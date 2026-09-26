@@ -674,3 +674,92 @@ DATA.journeys['dubai.nol'].after = [
   {journey:'dubai.taxi', name:{en:'Take a taxi or ride-hailing car', ar:'ركوب تاكسي أو سيارة عبر التطبيقات'}},
   {pathway:'dubai.eid', name:{en:'Get your Emirates ID', ar:'الحصول على الهوية الإماراتية'}},
 ];
+
+/* ---------- Healthcare for students (Dubai) ---------- */
+SRC.moi = {name:{en:'Ministry of Interior: Emergency numbers', ar:'وزارة الداخلية: أرقام الطوارئ'}, url:'https://moi.gov.ae/en/about.moi/content/emergency.contact.aspx'};
+SRC.uaeIns = {name:{en:'u.ae: Getting health insurance', ar:'البوابة الرسمية: الحصول على تأمين صحي'}, url:'https://u.ae/en/information-and-services/health-and-fitness/getting-a-health-insurance'};
+SRC.emergencyCare = {name:{en:'Khaleej Times: Health minister on emergency care (Jan 2026)', ar:'الخليج تايمز: وزير الصحة عن الرعاية الطارئة (يناير 2026)'}, url:'https://www.khaleejtimes.com/uae/health-minister-emergency-care-insurance-approvals'};
+SRC.murdoch = {name:{en:'Murdoch University Dubai: student visa', ar:'جامعة مردوخ دبي: تأشيرة الطالب'}, url:'https://www.murdochuniversitydubai.com/explore/living-dubai/student-visa-options/'};
+SRC.bham = {name:{en:'University of Birmingham Dubai: student visa', ar:'جامعة برمنغهام دبي: تأشيرة الطالب'}, url:'https://www.birmingham.ac.uk/dubai/study/apply/visas/new'};
+
+DATA.journeys['dubai.health.student'] = {
+  city:'dubai', need:'health', icon:'health',
+  title:{en:'See a doctor as a student', ar:'زيارة الطبيب كطالب'},
+  sources:[SRC.moi, SRC.emergencyCare, SRC.uaeIns, SRC.bham, SRC.murdoch], checked:CHECKED, trust:{reviewed:false, tested:0},
+  stages:[
+    {id:'emergency', level:'source', label:{en:'Emergency?', ar:'طوارئ؟'}, title:{en:'Is it an emergency?', ar:'هل هي حالة طارئة؟'}, help:['address','noins','else'],
+     blocks:[
+      {t:'emergency'},
+      {t:'list', v:[
+        {en:'These numbers work anywhere in the UAE: 998 for an ambulance, 999 for police.', ar:'تعمل هذه الأرقام في أي مكان في الإمارات: 998 للإسعاف، و999 للشرطة.'},
+        {en:'Or go straight to a hospital emergency department.', ar:'أو توجّه مباشرة إلى قسم الطوارئ في أقرب مستشفى.'},
+        {en:'Don’t let insurance stop you. By law, hospitals must treat emergencies right away, without waiting for insurance approval.', ar:'لا تدع التأمين يمنعك. بحكم القانون، يجب على المستشفيات علاج حالات الطوارئ فوراً دون انتظار موافقة التأمين.'},
+      ]},
+      {t:'phraseCard', v:{en:'This is an emergency. I need a doctor now.', ar:'هذه حالة طارئة. أحتاج إلى طبيب الآن.'}},
+     ]},
+    {id:'insurance', level:'source', label:{en:'Insurance', ar:'التأمين'}, title:{en:'Know your health insurance', ar:'اعرف تأمينك الصحي'}, help:['nocard','notstarted','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Health insurance is required to live in Dubai.', ar:'التأمين الصحي شرط للإقامة في دبي.'},
+        {en:'Universities usually arrange student insurance as part of your visa.', ar:'عادةً ترتّب الجامعات التأمين الصحي للطلاب ضمن إجراءات التأشيرة.'},
+        {en:'Your cover may only start once your visa is issued. Ask your university when it starts, and what to do before then.', ar:'قد لا يبدأ تأمينك إلا بعد صدور التأشيرة. اسأل جامعتك متى يبدأ، وماذا تفعل قبل ذلك.'},
+      ]},
+      {t:'tip', label:'tip', v:{en:'Save your insurance card or policy number on your phone, and download your insurer’s app if it has one.', ar:'احفظ بطاقة التأمين أو رقم الوثيقة على هاتفك، وحمّل تطبيق شركة التأمين إن وُجد.'}},
+     ]},
+    {id:'find', label:{en:'Find a clinic', ar:'اعثر على عيادة'}, title:{en:'Find a clinic you’re covered at', ar:'اعثر على عيادة يغطيها تأمينك'}, help:['nonetwork','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Your insurer’s app, website or card shows which clinics and hospitals accept your plan (its “network”).', ar:'يوضح تطبيق شركة التأمين أو موقعها أو بطاقتك العيادات والمستشفيات التي تقبل خطتك («الشبكة»).'},
+        {en:'Ask your university whether there’s a campus clinic or a clinic they recommend.', ar:'اسأل جامعتك إن كانت هناك عيادة في الحرم الجامعي أو عيادة توصي بها.'},
+        {en:'For problems that aren’t urgent, a clinic is usually quicker than a hospital emergency department.', ar:'للمشكلات غير الطارئة، تكون العيادة عادةً أسرع من قسم الطوارئ في المستشفى.'},
+      ]},
+     ]},
+    {id:'visit', label:{en:'At the clinic', ar:'في العيادة'}, title:{en:'At the clinic', ar:'في العيادة'}, help:['notcovered','staff','cost','else'],
+     blocks:[
+      {t:'steps', v:[
+        {en:'Bring your Emirates ID or passport, and your insurance card.', ar:'أحضر هويتك الإماراتية أو جواز سفرك، وبطاقة التأمين.'},
+        {en:'Tell reception you have insurance and show the card.', ar:'أخبر موظف الاستقبال أن لديك تأميناً واعرض البطاقة.'},
+        {en:'You may pay a small share of the cost, depending on your plan. Ask before you’re seen if you’re unsure.', ar:'قد تدفع جزءاً صغيراً من التكلفة حسب خطتك. اسأل قبل الكشف إن لم تكن متأكداً.'},
+      ]},
+      {t:'phraseCard', v:{en:'I’m a student. Here is my insurance card. I need to see a doctor.', ar:'أنا طالب. هذه بطاقة التأمين الخاصة بي. أحتاج إلى رؤية طبيب.'}},
+     ]},
+    {id:'pharmacy', label:{en:'Medicines', ar:'الأدوية'}, title:{en:'Getting medicines', ar:'الحصول على الأدوية'}, help:['rx','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Pharmacies are easy to find, and pharmacists can help with simple questions.', ar:'الصيدليات منتشرة، ويمكن للصيدلي المساعدة في الأسئلة البسيطة.'},
+        {en:'Some medicines need a doctor’s prescription.', ar:'بعض الأدوية تحتاج إلى وصفة طبية.'},
+        {en:'Ask your insurer whether prescribed medicines are covered, and at which pharmacies.', ar:'اسأل شركة التأمين إن كانت الأدوية الموصوفة مشمولة، وفي أي صيدليات.'},
+      ]},
+     ]},
+    {id:'wellbeing', label:{en:'Wellbeing', ar:'الصحة النفسية'}, title:{en:'Looking after your mental health', ar:'الاهتمام بصحتك النفسية'}, help:['talk','else'],
+     blocks:[
+      {t:'p', v:{en:'Moving to a new country is hard, and feeling lonely or stressed is common. You don’t have to handle it alone.', ar:'الانتقال إلى بلد جديد أمر صعب، والشعور بالوحدة أو الضغط شائع. لست مضطراً لمواجهة ذلك وحدك.'}},
+      {t:'list', v:[
+        {en:'Most universities have a counselling or wellbeing service for students. Ask student services how to reach it.', ar:'لدى معظم الجامعات خدمة إرشاد نفسي أو دعم للطلاب. اسأل خدمات الطلاب عن طريقة الوصول إليها.'},
+        {en:'If you’re in danger or feel you might harm yourself, call 999 or go to the nearest emergency department now.', ar:'إذا كنت في خطر أو تشعر أنك قد تؤذي نفسك، اتصل بالرقم 999 أو توجّه إلى أقرب قسم طوارئ الآن.'},
+      ]},
+     ]},
+  ],
+  problems:[
+    {id:'address', q:{en:'I don’t know what address to give', ar:'لا أعرف أي عنوان أعطي'}, a:{en:'Give the building name or the nearest landmark, like a mall, hotel or Metro station. Stay on the line and follow their instructions.', ar:'اذكر اسم المبنى أو أقرب معلم، مثل مركز تسوق أو فندق أو محطة مترو. ابقَ على الخط واتبع تعليماتهم.'}},
+    {id:'noins', q:{en:'My insurance isn’t active yet', ar:'تأميني لم يُفعّل بعد'}, a:{en:'In an emergency, go anyway. Hospitals must treat emergencies first. Sort out insurance afterwards with your university.', ar:'في حالة الطوارئ، اذهب على أي حال، فالمستشفيات ملزمة بعلاج الطوارئ أولاً. رتّب مسألة التأمين لاحقاً مع جامعتك.'}},
+    {id:'nocard', q:{en:'I don’t have my insurance card yet', ar:'لم أستلم بطاقة التأمين بعد'}, a:{en:'Ask your university’s visa office or student services for your insurance details. They arranged it with your visa.', ar:'اطلب تفاصيل تأمينك من مكتب التأشيرات أو خدمات الطلاب في جامعتك، فهم من رتّبه مع تأشيرتك.'}},
+    {id:'notstarted', q:{en:'My insurance hasn’t started yet', ar:'تأميني لم يبدأ بعد'}, a:{en:'Ask your university when it starts. Until then you may have to pay yourself, so some students buy short-term cover. In an emergency, go to hospital anyway.', ar:'اسأل جامعتك متى يبدأ. حتى ذلك الحين قد تدفع بنفسك، لذلك يشتري بعض الطلاب تأميناً قصير المدة. وفي الطوارئ، اذهب إلى المستشفى على أي حال.'}},
+    {id:'nonetwork', q:{en:'I can’t find a clinic in my network', ar:'لا أجد عيادة ضمن شبكتي'}, a:{en:'Call the phone number on your insurance card. They can tell you the nearest clinic that accepts your plan.', ar:'اتصل بالرقم المكتوب على بطاقة التأمين، وسيخبرونك بأقرب عيادة تقبل خطتك.'}},
+    {id:'notcovered', q:{en:'They say my insurance doesn’t cover this', ar:'يقولون إن تأميني لا يغطي هذا'}, a:{en:'Ask them to explain why, in writing if possible. Call your insurer (the number on your card) before paying. Your university’s student services can help too.', ar:'اطلب منهم توضيح السبب، كتابياً إن أمكن. اتصل بشركة التأمين (الرقم على بطاقتك) قبل الدفع. ويمكن لخدمات الطلاب في جامعتك المساعدة أيضاً.'}},
+    {id:'staff', q:{en:'I don’t understand what staff said', ar:'لم أفهم ما قاله الموظفون'}, a:{en:'Show them this card. It asks them to slow down or write it down.', ar:'اعرض عليهم هذه البطاقة، فهي تطلب منهم التحدث ببطء أو الكتابة.'}, phraseText:{en:'I’m a new student. Could you please say that more slowly, or write it down?', ar:'أنا طالب جديد. هل يمكنك أن تقول ذلك ببطء أكثر، أو تكتبه لي من فضلك؟'}},
+    {id:'cost', q:{en:'I’m worried about the cost', ar:'أنا قلق من التكلفة'}, a:{en:'Ask the clinic for the price before you’re seen, and tell your university’s student services. For emergencies, go anyway.', ar:'اسأل العيادة عن السعر قبل الكشف، وأخبر خدمات الطلاب في جامعتك. وفي الطوارئ، اذهب على أي حال.'}},
+    {id:'rx', q:{en:'They say I need a prescription', ar:'يقولون إنني أحتاج إلى وصفة طبية'}, a:{en:'See a doctor at a clinic in your network. They can prescribe the medicine if you need it.', ar:'راجع طبيباً في عيادة ضمن شبكتك، ويمكنه وصف الدواء إن احتجت إليه.'}},
+    {id:'talk', q:{en:'I need to talk to someone', ar:'أحتاج إلى التحدث مع أحد'}, a:{en:'Contact your university’s counselling or wellbeing service. If you’re in danger, call 999 or go to the nearest emergency department now.', ar:'تواصل مع خدمة الإرشاد النفسي أو دعم الطلاب في جامعتك. وإذا كنت في خطر، اتصل بالرقم 999 أو توجّه إلى أقرب قسم طوارئ الآن.'}},
+    {id:'else', q:{en:'Something else', ar:'مشكلة أخرى'}, a:{en:'Ask your university’s student services, or call the number on your insurance card. In an emergency, call 998.', ar:'اسأل خدمات الطلاب في جامعتك، أو اتصل بالرقم المكتوب على بطاقة التأمين. وفي الطوارئ، اتصل بالرقم 998.'}},
+  ],
+  stuck:{cards:[
+    {title:{en:'Emergency: ambulance', ar:'طوارئ: الإسعاف'}, phone:'998', body:{en:'Anywhere in the UAE. Police: 999.', ar:'في أي مكان في الإمارات. الشرطة: 999.'}},
+    {title:{en:'Your university’s student services', ar:'خدمات الطلاب في جامعتك'}, body:{en:'They can help with insurance, clinics and counselling.', ar:'يمكنهم المساعدة في التأمين والعيادات والإرشاد النفسي.'}},
+    {title:{en:'Your insurer', ar:'شركة التأمين'}, body:{en:'Call the number on your insurance card.', ar:'اتصل بالرقم المكتوب على بطاقة التأمين.'}},
+  ]},
+  after:[{pathway:'dubai.eid', name:{en:'Get your Emirates ID', ar:'الحصول على الهوية الإماراتية'}}],
+};
+DATA.tasks['dubai.health'] = [
+  {journey:'dubai.health.student', name:{en:'See a doctor as a student', ar:'زيارة الطبيب كطالب'}, note:{en:'Emergencies, insurance, clinics and medicines', ar:'الطوارئ والتأمين والعيادات والأدوية'}},
+];

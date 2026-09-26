@@ -124,7 +124,7 @@ const SCREENS = {
     const list = DATA.tasks[`${S.city}.${need.id}`] || [];
     return {
       body: sign({eyebrow:L(need.name), title:t('tasksAsk'), icon:need.icon}) + `
-        <div class="content"><div class="choices">
+        <div class="content">${need.id==='health' ? emergencyBox() : ''}<div class="choices">
           ${list.length ? list.map(x => (x.journey || x.pathway)
             ? `<button class="choice" data-act="${x.pathway?'pathway':'journey'}" data-v="${x.pathway||x.journey}"><span class="main"><span>${L(x.name)}</span><small>${L(x.note)}</small></span>${x.pathway ? pathPill(x.pathway) : progressPill(x.journey)}</button>`
             : `<button class="choice" disabled><span>${L(x.name)}</span><span class="pill pill-soon">${t('soon')}</span></button>`).join('')
@@ -264,6 +264,7 @@ function block(b){
     case 'steps': return `<ol class="blk-steps">${b.v.map(x=>`<li><span>${L(x)}</span></li>`).join('')}</ol>`;
     case 'tip': return `<div class="tip"><b>${t(b.label||'tip')}</b>${L(b.v)}</div>`;
     case 'cards': return `<div class="cards">${b.v.map(c=>`<div class="card ${c.rec?'rec':''}"><div class="card-head"><span class="swatch" style="background:${c.color}"></span><strong>${L(c.name)}</strong>${c.rec?`<span class="pill pill-amber">${lang()==='ar'?'مُقترحة':'Recommended'}</span>`:''}</div><p>${L(c.desc)}</p></div>`).join('')}</div>`;
+    case 'emergency': return emergencyBox();
     case 'phraseCard': return phraseHtml({phrase:b.v});
     case 'journeyLink': return `<button class="choice jlink" data-act="${DATA.journeys[b.journey] && DATA.journeys[b.journey].finder ? 'pathway' : 'journey'}" data-v="${DATA.journeys[b.journey] && DATA.journeys[b.journey].pathway ? DATA.journeys[b.journey].pathway : b.journey}"><span>${L(b.v)}</span>${chev()}</button>`;
     case 'link': return `<a class="btn btn-quiet linkbtn" href="${b.url}" target="_blank" rel="noopener">${L(b.v)} ${chev()}</a>`;
@@ -321,6 +322,10 @@ function setListen(on){
   document.querySelectorAll('.listen').forEach(b=>{ b.setAttribute('aria-pressed', on); b.innerHTML = `${svg(on?'stopsq':'speaker','lic')}<span>${on?t('stop'):t('listen')}</span>`; });
 }
 const isDone = id => { const j = DATA.journeys[id]; const d = S.done[id]||{}; return j.stages.every(s=>d[s.id]); };
+function emergencyBox(){
+  return `<div class="emergency-box"><span class="label">${lang()==='ar'?'طوارئ':'Emergency'}</span>
+    <div class="em-nums"><a href="tel:998" dir="ltr"><b>998</b><span>${lang()==='ar'?'الإسعاف':'Ambulance'}</span></a><a href="tel:999" dir="ltr"><b>999</b><span>${lang()==='ar'?'الشرطة':'Police'}</span></a></div></div>`;
+}
 function pathPill(pid){
   const opt = DATA.pathways[pid].options.find(o=>o.journey && S.finder[o.journey]);
   return opt ? progressPill(opt.journey) : `<span class="pill pill-ok">${t('ready')}</span>`;
@@ -424,7 +429,7 @@ function stuckSheet(){
   if(jj && jj.stuck){
     sheet(`<div class="sheet-top"><button class="linkish back-link" data-act="wrong">${chev()}${t('problems')}</button></div>
       <h2>${t('stuckTitle')}</h2>
-      ${jj.stuck.cards.map(c=>`<div class="help-card"><strong>${L(c.title)}</strong>${c.phone?`<span class="phone" dir="ltr">${c.phone}</span>`:''}<p>${L(c.body)}</p></div>`).join('')}
+      ${jj.stuck.cards.map(c=>`<div class="help-card"><strong>${L(c.title)}</strong>${c.phone?`<a class="phone" dir="ltr" href="tel:${c.phone.replace(/\s/g,'')}">${c.phone}</a>`:''}<p>${L(c.body)}</p></div>`).join('')}
       <div class="help-card"><strong>${t('showThis')}</strong>
         <div class="phrase"><div class="ar" lang="ar" dir="rtl" id="phAr"></div><hr><div class="en" lang="en" dir="ltr" id="phEn"></div></div></div>
       <button class="btn btn-primary" data-act="closeSheet">${t('close')}</button>`, true);

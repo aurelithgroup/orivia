@@ -298,3 +298,10 @@ html,body{margin:0}
 .gicon::after{content:counter(g);position:absolute;top:-6px;inset-inline-start:-6px;width:20px;height:20px;border-radius:50%;background:var(--amber);color:var(--amberInk);font-size:12px;font-weight:800;display:grid;place-items:center}
 .guide-hint{font-size:14px;color:var(--muted)}
 .jlink{border-style:solid;border-color:var(--ink);background:var(--surface2);font-size:16px;font-weight:700}
+.emergency-box{background:#B3261E;color:#fff;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.emergency-box .label{color:#FFD9D6}
+.em-nums{display:flex;gap:10px}
+.em-nums a{flex:1;background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.4);border-radius:12px;padding:10px 12px;color:#fff;text-decoration:none;display:flex;flex-direction:column;gap:2px;min-height:64px}
+.em-nums b{font-family:var(--display);font-size:30px;line-height:1;font-weight:800}
+.em-nums span{font-size:14px}
+a.phone{color:var(--ink);text-decoration:none}
