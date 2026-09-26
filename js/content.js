@@ -932,3 +932,79 @@ DATA.pathways['dubai.ins'] = {
 };
 DATA.tasks['dubai.health'].push({pathway:'dubai.ins', name:{en:'Get or check your health insurance', ar:'احصل على تأمينك الصحي أو تحقّق منه'}, note:{en:'Who arranges it depends on your visa', ar:'من يرتّبه يعتمد على تأشيرتك'}});
 DATA.journeys['dubai.health.student'].stages[1].blocks.push({t:'journeyLink', journey:'dubai.ins.student', v:{en:'More on student insurance and cover before your visa', ar:'المزيد عن تأمين الطلاب والتغطية قبل التأشيرة'}});
+
+/* ---------- Money & banking: open a bank account (Dubai) ---------- */
+SRC.adcbTips = {name:{en:'ADCB: Account opening tips for expatriates', ar:'بنك أبوظبي التجاري: نصائح فتح الحساب للوافدين'}, url:'https://www.adcb.com/en/consumer-education-awareness/money-guide-expatriates-uae/current-account-opening-tips'};
+SRC.adcbStudent = {name:{en:'ADCB: University Student Account terms', ar:'بنك أبوظبي التجاري: شروط حساب طلاب الجامعات'}, url:'https://www.adcb.com/Images/University-Student-TnCs-English-V1_tcm9-85805.pdf'};
+SRC.fabFraud = {name:{en:'FAB: Fraud and security', ar:'بنك أبوظبي الأول: الاحتيال والأمان'}, url:'https://www.bankfab.com/en-ae/personal/help-and-support/fraud-and-security'};
+SRC.sanadak = {name:{en:'Sanadak: Make a complaint', ar:'سندك: تقديم شكوى'}, url:'https://www.sanadak.gov.ae/en/make-a-complaint/'};
+
+DATA.journeys['dubai.bank'] = {
+  city:'dubai', need:'money', icon:'money',
+  title:{en:'Open a bank account', ar:'فتح حساب بنكي'},
+  sources:[SRC.adcbTips, SRC.adcbStudent, SRC.fabFraud, SRC.sanadak], checked:CHECKED, trust:{reviewed:false, tested:0},
+  stages:[
+    {id:'when', level:'source', label:{en:'When', ar:'متى'}, title:{en:'When you can open one', ar:'متى يمكنك فتح حساب'}, help:['noeid','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Most banks ask residents for an Emirates ID, as well as a passport.', ar:'تطلب معظم البنوك من المقيمين الهوية الإماراتية إلى جانب جواز السفر.'},
+        {en:'Student accounts are usually for UAE residents, so most students open one once their residence visa and Emirates ID are ready.', ar:'حسابات الطلاب مخصصة عادةً للمقيمين في الإمارات، لذلك يفتح معظم الطلاب حساباتهم بعد جاهزية تأشيرة الإقامة والهوية الإماراتية.'},
+      ]},
+      {t:'journeyLink', journey:'dubai.eid.student', v:{en:'Check where your Emirates ID is', ar:'اعرف أين وصلت هويتك الإماراتية'}},
+     ]},
+    {id:'choose', level:'source', label:{en:'Choose', ar:'اختر'}, title:{en:'Choose an account', ar:'اختر حساباً'}, help:['nosalary','fees','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Regular current accounts often ask for proof of salary, and some banks have a minimum salary, for example AED 3,000.', ar:'غالباً تطلب الحسابات الجارية العادية إثبات راتب، وبعض البنوك تشترط حداً أدنى للراتب، مثلاً 3,000 درهم.'},
+        {en:'Many banks offer student accounts instead. Some still need a minimum balance: ADCB’s student account, for example, asks for AED 1,500.', ar:'تقدّم بنوك كثيرة حسابات للطلاب بدلاً من ذلك، وبعضها يشترط حداً أدنى للرصيد: حساب الطلاب في بنك أبوظبي التجاري مثلاً يشترط 1,500 درهم.'},
+        {en:'Before you sign, read the bank’s schedule of fees, especially charges for falling below the minimum balance.', ar:'قبل التوقيع، اقرأ جدول رسوم البنك، خاصة الرسوم عند انخفاض الرصيد عن الحد الأدنى.'},
+      ]},
+     ]},
+    {id:'open', level:'source', label:{en:'Open it', ar:'افتح الحساب'}, title:{en:'Open your account', ar:'افتح حسابك'}, help:['noaddress','noeid','staff','else'],
+     blocks:[
+      {t:'steps', v:[
+        {en:'Apply in the bank’s app or at a branch.', ar:'قدّم طلبك عبر تطبيق البنك أو في أحد فروعه.'},
+        {en:'Bring your passport, Emirates ID and proof of address, such as a tenancy contract or a utility bill.', ar:'أحضر جواز سفرك وهويتك الإماراتية وإثبات العنوان، مثل عقد الإيجار أو فاتورة خدمات.'},
+        {en:'For a student account, bring proof you’re enrolled, like a letter from your university showing your start and end dates.', ar:'لحساب الطلاب، أحضر إثبات تسجيلك، مثل خطاب من جامعتك يوضح تاريخ البدء والتخرج المتوقع.'},
+        {en:'Collect your debit card and set up the bank’s app.', ar:'استلم بطاقة الخصم وفعّل تطبيق البنك.'},
+      ]},
+      {t:'phraseCard', v:{en:'I’m a student. I’d like to open a student account. Which documents do you need?', ar:'أنا طالب. أريد فتح حساب طلاب. ما المستندات التي تحتاجونها؟'}},
+     ]},
+    {id:'safe', level:'source', label:{en:'Stay safe', ar:'ابقَ آمناً'}, title:{en:'Keep your money safe', ar:'حافظ على أموالك'}, help:['scam','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Never share your PIN, one-time code (OTP), card security code (CVV) or card details with anyone.', ar:'لا تشارك رقمك السري أو رمز التحقق لمرة واحدة (OTP) أو رمز أمان البطاقة (CVV) أو بيانات بطاقتك مع أي أحد.'},
+        {en:'The police and the Central Bank will never ask for your card details or codes, or ask you to add a payment recipient on a video call.', ar:'لن تطلب منك الشرطة أو المصرف المركزي أبداً بيانات بطاقتك أو رموزها، ولن يطلبوا منك إضافة مستفيد عبر مكالمة فيديو.'},
+      ]},
+      {t:'tip', label:'important', v:{en:'Think it’s a scam? Hang up and call your bank on the number on the back of your card.', ar:'تظن أنها عملية احتيال؟ أغلق الخط واتصل ببنكك على الرقم المكتوب خلف بطاقتك.'}},
+     ]},
+    {id:'complain', level:'source', label:{en:'Problems', ar:'المشكلات'}, title:{en:'If the bank doesn’t fix a problem', ar:'إذا لم يحل البنك مشكلتك'}, help:['complaint','else'],
+     blocks:[
+      {t:'steps', v:[
+        {en:'Make a formal complaint to your bank, and keep the reference number.', ar:'قدّم شكوى رسمية إلى بنكك واحتفظ برقمها المرجعي.'},
+        {en:'If it isn’t sorted after 15 days, complain for free to Sanadak, the UAE’s independent financial ombudsman, on its website, app or 800 72 623 25.', ar:'إذا لم تُحل بعد 15 يوماً، قدّم شكوى مجانية إلى «سندك»، الجهة المستقلة لتسوية شكاوى القطاع المالي، عبر موقعها أو تطبيقها أو الرقم 800 72 623 25.'},
+      ]},
+     ]},
+  ],
+  problems:[
+    {id:'noeid', q:{en:'I don’t have my Emirates ID yet', ar:'ليست لدي هوية إماراتية بعد'}, a:{en:'Most banks need it. Ask the bank what they accept while your card is being made, or wait until it arrives. You can check where it is in Orivia’s Emirates ID journey.', ar:'تحتاجها معظم البنوك. اسأل البنك عما يقبله أثناء إصدار بطاقتك، أو انتظر حتى تصلك. يمكنك متابعتها في رحلة الهوية الإماراتية في أوريفيا.'}},
+    {id:'nosalary', q:{en:'They want proof of salary, but I’m a student', ar:'يطلبون إثبات راتب وأنا طالب'}, a:{en:'Ask for a student account instead, and bring a letter from your university confirming you’re enrolled.', ar:'اطلب حساب طلاب بدلاً من ذلك، وأحضر خطاباً من جامعتك يؤكد تسجيلك.'}},
+    {id:'noaddress', q:{en:'I don’t have a tenancy contract', ar:'ليس لدي عقد إيجار'}, a:{en:'If you live in university housing, ask your university for a letter confirming your address. Then ask the bank whether they accept it.', ar:'إذا كنت تسكن في سكن جامعي، اطلب من جامعتك خطاباً يؤكد عنوانك، ثم اسأل البنك إن كان يقبله.'}},
+    {id:'fees', q:{en:'I’m being charged fees I didn’t expect', ar:'تُخصم مني رسوم لم أتوقعها'}, a:{en:'Check your minimum balance first. Banks often charge when you fall below it. Ask the bank to explain each charge, and complain formally if it’s wrong.', ar:'تحقّق أولاً من الحد الأدنى للرصيد، فالبنوك غالباً تفرض رسوماً عند انخفاضه. اطلب من البنك شرح كل رسم، وقدّم شكوى رسمية إن كان خاطئاً.'}},
+    {id:'staff', q:{en:'I don’t understand what staff said', ar:'لم أفهم ما قاله الموظفون'}, a:{en:'Show them this card. It asks them to slow down or write it down.', ar:'اعرض عليهم هذه البطاقة، فهي تطلب منهم التحدث ببطء أو الكتابة.'}, phraseText:{en:'I’m new here. Could you please say that more slowly, or write it down?', ar:'أنا جديد هنا. هل يمكنك أن تقول ذلك ببطء أكثر، أو تكتبه لي من فضلك؟'}},
+    {id:'scam', q:{en:'Someone asked for my card details or a code', ar:'طلب أحدهم بيانات بطاقتي أو رمزاً'}, a:{en:'Don’t share anything. Hang up, then call your bank on the number on the back of your card. If you’ve already shared something, call straight away so they can block your card.', ar:'لا تشارك أي شيء. أغلق الخط، ثم اتصل ببنكك على الرقم المكتوب خلف بطاقتك. وإذا كنت قد شاركت شيئاً بالفعل، اتصل فوراً ليوقفوا بطاقتك.'}},
+    {id:'complaint', q:{en:'The bank won’t fix my problem', ar:'البنك لا يحل مشكلتي'}, a:{en:'Make a formal complaint to the bank and keep the reference number. If it isn’t resolved after 15 days, complain for free to Sanadak on 800 72 623 25 or through its website or app.', ar:'قدّم شكوى رسمية إلى البنك واحتفظ برقمها المرجعي. وإذا لم تُحل بعد 15 يوماً، قدّم شكوى مجانية إلى «سندك» على الرقم 800 72 623 25 أو عبر موقعها أو تطبيقها.'}},
+    {id:'else', q:{en:'Something else', ar:'مشكلة أخرى'}, a:{en:'Contact your bank through its app, a branch, or the number on your card. For a complaint the bank hasn’t solved, you can go to Sanadak.', ar:'تواصل مع بنكك عبر تطبيقه أو أحد فروعه أو الرقم المكتوب على بطاقتك. وللشكاوى التي لم يحلها البنك، يمكنك التوجه إلى «سندك».'}},
+  ],
+  stuck:{cards:[
+    {title:{en:'Your bank', ar:'بنكك'}, body:{en:'Call the number on the back of your card, or use the bank’s app.', ar:'اتصل بالرقم المكتوب خلف بطاقتك، أو استخدم تطبيق البنك.'}},
+    {title:{en:'Sanadak (financial ombudsman)', ar:'سندك (تسوية الشكاوى المالية)'}, phone:'800 72 623 25', body:{en:'Free. For complaints your bank hasn’t solved within 15 days.', ar:'مجانية. للشكاوى التي لم يحلها بنكك خلال 15 يوماً.'}},
+  ]},
+  after:[{journey:'dubai.nol', name:{en:'Start using the Metro, tram and bus', ar:'البدء باستخدام المترو والترام والحافلات'}}],
+};
+DATA.tasks['dubai.money'] = [
+  {journey:'dubai.bank', name:{en:'Open a bank account', ar:'فتح حساب بنكي'}, note:{en:'When you can, what to bring, and staying safe', ar:'متى يمكنك، وماذا تحضر، وكيف تبقى آمناً'}},
+];
+DATA.firstWeek.dubai[5] = {journey:'dubai.bank', name:{en:'Open a bank account', ar:'فتح حساب بنكي'}};
+DATA.journeys['dubai.eid.student'].after[1] = {journey:'dubai.bank', name:{en:'Open a bank account', ar:'فتح حساب بنكي'}};
+DATA.journeys['dubai.uaepass'].after = [{journey:'dubai.bank', name:{en:'Open a bank account', ar:'فتح حساب بنكي'}}];
