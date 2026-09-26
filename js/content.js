@@ -1008,3 +1008,72 @@ DATA.tasks['dubai.money'] = [
 DATA.firstWeek.dubai[5] = {journey:'dubai.bank', name:{en:'Open a bank account', ar:'فتح حساب بنكي'}};
 DATA.journeys['dubai.eid.student'].after[1] = {journey:'dubai.bank', name:{en:'Open a bank account', ar:'فتح حساب بنكي'}};
 DATA.journeys['dubai.uaepass'].after = [{journey:'dubai.bank', name:{en:'Open a bank account', ar:'فتح حساب بنكي'}}];
+
+/* ---------- Housing: renting a home (Dubai) ---------- */
+SRC.law26 = {name:{en:'Dubai Law No. 26 of 2007 (landlords and tenants)', ar:'قانون دبي رقم 26 لسنة 2007 (المؤجرين والمستأجرين)'}, url:'https://dlp.dubai.gov.ae/Legislation%20Reference/2007/Law%20No.%20(26)%20of%202007.html'};
+SRC.ejari = {name:{en:'Dubai Land Department: Register a tenancy contract (Ejari)', ar:'دائرة الأراضي والأملاك: تسجيل عقد الإيجار (إيجاري)'}, url:'https://dubailand.gov.ae/en/eservices/register-renew-ejari-contract/'};
+SRC.dldVerify = {name:{en:'Dubai Land Department: Verify licences and permits', ar:'دائرة الأراضي والأملاك: التحقق من التراخيص والتصاريح'}, url:'https://dubailand.gov.ae/en/eservices/validate-real-estate-licenses-and-permits/'};
+SRC.rentIndex = {name:{en:'Dubai Land Department: Smart Rent Index', ar:'دائرة الأراضي والأملاك: مؤشر الإيجارات الذكي'}, url:'https://dubailand.gov.ae/en/news-media/the-smart-rent-index-mitigates-inflation-in-dubai-and-enhances-market-transparency/'};
+SRC.rdc = {name:{en:'Rental Disputes Center: Contact', ar:'مركز فض المنازعات الإيجارية: تواصل معنا'}, url:'https://rdc.gov.ae/en/contact-us'};
+
+DATA.journeys['dubai.rent'] = {
+  city:'dubai', need:'housing', icon:'housing',
+  title:{en:'Rent a home', ar:'استئجار سكن'},
+  sources:[SRC.law26, SRC.ejari, SRC.dldVerify, SRC.rentIndex, SRC.rdc], checked:CHECKED, trust:{reviewed:false, tested:0},
+  stages:[
+    {id:'student', label:{en:'Students first', ar:'للطلاب أولاً'}, title:{en:'Students: ask about university housing', ar:'للطلاب: اسأل عن السكن الجامعي'}, help:['else'],
+     blocks:[
+      {t:'p', v:{en:'Many universities offer student housing or work with approved providers. Ask yours before renting privately. It’s usually simpler for your first year.', ar:'تقدّم جامعات كثيرة سكناً للطلاب أو تتعامل مع جهات سكن معتمدة. اسأل جامعتك قبل الاستئجار الخاص، فهو عادةً أبسط في سنتك الأولى.'}},
+      {t:'tip', label:'tip', v:{en:'Renting privately? The next steps show how to do it safely.', ar:'ستستأجر بشكل خاص؟ الخطوات التالية توضح كيف تفعل ذلك بأمان.'}},
+     ]},
+    {id:'find', level:'source', label:{en:'Find safely', ar:'ابحث بأمان'}, title:{en:'Find a place safely', ar:'ابحث عن سكن بأمان'}, help:['scam','deposit','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Check any agent’s licence and any advert’s permit with the Dubai Land Department, on its website or the Dubai REST app.', ar:'تحقّق من ترخيص أي وسيط وتصريح أي إعلان لدى دائرة الأراضي والأملاك، عبر موقعها أو تطبيق Dubai REST.'},
+        {en:'See the home in person, or on a live video call, before paying anything.', ar:'عاين السكن بنفسك، أو عبر مكالمة فيديو مباشرة، قبل أن تدفع أي شيء.'},
+        {en:'Don’t pay a deposit to hold a place before you’ve seen it and checked who you’re dealing with.', ar:'لا تدفع عربوناً لحجز سكن قبل أن تعاينه وتتحقق ممن تتعامل معه.'},
+      ]},
+     ]},
+    {id:'contract', level:'source', label:{en:'Contract', ar:'العقد'}, title:{en:'Sign the contract', ar:'وقّع العقد'}, help:['deposit','staff','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Get a written tenancy contract, and read it before signing: rent, how you pay, the deposit, and the end date.', ar:'احصل على عقد إيجار مكتوب واقرأه قبل التوقيع: الإيجار وطريقة الدفع والتأمين وتاريخ الانتهاء.'},
+        {en:'The landlord can take a security deposit. By law it must be refunded at the end, minus any repair costs.', ar:'يحق للمالك أخذ مبلغ تأمين، ويجب قانوناً إعادته في النهاية بعد خصم تكاليف الإصلاح إن وُجدت.'},
+      ]},
+      {t:'phraseCard', v:{en:'Before I sign, can you show me the rent, the deposit and the end date in the contract?', ar:'قبل أن أوقّع، هل يمكنك أن تريني الإيجار والتأمين وتاريخ الانتهاء في العقد؟'}},
+     ]},
+    {id:'ejari', level:'source', label:{en:'Ejari', ar:'إيجاري'}, title:{en:'Register it with Ejari', ar:'سجّله في «إيجاري»'}, help:['noejari','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Ejari is Dubai’s official register of rental contracts. By law, contracts must be registered, and disputes over unregistered ones won’t be heard.', ar:'«إيجاري» هو السجل الرسمي لعقود الإيجار في دبي. قانوناً يجب تسجيل العقود، ولا يُنظر في النزاعات المتعلقة بعقود غير مسجلة.'},
+        {en:'The tenant or landlord can register it in the Dubai REST app, on the Dubai Land Department website, or at a Real Estate Trustee Centre.', ar:'يمكن للمستأجر أو المالك تسجيله عبر تطبيق Dubai REST، أو موقع دائرة الأراضي والأملاك، أو في أحد مراكز أمين العقارية.'},
+        {en:'Online, it costs about AED 178. At a centre, about AED 220.', ar:'التكلفة عبر الإنترنت نحو 178 درهماً، وفي المراكز نحو 220 درهماً.'},
+      ]},
+      {t:'tip', label:'tip', v:{en:'Keep your Ejari certificate. You’ll often need it for things like connecting electricity and water, or visas for family.', ar:'احتفظ بشهادة «إيجاري»، فغالباً ستحتاجها لأمور مثل توصيل الكهرباء والماء أو تأشيرات العائلة.'}},
+     ]},
+    {id:'renew', level:'source', label:{en:'Renewing', ar:'التجديد'}, title:{en:'Renewing and rent increases', ar:'التجديد وزيادة الإيجار'}, help:['increase','evict','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Either side must give at least 90 days’ notice before the contract ends to change its terms, including the rent.', ar:'يجب على أي من الطرفين إشعار الآخر قبل 90 يوماً على الأقل من انتهاء العقد لتغيير شروطه، بما فيها الإيجار.'},
+        {en:'Rent increases are checked against the Dubai Land Department’s Smart Rent Index.', ar:'تُقاس زيادات الإيجار وفق مؤشر الإيجارات الذكي لدائرة الأراضي والأملاك.'},
+      ]},
+     ]},
+  ],
+  problems:[
+    {id:'scam', q:{en:'I think a listing is a scam', ar:'أظن أن الإعلان احتيالي'}, a:{en:'Don’t pay anything. Check the agent’s licence and the advert’s permit with the Dubai Land Department (website or Dubai REST app). If they don’t check out, walk away.', ar:'لا تدفع شيئاً. تحقّق من ترخيص الوسيط وتصريح الإعلان لدى دائرة الأراضي والأملاك (الموقع أو تطبيق Dubai REST). وإذا لم يثبتا، ابتعد.'}},
+    {id:'deposit', q:{en:'I’m worried about my deposit', ar:'أنا قلق بشأن مبلغ التأمين'}, a:{en:'Make sure the deposit is written in your contract, and get a receipt. At the end, the landlord must refund it minus any repair costs. If they don’t, you can go to the Rental Disputes Center.', ar:'تأكد أن مبلغ التأمين مكتوب في العقد، واحصل على إيصال. في النهاية يجب على المالك إعادته بعد خصم تكاليف الإصلاح، وإن لم يفعل يمكنك التوجه إلى مركز فض المنازعات الإيجارية.'}},
+    {id:'staff', q:{en:'I don’t understand the contract', ar:'لا أفهم العقد'}, a:{en:'Ask for the key terms in writing, in a language you understand, before signing. Don’t sign under pressure.', ar:'اطلب الشروط الأساسية مكتوبة بلغة تفهمها قبل التوقيع، ولا توقّع تحت الضغط.'}, phraseText:{en:'Before I sign, can you show me the rent, the deposit and the end date in the contract?', ar:'قبل أن أوقّع، هل يمكنك أن تريني الإيجار والتأمين وتاريخ الانتهاء في العقد؟'}},
+    {id:'noejari', q:{en:'The landlord won’t register Ejari', ar:'المالك لا يسجّل «إيجاري»'}, a:{en:'You can register it yourself as the tenant, with a copy of the contract, in the Dubai REST app. Without Ejari, a dispute may not be heard.', ar:'يمكنك تسجيله بنفسك كمستأجر عبر تطبيق Dubai REST بنسخة من العقد. ومن دون «إيجاري» قد لا يُنظر في أي نزاع.'}},
+    {id:'increase', q:{en:'My landlord wants to raise the rent', ar:'المالك يريد رفع الإيجار'}, a:{en:'Check they gave you at least 90 days’ notice before the contract ends, and that the Smart Rent Index allows an increase. If you disagree, contact the Rental Disputes Center.', ar:'تأكد أنه أشعرك قبل 90 يوماً على الأقل من انتهاء العقد، وأن مؤشر الإيجارات الذكي يسمح بالزيادة. وإذا لم توافق، تواصل مع مركز فض المنازعات الإيجارية.'}},
+    {id:'evict', q:{en:'My landlord says I have to leave', ar:'المالك يقول إن علي المغادرة'}, a:{en:'Landlords can only end a tenancy for reasons set out in Dubai law, with proper notice. Don’t leave or stop paying before getting advice. Contact the Rental Disputes Center.', ar:'لا يحق للمالك إنهاء الإيجار إلا لأسباب يحددها قانون دبي ومع إشعار صحيح. لا تغادر ولا تتوقف عن الدفع قبل الحصول على المشورة، وتواصل مع مركز فض المنازعات الإيجارية.'}},
+    {id:'else', q:{en:'Something else', ar:'مشكلة أخرى'}, a:{en:'For rental disagreements, contact Dubai’s Rental Disputes Center on 800 4484. Students can also ask their university’s housing or student services team.', ar:'لخلافات الإيجار، تواصل مع مركز فض المنازعات الإيجارية في دبي على الرقم 800 4484. ويمكن للطلاب أيضاً سؤال فريق السكن أو خدمات الطلاب في جامعتهم.'}},
+  ],
+  stuck:{cards:[
+    {title:{en:'Rental Disputes Center', ar:'مركز فض المنازعات الإيجارية'}, phone:'800 4484', body:{en:'Dubai’s official centre for landlord and tenant disputes.', ar:'المركز الرسمي في دبي لنزاعات المؤجرين والمستأجرين.'}},
+    {title:{en:'Your university’s housing team', ar:'فريق السكن في جامعتك'}, body:{en:'If you’re a student, they may know trusted options.', ar:'إذا كنت طالباً، فقد يعرفون خيارات موثوقة.'}},
+  ]},
+  after:[{journey:'dubai.bank', name:{en:'Open a bank account', ar:'فتح حساب بنكي'}}],
+};
+DATA.tasks['dubai.housing'] = [
+  {journey:'dubai.rent', name:{en:'Rent a home', ar:'استئجار سكن'}, note:{en:'Avoid scams, sign safely, register Ejari', ar:'تجنّب الاحتيال ووقّع بأمان وسجّل «إيجاري»'}},
+];
