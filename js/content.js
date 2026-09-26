@@ -8,7 +8,7 @@ const UI = {
     purposeTitle:'What brings you here?', purposeSub:'This helps Orivia show the right steps. You can skip it.',
     purposes:['Work','Study','Family','Visiting','Something else'],
     needsEyebrow:'Step 1 of finding your way', needsTitle:'What do you need?', needsSub:'Pick one. You can come back for the rest.',
-    ready:'Ready', inFull:'In the full version',
+    ready:'Ready', inFull:'Coming soon',
     tasksAsk:'What are you trying to do?',
     weekTitle:'A good first week', weekSub:'Most newcomers do these in roughly this order.',
     journey:'Your journey', stepsDone:(n,t)=>`${n} of ${t} steps done`, start:'Start the journey', resume:'Continue the journey',
@@ -47,7 +47,7 @@ const UI = {
     purposeTitle:'ما سبب قدومك؟', purposeSub:'يساعد هذا أوريفيا على عرض الخطوات المناسبة لك. يمكنك التخطي.',
     purposes:['العمل','الدراسة','العائلة','زيارة','سبب آخر'],
     needsEyebrow:'أول خطوة لتجد طريقك', needsTitle:'بماذا تحتاج المساعدة؟', needsSub:'اختر واحداً، ويمكنك العودة إلى الباقي لاحقاً.',
-    ready:'جاهز', inFull:'في النسخة الكاملة',
+    ready:'جاهز', inFull:'قريباً',
     tasksAsk:'ماذا تريد أن تفعل؟',
     weekTitle:'أسبوع أول موفّق', weekSub:'يقوم معظم القادمين الجدد بهذه الخطوات بهذا الترتيب تقريباً.',
     journey:'رحلتك', stepsDone:(n,t)=>`${n} من ${t} خطوات مكتملة`, start:'ابدأ الرحلة', resume:'تابع الرحلة',
@@ -453,3 +453,224 @@ DATA.tasks['dubai.docs'] = [
 ];
 DATA.firstWeek.dubai[1] = {pathway:'dubai.eid', name:{en:'Get your Emirates ID', ar:'الحصول على الهوية الإماراتية'}};
 
+
+/* ---------- First-days journeys (Dubai): airport, taxi, SIM card, UAE PASS ---------- */
+const SRC = {
+  dxbMetro:{name:{en:'Dubai Airports: Metro', ar:'مطارات دبي: المترو'}, url:'https://dubaiairports.ae/transport/metro'},
+  dxbTaxi:{name:{en:'Dubai Airports: Taxi', ar:'مطارات دبي: سيارات الأجرة'}, url:'https://dubaiairports.ae/transport/taxi'},
+  rtaTaxi:{name:{en:'RTA: Taxi fares', ar:'هيئة الطرق والمواصلات: أجرة التاكسي'}, url:'https://www.rta.ae/wps/portal/rta/ae/home/promotion/taxi-fare'},
+  careemHala:{name:{en:'Careem: Booking a Hala taxi', ar:'كريم: حجز تاكسي هلا'}, url:'https://help.careem.com/hc/en-us/articles/4410000971795-Booking-a-Hala-ride-from-Careem-app'},
+  tdra:{name:{en:'TDRA: FAQs', ar:'هيئة تنظيم الاتصالات: الأسئلة الشائعة'}, url:'https://tdra.gov.ae/en/FAQs'},
+  uaepassGov:{name:{en:'TDRA Digital Government: UAE PASS', ar:'الحكومة الرقمية: UAE PASS'}, url:'https://dgov.tdra.gov.ae/services/uae-pass'},
+  uaepassPortal:{name:{en:'u.ae: The UAE PASS app', ar:'البوابة الرسمية: تطبيق UAE PASS'}, url:'https://u.ae/en/about-the-uae/digital-uae/digital-transformation/platforms-and-apps/the-uae-pass-app'},
+};
+const CHECKED = {en:'26 Sep 2026', ar:'26 سبتمبر 2026'};
+const HELP_ELSE_RTA = {id:'else', q:{en:'Something else', ar:'مشكلة أخرى'}, a:{en:'For taxi or public transport problems, call RTA on 800 9090.', ar:'لمشاكل التاكسي أو المواصلات العامة، اتصل بهيئة الطرق والمواصلات على الرقم 800 9090.'}};
+
+DATA.journeys['dubai.airport'] = {
+  city:'dubai', need:'move', icon:'move',
+  title:{en:'From the airport to where you’re staying', ar:'من المطار إلى مكان إقامتك'},
+  sources:[SRC.dxbMetro, SRC.dxbTaxi, SRC.rtaTaxi], checked:CHECKED, trust:{reviewed:false, tested:0},
+  stages:[
+    {id:'choose', level:'source', label:{en:'Choose', ar:'اختر'}, title:{en:'Choose how to travel', ar:'اختر طريقة التنقل'}, help:['metroclosed','nocash','else'],
+     blocks:[
+      {t:'cards', v:[
+        {color:'#C8382F', rec:true, name:{en:'Metro', ar:'المترو'}, desc:{en:'Cheapest. Red Line stations are inside Terminals 1 and 3. You can bring up to 2 bags, including hand luggage.', ar:'الأرخص. محطات الخط الأحمر داخل المبنى 1 والمبنى 3. يمكنك حمل حقيبتين كحد أقصى، بما فيها حقيبة اليد.'}},
+        {color:'#D4A53A', name:{en:'Taxi', ar:'التاكسي'}, desc:{en:'Easiest with lots of luggage. Runs 24/7 from the taxi rank. Starts at about AED 20–25, plus distance.', ar:'الأسهل إذا كانت معك أمتعة كثيرة. متوفر على مدار الساعة من موقف التاكسي. تبدأ الأجرة من نحو 20–25 درهماً، إضافة إلى المسافة.'}},
+        {color:'#2F6DB5', name:{en:'Ride-hailing app', ar:'تطبيق نقل'}, desc:{en:'Uber, Careem or Bolt. Book in the app, then follow the signs to the pickup point.', ar:'أوبر أو كريم أو بولت. احجز في التطبيق، ثم اتبع اللافتات إلى نقطة الالتقاء.'}},
+      ]},
+      {t:'tip', label:'tip', v:{en:'Heavy bags, or landing late? Take a taxi. The Metro runs from about 5am to midnight (from 8am on Sundays).', ar:'أمتعة ثقيلة أو وصلت متأخراً؟ خذ تاكسي. يعمل المترو تقريباً من 5 صباحاً حتى منتصف الليل (ومن 8 صباحاً يوم الأحد).'}},
+     ]},
+    {id:'metro', level:'source', label:{en:'By Metro', ar:'بالمترو'}, title:{en:'If you take the Metro', ar:'إذا اخترت المترو'}, help:['metroclosed','toomuch','else'],
+     blocks:[
+      {t:'steps', v:[
+        {en:'Follow the Metro signs inside Terminal 1 or 3.', ar:'اتبع لافتات المترو داخل المبنى 1 أو المبنى 3.'},
+        {en:'Buy a nol card or ticket at the ticket office or a machine in the terminal.', ar:'اشترِ بطاقة نول أو تذكرة من شباك التذاكر أو من جهاز في المبنى.'},
+        {en:'Take the Red Line. Plan your stop in RTA’s S’hail app.', ar:'اركب الخط الأحمر، وخطط لمحطتك في تطبيق «سهيل» من هيئة الطرق والمواصلات.'},
+      ]},
+      {t:'journeyLink', journey:'dubai.nol', v:{en:'New to nol cards? See the step-by-step guide', ar:'جديد على بطاقات نول؟ اطّلع على الدليل خطوة بخطوة'}},
+     ]},
+    {id:'taxi', level:'source', label:{en:'By taxi or app', ar:'بالتاكسي أو التطبيق'}, title:{en:'If you take a taxi or app', ar:'إذا اخترت التاكسي أو التطبيق'}, help:['address','nocash','else'],
+     blocks:[
+      {t:'steps', v:[
+        {en:'Follow the Taxi signs to the rank, or the app signs to your pickup point.', ar:'اتبع لافتات التاكسي إلى الموقف، أو لافتات التطبيق إلى نقطة الالتقاء.'},
+        {en:'Show the driver your address or a map pin.', ar:'اعرض على السائق عنوانك أو موقعه على الخريطة.'},
+        {en:'Pay at the end by card or cash. Road tolls (Salik) are added to the fare.', ar:'ادفع في النهاية بالبطاقة أو نقداً. تُضاف رسوم الطرق (سالك) إلى الأجرة.'},
+      ]},
+      {t:'phraseCard', v:{en:'Please take me to this address. Here it is on the map.', ar:'من فضلك خذني إلى هذا العنوان. هذا هو على الخريطة.'}},
+     ]},
+    {id:'arrived', label:{en:'Arrived', ar:'الوصول'}, title:{en:'You’ve arrived. What next?', ar:'وصلت. ما التالي؟'}, help:['else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Get a UAE SIM card so you can use maps and messages without Wi-Fi.', ar:'احصل على شريحة هاتف إماراتية لتستخدم الخرائط والرسائل دون شبكة واي فاي.'},
+        {en:'If you’re a student, tell your university you’ve arrived. It starts your residence visa.', ar:'إذا كنت طالباً، أبلغ جامعتك بوصولك، فهذا يبدأ إجراءات تأشيرة الإقامة.'},
+      ]},
+      {t:'journeyLink', journey:'dubai.sim', v:{en:'Get a UAE SIM card', ar:'احصل على شريحة هاتف إماراتية'}},
+     ]},
+  ],
+  problems:[
+    {id:'metroclosed', q:{en:'The Metro is closed', ar:'المترو مغلق'}, a:{en:'Take a taxi from the rank. Airport taxis run 24/7.', ar:'خذ تاكسي من الموقف، فسيارات أجرة المطار تعمل على مدار الساعة.'}},
+    {id:'nocash', q:{en:'I don’t have any dirhams', ar:'ليس معي دراهم'}, a:{en:'Taxis accept bank cards, so you don’t need cash. Ride-hailing apps charge your card too.', ar:'تقبل سيارات الأجرة البطاقات البنكية، فلا تحتاج إلى نقود. وتطبيقات النقل تخصم من بطاقتك أيضاً.'}},
+    {id:'toomuch', q:{en:'I have too much luggage for the Metro', ar:'معي أمتعة أكثر من المسموح في المترو'}, a:{en:'The Metro allows up to 2 bags, including hand luggage. With more, take a taxi or a larger ride-hailing car.', ar:'يسمح المترو بحقيبتين كحد أقصى، بما فيها حقيبة اليد. إذا كان معك أكثر، خذ تاكسي أو سيارة أكبر عبر التطبيق.'}},
+    {id:'address', q:{en:'The driver doesn’t know my address', ar:'السائق لا يعرف عنواني'}, a:{en:'Show a map pin, or name a landmark nearby, such as a mall, hotel or Metro station.', ar:'اعرض موقعاً على الخريطة، أو اذكر معلماً قريباً مثل مركز تسوق أو فندق أو محطة مترو.'}, phraseText:{en:'Please take me to this address. Here it is on the map.', ar:'من فضلك خذني إلى هذا العنوان. هذا هو على الخريطة.'}},
+    HELP_ELSE_RTA,
+  ],
+  stuck:{cards:[{title:{en:'Ask at an airport information desk', ar:'اسأل في مكتب الاستعلامات في المطار'}, body:{en:'Staff can point you to the Metro, taxi rank or pickup points.', ar:'يمكن للموظفين إرشادك إلى المترو أو موقف التاكسي أو نقاط الالتقاء.'}},{title:{en:'Call RTA', ar:'اتصل بهيئة الطرق والمواصلات'}, phone:'800 9090', body:{en:'Dubai’s roads and transport authority.', ar:'هيئة الطرق والمواصلات في دبي.'}}]},
+  after:[{journey:'dubai.sim', name:{en:'Get a UAE SIM card', ar:'احصل على شريحة هاتف إماراتية'}}],
+};
+
+DATA.journeys['dubai.taxi'] = {
+  city:'dubai', need:'move', icon:'move',
+  title:{en:'Take a taxi or ride-hailing car', ar:'ركوب تاكسي أو سيارة عبر التطبيقات'},
+  sources:[SRC.rtaTaxi, SRC.dxbTaxi, SRC.careemHala], checked:CHECKED, trust:{reviewed:false, tested:0},
+  stages:[
+    {id:'which', level:'source', label:{en:'Street or app', ar:'الشارع أو التطبيق'}, title:{en:'Street taxi or app?', ar:'تاكسي من الشارع أم عبر التطبيق؟'}, help:['else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'You can wave down a taxi on the street, or book one in an app.', ar:'يمكنك إيقاف تاكسي من الشارع، أو حجزه عبر تطبيق.'},
+        {en:'A street taxi starts at AED 5 (6am–10pm) or AED 5.5 (10pm–6am), plus distance.', ar:'تبدأ أجرة تاكسي الشارع من 5 دراهم (6 صباحاً–10 مساءً) أو 5.5 دراهم (10 مساءً–6 صباحاً)، إضافة إلى المسافة.'},
+        {en:'Booking a taxi in an app starts higher, from AED 9.', ar:'حجز التاكسي عبر التطبيق يبدأ بأجرة أعلى، من 9 دراهم.'},
+        {en:'Common apps: Careem (which also books official Hala taxis), Uber and Bolt.', ar:'تطبيقات شائعة: كريم (ويمكن عبره حجز تاكسي «هلا» الرسمي)، وأوبر، وبولت.'},
+      ]},
+     ]},
+    {id:'ride', level:'source', label:{en:'The ride', ar:'الرحلة'}, title:{en:'During the ride', ar:'أثناء الرحلة'}, help:['meter','overcharge','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Check the meter is running. Under RTA rules, if it isn’t, the ride is free.', ar:'تأكد أن العداد يعمل. وفق قواعد هيئة الطرق والمواصلات، إذا لم يكن يعمل فالرحلة مجانية.'},
+        {en:'Road tolls (Salik) are added to your fare.', ar:'تُضاف رسوم الطرق (سالك) إلى أجرتك.'},
+        {en:'Pay by card or cash.', ar:'ادفع بالبطاقة أو نقداً.'},
+      ]},
+     ]},
+    {id:'address', label:{en:'Your address', ar:'عنوانك'}, title:{en:'Explaining where you’re going', ar:'شرح وجهتك'}, help:['lostdriver','else'],
+     blocks:[
+      {t:'p', v:{en:'Places are often known by building name or a nearby landmark rather than a street number. Have both ready, and a map pin.', ar:'غالباً تُعرف الأماكن باسم المبنى أو بمعلم قريب أكثر من رقم الشارع. جهّز الاثنين، ومعهما موقعاً على الخريطة.'}},
+      {t:'phraseCard', v:{en:'Please take me to this address. Here it is on the map.', ar:'من فضلك خذني إلى هذا العنوان. هذا هو على الخريطة.'}},
+     ]},
+  ],
+  problems:[
+    {id:'meter', q:{en:'The meter isn’t on', ar:'العداد لا يعمل'}, a:{en:'Ask the driver to start it. Under RTA rules, if the meter isn’t running, the journey is free.', ar:'اطلب من السائق تشغيله. وفق قواعد هيئة الطرق والمواصلات، إذا لم يكن العداد يعمل فالرحلة مجانية.'}},
+    {id:'overcharge', q:{en:'I think I was overcharged', ar:'أظن أنني دفعت أكثر من اللازم'}, a:{en:'Ask for a receipt. It shows the taxi number. Report it to RTA on 800 9090, or in the app if you booked there.', ar:'اطلب إيصالاً، فهو يُظهر رقم التاكسي. أبلغ هيئة الطرق والمواصلات على الرقم 800 9090، أو في التطبيق إذا حجزت عبره.'}},
+    {id:'lostdriver', q:{en:'The driver doesn’t know where to go', ar:'السائق لا يعرف إلى أين يذهب'}, a:{en:'Show a map pin, or name a landmark nearby, such as a mall, hotel or Metro station.', ar:'اعرض موقعاً على الخريطة، أو اذكر معلماً قريباً مثل مركز تسوق أو فندق أو محطة مترو.'}, phraseText:{en:'Please take me to this address. Here it is on the map.', ar:'من فضلك خذني إلى هذا العنوان. هذا هو على الخريطة.'}},
+    {id:'lostitem', q:{en:'I left something in the taxi', ar:'نسيت شيئاً في التاكسي'}, a:{en:'If you booked in an app, report it there. Otherwise call RTA on 800 9090 with the time and place of your ride. A receipt with the taxi number helps a lot.', ar:'إذا حجزت عبر تطبيق، أبلغ عبره. وإلا فاتصل بهيئة الطرق والمواصلات على الرقم 800 9090 مع وقت الرحلة ومكانها. الإيصال الذي يحمل رقم التاكسي مفيد جداً.'}},
+    HELP_ELSE_RTA,
+  ],
+  stuck:{cards:[{title:{en:'Call RTA', ar:'اتصل بهيئة الطرق والمواصلات'}, phone:'800 9090', body:{en:'Dubai’s roads and transport authority, which licenses taxis.', ar:'هيئة الطرق والمواصلات في دبي، الجهة التي ترخّص سيارات الأجرة.'}}]},
+  after:[{journey:'dubai.nol', name:{en:'Start using the Metro, tram and bus', ar:'البدء باستخدام المترو والترام والحافلات'}}],
+};
+DATA.journeys['dubai.taxi'].stages[0].help = ['lostitem','else'];
+
+DATA.journeys['dubai.sim'] = {
+  city:'dubai', need:'life', icon:'life',
+  title:{en:'Get a UAE SIM card', ar:'احصل على شريحة هاتف إماراتية'},
+  sources:[SRC.tdra], checked:CHECKED, trust:{reviewed:false, tested:0},
+  stages:[
+    {id:'which', level:'source', label:{en:'Which SIM', ar:'أي شريحة'}, title:{en:'Which SIM can you get?', ar:'أي شريحة يمكنك الحصول عليها؟'}, help:['noid','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Every SIM in the UAE is registered to a person. You need ID to buy one.', ar:'كل شريحة في الإمارات مسجلة باسم شخص، فتحتاج إلى هوية لشرائها.'},
+        {en:'No Emirates ID yet? Visitors can register a SIM with a passport. These SIMs are for a limited period.', ar:'ليست لديك هوية إماراتية بعد؟ يمكن للزوار تسجيل شريحة بجواز السفر، وتكون لفترة محدودة.'},
+        {en:'Residents register SIMs with their Emirates ID.', ar:'يسجّل المقيمون الشرائح بهويتهم الإماراتية.'},
+      ]},
+     ]},
+    {id:'buy', level:'source', label:{en:'Buy', ar:'الشراء'}, title:{en:'Buy and register it', ar:'اشترِها وسجّلها'}, help:['noid','nodata','else'],
+     blocks:[
+      {t:'steps', v:[
+        {en:'Go to a mobile provider’s shop, or use their app.', ar:'اذهب إلى متجر مزوّد خدمة الهاتف، أو استخدم تطبيقه.'},
+        {en:'Bring your passport, or your Emirates ID if you have it.', ar:'أحضر جواز سفرك، أو هويتك الإماراتية إن كانت لديك.'},
+        {en:'They register the SIM in your name. Test calls and data before you leave.', ar:'يسجّلون الشريحة باسمك. جرّب المكالمات والإنترنت قبل أن تغادر.'},
+      ]},
+      {t:'tip', label:'important', v:{en:'Never lend your passport or Emirates ID to someone for their SIM. Anything done with that number is linked to you.', ar:'لا تُعِر جواز سفرك أو هويتك لأحد ليشتري بها شريحة، فكل ما يتم بهذا الرقم مرتبط بك.'}},
+     ]},
+    {id:'check', level:'source', label:{en:'Check', ar:'التحقق'}, title:{en:'Check which numbers are in your name', ar:'تحقّق من الأرقام المسجلة باسمك'}, help:['unknown','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'You can check with TDRA’s “My Numbers” service, your provider’s app, or at a provider branch with your Emirates ID.', ar:'يمكنك التحقق عبر خدمة «أرقامي» من هيئة تنظيم الاتصالات، أو تطبيق مزوّد الخدمة، أو في أحد فروعه بهويتك الإماراتية.'},
+        {en:'Limits: residents can have up to 5 SIMs per provider; visitors up to 2.', ar:'الحد الأقصى: يمكن للمقيم امتلاك 5 شرائح لدى كل مزوّد، وللزائر شريحتين.'},
+      ]},
+     ]},
+    {id:'switch', level:'source', label:{en:'After your ID', ar:'بعد الهوية'}, title:{en:'When your Emirates ID arrives', ar:'عندما تصلك الهوية الإماراتية'}, help:['else'],
+     blocks:[
+      {t:'p', v:{en:'Residents register lines with their Emirates ID. Once your card arrives, ask your provider how to move your number onto it, so you keep the same number.', ar:'يسجّل المقيمون خطوطهم بالهوية الإماراتية. عندما تصلك البطاقة، اسأل مزوّد الخدمة كيف تنقل رقمك إليها لتحتفظ بالرقم نفسه.'}},
+     ]},
+  ],
+  problems:[
+    {id:'noid', q:{en:'I don’t have my Emirates ID yet', ar:'ليست لدي هوية إماراتية بعد'}, a:{en:'Ask for a SIM you can register with your passport. It’s for a limited period, so move to your Emirates ID once it arrives.', ar:'اطلب شريحة يمكن تسجيلها بجواز السفر. تكون لفترة محدودة، فانقلها إلى هويتك الإماراتية عندما تصلك.'}},
+    {id:'nodata', q:{en:'My internet isn’t working', ar:'الإنترنت لا يعمل'}, a:{en:'Restart your phone, then check that mobile data is on. If it still doesn’t work, go back to the provider’s shop so they can check the SIM.', ar:'أعد تشغيل هاتفك، ثم تأكد أن بيانات الهاتف مفعّلة. إذا لم يعمل، عُد إلى متجر المزوّد ليتحقق من الشريحة.'}},
+    {id:'unknown', q:{en:'A number I don’t know is in my name', ar:'يوجد رقم لا أعرفه باسمي'}, a:{en:'Contact that provider straight away and ask them to cancel it. Then check your numbers again with TDRA’s “My Numbers” service.', ar:'تواصل مع ذلك المزوّد فوراً واطلب إلغاءه، ثم تحقّق من أرقامك مجدداً عبر خدمة «أرقامي» من هيئة تنظيم الاتصالات.'}},
+    {id:'else', q:{en:'Something else', ar:'مشكلة أخرى'}, a:{en:'Visit your provider’s shop, or contact them through their app. They can see your account.', ar:'زُر متجر مزوّد الخدمة، أو تواصل معه عبر تطبيقه، فهو يستطيع الاطلاع على حسابك.'}},
+  ],
+  stuck:{cards:[{title:{en:'Ask your mobile provider', ar:'اسأل مزوّد خدمة الهاتف'}, body:{en:'Their shop or app can check your SIM and account.', ar:'يستطيع متجره أو تطبيقه التحقق من شريحتك وحسابك.'}}]},
+  after:[{journey:'dubai.nol', name:{en:'Start using the Metro, tram and bus', ar:'البدء باستخدام المترو والترام والحافلات'}}],
+};
+
+DATA.journeys['dubai.uaepass'] = {
+  city:'dubai', need:'docs', icon:'docs',
+  title:{en:'Set up UAE PASS', ar:'إعداد الهوية الرقمية UAE PASS'},
+  sources:[SRC.uaepassGov, SRC.uaepassPortal], checked:CHECKED, trust:{reviewed:false, tested:0},
+  stages:[
+    {id:'what', level:'source', label:{en:'Understand', ar:'افهم'}, title:{en:'What UAE PASS is', ar:'ما هي UAE PASS'}, help:['noeid','else'],
+     blocks:[
+      {t:'p', v:{en:'UAE PASS is the UAE’s national digital identity. It lets you log in to government services, like DubaiNow, from your phone.', ar:'UAE PASS هي الهوية الرقمية الوطنية في الإمارات، وتتيح لك تسجيل الدخول إلى الخدمات الحكومية مثل «دبي الآن» من هاتفك.'}},
+      {t:'list', v:[
+        {en:'As a resident, you register with your Emirates ID.', ar:'بصفتك مقيماً، تسجّل بهويتك الإماراتية.'},
+        {en:'Visitors can register with a passport instead.', ar:'يمكن للزوار التسجيل بجواز السفر بدلاً منها.'},
+      ]},
+      {t:'journeyLink', journey:'dubai.eid.student', v:{en:'Still waiting for your Emirates ID? Check where it is', ar:'ما زلت تنتظر هويتك الإماراتية؟ اعرف أين وصلت'}},
+     ]},
+    {id:'register', level:'source', label:{en:'Register', ar:'التسجيل'}, title:{en:'Create your account', ar:'أنشئ حسابك'}, help:['face','noeid','else'],
+     blocks:[
+      {t:'steps', v:[
+        {en:'Download the UAE PASS app from the App Store or Google Play.', ar:'حمّل تطبيق UAE PASS من App Store أو Google Play.'},
+        {en:'Create an account and enter your Emirates ID details when asked.', ar:'أنشئ حساباً وأدخل بيانات هويتك الإماراتية عند الطلب.'},
+        {en:'Verify your face with your phone’s camera. It usually takes under 5 minutes.', ar:'تحقّق من وجهك بكاميرا هاتفك. يستغرق ذلك عادةً أقل من 5 دقائق.'},
+        {en:'Create a PIN, and keep it private.', ar:'أنشئ رمزاً سرياً (PIN) واحتفظ به لنفسك.'},
+      ]},
+      {t:'tip', label:'tip', v:{en:'Face check not working? UAE PASS kiosks can verify you in person with your Emirates ID.', ar:'لا ينجح التحقق من الوجه؟ يمكن لأجهزة الخدمة الذاتية الخاصة بـ UAE PASS التحقق منك حضورياً بهويتك الإماراتية.'}},
+     ]},
+    {id:'use', label:{en:'Use it safely', ar:'استخدمها بأمان'}, title:{en:'Using UAE PASS safely', ar:'استخدام UAE PASS بأمان'}, help:['strange','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'When you log in to a service, approve the request in the UAE PASS app.', ar:'عند تسجيل الدخول إلى خدمة، وافق على الطلب في تطبيق UAE PASS.'},
+        {en:'Only approve requests you started yourself. Never share your PIN with anyone.', ar:'لا توافق إلا على الطلبات التي بدأتها بنفسك، ولا تشارك رمزك السري مع أحد.'},
+      ]},
+     ]},
+  ],
+  problems:[
+    {id:'noeid', q:{en:'I don’t have my Emirates ID yet', ar:'ليست لدي هوية إماراتية بعد'}, a:{en:'Wait until your card arrives. You can check where your application is in Orivia’s Emirates ID journey.', ar:'انتظر حتى تصلك البطاقة. يمكنك متابعة طلبك في رحلة الهوية الإماراتية في أوريفيا.'}},
+    {id:'face', q:{en:'Face verification isn’t working', ar:'التحقق من الوجه لا يعمل'}, a:{en:'Find good light, and remove glasses or anything covering your face. If it still fails, visit a UAE PASS kiosk with your Emirates ID.', ar:'ابحث عن إضاءة جيدة، وانزع النظارة أو أي شيء يغطي وجهك. إذا استمر الفشل، توجّه إلى جهاز خدمة UAE PASS ومعك هويتك الإماراتية.'}},
+    {id:'strange', q:{en:'I got a login request I didn’t make', ar:'وصلني طلب تسجيل دخول لم أقم به'}, a:{en:'Reject it, and don’t share your PIN. Then call the UAE PASS help desk on 600 561 111.', ar:'ارفضه ولا تشارك رمزك السري، ثم اتصل بمكتب مساعدة UAE PASS على الرقم 600561111.'}},
+    {id:'else', q:{en:'Something else', ar:'مشكلة أخرى'}, a:{en:'Call the UAE PASS help desk on 600 561 111.', ar:'اتصل بمكتب مساعدة UAE PASS على الرقم 600561111.'}},
+  ],
+  stuck:{cards:[{title:{en:'Call the UAE PASS help desk', ar:'اتصل بمكتب مساعدة UAE PASS'}, phone:'600 561 111', body:{en:'The official support line for UAE PASS.', ar:'خط الدعم الرسمي لـ UAE PASS.'}}]},
+  after:[{name:{en:'Open a bank account', ar:'فتح حساب بنكي'}}],
+};
+
+/* Wire the new journeys into the menus */
+DATA.tasks['dubai.move'] = [
+  {journey:'dubai.nol', name:{en:'Start using the Metro, tram and bus', ar:'البدء باستخدام المترو والترام والحافلات'}, note:{en:'Get a nol card and take your first ride', ar:'احصل على بطاقة نول واركب أول رحلة'}},
+  {journey:'dubai.airport', name:{en:'Get from the airport to where you’re staying', ar:'الوصول من المطار إلى مكان إقامتك'}, note:{en:'Metro, taxi or app: which to choose and how', ar:'المترو أو التاكسي أو التطبيق: ماذا تختار وكيف'}},
+  {journey:'dubai.taxi', name:{en:'Take a taxi or ride-hailing car', ar:'ركوب تاكسي أو سيارة عبر التطبيقات'}, note:{en:'Fares, apps, and what to do if something goes wrong', ar:'الأجرة والتطبيقات وماذا تفعل إذا حدثت مشكلة'}},
+];
+DATA.tasks['dubai.docs'] = [
+  DATA.tasks['dubai.docs'][0],
+  {journey:'dubai.uaepass', name:{en:'Set up UAE PASS', ar:'إعداد الهوية الرقمية UAE PASS'}, note:{en:'Your digital ID for government services', ar:'هويتك الرقمية للخدمات الحكومية'}},
+];
+DATA.tasks['dubai.life'] = [
+  {journey:'dubai.sim', name:{en:'Get a UAE SIM card', ar:'احصل على شريحة هاتف إماراتية'}, note:{en:'What ID you need, even before your Emirates ID', ar:'ما الهوية التي تحتاجها، حتى قبل الهوية الإماراتية'}},
+];
+DATA.firstWeek.dubai = [
+  {journey:'dubai.airport', name:{en:'Get from the airport', ar:'الوصول من المطار'}},
+  {journey:'dubai.sim', name:{en:'Get a UAE SIM card', ar:'احصل على شريحة هاتف إماراتية'}},
+  {journey:'dubai.nol', name:{en:'Learn to get around', ar:'تعلّم التنقل في المدينة'}},
+  {pathway:'dubai.eid', name:{en:'Get your Emirates ID', ar:'الحصول على الهوية الإماراتية'}},
+  {journey:'dubai.uaepass', name:{en:'Set up UAE PASS', ar:'إعداد الهوية الرقمية UAE PASS'}},
+  {name:{en:'Open a bank account', ar:'فتح حساب بنكي'}},
+];
+DATA.journeys['dubai.eid.student'].after = [
+  {journey:'dubai.uaepass', name:{en:'Set up UAE PASS', ar:'إعداد الهوية الرقمية UAE PASS'}},
+  {name:{en:'Open a bank account', ar:'فتح حساب بنكي'}},
+];
+DATA.journeys['dubai.nol'].after = [
+  {journey:'dubai.taxi', name:{en:'Take a taxi or ride-hailing car', ar:'ركوب تاكسي أو سيارة عبر التطبيقات'}},
+  {pathway:'dubai.eid', name:{en:'Get your Emirates ID', ar:'الحصول على الهوية الإماراتية'}},
+];

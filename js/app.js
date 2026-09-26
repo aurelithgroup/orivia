@@ -247,7 +247,9 @@ const SCREENS = {
           <div class="done-hero"><span class="big"></span><span class="label">${t('doneEyebrow')}</span><h1 style="font-family:var(--display);font-stretch:85%;font-weight:800;font-size:30px">${j.doneTitle ? L(j.doneTitle) : t('doneTitle')}</h1>
           <p class="lead">${L(j.title)}</p></div>
           <span class="label">${t('nextUp')}</span>
-          <div class="choices">${j.after.map(x=>`<button class="choice" disabled><span>${L(x.name)}</span><span class="pill pill-soon">${t('soon')}</span></button>`).join('')}</div>
+          <div class="choices">${j.after.map(x=> x.journey ? `<button class="choice" data-act="journey" data-v="${x.journey}"><span>${L(x.name)}</span>${chev()}</button>`
+            : x.pathway ? `<button class="choice" data-act="pathway" data-v="${x.pathway}"><span>${L(x.name)}</span>${chev()}</button>`
+            : `<button class="choice" disabled><span>${L(x.name)}</span><span class="pill pill-soon">${t('soon')}</span></button>`).join('')}</div>
         </div>`,
       actions:`<button class="btn btn-quiet" data-act="journey" data-v="${S.params.id}">${t('journey')}</button><button class="btn btn-primary" data-act="home">${t('home')}</button>`
     };
@@ -263,6 +265,7 @@ function block(b){
     case 'tip': return `<div class="tip"><b>${t(b.label||'tip')}</b>${L(b.v)}</div>`;
     case 'cards': return `<div class="cards">${b.v.map(c=>`<div class="card ${c.rec?'rec':''}"><div class="card-head"><span class="swatch" style="background:${c.color}"></span><strong>${L(c.name)}</strong>${c.rec?`<span class="pill pill-amber">${lang()==='ar'?'مُقترحة':'Recommended'}</span>`:''}</div><p>${L(c.desc)}</p></div>`).join('')}</div>`;
     case 'phraseCard': return phraseHtml({phrase:b.v});
+    case 'journeyLink': return `<button class="choice jlink" data-act="${DATA.journeys[b.journey] && DATA.journeys[b.journey].finder ? 'pathway' : 'journey'}" data-v="${DATA.journeys[b.journey] && DATA.journeys[b.journey].pathway ? DATA.journeys[b.journey].pathway : b.journey}"><span>${L(b.v)}</span>${chev()}</button>`;
     case 'link': return `<a class="btn btn-quiet linkbtn" href="${b.url}" target="_blank" rel="noopener">${L(b.v)} ${chev()}</a>`;
     case 'phrase': return `<div class="tip"><b>${t('tip')}</b>${lang()==='ar'?'تائه أو لا تعرف كيف تسأل؟':'Lost, or not sure how to ask?'} <button class="linkish" data-act="phrase">${t('phraseBtn')}</button></div>`;
   }

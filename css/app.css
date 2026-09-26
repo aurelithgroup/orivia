@@ -297,3 +297,4 @@ html,body{margin:0}
 .gicon svg{width:26px;height:26px}
 .gicon::after{content:counter(g);position:absolute;top:-6px;inset-inline-start:-6px;width:20px;height:20px;border-radius:50%;background:var(--amber);color:var(--amberInk);font-size:12px;font-weight:800;display:grid;place-items:center}
 .guide-hint{font-size:14px;color:var(--muted)}
+.jlink{border-style:solid;border-color:var(--ink);background:var(--surface2);font-size:16px;font-weight:700}
