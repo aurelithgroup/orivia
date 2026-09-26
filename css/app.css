@@ -285,3 +285,15 @@ html,body{margin:0}
 .install-bar .btn{flex:0 0 auto;min-height:40px;padding:8px 16px}
 .install-bar .linkish{color:var(--signInk);font-weight:400;font-size:14px}
 .offline-note{background:var(--warnSoft);color:var(--warn);font-size:14px;font-weight:700;padding:8px 20px;flex:none}
+.save-card{border:1.5px solid var(--ink);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.save-text{display:flex;flex-direction:column;gap:2px}
+.save-text strong{font-size:16px}
+.save-text span{font-size:14px;color:var(--muted)}
+.save-actions{display:flex;align-items:center;gap:14px}
+.save-actions .btn{flex:0 0 auto;min-height:44px;padding:10px 18px;font-size:15px}
+.guide-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;counter-reset:g}
+.guide-steps li{display:flex;gap:14px;align-items:center;font-size:17px;counter-increment:g}
+.gicon{width:48px;height:48px;border-radius:12px;background:var(--sign);color:var(--amber);display:grid;place-items:center;flex:none;position:relative}
+.gicon svg{width:26px;height:26px}
+.gicon::after{content:counter(g);position:absolute;top:-6px;inset-inline-start:-6px;width:20px;height:20px;border-radius:50%;background:var(--amber);color:var(--amberInk);font-size:12px;font-weight:800;display:grid;place-items:center}
+.guide-hint{font-size:14px;color:var(--muted)}

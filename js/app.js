@@ -209,6 +209,7 @@ const SCREENS = {
             <div class="progress-text"><span>${t('stepsDone')(n,total)}</span>${n?`<span>${t('saved')}</span>`:''}</div>
           </div>
           ${j.finder && cur>=0 && j.stages[cur].now ? `<div class="now-box"><span class="label">${t('youAreHere')}: ${L(j.stages[cur].label)}</span><p>${L(j.stages[cur].now)}</p></div>` : ''}
+          ${saveCard()}
           <ol class="line">
             ${j.stages.map((s,i)=>`<li class="station ${done[s.id]?'done':''} ${i===cur?'current':''}"><span class="dot"></span>
               <button data-act="step" data-v="${i}"><span style="display:flex;flex-direction:column"><span class="n">${i+1} · ${L(s.label)}</span><span class="nm">${L(s.title)}</span><span class="chips">${j.finder && i===cur ? `<span class="pill pill-amber">${t('youAreHere')}</span>` : ''}${chip(s)}</span></span>${chev()}</button></li>`).join('')}
@@ -555,23 +556,51 @@ render();
 if('serviceWorker' in navigator && location.protocol !== 'file:'){
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
-let deferredInstall = null;
-const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-function dismissedInstall(){ try{ return localStorage.getItem('orivia-install-dismissed') === '1'; }catch(e){ return false; } }
-function showInstall(){
-  if(isStandalone() || dismissedInstall() || document.getElementById('installBar') || !S.lang) return;
-  if(!deferredInstall && !isIos) return;
-  const bar = document.createElement('div'); bar.id = 'installBar'; bar.className = 'install-bar';
-  bar.innerHTML = `<div><strong>${t('installTitle')}</strong><span>${deferredInstall ? t('installBody') : t('installIos')}</span></div>
-    ${deferredInstall ? `<button class="btn btn-primary" id="installYes">${t('installBtn')}</button>` : ''}
-    <button class="linkish" id="installNo">${t('later')}</button>`;
-  app.appendChild(bar);
-  bar.querySelector('#installNo').onclick = () => { try{ localStorage.setItem('orivia-install-dismissed','1'); }catch(e){} bar.remove(); };
-  const y = bar.querySelector('#installYes'); if(y) y.onclick = () => { bar.remove(); deferredInstall.prompt(); deferredInstall = null; };
+/* "Save to phone": offered once Orivia has helped (on a journey screen), with a picture guide per phone type. */
+var deferredInstall = null;
+function isStandalone(){ return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
+function phoneKind(){
+  const ua = navigator.userAgent;
+  if(/FBAN|FBAV|Instagram|Line\/|WhatsApp|Snapchat|TikTok|GSA\/|; wv\)/i.test(ua)) return 'inapp';
+  if(/iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ios';
+  if(/android/i.test(ua)) return 'android';
+  return 'desktop';
 }
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; setTimeout(showInstall, 1500); });
-if(isIos) setTimeout(showInstall, 4000);
+function dismissedInstall(){ try{ return localStorage.getItem('orivia-install-dismissed') === '1'; }catch(e){ return false; } }
+function saveCard(){
+  if(isStandalone() || dismissedInstall() || location.protocol === 'file:') return '';
+  return `<div class="save-card">
+    <div class="save-text"><strong>${t('saveTitle')}</strong><span>${t('saveBody')}</span></div>
+    <div class="save-actions"><button class="btn btn-primary" data-act="saveApp">${t('saveBtn')}</button><button class="linkish" data-act="saveLater">${t('later')}</button></div>
+  </div>`;
+}
+const GUIDE_ICONS = {
+  share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>',
+  dots:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>',
+  more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+  compass:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>',
+};
+function saveGuide(){
+  const kind = phoneKind();
+  const steps = t('guide')[kind] || t('guide').android;
+  sheet(`<h2>${t('saveTitle')}</h2>
+    ${kind === 'inapp' ? `<div class="tip warn-tip"><b>${t('important')}</b>${t('inappNote')}</div>` : ''}
+    <ol class="guide-steps">${steps.map(s=>`<li><span class="gicon">${GUIDE_ICONS[s.icon]}</span><span>${s.text}</span></li>`).join('')}</ol>
+    ${kind === 'ios' ? `<div class="guide-hint">${t('iosHint')}</div>` : ''}
+    <button class="btn btn-primary" data-act="closeSheet">${t('gotIt')}</button>`);
+}
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; });
+window.addEventListener('appinstalled', () => { deferredInstall = null; render(); });
+app.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if(!b) return;
+  if(b.dataset.act === 'saveApp'){
+    if(deferredInstall){ deferredInstall.prompt(); deferredInstall.userChoice.finally(()=>{ deferredInstall = null; render(); }); }
+    else saveGuide();
+  }
+  if(b.dataset.act === 'saveLater'){ try{ localStorage.setItem('orivia-install-dismissed','1'); }catch(e){} render(); }
+});
 function offlineNote(){
   let n = document.getElementById('offlineNote');
   if(navigator.onLine){ if(n) n.remove(); return; }
@@ -580,5 +609,5 @@ function offlineNote(){
 }
 window.addEventListener('online', offlineNote); window.addEventListener('offline', offlineNote);
 const baseRender = render;
-render = function(x){ baseRender(x); offlineNote(); const b = document.getElementById('installBar'); if(b){ b.remove(); showInstall(); } };
+render = function(x){ baseRender(x); offlineNote(); };
 offlineNote();
