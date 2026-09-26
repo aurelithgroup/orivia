@@ -41,17 +41,40 @@ const lang = () => S.lang || 'en';
 const t = k => UI[lang()][k];
 const L = o => o ? (o[lang()] || o.en) : '';
 
-function go(screen, params={}){ S.history.push({screen:S.screen, params:S.params}); S.screen = screen; S.params = params; save(); render(true); }
-function back(){ const p = S.history.pop(); if(p){ S.screen = p.screen; S.params = p.params; } else { S.screen = 'welcome'; } save(); render(true); }
+/* Navigation. Each screen change also adds a browser history entry, so the phone's
+   back gesture/button works too (important when Orivia is saved to the home screen). */
+let navDepth = 0;
+function go(screen, params={}){
+  S.history.push({screen:S.screen, params:S.params}); S.screen = screen; S.params = params; save(); render(true);
+  try{ history.pushState({orivia:true}, ''); navDepth++; }catch(e){}
+}
+function parentOf(){
+  if(S.screen === 'step' || S.screen === 'complete') return {screen:'journey', params:{id:S.params.id}};
+  if(S.screen === 'needs' || S.screen === 'purpose') return {screen:'welcome', params:{}};
+  return {screen: S.lang ? 'needs' : 'welcome', params:{}};
+}
+function back(){
+  const p = S.history.pop() || parentOf();
+  S.screen = p.screen; S.params = p.params; save(); render(true);
+}
+function goBack(){ if(navDepth > 0){ history.back(); } else { back(); } }
+window.addEventListener('popstate', () => {
+  navDepth = Math.max(0, navDepth - 1);
+  if(document.getElementById('sheet')){ closeSheet(); try{ history.pushState({orivia:true}, ''); navDepth++; }catch(e){} return; }
+  if(S.screen !== 'welcome') back();
+});
 function home(){ S.history = []; S.screen = S.lang ? 'needs' : 'welcome'; S.params = {}; save(); render(true); }
 
 /* ---------- Pieces ---------- */
 const topbar = () => `
   <header class="topbar">
+    <div class="top-left">
+    ${S.screen !== 'welcome' ? `<button class="top-back" data-act="back" aria-label="${t('back')}">${svg('chev','chev back-chev')}</button>` : ''}
     <button class="brand" data-act="home" aria-label="Orivia, ${t('home')}">
       <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 5l3.2 7L12 19l-3.2-7z" fill="var(--amber)"/></svg>
       orivia
     </button>
+    </div>
     <div class="top-actions">
       <span class="badge">${t('proto')}</span>
       ${S.lang ? `<button class="lang-toggle" data-act="toggleLang" lang="${lang()==='en'?'ar':'en'}">${t('switchTo')}</button>` : ''}
@@ -478,7 +501,7 @@ app.addEventListener('click', e => {
   const v = b.dataset.v;
   switch(b.dataset.act){
     case 'home': home(); break;
-    case 'back': back(); break;
+    case 'back': goBack(); break;
     case 'go': go(v); break;
     case 'toggleLang': S.lang = lang()==='en' ? 'ar' : 'en'; save(); render(); break;
     case 'lang': S.lang = v; go('purpose'); break;
@@ -534,7 +557,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closeSheet();
 
 /* ---------- Poster (desktop demo controls) ---------- */
 function syncPoster(){
-  document.getElementById('posterKick').textContent = DATA.cities[S.city].poster;
+  const q = document.getElementById('landQr'); if(q) q.src = `icons/qr-${S.city}.png`;
   document.querySelectorAll('#scanAs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.city === S.city));
 }
 document.getElementById('scanAs').addEventListener('click', e => {
@@ -546,20 +569,11 @@ document.getElementById('resetAll').addEventListener('click', () => {
 });
 
 /* Decorative stand-in for a QR code (not scannable) */
-function drawQR(){
-  const c = document.getElementById('qr'), x = c.getContext('2d'), n = 25, s = c.width / n;
-  let seed = S.city === 'dubai' ? 7 : 19; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
-  x.fillStyle = '#fff'; x.fillRect(0,0,c.width,c.height); x.fillStyle = '#1C2733';
-  for(let i=0;i<n;i++) for(let j=0;j<n;j++) if(rnd() > .52) x.fillRect(i*s, j*s, s, s);
-  [[0,0],[n-7,0],[0,n-7]].forEach(([a,b]) => {
-    x.fillStyle='#fff'; x.fillRect((a-1)*s,(b-1)*s,9*s,9*s);
-    x.fillStyle='#1C2733'; x.fillRect(a*s,b*s,7*s,7*s);
-    x.fillStyle='#fff'; x.fillRect((a+1)*s,(b+1)*s,5*s,5*s);
-    x.fillStyle='#1C2733'; x.fillRect((a+2)*s,(b+2)*s,3*s,3*s);
-  });
-}
+function drawQR(){}
 drawQR();
 render();
+fillLanding();
+if(S.screen !== 'welcome'){ try{ history.pushState({orivia:true}, ''); navDepth++; }catch(e){} }
 
 /* ---------- Installable app + offline ---------- */
 if('serviceWorker' in navigator && location.protocol !== 'file:'){
@@ -620,3 +634,18 @@ window.addEventListener('online', offlineNote); window.addEventListener('offline
 const baseRender = render;
 render = function(x){ baseRender(x); offlineNote(); };
 offlineNote();
+
+/* ---------- Laptop landing page: live counts and journey list, read from the content ---------- */
+function fillLanding(){
+  const stats = document.getElementById('landStats'), list = document.getElementById('landJourneys');
+  if(!stats || !list) return;
+  const js = Object.values(DATA.journeys).filter(j=>j.city==='dubai');
+  const srcs = new Set(); js.forEach(j => (j.sources || (j.source?[j.source]:[])).forEach(s => srcs.add(s.url)));
+  const helps = js.reduce((n,j)=> n + (j.problems ? j.problems.length : 0), 0);
+  stats.innerHTML = [[js.length,'journeys'],[srcs.size,'official and institutional sources'],[helps,'“I need help” answers'],[2,'languages']]
+    .map(([n,l])=>`<div><b>${n}</b><span>${l}</span></div>`).join('');
+  list.innerHTML = DATA.needs.filter(n=>DATA.tasks['dubai.'+n.id]).map(n => {
+    const items = DATA.tasks['dubai.'+n.id].filter(x=>x.journey||x.pathway);
+    return `<div class="land-need"><span class="land-need-h">${svg(n.icon)}${n.name.en}</span><ul>${items.map(x=>`<li>${x.name.en}</li>`).join('')}</ul></div>`;
+  }).join('');
+}

@@ -19,27 +19,81 @@
 </head>
 <body>
 <div class="stage">
-  <aside class="poster" aria-label="Arrival poster">
-    <div class="poster-sign">
-      <span class="kick" id="posterKick">Dubai International · Arrivals</span>
-      <h2>Welcome.<br>You're here.</h2>
-      <p>Not sure what comes next? Scan to start with Orivia.</p>
-      <div class="qr-row"><canvas id="qr" width="96" height="96" aria-hidden="true"></canvas><span>No app to download. It opens in the phone's browser.</span></div>
-    </div>
-    <div class="poster-notes">
-      <span><strong>Demo:</strong> each arrival point gets its own code, so Orivia already knows where the person is.</span>
-      <span class="label">Open as if scanned at</span>
-      <div class="scan-as" id="scanAs">
-        <button type="button" data-city="dubai" aria-pressed="true">Dubai airport</button>
-        <button type="button" data-city="edinburgh" aria-pressed="false">Edinburgh airport</button>
+  <section class="landing" aria-label="About Orivia">
+    <header class="land-top">
+      <span class="land-brand"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 5l3.2 7L12 19l-3.2-7z" fill="var(--amber)"/></svg>orivia</span>
+      <span class="badge">Beta · Dubai</span>
+    </header>
+
+    <div class="land-hero">
+      <span class="land-eyebrow">For newcomers to Dubai</span>
+      <h1>Your first weeks in a new country, one step at a time.</h1>
+      <p class="land-lead">Orivia guides newcomers through real tasks, like getting an Emirates ID or seeing a doctor, and helps the moment something goes wrong. No app to download. English and Arabic.</p>
+      <div class="land-qr">
+        <img src="icons/qr-dubai.png" alt="QR code that opens Orivia" width="132" height="132" id="landQr">
+        <div><strong>Try it on your phone</strong><span>Scan with your camera. It opens straight in the browser.</span><span class="land-url">aurelithgroup.github.io/orivia</span></div>
       </div>
-      <button type="button" class="linkish" id="resetAll" style="align-self:flex-start">Reset prototype</button>
     </div>
-  </aside>
 
-  <main class="device" id="app" lang="en" dir="ltr" aria-live="polite"></main>
+    <section class="land-sec">
+      <span class="land-label">How it works</span>
+      <ol class="land-steps">
+        <li><div><b>Scan where you arrive.</b> A QR code at the airport, on campus or in an arrival email opens Orivia, already set to your city.</div></li>
+        <li><div><b>Orivia works out where you are.</b> One question, “What’s the last thing you remember doing?”, places you on the process. You don’t need to know the official names.</div></li>
+        <li><div><b>Step by step, with help at every step.</b> Each step says what to do and what to bring. If something goes wrong, “I need help” shows what to do next and who to ask.</div></li>
+      </ol>
+    </section>
+
+    <section class="land-sec">
+      <span class="land-label">What makes it different</span>
+      <div class="land-diff">
+        <div><h3>Help when it goes wrong</h3><p>Most guides stop at the instructions. Orivia covers the missed appointment, the gate that won’t open and the clinic that says you’re not covered.</p></div>
+        <div><h3>It already knows the step you’re on</h3><p>Search engines and chatbots need you to describe the problem, in your second language, under stress. Orivia needs a tap.</p></div>
+        <div><h3>Made for the real-world moment</h3><p>Cards to show staff in Arabic and English, tap-to-call numbers, and it keeps working without internet.</p></div>
+      </div>
+    </section>
+
+    <section class="land-sec">
+      <span class="land-label">Trust you can see</span>
+      <p class="land-p">Every step shows how it was checked, and links to its sources.</p>
+      <div class="land-trust">
+        <span class="vchip v-official"><span class="lv-dot"></span>Officially verified</span><span class="land-trust-t">Checked against government or university sources.</span>
+        <span class="vchip v-reviewed"><span class="lv-dot"></span>Institution reviewed</span><span class="land-trust-t">Reviewed by the organisation that runs the process.</span>
+        <span class="vchip v-tested"><span class="lv-dot"></span>Tested with newcomers</span><span class="land-trust-t">Real newcomers used it and it matched their experience.</span>
+      </div>
+      <div class="land-stats" id="landStats"></div>
+    </section>
+
+    <section class="land-sec">
+      <span class="land-label">Live now in Dubai</span>
+      <div class="land-journeys" id="landJourneys"></div>
+    </section>
+
+    <section class="land-sec land-partner">
+      <span class="land-label">For universities and organisations</span>
+      <h2>Orivia handles the routine questions. Your team handles the people.</h2>
+      <p class="land-p">Put an Orivia QR code in your arrival email or at your desk. Newcomers get step-by-step help for the common tasks, and are sent to your team when a person is needed.</p>
+    </section>
+
+    <footer class="land-foot">
+      <p>Orivia is guidance, not official or legal advice. Always check the official source.</p>
+      <p>Privacy: Orivia sends nothing anywhere. Progress and answers stay on your own phone.</p>
+    </footer>
+  </section>
+
+  <div class="demo-col">
+    <span class="demo-cap">Try it right here</span>
+    <main class="device" id="app" lang="en" dir="ltr" aria-live="polite"></main>
+    <div class="demo-tools">
+      <span>Open as if scanned at</span>
+      <div class="scan-as" id="scanAs">
+        <button type="button" data-city="dubai" aria-pressed="true">Dubai</button>
+        <button type="button" data-city="edinburgh" aria-pressed="false">Edinburgh</button>
+      </div>
+      <button type="button" class="linkish" id="resetAll">Start over</button>
+    </div>
+  </div>
 </div>
-
 <script src="js/content.js"></script>
 <script src="js/app.js"></script>
 </body>
