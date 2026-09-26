@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Orivia</title>
+<meta name="description" content="Orivia guides newcomers step by step through their first weeks in a new country, and helps when something goes wrong.">
+<meta name="theme-color" content="#1C2733">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Orivia">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="stage">
+  <aside class="poster" aria-label="Arrival poster">
+    <div class="poster-sign">
+      <span class="kick" id="posterKick">Dubai International · Arrivals</span>
+      <h2>Welcome.<br>You're here.</h2>
+      <p>Not sure what comes next? Scan to start with Orivia.</p>
+      <div class="qr-row"><canvas id="qr" width="96" height="96" aria-hidden="true"></canvas><span>No app to download. It opens in the phone's browser.</span></div>
+    </div>
+    <div class="poster-notes">
+      <span><strong>Demo:</strong> each arrival point gets its own code, so Orivia already knows where the person is.</span>
+      <span class="label">Open as if scanned at</span>
+      <div class="scan-as" id="scanAs">
+        <button type="button" data-city="dubai" aria-pressed="true">Dubai airport</button>
+        <button type="button" data-city="edinburgh" aria-pressed="false">Edinburgh airport</button>
+      </div>
+      <button type="button" class="linkish" id="resetAll" style="align-self:flex-start">Reset prototype</button>
+    </div>
+  </aside>
+
+  <main class="device" id="app" lang="en" dir="ltr" aria-live="polite"></main>
+</div>
+
+<script src="js/content.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
