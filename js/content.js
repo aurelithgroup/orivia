@@ -27,7 +27,7 @@ const UI = {
     whereGoing:'Where are you going? (optional)', wherePh:'Type a station name',
     callRta:'Call RTA', callRtaBody:'The RTA help line for public transport.',
     checkRoute:'Check your route', checkRouteBody:'Open RTA’s S’hail app and type where you’re going. It shows which train to take.',
-    trust:{draft:'Draft',official:'Officially verified',reviewed:'University reviewed',tested:n=>`Tested with ${n} newcomer${n===1?'':'s'}`,testedNone:'Not yet tested with newcomers'}, trustDesc:{draft:'Written from public guides. Not yet checked against official sources.',official:'Checked against the official sources listed below.',reviewed:'Reviewed by the university or authority that runs this process.',tested:'Real newcomers used this guidance and it matched their experience.'},
+    trust:{draft:'Draft',official:'Officially verified',reviewed:'Institution reviewed',tested:n=>`Tested with ${n} newcomer${n===1?'':'s'}`,testedNone:'Not yet tested with newcomers'}, trustDesc:{draft:'Written from public guides. Not yet checked against official sources.',official:'Checked against the official sources listed below.',reviewed:'Reviewed by the university or authority that runs this process.',tested:'Real newcomers used this guidance and it matched their experience.'},
     saveTitle:'Save your journey to your phone', saveBody:'Keep your progress and help cards, even without internet.', saveBtn:'Save to phone', later:'Not now', gotIt:'Got it',
     inappNote:'You opened Orivia inside another app. First tap the menu (••• or ⋮) and choose “Open in browser”, “Open in Safari” or “Open in Chrome”. Then come back to this step.',
     iosHint:'Can’t see “Add to Home Screen”? Scroll to the bottom of the list, tap “Edit Actions”, and add it.',
@@ -66,7 +66,7 @@ const UI = {
     whereGoing:'إلى أين تذهب؟ (اختياري)', wherePh:'اكتب اسم المحطة',
     callRta:'اتصل بهيئة الطرق والمواصلات', callRtaBody:'خط المساعدة الخاص بالمواصلات العامة.',
     checkRoute:'تحقّق من طريقك', checkRouteBody:'افتح تطبيق «سهيل» واكتب وجهتك، وسيعرض لك القطار المناسب.',
-    trust:{draft:'مسودة',official:'موثّقة رسمياً',reviewed:'راجعتها الجامعة',tested:n=>`جرّبها ${n} من القادمين الجدد`,testedNone:'لم يجرّبها قادمون جدد بعد'}, trustDesc:{draft:'مكتوبة من أدلة عامة، ولم تُراجَع بعد مع المصادر الرسمية.',official:'رُوجعت مع المصادر الرسمية المذكورة أدناه.',reviewed:'راجعتها الجامعة أو الجهة التي تدير هذه الإجراءات.',tested:'استخدم قادمون جدد حقيقيون هذا الإرشاد ووجدوه مطابقاً لتجربتهم.'},
+    trust:{draft:'مسودة',official:'موثّقة رسمياً',reviewed:'راجعتها الجهة المختصة',tested:n=>`جرّبها ${n} من القادمين الجدد`,testedNone:'لم يجرّبها قادمون جدد بعد'}, trustDesc:{draft:'مكتوبة من أدلة عامة، ولم تُراجَع بعد مع المصادر الرسمية.',official:'رُوجعت مع المصادر الرسمية المذكورة أدناه.',reviewed:'راجعتها الجامعة أو الجهة التي تدير هذه الإجراءات.',tested:'استخدم قادمون جدد حقيقيون هذا الإرشاد ووجدوه مطابقاً لتجربتهم.'},
     saveTitle:'احفظ رحلتك على هاتفك', saveBody:'احتفظ بتقدمك وبطاقات المساعدة حتى دون إنترنت.', saveBtn:'احفظ على الهاتف', later:'ليس الآن', gotIt:'فهمت',
     inappNote:'فتحت أوريفيا داخل تطبيق آخر. اضغط أولاً على القائمة (••• أو ⋮) واختر «فتح في المتصفح» أو «فتح في Safari» أو «فتح في Chrome»، ثم عد إلى هذه الخطوة.',
     iosHint:'لا ترى «إضافة إلى الشاشة الرئيسية»؟ انزل إلى أسفل القائمة، واضغط «تعديل الإجراءات»، ثم أضفها.',
@@ -763,3 +763,172 @@ DATA.journeys['dubai.health.student'] = {
 DATA.tasks['dubai.health'] = [
   {journey:'dubai.health.student', name:{en:'See a doctor as a student', ar:'زيارة الطبيب كطالب'}, note:{en:'Emergencies, insurance, clinics and medicines', ar:'الطوارئ والتأمين والعيادات والأدوية'}},
 ];
+
+/* ---------- Health insurance: who arranges it, by pathway (Dubai) ---------- */
+SRC.law11 = {name:{en:'Dubai Law No. 11 of 2013 on Health Insurance', ar:'قانون دبي رقم 11 لسنة 2013 بشأن الضمان الصحي'}, url:'https://dlp.dubai.gov.ae/Legislation%20Reference/2013/Law%20No.%20(11)%20of%202013.pdf'};
+SRC.isahd = {name:{en:'ISAHD (Dubai Health Insurance): FAQ', ar:'إسعاد (الضمان الصحي في دبي): الأسئلة الشائعة'}, url:'https://www.isahd.ae/Home/FAQ'};
+SRC.siu = {name:{en:'SIU Dubai: visa', ar:'جامعة سيمبيوسيس دبي: التأشيرة'}, url:'https://siu-dubai.ac.ae/visa'};
+
+const INS_CHECK = {id:'check', level:'source', label:{en:'Check', ar:'تحقّق'}, title:{en:'Check you’re covered', ar:'تحقّق من أنك مؤمَّن'}, help:['nocard','network','else'],
+  blocks:[
+    {t:'list', v:[
+      {en:'Once you’re enrolled, you should receive an insurance card.', ar:'بعد تسجيلك في التأمين، يُفترض أن تستلم بطاقة تأمين.'},
+      {en:'Your insurer can confirm what you’re covered for and which clinics accept your plan.', ar:'يمكن لشركة التأمين تأكيد ما يغطيه تأمينك والعيادات التي تقبل خطتك.'},
+    ]},
+    {t:'tip', label:'tip', v:{en:'Save a photo of your card and the insurer’s phone number on your phone.', ar:'احفظ صورة بطاقتك ورقم هاتف شركة التأمين على هاتفك.'}},
+    {t:'journeyLink', journey:'dubai.health.student', v:{en:'Need to see a doctor? Here’s how', ar:'تحتاج إلى زيارة طبيب؟ إليك الطريقة'}},
+  ]};
+const INS_COMMON_PROBLEMS = [
+  {id:'nocard', q:{en:'I don’t have an insurance card', ar:'ليست لدي بطاقة تأمين'}, a:{en:'Ask whoever arranged your insurance (your university, HR or your sponsor) for your card or policy number. If you’re still not sure you’re covered, ask them to confirm in writing.', ar:'اطلب البطاقة أو رقم الوثيقة ممن رتّب تأمينك (جامعتك أو الموارد البشرية أو كفيلك). وإذا لم تكن متأكداً من تغطيتك، اطلب منهم تأكيداً كتابياً.'}},
+  {id:'network', q:{en:'I don’t know which clinics I can use', ar:'لا أعرف أي العيادات يمكنني استخدامها'}, a:{en:'Call the number on your insurance card, or check the insurer’s app. They list the clinics and hospitals in your network.', ar:'اتصل بالرقم المكتوب على بطاقة التأمين، أو تحقّق من تطبيق شركة التأمين، فهما يعرضان العيادات والمستشفيات ضمن شبكتك.'}},
+  {id:'emergency', q:{en:'It’s an emergency and I’m not sure I’m insured', ar:'إنها حالة طارئة ولست متأكداً من تأميني'}, a:{en:'Call 998 or go to the nearest emergency department now. Hospitals must treat emergencies first. Sort out insurance afterwards.', ar:'اتصل بالرقم 998 أو توجّه إلى أقرب قسم طوارئ الآن، فالمستشفيات ملزمة بعلاج الطوارئ أولاً. رتّب مسألة التأمين لاحقاً.'}},
+  {id:'else', q:{en:'Something else', ar:'مشكلة أخرى'}, a:{en:'Start with whoever arranged your insurance, then your insurer. You can also raise a complaint with Dubai’s health insurance regulator through its iPromes platform.', ar:'ابدأ بمن رتّب تأمينك، ثم شركة التأمين. ويمكنك أيضاً تقديم شكوى إلى جهة تنظيم التأمين الصحي في دبي عبر منصة iPromes.'}},
+];
+const INS_STUCK = {cards:[
+  {title:{en:'Emergency: ambulance', ar:'طوارئ: الإسعاف'}, phone:'998', body:{en:'Anywhere in the UAE. Hospitals must treat emergencies first.', ar:'في أي مكان في الإمارات. المستشفيات ملزمة بعلاج الطوارئ أولاً.'}},
+  {title:{en:'Your insurer', ar:'شركة التأمين'}, body:{en:'Call the number on your insurance card.', ar:'اتصل بالرقم المكتوب على بطاقة التأمين.'}},
+  {title:{en:'Dubai’s health insurance regulator', ar:'جهة تنظيم التأمين الصحي في دبي'}, body:{en:'You can file a complaint through the iPromes platform.', ar:'يمكنك تقديم شكوى عبر منصة iPromes.'}},
+]};
+const insJourney = (o) => Object.assign({city:'dubai', need:'health', icon:'health', checked:CHECKED, trust:{reviewed:false, tested:0}, stuck:INS_STUCK, pathway:'dubai.ins'}, o);
+
+DATA.journeys['dubai.ins.student'] = insJourney({
+  title:{en:'Health insurance as a student', ar:'التأمين الصحي للطلاب'},
+  sources:[SRC.law11, SRC.isahd, SRC.bham, SRC.murdoch, SRC.siu],
+  stages:[
+    {id:'who', level:'source', label:{en:'Who arranges it', ar:'من يرتّبه'}, title:{en:'Your university arranges it', ar:'جامعتك ترتّبه'}, help:['double','cost','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'In Dubai, whoever sponsors your visa is responsible for your health insurance. For most international students, that’s the university.', ar:'في دبي، كفيل تأشيرتك مسؤول عن تأمينك الصحي، وهو الجامعة بالنسبة لمعظم الطلاب الدوليين.'},
+        {en:'Universities usually arrange it as part of your visa. Some include the cost in their visa fees, so check your fee breakdown.', ar:'عادةً ترتّبه الجامعات ضمن إجراءات التأشيرة، وبعضها يضيف تكلفته إلى رسوم التأشيرة، فراجع تفاصيل الرسوم.'},
+        {en:'Don’t buy a second residence plan without asking your university first. You may already be covered.', ar:'لا تشترِ خطة إقامة ثانية قبل أن تسأل جامعتك، فقد تكون مؤمَّناً بالفعل.'},
+      ]},
+     ]},
+    {id:'gap', level:'source', label:{en:'Before your visa', ar:'قبل التأشيرة'}, title:{en:'Before your visa is issued', ar:'قبل صدور تأشيرتك'}, help:['notstarted','emergency','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Your student cover may only start once your visa is issued. Ask your university for the start date.', ar:'قد لا يبدأ تأمينك كطالب إلا بعد صدور التأشيرة. اسأل جامعتك عن تاريخ البدء.'},
+        {en:'Until then, some students buy short-term travel medical insurance.', ar:'حتى ذلك الحين، يشتري بعض الطلاب تأميناً طبياً قصير المدة للسفر.'},
+        {en:'In an emergency, go to hospital anyway. Hospitals must treat emergencies first.', ar:'في الطوارئ، اذهب إلى المستشفى على أي حال، فالمستشفيات ملزمة بعلاج الطوارئ أولاً.'},
+      ]},
+     ]},
+    INS_CHECK,
+  ],
+  problems:[
+    {id:'double', q:{en:'Should I buy my own insurance?', ar:'هل يجب أن أشتري تأميناً بنفسي؟'}, a:{en:'Ask your university first. They usually arrange it with your visa. Short-term travel cover can make sense before your visa is issued.', ar:'اسأل جامعتك أولاً، فهي عادةً ترتّبه مع تأشيرتك. وقد يكون التأمين قصير المدة للسفر مفيداً قبل صدور التأشيرة.'}},
+    {id:'cost', q:{en:'I don’t understand what I paid for', ar:'لا أفهم ما الذي دفعت مقابله'}, a:{en:'Ask your university’s visa office for a breakdown of your visa fees. It should show whether insurance is included.', ar:'اطلب من مكتب التأشيرات في جامعتك تفصيلاً لرسوم التأشيرة، ويُفترض أن يوضح إن كان التأمين مشمولاً.'}},
+    {id:'notstarted', q:{en:'My insurance hasn’t started yet', ar:'تأميني لم يبدأ بعد'}, a:{en:'Ask your university when it starts. Until then you may have to pay yourself, so some students buy short-term cover. In an emergency, go to hospital anyway.', ar:'اسأل جامعتك متى يبدأ. حتى ذلك الحين قد تدفع بنفسك، لذلك يشتري بعض الطلاب تأميناً قصير المدة. وفي الطوارئ، اذهب إلى المستشفى على أي حال.'}},
+  ].concat(INS_COMMON_PROBLEMS),
+  after:[{journey:'dubai.health.student', name:{en:'See a doctor as a student', ar:'زيارة الطبيب كطالب'}}],
+});
+
+DATA.journeys['dubai.ins.employee'] = insJourney({
+  title:{en:'Health insurance through your job', ar:'التأمين الصحي عبر عملك'},
+  sources:[SRC.law11, SRC.isahd, SRC.uaeIns],
+  stages:[
+    {id:'who', level:'source', label:{en:'Who pays', ar:'من يدفع'}, title:{en:'Your employer must provide it', ar:'جهة عملك ملزمة بتوفيره'}, help:['nocover','pay','family','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'By Dubai law, your employer must enrol you in health insurance and pay for it.', ar:'بموجب قانون دبي، يجب على جهة عملك تسجيلك في التأمين الصحي ودفع تكلفته.'},
+        {en:'They must not charge the cost to you.', ar:'ولا يجوز لها تحميلك هذه التكلفة.'},
+        {en:'Your cover must be at least Dubai’s basic plan, the Essential Benefits Plan.', ar:'يجب ألا يقل تأمينك عن الخطة الأساسية في دبي، «خطة المنافع الأساسية».'},
+      ]},
+     ]},
+    Object.assign({}, INS_CHECK, {help:['nocard','network','nocover','else']}),
+    {id:'family', level:'source', label:{en:'Your family', ar:'عائلتك'}, title:{en:'If your family lives with you', ar:'إذا كانت عائلتك تعيش معك'}, help:['family','else'],
+     blocks:[
+      {t:'p', v:{en:'If you sponsor your spouse or children, you must arrange and pay for their insurance, unless your employer covers them too. Ask HR whether family cover is included.', ar:'إذا كنت تكفل زوجك أو أطفالك، فعليك ترتيب تأمينهم ودفع تكلفته، ما لم تغطّهم جهة عملك أيضاً. اسأل الموارد البشرية إن كان تأمين العائلة مشمولاً.'}},
+     ]},
+  ],
+  problems:[
+    {id:'nocover', q:{en:'My employer hasn’t given me insurance', ar:'جهة عملي لم توفر لي تأميناً'}, a:{en:'Ask HR, or your company’s PRO, in writing when you’ll be enrolled. If nothing happens, you can complain to Dubai’s health insurance regulator through its iPromes platform.', ar:'اسأل الموارد البشرية أو مندوب العلاقات العامة في شركتك كتابياً عن موعد تسجيلك. وإذا لم يحدث شيء، يمكنك تقديم شكوى إلى جهة تنظيم التأمين الصحي في دبي عبر منصة iPromes.'}},
+    {id:'pay', q:{en:'My employer wants me to pay for it', ar:'جهة عملي تريد أن أدفع تكلفته'}, a:{en:'Under Dubai’s health insurance law (Law No. 11 of 2013, Article 10), employers must bear the cost and must not charge it to employees. Raise it with HR, and complain through iPromes if needed.', ar:'بموجب قانون الضمان الصحي في دبي (القانون رقم 11 لسنة 2013، المادة 10)، يتحمّل صاحب العمل التكلفة ولا يجوز له تحميلها للموظفين. ناقش الأمر مع الموارد البشرية، وقدّم شكوى عبر iPromes إن لزم.'}},
+    {id:'family', q:{en:'What about my family?', ar:'ماذا عن عائلتي؟'}, a:{en:'If you sponsor them, insuring them is your responsibility, unless your employer’s plan includes them. Ask HR first.', ar:'إذا كنت تكفلهم، فتأمينهم مسؤوليتك، ما لم تشملهم خطة جهة عملك. اسأل الموارد البشرية أولاً.'}},
+  ].concat(INS_COMMON_PROBLEMS),
+  after:[{journey:'dubai.health.student', name:{en:'See a doctor', ar:'زيارة الطبيب'}}],
+});
+
+DATA.journeys['dubai.ins.family'] = insJourney({
+  title:{en:'Health insurance through your family', ar:'التأمين الصحي عبر عائلتك'},
+  sources:[SRC.law11, SRC.isahd, SRC.uaeIns],
+  stages:[
+    {id:'who', level:'source', label:{en:'Who pays', ar:'من يدفع'}, title:{en:'Your sponsor arranges it', ar:'كفيلك يرتّبه'}, help:['nocover','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'By Dubai law, the family member who sponsors your visa must enrol you in health insurance and pay for it.', ar:'بموجب قانون دبي، يجب على فرد العائلة الذي يكفل تأشيرتك تسجيلك في التأمين الصحي ودفع تكلفته.'},
+        {en:'Sometimes their employer covers the family too. Ask your sponsor which applies to you.', ar:'أحياناً تغطي جهة عمله العائلة أيضاً. اسأل كفيلك أيهما ينطبق عليك.'},
+      ]},
+     ]},
+    INS_CHECK,
+  ],
+  problems:[
+    {id:'nocover', q:{en:'I don’t think I’m insured', ar:'لا أظن أنني مؤمَّن'}, a:{en:'Ask your sponsor to check with their HR or insurer. Insurance is required for your residence visa, so it’s worth sorting out quickly.', ar:'اطلب من كفيلك التحقق مع الموارد البشرية لديه أو شركة التأمين. التأمين شرط لتأشيرة إقامتك، فمن الأفضل حل الأمر سريعاً.'}},
+  ].concat(INS_COMMON_PROBLEMS),
+  after:[{journey:'dubai.health.student', name:{en:'See a doctor', ar:'زيارة الطبيب'}}],
+});
+
+DATA.journeys['dubai.ins.self'] = insJourney({
+  title:{en:'Buying your own health insurance', ar:'شراء تأمينك الصحي بنفسك'},
+  sources:[SRC.law11, SRC.isahd],
+  stages:[
+    {id:'who', level:'source', label:{en:'Who pays', ar:'من يدفع'}, title:{en:'You arrange your own', ar:'أنت ترتّب تأمينك'}, help:['else'],
+     blocks:[
+      {t:'p', v:{en:'In Dubai, whoever sponsors a visa is responsible for that person’s health insurance. If you sponsor yourself, for example on a Golden Visa or as a freelancer, that’s you.', ar:'في دبي، كفيل التأشيرة مسؤول عن التأمين الصحي لمن يكفله. فإذا كنت تكفل نفسك، مثلاً بالإقامة الذهبية أو كعامل مستقل، فالمسؤولية عليك.'}},
+     ]},
+    {id:'choose', label:{en:'Choose a plan', ar:'اختر خطة'}, title:{en:'Choosing a plan', ar:'اختيار خطة'}, help:['unsureplan','else'],
+     blocks:[
+      {t:'steps', v:[
+        {en:'Compare plans from insurers authorised in Dubai. A licensed insurance broker can do this for you.', ar:'قارن الخطط لدى شركات التأمين المرخّصة في دبي، ويمكن لوسيط تأمين مرخّص القيام بذلك عنك.'},
+        {en:'Check the plan is accepted for a Dubai residence visa, and at least meets Dubai’s basic plan (the Essential Benefits Plan).', ar:'تأكد أن الخطة مقبولة لتأشيرة الإقامة في دبي، وأنها لا تقل عن الخطة الأساسية («خطة المنافع الأساسية»).'},
+        {en:'Check its network includes clinics near where you live or work.', ar:'تأكد أن شبكتها تشمل عيادات قريبة من سكنك أو عملك.'},
+      ]},
+     ]},
+    INS_CHECK,
+  ],
+  problems:[
+    {id:'unsureplan', q:{en:'I don’t know which plan is enough', ar:'لا أعرف أي خطة تكفي'}, a:{en:'Ask the insurer or broker to confirm in writing that the plan is valid for a Dubai residence visa.', ar:'اطلب من شركة التأمين أو الوسيط تأكيداً كتابياً بأن الخطة صالحة لتأشيرة الإقامة في دبي.'}},
+  ].concat(INS_COMMON_PROBLEMS),
+  after:[{journey:'dubai.health.student', name:{en:'See a doctor', ar:'زيارة الطبيب'}}],
+});
+
+DATA.journeys['dubai.ins.visitor'] = insJourney({
+  title:{en:'Health cover while visiting', ar:'التغطية الصحية أثناء الزيارة'},
+  sources:[SRC.law11, SRC.moi],
+  stages:[
+    {id:'what', level:'source', label:{en:'Visitors', ar:'الزوار'}, title:{en:'What visitors need to know', ar:'ما يحتاج الزوار إلى معرفته'}, help:['emergency','else'],
+     blocks:[
+      {t:'emergency'},
+      {t:'list', v:[
+        {en:'Visitors aren’t enrolled in a resident health plan.', ar:'لا يُسجَّل الزوار في خطط التأمين الصحي للمقيمين.'},
+        {en:'Dubai’s health insurance law covers emergency care for visitors.', ar:'يشمل قانون الضمان الصحي في دبي الرعاية الطارئة للزوار.'},
+        {en:'For anything else, like a clinic visit or medicines, you may have to pay. Travel medical insurance helps with that.', ar:'لأي شيء آخر، مثل زيارة عيادة أو الأدوية، قد تدفع بنفسك، والتأمين الطبي للسفر يساعد في ذلك.'},
+      ]},
+      {t:'tip', label:'tip', v:{en:'Moving here for study or work? Your visa sponsor will arrange resident cover. Go back and choose that option.', ar:'قادم للدراسة أو العمل؟ سيرتّب كفيل تأشيرتك تأمين الإقامة. عُد واختر ذلك الخيار.'}},
+     ]},
+  ],
+  problems:INS_COMMON_PROBLEMS,
+  after:[{journey:'dubai.health.student', name:{en:'See a doctor', ar:'زيارة الطبيب'}}],
+});
+
+DATA.pathways['dubai.ins'] = {
+  icon:'health',
+  title:{en:'Who arranges your health insurance?', ar:'من يرتّب تأمينك الصحي؟'},
+  sub:{en:'In Dubai it depends on who sponsors your visa. Pick the closest one.', ar:'في دبي يعتمد ذلك على كفيل تأشيرتك. اختر الأقرب.'},
+  options:[
+    {name:{en:'I’m a student (my university sponsors my visa)', ar:'أنا طالب (جامعتي تكفل تأشيرتي)'}, journey:'dubai.ins.student'},
+    {name:{en:'I work here (my employer sponsors my visa)', ar:'أعمل هنا (جهة عملي تكفل تأشيرتي)'}, journey:'dubai.ins.employee'},
+    {name:{en:'A family member sponsors my visa', ar:'أحد أفراد عائلتي يكفل تأشيرتي'}, journey:'dubai.ins.family'},
+    {name:{en:'I sponsor myself', ar:'أكفل نفسي'}, journey:'dubai.ins.self'},
+    {name:{en:'I’m visiting', ar:'أنا زائر'}, journey:'dubai.ins.visitor'},
+  ],
+  dontKnow:{
+    title:{en:'That’s OK. Here’s how to tell.', ar:'لا بأس. إليك كيف تعرف.'},
+    items:[
+      {en:'Your visa sponsor is whoever applied for your residence visa: usually your university, your employer, or a family member.', ar:'كفيل تأشيرتك هو من تقدّم بطلب تأشيرة إقامتك: عادةً جامعتك أو جهة عملك أو أحد أفراد عائلتك.'},
+      {en:'In Dubai, that sponsor is responsible for your health insurance.', ar:'وفي دبي، يكون هذا الكفيل مسؤولاً عن تأمينك الصحي.'},
+      {en:'On a visit visa, you’re a visitor.', ar:'إذا كانت لديك تأشيرة زيارة، فأنت زائر.'},
+    ],
+    tip:{en:'Don’t buy a residence plan yourself until you know. Your sponsor may already have one for you.', ar:'لا تشترِ خطة إقامة بنفسك قبل أن تتأكد، فقد يكون كفيلك قد رتّب واحدة لك.'}
+  }
+};
+DATA.tasks['dubai.health'].push({pathway:'dubai.ins', name:{en:'Get or check your health insurance', ar:'احصل على تأمينك الصحي أو تحقّق منه'}, note:{en:'Who arranges it depends on your visa', ar:'من يرتّبه يعتمد على تأشيرتك'}});
+DATA.journeys['dubai.health.student'].stages[1].blocks.push({t:'journeyLink', journey:'dubai.ins.student', v:{en:'More on student insurance and cover before your visa', ar:'المزيد عن تأمين الطلاب والتغطية قبل التأشيرة'}});

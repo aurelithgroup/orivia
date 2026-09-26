@@ -151,7 +151,7 @@ const SCREENS = {
   pathway(){
     const pw = DATA.pathways[S.params.id];
     return {
-      body: sign({eyebrow:t('finderEyebrow'), title:L(pw.title), sub:L(pw.sub), icon:'docs'}) + `
+      body: sign({eyebrow:t('finderEyebrow'), title:L(pw.title), sub:L(pw.sub), icon:pw.icon||'docs'}) + `
         <div class="content"><div class="choices">
           ${pw.options.map((o,i)=> o.journey
             ? `<button class="choice" data-act="pathOpt" data-v="${o.journey}"><span>${L(o.name)}</span>${chev()}</button>`
@@ -266,7 +266,8 @@ function block(b){
     case 'cards': return `<div class="cards">${b.v.map(c=>`<div class="card ${c.rec?'rec':''}"><div class="card-head"><span class="swatch" style="background:${c.color}"></span><strong>${L(c.name)}</strong>${c.rec?`<span class="pill pill-amber">${lang()==='ar'?'مُقترحة':'Recommended'}</span>`:''}</div><p>${L(c.desc)}</p></div>`).join('')}</div>`;
     case 'emergency': return emergencyBox();
     case 'phraseCard': return phraseHtml({phrase:b.v});
-    case 'journeyLink': return `<button class="choice jlink" data-act="${DATA.journeys[b.journey] && DATA.journeys[b.journey].finder ? 'pathway' : 'journey'}" data-v="${DATA.journeys[b.journey] && DATA.journeys[b.journey].pathway ? DATA.journeys[b.journey].pathway : b.journey}"><span>${L(b.v)}</span>${chev()}</button>`;
+    case 'journeyLink': { const lj = DATA.journeys[b.journey] || {}; const viaPath = !!(lj.finder && lj.pathway);
+      return `<button class="choice jlink" data-act="${viaPath ? 'pathway' : 'journey'}" data-v="${viaPath ? lj.pathway : b.journey}"><span>${L(b.v)}</span>${chev()}</button>`; }
     case 'link': return `<a class="btn btn-quiet linkbtn" href="${b.url}" target="_blank" rel="noopener">${L(b.v)} ${chev()}</a>`;
     case 'phrase': return `<div class="tip"><b>${t('tip')}</b>${lang()==='ar'?'تائه أو لا تعرف كيف تسأل؟':'Lost, or not sure how to ask?'} <button class="linkish" data-act="phrase">${t('phraseBtn')}</button></div>`;
   }
@@ -327,7 +328,7 @@ function emergencyBox(){
     <div class="em-nums"><a href="tel:998" dir="ltr"><b>998</b><span>${lang()==='ar'?'الإسعاف':'Ambulance'}</span></a><a href="tel:999" dir="ltr"><b>999</b><span>${lang()==='ar'?'الشرطة':'Police'}</span></a></div></div>`;
 }
 function pathPill(pid){
-  const opt = DATA.pathways[pid].options.find(o=>o.journey && S.finder[o.journey]);
+  const opt = DATA.pathways[pid].options.find(o=>o.journey && (S.finder[o.journey] || Object.keys(S.done[o.journey]||{}).length));
   return opt ? progressPill(opt.journey) : `<span class="pill pill-ok">${t('ready')}</span>`;
 }
 function progressPill(id){
@@ -502,7 +503,7 @@ app.addEventListener('click', e => {
     case 'gstep': guideSheet(curProblem, +v); break;
     case 'branch': branchSheet(curProblem, +v); break;
     case 'pathway': go('pathway', {id:v}); break;
-    case 'pathOpt': S.finder[v] ? go('journey', {id:v}) : go('finder', {id:v, mode:'last'}); break;
+    case 'pathOpt': { const jj = DATA.journeys[v]; (jj.finder || jj.lastDone) && !S.finder[v] ? go('finder', {id:v, mode:'last'}) : go('journey', {id:v}); break; }
     case 'lastAns': {
       const id = S.params.id, j = DATA.journeys[id], n = j.lastDone.options[+v].done;
       const doneMap = {}; for(let i=0;i<n;i++) doneMap[j.stages[i].id] = true;
