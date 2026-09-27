@@ -38,7 +38,10 @@ const DOC_TYPES = {
     what:{en:'Health insurance is required in Dubai. Ask whoever arranged it (university, employer or sponsor) how it renews.', ar:'التأمين الصحي إلزامي في دبي. اسأل الجهة التي رتّبته (الجامعة أو صاحب العمل أو الكفيل) عن طريقة تجديده.'}},
   ukvisa:{cities:['edinburgh'], warn:90, name:{en:'UK visa (eVisa end date)', ar:'التأشيرة البريطانية (تاريخ انتهاء eVisa)'},
     what:{en:'Check the end date in your UKVI account. Talk to your university’s immigration team well before it ends about what comes next.', ar:'تحقّق من تاريخ الانتهاء في حسابك على UKVI. تحدّث مع فريق الهجرة في جامعتك قبل انتهائها بوقت كافٍ عن الخطوة التالية.'}, journey:'edinburgh.evisa'},
-  sharecode:{cities:['edinburgh'], warn:7, made90:true, name:{en:'Share code', ar:'رمز المشاركة'},
+  deadline60:{cities:['dubai'], warn:21, madeDays:60, madeLabel:{en:'Date you entered the UAE', ar:'تاريخ دخولك إلى الإمارات'}, madeNote:{en:'You have 60 days from entry to finish your residency, so Orivia works out the deadline for you.', ar:'لديك 60 يوماً من دخولك لإكمال إقامتك، لذا تحسب أوريفيا المهلة عنك.'},
+    name:{en:'60-day residency deadline', ar:'مهلة الإقامة (60 يوماً)'},
+    what:{en:'Finish your medical test, fingerprints and residence visa before this date. Ask your sponsor or their PRO where your application is. Overstaying costs AED 50 a day.', ar:'أكمل الفحص الطبي والبصمات وتأشيرة الإقامة قبل هذا التاريخ. اسأل كفيلك أو مندوبه عن مرحلة طلبك. غرامة تجاوز مدة الإقامة 50 درهماً يومياً.'}},
+  sharecode:{cities:['edinburgh'], warn:7, madeDays:90, madeLabel:{en:'Date you made it', ar:'تاريخ إنشائه'}, madeNote:{en:'Share codes last 90 days, so Orivia works out the expiry date for you.', ar:'رموز المشاركة صالحة لمدة 90 يوماً، لذا تحسب أوريفيا تاريخ الانتهاء عنك.'}, name:{en:'Share code', ar:'رمز المشاركة'},
     what:{en:'Share codes last 90 days. Make a new one on GOV.UK whenever you need it: it’s free.', ar:'رموز المشاركة صالحة لمدة 90 يوماً. أنشئ رمزاً جديداً على GOV.UK متى احتجت، فهو مجاني.'}, journey:'edinburgh.evisa'},
   tenancy:{cities:['dubai'], warn:90, name:{en:'Tenancy contract', ar:'عقد الإيجار'},
     what:{en:'Talk to your landlord about renewing before the contract ends, and renew your Ejari registration with it.', ar:'تحدّث مع المالك عن التجديد قبل انتهاء العقد، وجدّد تسجيل «إيجاري» معه.'}, journey:'dubai.rent'},
@@ -72,9 +75,9 @@ function docPickSheet(){
 function docEditSheet(id){
   const d = DOC_TYPES[id], cur = (S.docs||{})[id] || '';
   sheet(`<h2>${L(d.name)}</h2>
-    ${d.made90 ? `<p class="lead">${t('docsShare90')}</p>` : ''}
-    <label class="field-label" for="docDate">${d.made90 ? t('docsMade') : t('docsExpires')}</label>
-    <input id="docDate" class="field" type="date" value="${d.made90 && cur ? new Date(new Date(cur+'T00:00:00').getTime()-90*dayMs).toISOString().slice(0,10) : cur}">
+    ${d.madeDays ? `<p class="lead">${L(d.madeNote)}</p>` : ''}
+    <label class="field-label" for="docDate">${d.madeDays ? L(d.madeLabel) : t('docsExpires')}</label>
+    <input id="docDate" class="field" type="date" value="${d.madeDays && cur ? new Date(new Date(cur+'T12:00:00').getTime()-d.madeDays*dayMs).toISOString().slice(0,10) : cur}">
     <button class="btn btn-primary" data-act="docSave" data-v="${id}">${t('saveBtn2')}</button>
     ${cur ? `<button class="linkish" data-act="docDel" data-v="${id}">${t('remove')}</button>` : ''}
     <button class="btn btn-quiet" data-act="closeSheet">${t('close')}</button>`);
@@ -84,7 +87,9 @@ function docOpenSheet(id){
   sheet(`<h2>${L(d.name)}</h2>
     <div class="doc-big doc-${docState(id,date)}"><strong>${docLabel(date)}</strong><span>${t('docsExpiresOn')} ${fmtDate(date)}</span></div>
     <div class="answer"><h3>${t('docsWhat')}</h3><p>${L(d.what)}</p></div>
-    ${d.journey && DATA.journeys[d.journey] ? `<button class="choice jlink" data-act="journey" data-v="${d.journey}"><span>${L(DATA.journeys[d.journey].title)}</span>${chev()}</button>` : ''}
+    ${(()=>{ const lj = d.journey && DATA.journeys[d.journey]; if(!lj) return '';
+      return lj.pathway ? `<button class="choice jlink" data-act="pathway" data-v="${lj.pathway}"><span>${L(DATA.pathways[lj.pathway].title)}</span>${chev()}</button>`
+        : `<button class="choice jlink" data-act="journey" data-v="${d.journey}"><span>${L(lj.title)}</span>${chev()}</button>`; })()}
     <span class="label">${t('docsCal')}</span><p class="muted" style="margin:0">${t('docsCalNote')}</p>
     <div class="choices"><button class="choice" data-act="docIcs" data-v="${id}"><span>${t('calOther')}</span>${chev()}</button>
       <a class="choice" href="${docGcal(id)}" target="_blank" rel="noopener"><span>${t('calGoogle')}</span>${chev()}</a></div>
@@ -120,7 +125,7 @@ function expiryAct(act, v){
     case 'docOpen': docOpenSheet(v); return true;
     case 'docSave': {
       let val = document.getElementById('docDate').value; if(!val){ toast(t('apptMissing')); return true; }
-      if(DOC_TYPES[v].made90) val = new Date(new Date(val+'T00:00:00').getTime()+90*dayMs+12*36e5).toISOString().slice(0,10);
+      if(DOC_TYPES[v].madeDays) val = new Date(new Date(val+'T12:00:00').getTime()+DOC_TYPES[v].madeDays*dayMs).toISOString().slice(0,10);
       S.docs = S.docs || {}; S.docs[v] = val; logEv('doc_saved', {detail:v}); save(); closeSheet(); render(); docOpenSheet(v); return true; }
     case 'docDel': delete S.docs[v]; save(); closeSheet(); render(); return true;
     case 'docIcs': docIcs(v); logEv('doc_calendar', {detail:v}); return true;
