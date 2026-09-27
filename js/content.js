@@ -94,14 +94,14 @@ const DATA = {
       poster:'Dubai International · Arrivals', staffLang:'ar',
       emergency:[{num:'998', k:'ambulance'}, {num:'999', k:'police'}],
       title:{en:"Welcome. You're here.", ar:'أهلاً بك. لقد وصلت.'},
-      sub:{en:"Not sure what comes next? Orivia walks you through it, one step at a time.", ar:'لا تعرف ما الخطوة التالية؟ أوريفيا ترشدك خطوة بخطوة.'},
+      sub:{en:"New place. Same you. Orivia walks you through what comes next, one step at a time.", ar:'مكان جديد. أنت كما أنت. أوريفيا ترشدك إلى ما يأتي بعد ذلك، خطوة بخطوة.'},
     },
     edinburgh:{
       kicker:{en:'Edinburgh · United Kingdom', ar:'إدنبرة · المملكة المتحدة'},
       poster:'Edinburgh Airport · Arrivals',
       emergency:[{num:'999', label:{en:'Police, ambulance, fire', ar:'الشرطة والإسعاف والإطفاء'}}, {num:'111', label:{en:'NHS 24: urgent, not life-threatening', ar:'NHS 24: حالة عاجلة غير خطيرة على الحياة'}}],
       title:{en:"Welcome. You're here.", ar:'أهلاً بك. لقد وصلت.'},
-      sub:{en:"Not sure what comes next? Orivia walks you through it, one step at a time.", ar:'لا تعرف ما الخطوة التالية؟ أوريفيا ترشدك خطوة بخطوة.'},
+      sub:{en:"New place. Same you. Orivia walks you through what comes next, one step at a time.", ar:'مكان جديد. أنت كما أنت. أوريفيا ترشدك إلى ما يأتي بعد ذلك، خطوة بخطوة.'},
     }
   },
   languages:[
