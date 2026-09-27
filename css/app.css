@@ -474,3 +474,13 @@ a.phone{color:var(--ink);text-decoration:none}
 .ask-type{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .ask-none{display:flex;flex-direction:column;gap:12px}
 #askOut{display:flex;flex-direction:column;gap:10px}
+
+/* ---------- Partner mode ---------- */
+.partner-note{border-radius:14px;padding:14px 16px;background:#EEF3FB;border-inline-start:5px solid #2F6DB5;display:flex;flex-direction:column;gap:6px;color:#18222D}
+.partner-note p{margin:0;font-size:16px}
+.partner-note .label{color:#2F4F7F}
+.partner-note .muted{font-size:13px;color:#4A5A6C}
+.partner-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.partner-strip{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:12px;background:#EEF3FB;color:#18222D;font-size:14px;flex-wrap:wrap}
+.partner-card{border-color:#2F6DB5}
+.land-cta{display:inline-block;background:var(--amber);color:var(--amberInk);font-weight:700;text-decoration:none;padding:10px 16px;border-radius:12px}

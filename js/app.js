@@ -284,6 +284,7 @@ const SCREENS = {
           <div class="sign-tools">${chip(s,true)}${listenBtn()}</div>
         </div>
         <div class="content">
+          ${partnerNote(S.params.id, s)}
           ${s.blocks.filter(b => !(s.need && b.t==='tip' && b.label==='bring')).map(block).join('')}
           ${apptBox(S.params.id, s)}
           ${needBox(S.params.id, s)}
@@ -487,6 +488,7 @@ function stuckSheet(){
   if(jj && jj.stuck){
     sheet(`<div class="sheet-top"><button class="linkish back-link" data-act="wrong">${chev()}${t('problems')}</button></div>
       <h2>${t('stuckTitle')}</h2>
+      ${partnerCard()}
       ${jj.stuck.cards.map(c=>`<div class="help-card"><strong>${L(c.title)}</strong>${c.phone?`<a class="phone" dir="ltr" href="tel:${c.phone.replace(/\s/g,'')}">${c.phone}</a>`:''}<p>${L(c.body)}</p></div>`).join('')}
       <div class="help-card"><strong>${t('showThis')}</strong>
         <div class="phrase" id="phBox"></div></div>
@@ -496,6 +498,7 @@ function stuckSheet(){
   const dyn = !!(p && p.stuckPhrase);
   sheet(`<div class="sheet-top"><button class="linkish back-link" data-act="wrong">${chev()}${t('problems')}</button></div>
     <h2>${t('stuckTitle')}</h2>
+    ${partnerCard()}
     <div class="help-card">
       <strong>${t('askStaff')}</strong><p>${t('askStaffBody')}</p>
       ${dyn ? `<label class="field-label" for="dest">${t('whereGoing')}</label><input id="dest" class="field" type="text" dir="auto" autocomplete="off" placeholder="${t('wherePh')}">` : ''}

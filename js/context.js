@@ -156,6 +156,7 @@ function hubScreen(){
   return {
     body: sign({eyebrow:L(DATA.cities[S.city].kicker), title:t('hubTitle'), sub:t('hubSub')}) + `
       <div class="content">
+        ${partnerStrip()}
         ${hubApptCard()}
         <div class="hub-card">
           <button class="hub-title" data-act="journey" data-v="${focusId}"><span>${L(j.title)}</span>${chev()}</button>
@@ -202,6 +203,10 @@ function readDeepLink(){
     touch(jid);
     target = i >= 0 ? {screen:'step', params:{id:jid, i}} : {screen:'journey', params:{id:jid}};
   } else if(pw && DATA.pathways[pw]){ S.city = pw.split('.')[0]; target = {screen:'pathway', params:{id:pw}}; }
+  if(!target && S.partner && DATA.partners && DATA.partners[S.partner] && !(q.get('city'))){
+    const e = DATA.partners[S.partner].entry, j = e && DATA.journeys[e.j];
+    if(j){ S.city = j.city; touch(e.j); target = {screen:'journey', params:{id:e.j}}; }
+  }
   if(target){ S.pending = target; logEv('deeplink', {detail:location.search.slice(1)}); }
   try{ history.replaceState(null, '', location.pathname); }catch(e){}
 }

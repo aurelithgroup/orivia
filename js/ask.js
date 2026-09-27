@@ -95,6 +95,7 @@ function askResultsHtml(q){
     const cards = (j && j.stuck && j.stuck.cards) || [];
     const els = j && (j.problems||[]).find(p=>p.id==='else');
     return `<div class="ask-none"><strong>${t('askNone')}</strong><span class="label">${t('askWho')}</span>
+      ${partnerCard()}
       ${els && els.a ? `<div class="answer"><p>${L(els.a)}</p></div>` : ''}
       ${cards.map(c=>`<div class="help-card"><strong>${L(c.title)}</strong>${c.phone?`<a class="phone" dir="ltr" href="tel:${c.phone.replace(/\s/g,'')}">${c.phone}</a>`:''}<p>${L(c.body)}</p></div>`).join('')}
       ${emergencyBox()}
