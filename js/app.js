@@ -368,8 +368,9 @@ function setListen(on){
 }
 const isDone = id => { const j = DATA.journeys[id]; const d = S.done[id]||{}; return j.stages.every(s=>d[s.id]); };
 function emergencyBox(){
+  const nums = DATA.cities[S.city].emergency || [];
   return `<div class="emergency-box"><span class="label">${t('emergency')}</span>
-    <div class="em-nums"><a href="tel:998" dir="ltr"><b>998</b><span>${t('ambulance')}</span></a><a href="tel:999" dir="ltr"><b>999</b><span>${t('police')}</span></a></div></div>`;
+    <div class="em-nums">${nums.map(e=>`<a href="tel:${e.num}" dir="ltr"><b>${e.num}</b><span>${e.k ? t(e.k) : L(e.label)}</span></a>`).join('')}</div></div>`;
 }
 function pathPill(pid){
   const opt = DATA.pathways[pid].options.find(o=>o.journey && (S.finder[o.journey] || Object.keys(S.done[o.journey]||{}).length));
@@ -476,7 +477,7 @@ function stuckSheet(){
       <h2>${t('stuckTitle')}</h2>
       ${jj.stuck.cards.map(c=>`<div class="help-card"><strong>${L(c.title)}</strong>${c.phone?`<a class="phone" dir="ltr" href="tel:${c.phone.replace(/\s/g,'')}">${c.phone}</a>`:''}<p>${L(c.body)}</p></div>`).join('')}
       <div class="help-card"><strong>${t('showThis')}</strong>
-        <div class="phrase"><div class="ar" lang="ar" dir="rtl" id="phAr"></div><hr><div class="en" lang="en" dir="ltr" id="phEn"></div></div></div>
+        <div class="phrase" id="phBox"></div></div>
       <button class="btn btn-primary" data-act="closeSheet">${t('close')}</button>`, true);
     updatePhrase(); return;
   }
@@ -486,8 +487,7 @@ function stuckSheet(){
     <div class="help-card">
       <strong>${t('askStaff')}</strong><p>${t('askStaffBody')}</p>
       ${dyn ? `<label class="field-label" for="dest">${t('whereGoing')}</label><input id="dest" class="field" type="text" dir="auto" autocomplete="off" placeholder="${t('wherePh')}">` : ''}
-      <div class="phrase"><span class="label" style="color:var(--signMuted)">${t('showStaff')}</span>
-        <div class="ar" lang="ar" dir="rtl" id="phAr"></div><hr><div class="en" lang="en" dir="ltr" id="phEn"></div></div>
+      <div class="phrase"><span class="label" style="color:var(--signMuted)">${t('showStaff')}</span><div id="phBox" style="display:contents"></div></div>
     </div>
     <div class="help-card"><strong>${t('callRta')}</strong><span class="phone" dir="ltr">800 9090</span><p>${t('callRtaBody')}</p></div>
     <div class="help-card"><strong>${t('checkRoute')}</strong><p>${t('checkRouteBody')}</p></div>
@@ -497,11 +497,17 @@ function stuckSheet(){
 function updatePhrase(){
   const p = curProblem, el = document.getElementById('dest');
   const v = el ? el.value.trim() : '';
-  const ar = document.getElementById('phAr'), en = document.getElementById('phEn'); if(!ar) return;
-  if(p && p.stuckPhrase){ ar.textContent = p.stuckPhrase.ar(v); en.textContent = p.stuckPhrase.en(v); }
-  else { ar.textContent = UI.ar.helpPhrase; en.textContent = UI.en.helpPhrase; }
+  const box = document.getElementById('phBox'); if(!box) return;
+  box.innerHTML = staffInner(p && p.stuckPhrase ? {en:p.stuckPhrase.en(v), ar:p.stuckPhrase.ar(v), mine:p.stuckPhrase[lang()] && p.stuckPhrase[lang()](v)} : {en:UI.en.helpPhrase, ar:UI.ar.helpPhrase, mine:t('helpPhrase')});
 }
-const phraseHtml = j => `<div class="phrase"><span class="label" style="color:var(--signMuted)">${t('showStaff')}</span><div class="ar" lang="ar" dir="rtl">${j.phrase.ar}</div><hr><div class="en" lang="en" dir="ltr">${j.phrase.en}</div></div>`;
+/* Staff phrase: Dubai shows Arabic + English. Elsewhere, English (for staff) plus the reader's own language underneath. */
+function staffInner(o){
+  const c = DATA.cities[S.city];
+  if(c.staffLang === 'ar') return `<div class="ar" lang="ar" dir="rtl">${o.ar}</div><hr><div class="en" lang="en" dir="ltr">${o.en}</div>`;
+  const l = lang(), mine = o.mine || (l==='ar' ? o.ar : (I18N[l] && I18N[l].t && I18N[l].t[o.en]));
+  return `<div class="en big" lang="en" dir="ltr">${o.en}</div>` + (l!=='en' && mine && mine!==o.en ? `<hr><div class="mine" lang="${l}" dir="${isRtl(l)?'rtl':'ltr'}">${mine}</div>` : '');
+}
+const phraseHtml = j => `<div class="phrase"><span class="label" style="color:var(--signMuted)">${t('showStaff')}</span>${staffInner(j.phrase)}</div>`;
 function phraseSheet(){ const j = DATA.journeys[S.params.id]; sheet(`<h2>${t('showStaff')}</h2>${phraseHtml(j)}<button class="btn btn-primary" data-act="closeSheet">${t('close')}</button>`); }
 
 function toast(msg){ const el = document.createElement('div'); el.className='toast'; el.textContent = msg; app.appendChild(el); setTimeout(()=>el.remove(), 1800); }
@@ -585,7 +591,7 @@ function syncPoster(){
 }
 document.getElementById('scanAs').addEventListener('click', e => {
   const b = e.target.closest('button'); if(!b) return;
-  S.city = b.dataset.city; S.history = []; S.screen = 'welcome'; S.params = {}; save(); render(true); drawQR();
+  S.city = b.dataset.city; S.history = []; S.screen = 'welcome'; S.params = {}; save(); render(true); drawQR(); fillLanding();
 });
 document.getElementById('resetAll').addEventListener('click', () => {
   S = {city:S.city, lang:null, purpose:null, done:{}, finder:{}, screen:'welcome', params:{}, history:[]}; save(); render(true);
@@ -662,13 +668,14 @@ offlineNote();
 function fillLanding(){
   const stats = document.getElementById('landStats'), list = document.getElementById('landJourneys');
   if(!stats || !list) return;
-  const js = Object.values(DATA.journeys).filter(j=>j.city==='dubai');
+  const js = Object.values(DATA.journeys);
   const srcs = new Set(); js.forEach(j => (j.sources || (j.source?[j.source]:[])).forEach(s => srcs.add(s.url)));
   const helps = js.reduce((n,j)=> n + (j.problems ? j.problems.length : 0), 0);
-  stats.innerHTML = [[js.length,'journeys'],[srcs.size,'official and institutional sources'],[helps,'“I need help” answers'],[2,'languages']]
+  stats.innerHTML = [[js.length,'journeys'],[srcs.size,'official and institutional sources'],[helps,'“I need help” answers'],[DATA.languages.filter(l=>l.ready).length,'languages'],[Object.keys(DATA.firstWeek).length,'cities']]
     .map(([n,l])=>`<div><b>${n}</b><span>${l}</span></div>`).join('');
-  list.innerHTML = DATA.needs.filter(n=>DATA.tasks['dubai.'+n.id]).map(n => {
-    const items = DATA.tasks['dubai.'+n.id].filter(x=>x.journey||x.pathway);
+  const lbl = document.getElementById('landLiveLabel'); if(lbl) lbl.textContent = 'Live now in ' + (S.city==='edinburgh' ? 'Edinburgh' : 'Dubai');
+  list.innerHTML = DATA.needs.filter(n=>DATA.tasks[S.city+'.'+n.id]).map(n => {
+    const items = DATA.tasks[S.city+'.'+n.id].filter(x=>x.journey||x.pathway);
     return `<div class="land-need"><span class="land-need-h">${svg(n.icon)}${n.name.en}</span><ul>${items.map(x=>`<li>${x.name.en}</li>`).join('')}</ul></div>`;
   }).join('');
 }
