@@ -9,7 +9,6 @@ const S = (en, ar, url) => ({name:{en, ar}, url});
 const ESRC = {
   airlink:   S('Lothian Buses: Airlink 100', 'Lothian Buses: حافلة Airlink 100', 'https://www.lothianbuses.com/our-services/airport-buses/'),
   fares:     S('Lothian Buses: Fares from 22 Feb 2026', 'Lothian Buses: الأجرة من 22 فبراير 2026', 'https://www.lothianbuses.com/news/2026/01/fares-revision/'),
-  princes:   S('Lothian Buses: Partial closure of Princes Street', 'Lothian Buses: الإغلاق الجزئي لشارع Princes Street', 'https://www.lothianbuses.com/news/2026/07/partial-closure-of-princes-street/'),
   airportBus:S('Edinburgh Airport: Buses to the city', 'مطار إدنبرة: الحافلات إلى المدينة', 'https://www.edinburghairport.com/transport-links/buses-and-coaches/edinburgh-city-bus-links'),
   airportTaxi:S('Edinburgh Airport: Taxis', 'مطار إدنبرة: سيارات الأجرة', 'https://www.edinburghairport.com/transport-links/taxis'),
   airportTram:S('Edinburgh Airport: Trams', 'مطار إدنبرة: الترام', 'https://www.edinburghairport.com/transport-links/trams'),
@@ -86,7 +85,7 @@ DATA.journeys['edinburgh.airport'] = base({
   need:'move', icon:'move',
   title:{en:'Get from the airport to the city', ar:'الوصول من المطار إلى المدينة'},
   doneTitle:{en:'You’ve made it into Edinburgh.', ar:'لقد وصلت إلى إدنبرة.'},
-  sources:[ESRC.airlink, ESRC.airportBus, ESRC.fares, ESRC.tramTickets, ESRC.tramFaq, ESRC.airportTram, ESRC.airportTaxi, ESRC.princes],
+  sources:[ESRC.airlink, ESRC.airportBus, ESRC.fares, ESRC.tramTickets, ESRC.tramFaq, ESRC.airportTram, ESRC.airportTaxi],
   stuck:TRANSPORT_STUCK,
   phrase:{en:'I’ve just arrived. Which bus or tram goes to the city centre?', ar:'وصلت للتو. أي حافلة أو ترام يذهب إلى وسط المدينة؟'},
   stages:[
@@ -97,7 +96,6 @@ DATA.journeys['edinburgh.airport'] = base({
         {color:'#B32424', name:{en:'Tram', ar:'الترام'}, desc:{en:'£7.90 single from the airport. You must have a ticket, or tap your card, before you get on.', ar:'7.90 جنيهات للرحلة من المطار. يجب أن تكون معك تذكرة، أو أن تمرر بطاقتك، قبل الصعود.'}},
         {color:'#1C2733', name:{en:'Taxi', ar:'سيارة أجرة'}, desc:{en:'Easiest with heavy bags. The official rank is outside the terminal.', ar:'الأسهل إن كانت حقائبك ثقيلة. الموقف الرسمي خارج مبنى المطار.'}},
       ]},
-      {t:'tip', label:'important', v:{en:'Part of Princes Street has been closed since July 2026. Trams run only between the airport and West End, and the Airlink bus is diverted via Queen Street. Check the Lothian Buses website for the latest.', ar:'جزء من شارع Princes Street مغلق منذ يوليو 2026. يعمل الترام فقط بين المطار ومحطة West End، وتسلك حافلة Airlink طريقاً بديلاً عبر Queen Street. راجع موقع Lothian Buses لآخر المستجدات.'}},
       {t:'phrase'},
      ]},
     {id:'bus', level:'source', label:{en:'By bus', ar:'بالحافلة'}, title:{en:'Take the Airlink 100', ar:'اركب حافلة Airlink 100'}, help:['nochange','wrongstop','staff','else'],
@@ -150,7 +148,7 @@ DATA.journeys['edinburgh.bus'] = base({
   need:'move', icon:'move',
   title:{en:'Start using buses and trams', ar:'البدء باستخدام الحافلات والترام'},
   doneTitle:{en:'You’re ready to get around Edinburgh.', ar:'أنت جاهز للتنقل في إدنبرة.'},
-  sources:[ESRC.fares, ESRC.contactless, ESRC.visitor, ESRC.tramFaq, ESRC.tramContact, ESRC.lostProp, ESRC.princes],
+  sources:[ESRC.fares, ESRC.contactless, ESRC.visitor, ESRC.tramFaq, ESRC.tramContact, ESRC.lostProp],
   stuck:TRANSPORT_STUCK,
   phrase:{en:'I’m new here. Does this bus go to this address?', ar:'أنا جديد هنا. هل تذهب هذه الحافلة إلى هذا العنوان؟'},
   stages:[
@@ -616,7 +614,7 @@ DATA.journeys['edinburgh.work'] = base({
   ],
   problems:[
     {id:'hours', q:{en:'My employer wants me to work more hours', ar:'يريد صاحب العمل أن أعمل ساعات أكثر'}, a:{en:'In term time, say no: going over your limit breaks your visa conditions, even once. Show them your eVisa limit and your term dates. You can work more in official holidays.', ar:'خلال الفصل الدراسي، ارفض: تجاوز حدّك يخالف شروط تأشيرتك ولو لمرة واحدة. اعرض عليهم حدّك في التأشيرة ومواعيد الفصل الدراسي. ويمكنك العمل أكثر في العطلات الرسمية.'}},
-    {id:'self', q:{en:'Can I do freelance or delivery-app work?', ar:'هل يمكنني العمل المستقل أو التوصيل عبر التطبيقات؟'}, a:{en:'Usually not. Work where you’re self-employed, which includes most delivery and ride apps, isn’t allowed on a Student visa. Ask your university’s visa team if you’re unsure.', ar:'غالباً لا. العمل الحر، ويشمل معظم تطبيقات التوصيل والنقل، غير مسموح بتأشيرة الطالب. اسأل فريق التأشيرات في جامعتك إن لم تكن متأكداً.'}},
+    {id:'self', q:{en:'Can I do freelance or delivery-app work?', ar:'هل يمكنني العمل المستقل أو التوصيل عبر التطبيقات؟'}, a:{en:'Not if you’d be self-employed: that isn’t allowed on a Student visa. Many delivery and ride apps treat workers as self-employed, so check how the app would pay you, and ask your university’s visa team before you sign up.', ar:'ليس إن كنت ستعمل عملاً حراً، فذلك غير مسموح بتأشيرة الطالب. كثير من تطبيقات التوصيل والنقل تعامل العاملين كأصحاب عمل حر، فتحقّق من طريقة الدفع لك، واسأل فريق التأشيرات في جامعتك قبل التسجيل.'}},
     {id:'share', q:{en:'My employer won’t accept my share code', ar:'صاحب العمل لا يقبل رمز المشاركة'}, a:{en:'Check it’s a right-to-work code, not a right-to-rent one, and that it’s less than 90 days old. Make a new one if needed. Employers check it at gov.uk/view-right-to-work.', ar:'تأكد أنه رمز لحق العمل لا لحق الاستئجار، وأن عمره أقل من 90 يوماً، وأنشئ رمزاً جديداً إن لزم. يتحقق أصحاب العمل منه على gov.uk/view-right-to-work.'}},
     {id:'nonino', q:{en:'I haven’t got my NI number yet', ar:'لم أحصل على رقم التأمين بعد'}, a:{en:'You can still start work if you can prove your right to work. It can take up to 4 weeks to arrive. Tell your employer you’ve applied.', ar:'يمكنك بدء العمل إن استطعت إثبات حقك في العمل. قد يستغرق وصول الرقم حتى 4 أسابيع، فأخبر صاحب العمل أنك قدّمت الطلب.'}},
     ELSE('Ask your university’s immigration team, or call Citizens Advice Scotland on 0800 028 1456.', 'اسأل فريق الهجرة في جامعتك، أو اتصل بـ Citizens Advice Scotland على 0800 028 1456.'),
