@@ -465,3 +465,12 @@ a.phone{color:var(--ink);text-decoration:none}
 .appt .linkish{align-self:flex-start}
 .appt-add{border-style:dashed}
 .appt-form .field{margin-bottom:4px}
+
+/* ---------- Ask Orivia ---------- */
+.ask-inline{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface2);color:var(--muted);font-size:16px}
+.ask-inline:focus-visible{outline:3px solid var(--focus)}
+.ask-ctx{font-size:14px;color:var(--muted)}
+.ask-try{color:var(--muted);font-size:15px;margin:4px 0}
+.ask-type{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ask-none{display:flex;flex-direction:column;gap:12px}
+#askOut{display:flex;flex-direction:column;gap:10px}

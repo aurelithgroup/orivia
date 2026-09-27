@@ -159,6 +159,7 @@ const SCREENS = {
     return {
       body: sign({eyebrow:t('needsEyebrow'), title:t('needsTitle'), sub:t('needsSub')}) + `
         <div class="content">
+          <button class="ask-inline" data-act="askOpen">${svg('help','help-ico')}<span>${t('askEntry')}</span></button>
           ${hasHub() ? `<button class="choice hub-link" data-act="home"><span class="main"><span>${t('yourJourneys')}</span><small>${(()=>{ const c = ctx(activeJourneys()[0]); return L(c.journey.title) + ' · ' + t('stepsDone')(c.done,c.total); })()}</small></span>${chev()}</button>` : ''}
           ${!hasWeek ? `<div class="tip">${t('cityClosed')}</div>` : ''}
           <div class="grid">
@@ -416,7 +417,7 @@ function wrongSheet(pid){
     let list = j.problems;
     const st = (S.screen==='step' && j.stages[S.params.i]) ? j.stages[S.params.i] : null;
     if(st && st.help) list = st.help.map(id=>j.problems.find(p=>p.id===id)).concat(j.problems.filter(p=>p.id==='else'));
-    sheet(`<h2>${t('whatHappened')}</h2>${st && st.help ? `<span class="badge" style="align-self:flex-start">${L(st.label)}</span>` : ''}<div class="choices">${list.map(p=>`<button class="choice" data-act="problem" data-v="${p.id}"><span>${L(p.q)}</span>${chev()}</button>`).join('')}</div>
+    sheet(`<h2>${t('whatHappened')}</h2>${st && st.help ? `<span class="badge" style="align-self:flex-start">${L(st.label)}</span>` : ''}${helpSearchHtml()}<div class="choices">${list.map(p=>`<button class="choice" data-act="problem" data-v="${p.id}"><span>${L(p.q)}</span>${chev()}</button>`).join('')}</div>
       <button class="btn btn-quiet" data-act="closeSheet">${t('close')}</button>`);
     return;
   }
@@ -562,7 +563,7 @@ app.addEventListener('click', e => {
     }
     case 'restartJ': S.done[S.params.id] = {}; save(); render(true); break;
     case 'wrong': wrongSheet(); logEv('help_open'); break;
-    case 'problem': wrongSheet(v); S.lastProblem = {j:S.params.id, p:v}; logEv('problem', {p:v}); break;
+    case 'problem': if(v === 'else'){ askSheet(); logEv('problem', {p:v}); break; } wrongSheet(v); S.lastProblem = {j:S.params.id, p:v}; logEv('problem', {p:v}); break;
     case 'phrase': phraseSheet(); break;
     case 'closeSheet': closeSheet(); break;
     case 'gstep': guideSheet(curProblem, +v); break;
@@ -598,10 +599,12 @@ app.addEventListener('click', e => {
     case 'hubHelp': { const c = ctx(v); go('step', {id:v, i:Math.max(c.index,0)}); wrongSheet(); logEv('help_open', {detail:'from_hub'}); break; }
     case 'exportLog': exportLog(); break;
     case 'clearLog': S.log = []; save(); render(); break;
+    case 'askOpen': askSheet(); break;
+    case 'askGo': askGo(v); break;
     default: placesAct(b.dataset.act, v);
   }
 });
-app.addEventListener('input', e => { if(e.target.id === 'dest') updatePhrase(); });
+app.addEventListener('input', e => { if(e.target.id === 'dest') updatePhrase(); if(e.target.id === 'askQ') askInput(e.target.value); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape') closeSheet(); });
 
 /* ---------- Poster (desktop demo controls) ---------- */

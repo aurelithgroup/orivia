@@ -166,6 +166,7 @@ function hubScreen(){
           ${c.need.length ? `<button class="hub-need" data-act="hubStep" data-v="${focusId}"><span>${t('needTitle')}</span><span class="pill ${c.ready===c.need.length?'pill-ok':'pill-amber'}">${c.ready===c.need.length ? t('allReady') : t('readyN')(c.ready,c.need.length)}</span></button>` : ''}
           ${c.upcoming.length ? `<div class="hub-up"><span class="label">${t('upcoming')}</span><ol>${c.upcoming.map(s=>`<li>${L(s.label)}: ${L(s.title)}</li>`).join('')}</ol></div>` : ''}
         </div>
+        <button class="ask-inline" data-act="askOpen">${svg('help','help-ico')}<span>${t('askEntry')}</span></button>
         ${others.length ? `<span class="label">${t('alsoGoing')}</span><div class="choices">${others.map(id=>{ const o = ctx(id);
           return `<button class="choice" data-act="journey" data-v="${id}"><span class="main"><span>${L(o.journey.title)}</span><small>${o.stage ? (o.status==='waiting' ? t('waitingOn')+': '+L(o.stage.label) : o.status==='blocked' ? t('needsHelp') : t('nextStep')+': '+L(o.stage.title)) : t('allDoneJ')}</small></span><span class="pill pill-ok">${o.done}/${o.total}</span></button>`; }).join('')}</div>` : ''}
         ${sug ? `<span class="label">${t('suggested')}</span><div class="choices"><button class="choice" data-act="journey" data-v="${sug.journey}"><span>${L(sug.name)}</span>${chev()}</button></div>` : ''}
