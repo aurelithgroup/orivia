@@ -50,7 +50,8 @@ h1,h2,h3{text-wrap:balance;margin:0}
 
 /* ---------- Device ---------- */
 .device{width:100%;max-width:400px;height:min(840px,calc(100dvh - 48px));min-height:640px;background:var(--surface);border-radius:32px;border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;position:relative}
-.device[lang="ar"]{font-family:var(--arabic)}
+.device[lang="ar"],
+.device[lang="ur"]{font-family:var(--arabic)}
 @media (max-width:520px){
   body{padding-inline:0;padding-block:0}
   .stage{display:block;height:100%;min-height:0}
@@ -61,7 +62,8 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .brand-mark{width:22px;height:22px;flex:none}
 .top-actions{display:flex;align-items:center;gap:8px}
 .badge{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--line);border-radius:4px;padding:2px 6px}
-.device[lang="ar"] .badge{letter-spacing:0}
+.device[lang="ar"] .badge,
+.device[lang="ur"] .badge{letter-spacing:0}
 .lang-toggle{border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:4px 12px;font-size:14px;min-height:32px}
 
 .scroll{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column}
@@ -72,9 +74,11 @@ h1,h2,h3{text-wrap:balance;margin:0}
 /* Wayfinding sign header */
 .sign{background:var(--sign);color:var(--signInk);padding:20px;display:flex;flex-direction:column;gap:6px;flex:none}
 .sign .eyebrow{font-family:var(--display);font-weight:700;font-stretch:85%;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--signMuted);display:flex;align-items:center;gap:8px}
-.device[lang="ar"] .sign .eyebrow{font-family:var(--arabic);letter-spacing:0;font-size:13px}
+.device[lang="ar"] .sign .eyebrow,
+.device[lang="ur"] .sign .eyebrow{font-family:var(--arabic);letter-spacing:0;font-size:13px}
 .sign h1{font-family:var(--display);font-stretch:82%;font-weight:800;font-size:30px;line-height:1.05;color:var(--amber)}
-.device[lang="ar"] .sign h1{font-family:var(--arabic);font-weight:700;font-size:27px;line-height:1.3}
+.device[lang="ar"] .sign h1,
+.device[lang="ur"] .sign h1{font-family:var(--arabic);font-weight:700;font-size:27px;line-height:1.3}
 .sign p{margin:0;color:var(--signInk);opacity:.9;font-size:15px}
 .sign-row{display:flex;align-items:center;gap:12px}
 .sign-icon{width:40px;height:40px;border-radius:6px;background:var(--amber);color:var(--amberInk);display:grid;place-items:center;flex:none}
@@ -82,7 +86,8 @@ h1,h2,h3{text-wrap:balance;margin:0}
 
 .lead{font-size:15px;color:var(--muted);margin:0}
 .label{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.device[lang="ar"] .label{letter-spacing:0;font-size:13px}
+.device[lang="ar"] .label,
+.device[lang="ur"] .label{letter-spacing:0;font-size:13px}
 
 /* Buttons */
 .btn{border:0;border-radius:12px;padding:14px 18px;font-weight:700;font-size:16px;min-height:52px;display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:1}
@@ -167,7 +172,8 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .card p{margin:0;font-size:15px;color:var(--muted)}
 .tip{background:var(--surface2);border-inline-start:4px solid var(--amber);border-radius:8px;padding:12px 14px;font-size:15px}
 .tip b{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
-.device[lang="ar"] .tip b{letter-spacing:0}
+.device[lang="ar"] .tip b,
+.device[lang="ur"] .tip b{letter-spacing:0}
 .linkish{background:none;border:0;padding:0;color:var(--ink);text-decoration:underline;text-underline-offset:3px;font-weight:700}
 
 .source{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
@@ -180,7 +186,8 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .sheet{background:var(--surface);width:100%;max-height:88%;overflow-y:auto;border-radius:22px 22px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;animation:up .25s ease}
 .grab{width:40px;height:5px;border-radius:3px;background:var(--line);align-self:center}
 .sheet h2{font-family:var(--display);font-stretch:85%;font-weight:800;font-size:24px}
-.device[lang="ar"] .sheet h2{font-family:var(--arabic);font-weight:700}
+.device[lang="ar"] .sheet h2,
+.device[lang="ur"] .sheet h2{font-family:var(--arabic);font-weight:700}
 .answer{background:var(--surface2);border-inline-start:4px solid var(--amber);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px}
 .answer h3{font-size:17px;color:var(--ink)}
 .answer p{margin:0;font-size:16px}
@@ -194,7 +201,8 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .gcount{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
 .gticks i{background:var(--line)}
 .gstep h3{font-family:var(--display);font-stretch:85%;font-weight:800;font-size:28px;line-height:1.1}
-.device[lang="ar"] .gstep h3{font-family:var(--arabic);font-weight:700;font-size:26px;line-height:1.35}
+.device[lang="ar"] .gstep h3,
+.device[lang="ur"] .gstep h3{font-family:var(--arabic);font-weight:700;font-size:26px;line-height:1.35}
 .gstep p{margin:0;font-size:19px;line-height:1.55}
 .gnav{display:flex;gap:10px;margin-top:auto}
 .outcome{display:flex;flex-direction:column;gap:10px;align-items:stretch}
@@ -245,9 +253,11 @@ h1,h2,h3{text-wrap:balance;margin:0}
 /* Welcome */
 .hero-sign{background:var(--sign);color:var(--signInk);padding:28px 22px 26px;display:flex;flex-direction:column;gap:12px}
 .hero-sign .kick{font-family:var(--display);font-stretch:85%;font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--signMuted)}
-.device[lang="ar"] .hero-sign .kick{font-family:var(--arabic);letter-spacing:0;font-size:14px}
+.device[lang="ar"] .hero-sign .kick,
+.device[lang="ur"] .hero-sign .kick{font-family:var(--arabic);letter-spacing:0;font-size:14px}
 .hero-sign h1{font-family:var(--display);font-stretch:78%;font-weight:800;font-size:46px;line-height:.98;text-transform:uppercase;color:var(--amber)}
-.device[lang="ar"] .hero-sign h1{font-family:var(--arabic);font-weight:700;font-size:38px;line-height:1.25;text-transform:none}
+.device[lang="ar"] .hero-sign h1,
+.device[lang="ur"] .hero-sign h1{font-family:var(--arabic);font-weight:700;font-size:38px;line-height:1.25;text-transform:none}
 .hero-sign p{margin:0;font-size:16px;opacity:.92;max-width:30ch}
 .arrow-row{display:flex;gap:6px;align-items:center;color:var(--amber);margin-top:4px}
 .arrow-row svg{width:28px;height:28px}
@@ -380,3 +390,14 @@ a.phone{color:var(--ink);text-decoration:none}
 .land-brand-text{display:flex;flex-direction:column;gap:3px;line-height:1}
 .land-brand .wordmark{font-size:26px}
 .tagline{font-family:var(--brand);font-weight:500;font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted)}
+
+/* Urdu and Hindi fonts */
+.device[lang="ur"]{font-family:"Noto Naskh Arabic",var(--arabic);line-height:1.75}
+.device[lang="hi"]{font-family:"Noto Sans Devanagari",var(--body)}
+.device[lang="hi"] .sign h1,.device[lang="hi"] .hero-sign h1{font-family:"Noto Sans Devanagari",var(--display);line-height:1.3}
+.device[lang="hi"] .hero-sign h1{text-transform:none}
+.beta-tr{border-color:var(--warn);color:var(--warn)}
+.lang-toggle{display:inline-flex;align-items:center;gap:6px}
+.globe{width:16px;height:16px}
+.beta-tr{white-space:nowrap;font-size:10px;letter-spacing:.04em}
+.topbar{min-width:0}.top-actions{flex-wrap:nowrap;min-width:0}

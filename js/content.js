@@ -39,6 +39,8 @@ const UI = {
     }, offline:'You’re offline. Saved journeys still work.', important:'Important',
     finderEyebrow:'Let’s work out where you are', yes:'Yes', notYet:'Not yet', notSure:'Not sure', qOf:(i,t)=>`Question ${i} of ${t}`,
     hereEyebrow:'Here’s where you are', youAreHere:'You are here', unsureNote:'You weren’t sure about some steps. Ask your university’s visa office to confirm before doing anything else.', redo:'Answer the questions again', privacy:'Your answers stay on this phone. Orivia doesn’t send them anywhere.', startHere:'Start from here', dontKnow:'I don’t know', showThis:'Show this to staff', sources:'Sources', done:'Done', howChecked:'How this was checked', listen:'Listen', stop:'Stop', noVoice:'This phone has no voice for this language.',
+    dontKnowStart:"I don't know where to start", recommended:'Recommended', lostAsk:'Lost, or not sure how to ask?', emergency:'Emergency', ambulance:'Ambulance', police:'Police', nextShort:'Next', openIcp:'Open the ICP status page',
+    betaTr:'Beta translation', betaTrNote:'English and Arabic are checked. Other languages are machine-assisted translations that haven’t been checked by a native speaker yet. If something is unclear, switch to English or Arabic.',
     problems:'What happened?', helpPhrase:'I’m new here and I need help. Can you help me, please?',
   },
   ar:{
@@ -78,6 +80,8 @@ const UI = {
     }, offline:'أنت غير متصل بالإنترنت. الرحلات المحفوظة ما زالت تعمل.', important:'مهم',
     finderEyebrow:'لنعرف أين وصلت', yes:'نعم', notYet:'ليس بعد', notSure:'لست متأكداً', qOf:(i,t)=>`السؤال ${i} من ${t}`,
     hereEyebrow:'هذا هو موقعك', youAreHere:'أنت هنا', unsureNote:'لم تكن متأكداً من بعض الخطوات. اطلب من مكتب التأشيرات في جامعتك التأكيد قبل أي خطوة أخرى.', redo:'أجب عن الأسئلة من جديد', privacy:'إجاباتك تبقى على هذا الهاتف، ولا ترسلها أوريفيا إلى أي جهة.', startHere:'ابدأ من هنا', dontKnow:'لا أعرف', showThis:'اعرض هذا على الموظفين', sources:'المصادر', done:'تم', howChecked:'كيف تم التحقق', listen:'استمع', stop:'إيقاف', noVoice:'لا يوجد صوت لهذه اللغة على هذا الهاتف.',
+    dontKnowStart:'لا أعرف من أين أبدأ', recommended:'مُقترحة', lostAsk:'تائه أو لا تعرف كيف تسأل؟', emergency:'طوارئ', ambulance:'الإسعاف', police:'الشرطة', nextShort:'التالي', openIcp:'افتح صفحة حالة الهوية',
+    betaTr:'ترجمة تجريبية', betaTrNote:'اللغتان الإنجليزية والعربية مُراجَعتان. اللغات الأخرى ترجمات بمساعدة الآلة ولم يراجعها متحدث أصلي بعد. إذا كان شيء غير واضح، انتقل إلى الإنجليزية أو العربية.',
     problems:'ماذا حدث؟', helpPhrase:'أنا جديد هنا وأحتاج إلى مساعدة. هل يمكنك مساعدتي من فضلك؟',
   }
 };
@@ -101,7 +105,7 @@ const DATA = {
   languages:[
     {code:'en', name:'English', ready:true},
     {code:'ar', name:'العربية', ready:true},
-    {code:'fr', name:'Français'}, {code:'ur', name:'اردو'}, {code:'hi', name:'हिन्दी'}, {code:'tl', name:'Filipino'}
+    {code:'fr', name:'Français', ready:true, beta:true}, {code:'fil', name:'Filipino'}, {code:'hi', name:'हिन्दी'}, {code:'ur', name:'اردو'}
   ],
   needs:[
     {id:'move', icon:'move', name:{en:'Getting around', ar:'التنقل'}},
@@ -1248,3 +1252,6 @@ DATA.journeys['dubai.community'] = {
 DATA.tasks['dubai.community'] = [
   {journey:'dubai.community', name:{en:'Meet people and settle in', ar:'تعرّف على الناس واستقر'}, note:{en:'Making friends, volunteering, and local customs', ar:'تكوين الصداقات والتطوع والعادات المحلية'}},
 ];
+
+/* Mark translated languages as ready when their file has loaded */
+DATA.languages.forEach(l => { if(window.I18N && window.I18N[l.code]){ l.ready = true; l.beta = true; } });

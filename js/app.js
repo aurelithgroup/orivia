@@ -17,6 +17,7 @@ const ICONS = {
   community:'<circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M2 20c1-4 11-4 12 0M10 20c1-4 11-4 12 0"/>',
   unsure:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/>',
   alert:'<path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5h.01"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>',
   speaker:'<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>',
   stopsq:'<rect x="6" y="6" width="12" height="12" rx="2"/>',
   help:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"/>',
@@ -38,8 +39,26 @@ const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e
 
 const app = document.getElementById('app');
 const lang = () => S.lang || 'en';
-const t = k => UI[lang()][k];
-const L = o => o ? (o[lang()] || o.en) : '';
+/* Languages: English and Arabic live in content.js; other languages are
+   translation tables in js/i18n/<code>.js, keyed by the English text.
+   Anything missing falls back to English. */
+window.I18N = window.I18N || {};
+const RTL = ['ar','ur'];
+const isRtl = l => RTL.includes(l);
+const isBeta = () => !['en','ar'].includes(lang());
+const langName = code => (DATA.languages.find(x=>x.code===code) || {}).name || code;
+const t = k => { const l = lang(); const tr = I18N[l] && I18N[l].ui;
+  if(UI[l] && UI[l][k] !== undefined) return UI[l][k];
+  if(tr && tr[k] !== undefined) return tr[k];
+  return UI.en[k]; };
+const L = o => { if(!o) return ''; const l = lang(); if(o[l]) return o[l];
+  const tr = I18N[l] && I18N[l].t; if(tr && o.en && tr[o.en]) return tr[o.en]; return o.en || ''; };
+function langSheet(){
+  sheet(`<h2>${t('chooseLang')}</h2><div class="choices">${DATA.languages.map(x => x.ready
+    ? `<button class="choice" data-act="setLang" data-v="${x.code}" lang="${x.code}" ${isRtl(x.code)?'dir="rtl"':''} aria-pressed="${lang()===x.code}"><span class="lang-name">${x.name}</span>${x.beta?`<span class="pill pill-soon">${t('betaTr')}</span>`:''}</button>`
+    : `<button class="choice" disabled lang="${x.code}"><span class="lang-name">${x.name}</span><span class="pill pill-soon">${t('soon')}</span></button>`).join('')}</div>
+    <p class="disclaimer">${t('betaTrNote')}</p>`);
+}
 
 /* Navigation. Each screen change also adds a browser history entry, so the phone's
    back gesture/button works too (important when Orivia is saved to the home screen). */
@@ -76,8 +95,8 @@ const topbar = () => `
     </button>
     </div>
     <div class="top-actions">
-      <span class="badge">${t('proto')}</span>
-      ${S.lang ? `<button class="lang-toggle" data-act="toggleLang" lang="${lang()==='en'?'ar':'en'}">${t('switchTo')}</button>` : ''}
+      ${S.lang && isBeta() ? `<span class="badge beta-tr" title="${t('betaTrNote')}">${t('betaTr')}</span>` : `<span class="badge">${t('proto')}</span>`}
+      ${S.lang ? `<button class="lang-toggle" data-act="langPicker" aria-label="${t('chooseLang')}: ${langName(lang())}">${svg('globe','globe')}<span>${lang().toUpperCase()}</span></button>` : ''}
     </div>
   </header>`;
 
@@ -106,7 +125,7 @@ const SCREENS = {
           <span class="label">${t('chooseLang')}</span>
           <div class="choices">
             ${DATA.languages.map(l => l.ready
-              ? `<button class="choice" data-act="lang" data-v="${l.code}" lang="${l.code}" ${l.code==='ar'?'dir="rtl"':''}><span class="lang-name">${l.name}</span>${chev()}</button>`
+              ? `<button class="choice" data-act="lang" data-v="${l.code}" lang="${l.code}" ${isRtl(l.code)?'dir="rtl"':''}><span class="lang-name">${l.name}</span>${l.beta?`<span class="pill pill-soon">${t('betaTr')}</span>`:chev()}</button>`
               : `<button class="choice" disabled lang="${l.code}"><span class="lang-name">${l.name}</span><span class="pill pill-soon">${t('soon')}</span></button>`).join('')}
           </div>
           <p class="disclaimer">${t('disclaimer')}</p>
@@ -136,7 +155,7 @@ const SCREENS = {
           ${!hasWeek ? `<div class="tip">${t('cityClosed')}</div>` : ''}
           <div class="grid">
             ${DATA.needs.map(tile).join('')}
-            <button class="tile wide ${hasWeek?'ready':''}" data-act="unsure">${svg('unsure')}<span class="t">${lang()==='ar'?'لا أعرف من أين أبدأ':"I don't know where to start"}</span><span class="s">${hasWeek ? chev() : t('inFull')}</span></button>
+            <button class="tile wide ${hasWeek?'ready':''}" data-act="unsure">${svg('unsure')}<span class="t">${t('dontKnowStart')}</span><span class="s">${hasWeek ? chev() : t('inFull')}</span></button>
           </div>
         </div>`,
       actions:''
@@ -286,13 +305,13 @@ function block(b){
     case 'list': return `<ul class="blk-list">${b.v.map(x=>`<li>${L(x)}</li>`).join('')}</ul>`;
     case 'steps': return `<ol class="blk-steps">${b.v.map(x=>`<li><span>${L(x)}</span></li>`).join('')}</ol>`;
     case 'tip': return `<div class="tip"><b>${t(b.label||'tip')}</b>${L(b.v)}</div>`;
-    case 'cards': return `<div class="cards">${b.v.map(c=>`<div class="card ${c.rec?'rec':''}"><div class="card-head"><span class="swatch" style="background:${c.color}"></span><strong>${L(c.name)}</strong>${c.rec?`<span class="pill pill-amber">${lang()==='ar'?'مُقترحة':'Recommended'}</span>`:''}</div><p>${L(c.desc)}</p></div>`).join('')}</div>`;
+    case 'cards': return `<div class="cards">${b.v.map(c=>`<div class="card ${c.rec?'rec':''}"><div class="card-head"><span class="swatch" style="background:${c.color}"></span><strong>${L(c.name)}</strong>${c.rec?`<span class="pill pill-amber">${t('recommended')}</span>`:''}</div><p>${L(c.desc)}</p></div>`).join('')}</div>`;
     case 'emergency': return emergencyBox();
     case 'phraseCard': return phraseHtml({phrase:b.v});
     case 'journeyLink': { const lj = DATA.journeys[b.journey] || {}; const viaPath = !!(lj.finder && lj.pathway);
       return `<button class="choice jlink" data-act="${viaPath ? 'pathway' : 'journey'}" data-v="${viaPath ? lj.pathway : b.journey}"><span>${L(b.v)}</span>${chev()}</button>`; }
     case 'link': return `<a class="btn btn-quiet linkbtn" href="${b.url}" target="_blank" rel="noopener">${L(b.v)} ${chev()}</a>`;
-    case 'phrase': return `<div class="tip"><b>${t('tip')}</b>${lang()==='ar'?'تائه أو لا تعرف كيف تسأل؟':'Lost, or not sure how to ask?'} <button class="linkish" data-act="phrase">${t('phraseBtn')}</button></div>`;
+    case 'phrase': return `<div class="tip"><b>${t('tip')}</b>${t('lostAsk')} <button class="linkish" data-act="phrase">${t('phraseBtn')}</button></div>`;
   }
   return '';
 }
@@ -332,13 +351,13 @@ function readable(root){
 function speak(btn){
   const ss = window.speechSynthesis;
   if(ss.speaking){ ss.cancel(); setListen(false); return; }
-  const code = lang()==='ar' ? 'ar' : 'en';
+  const code = ({fil:'fil',tl:'fil'})[lang()] || lang();
   const voices = ss.getVoices();
   const v = voices.find(x=>x.lang && x.lang.toLowerCase().startsWith(code));
   if(voices.length && !v){ toast(t('noVoice')); return; }
   const root = document.getElementById('sheet') || document.getElementById('scroll');
   const u = new SpeechSynthesisUtterance(readable(root));
-  u.lang = code==='ar' ? 'ar-AE' : 'en-GB'; if(v) u.voice = v; u.rate = .92;
+  u.lang = ({en:'en-GB',ar:'ar-AE',fr:'fr-FR',fil:'fil-PH',hi:'hi-IN',ur:'ur-PK'})[lang()] || 'en-GB'; if(v) u.voice = v; u.rate = .92;
   u.onend = u.onerror = () => setListen(false);
   ss.speak(u); setListen(true);
 }
@@ -347,8 +366,8 @@ function setListen(on){
 }
 const isDone = id => { const j = DATA.journeys[id]; const d = S.done[id]||{}; return j.stages.every(s=>d[s.id]); };
 function emergencyBox(){
-  return `<div class="emergency-box"><span class="label">${lang()==='ar'?'طوارئ':'Emergency'}</span>
-    <div class="em-nums"><a href="tel:998" dir="ltr"><b>998</b><span>${lang()==='ar'?'الإسعاف':'Ambulance'}</span></a><a href="tel:999" dir="ltr"><b>999</b><span>${lang()==='ar'?'الشرطة':'Police'}</span></a></div></div>`;
+  return `<div class="emergency-box"><span class="label">${t('emergency')}</span>
+    <div class="em-nums"><a href="tel:998" dir="ltr"><b>998</b><span>${t('ambulance')}</span></a><a href="tel:999" dir="ltr"><b>999</b><span>${t('police')}</span></a></div></div>`;
 }
 function pathPill(pid){
   const opt = DATA.pathways[pid].options.find(o=>o.journey && (S.finder[o.journey] || Object.keys(S.done[o.journey]||{}).length));
@@ -424,7 +443,7 @@ function guideSheet(p, k){
     </div>
     <div class="gnav">
       ${k>0 ? `<button class="btn btn-quiet" data-act="gstep" data-v="${k-1}">${t('back')}</button>` : ''}
-      <button class="btn btn-primary" data-act="gstep" data-v="${k+1}">${lang()==='ar'?'التالي':'Next'} ${chev()}</button>
+      <button class="btn btn-primary" data-act="gstep" data-v="${k+1}">${t('nextShort')} ${chev()}</button>
     </div>`, true);
 }
 function branchSheet(p, pick){
@@ -439,7 +458,7 @@ function branchSheet(p, pick){
   sheet(`<div class="sheet-top"><button class="linkish back-link" data-act="problem" data-v="${p.id}">${chev()}${L(b.q)}</button></div>
     <h2>${L(o.label)}</h2>
     <div class="answer"><h3>${t('tryThis')}</h3><p>${L(o.a)}</p></div>
-    ${o.link ? `<a class="btn btn-primary linkbtn" href="${o.link}" target="_blank" rel="noopener">${lang()==='ar'?'افتح صفحة حالة الهوية':'Open the ICP status page'} ${chev()}</a>` : ''}
+    ${o.link ? `<a class="btn btn-primary linkbtn" href="${o.link}" target="_blank" rel="noopener">${t('openIcp')} ${chev()}</a>` : ''}
     ${outcomeHtml()}`);
 }
 function outcomeHtml(){
@@ -489,7 +508,7 @@ function toast(msg){ const el = document.createElement('div'); el.className='toa
 function render(scrollTop){
   if(canSpeak && speechSynthesis.speaking) speechSynthesis.cancel();
   const l = lang();
-  app.lang = l; app.dir = l === 'ar' ? 'rtl' : 'ltr';
+  app.lang = l; app.dir = isRtl(l) ? 'rtl' : 'ltr';
   const scr = (SCREENS[S.screen] || SCREENS.welcome)();
   app.innerHTML = topbar() + `<div class="scroll" id="scroll">${scr.body}</div><div class="actions">${scr.actions||''}</div>`;
   if(scrollTop) document.getElementById('scroll').scrollTop = 0;
@@ -504,6 +523,8 @@ app.addEventListener('click', e => {
     case 'back': goBack(); break;
     case 'go': go(v); break;
     case 'toggleLang': S.lang = lang()==='en' ? 'ar' : 'en'; save(); render(); break;
+    case 'langPicker': langSheet(); break;
+    case 'setLang': closeSheet(); S.lang = v; save(); render(); break;
     case 'lang': S.lang = v; go('purpose'); break;
     case 'purpose': S.purpose = +v; save(); render(); break;
     case 'need': go('tasks', {need:v}); break;
