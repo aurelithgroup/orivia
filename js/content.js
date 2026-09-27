@@ -1077,3 +1077,174 @@ DATA.journeys['dubai.rent'] = {
 DATA.tasks['dubai.housing'] = [
   {journey:'dubai.rent', name:{en:'Rent a home', ar:'استئجار سكن'}, note:{en:'Avoid scams, sign safely, register Ejari', ar:'تجنّب الاحتيال ووقّع بأمان وسجّل «إيجاري»'}},
 ];
+
+/* ---------- Work (Dubai) ---------- */
+SRC.uaeLabour = {name:{en:'u.ae: Protection of workers’ rights', ar:'البوابة الرسمية: حماية حقوق العمال'}, url:'https://u.ae/en/information-and-services/jobs/employment-in-the-private-sector/labour-rights'};
+SRC.uaeLeave = {name:{en:'u.ae: Types of leave (private sector)', ar:'البوابة الرسمية: أنواع الإجازات (القطاع الخاص)'}, url:'https://u.ae/en/information-and-services/jobs/Sector-of-employment/employment-in-the-private-sector/Types-of-leaves'};
+SRC.mohreComplaint = {name:{en:'MOHRE: Register a labour complaint', ar:'وزارة الموارد البشرية والتوطين: تقديم شكوى عمالية'}, url:'https://www.mohre.gov.ae/en/services/register-labor-complaints-private-sector-employees-2022'};
+SRC.mohreStudent = {name:{en:'MOHRE: Student training and employment permit', ar:'وزارة الموارد البشرية والتوطين: تصريح تدريب وتشغيل الطلاب'}, url:'https://www.mohre.gov.ae/en/services/training-and-work-permit-for-students-2022'};
+const MOHRE_STUCK = {cards:[{title:{en:'MOHRE labour advice line', ar:'خط الاستشارات العمالية لوزارة الموارد البشرية والتوطين'}, phone:'80084', body:{en:'Free. For pay, contract and workplace problems in the private sector.', ar:'مجاني. لمشكلات الراتب والعقد وبيئة العمل في القطاع الخاص.'}}]};
+
+DATA.journeys['dubai.workrights'] = {
+  city:'dubai', need:'work', icon:'work',
+  title:{en:'Know your rights at work', ar:'اعرف حقوقك في العمل'},
+  sources:[SRC.uaeLabour, SRC.uaeLeave, SRC.mohreComplaint], checked:CHECKED, trust:{reviewed:false, tested:0},
+  stages:[
+    {id:'contract', level:'source', label:{en:'Contract', ar:'العقد'}, title:{en:'Your contract and passport', ar:'عقدك وجواز سفرك'}, help:['passport','fees','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'You sign your employment contract after arriving in the UAE. Read it and keep a copy.', ar:'توقّع عقد العمل بعد وصولك إلى الإمارات. اقرأه واحتفظ بنسخة منه.'},
+        {en:'It’s illegal for anyone to charge you recruitment fees.', ar:'يُمنع قانوناً أن يفرض عليك أي أحد رسوم توظيف.'},
+        {en:'Your employer is not allowed to keep your passport, and you don’t need their permission to leave the country.', ar:'لا يحق لجهة عملك الاحتفاظ بجواز سفرك، ولا تحتاج إلى إذنها لمغادرة الدولة.'},
+      ]},
+     ]},
+    {id:'pay', level:'source', label:{en:'Pay and leave', ar:'الراتب والإجازات'}, title:{en:'Pay and time off', ar:'الراتب والإجازات'}, help:['unpaid','leave','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'You should get your salary in full and on time.', ar:'يجب أن تحصل على راتبك كاملاً وفي موعده.'},
+        {en:'After one year, you get 30 days of paid annual leave a year. Between 6 and 12 months, you earn 2 days for each month worked.', ar:'بعد سنة من الخدمة، تحصل على 30 يوماً إجازة سنوية مدفوعة. وبين 6 و12 شهراً، تحصل على يومين عن كل شهر عمل.'},
+        {en:'Sick leave is up to 90 days a year: 15 on full pay, 30 on half pay, and the rest unpaid.', ar:'الإجازة المرضية حتى 90 يوماً في السنة: 15 بأجر كامل، و30 بنصف أجر، والباقي دون أجر.'},
+      ]},
+     ]},
+    {id:'problem', level:'source', label:{en:'Problems', ar:'المشكلات'}, title:{en:'If something goes wrong', ar:'إذا حدثت مشكلة'}, help:['unpaid','passport','else'],
+     blocks:[
+      {t:'steps', v:[
+        {en:'Raise it with HR first, in writing if you can.', ar:'ناقش الأمر مع الموارد البشرية أولاً، كتابياً إن أمكن.'},
+        {en:'If it isn’t solved, call MOHRE’s free labour advice line on 80084, or file a complaint in the MOHRE app or website.', ar:'إذا لم تُحل، اتصل بخط الاستشارات العمالية المجاني لوزارة الموارد البشرية والتوطين على الرقم 80084، أو قدّم شكوى عبر تطبيق الوزارة أو موقعها.'},
+        {en:'MOHRE contacts both sides to try to settle it, usually within 14 working days. If that fails, it goes to court.', ar:'تتواصل الوزارة مع الطرفين لمحاولة التسوية، عادةً خلال 14 يوم عمل، وإذا لم تنجح تُحال إلى المحكمة.'},
+      ]},
+     ]},
+  ],
+  problems:[
+    {id:'passport', q:{en:'My employer is keeping my passport', ar:'جهة عملي تحتفظ بجواز سفري'}, a:{en:'That’s prohibited in the UAE. Ask for it back in writing. If they refuse, call MOHRE on 80084.', ar:'هذا ممنوع في الإمارات. اطلب استرداده كتابياً، وإذا رفضوا اتصل بوزارة الموارد البشرية والتوطين على الرقم 80084.'}},
+    {id:'fees', q:{en:'I was asked to pay a recruitment fee', ar:'طُلب مني دفع رسوم توظيف'}, a:{en:'Charging recruitment fees is illegal in the UAE. Don’t pay, and report it to MOHRE on 80084.', ar:'فرض رسوم التوظيف ممنوع قانوناً في الإمارات. لا تدفع، وأبلغ وزارة الموارد البشرية والتوطين على الرقم 80084.'}},
+    {id:'unpaid', q:{en:'I haven’t been paid', ar:'لم أتقاضَ راتبي'}, a:{en:'Ask HR in writing when you’ll be paid. If it isn’t sorted, call MOHRE on 80084 or file a complaint in the MOHRE app.', ar:'اسأل الموارد البشرية كتابياً عن موعد صرف راتبك. وإذا لم تُحل المشكلة، اتصل بالوزارة على الرقم 80084 أو قدّم شكوى عبر تطبيقها.'}},
+    {id:'leave', q:{en:'I’m being refused leave I’m owed', ar:'يُرفض منحي إجازة مستحقة'}, a:{en:'Check your contract and how long you’ve worked there. If you’re still refused, ask MOHRE’s advice line on 80084.', ar:'تحقّق من عقدك ومدة عملك. وإذا استمر الرفض، اسأل خط الاستشارات في الوزارة على الرقم 80084.'}},
+    {id:'else', q:{en:'Something else', ar:'مشكلة أخرى'}, a:{en:'Call MOHRE’s free labour advice line on 80084.', ar:'اتصل بخط الاستشارات العمالية المجاني لوزارة الموارد البشرية والتوطين على الرقم 80084.'}},
+  ],
+  stuck:MOHRE_STUCK,
+  after:[{pathway:'dubai.ins', name:{en:'Check your health insurance', ar:'تحقّق من تأمينك الصحي'}}],
+};
+
+DATA.journeys['dubai.studentwork'] = {
+  city:'dubai', need:'work', icon:'work',
+  title:{en:'Work part-time as a student', ar:'العمل بدوام جزئي كطالب'},
+  sources:[SRC.mohreStudent], checked:CHECKED, trust:{reviewed:false, tested:0},
+  stages:[
+    {id:'ask', label:{en:'Ask first', ar:'اسأل أولاً'}, title:{en:'Ask your university first', ar:'اسأل جامعتك أولاً'}, help:['else'],
+     blocks:[
+      {t:'p', v:{en:'Rules can depend on your university and where it’s based. Ask your university’s visa office or careers team before accepting any job.', ar:'قد تختلف القواعد حسب جامعتك ومكانها. اسأل مكتب التأشيرات أو فريق التوظيف في جامعتك قبل قبول أي عمل.'}},
+      {t:'tip', label:'important', v:{en:'Never work without the right permit. It can put your visa at risk.', ar:'لا تعمل أبداً دون التصريح المناسب، فقد يعرّض ذلك تأشيرتك للخطر.'}},
+     ]},
+    {id:'permit', level:'source', label:{en:'The permit', ar:'التصريح'}, title:{en:'The student work permit', ar:'تصريح عمل الطالب'}, help:['nopermit','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'The government’s Student Training and Employment Permit lets students aged 15 and over work: part-time, temporary, flexible or remote.', ar:'يتيح تصريح تدريب وتشغيل الطلاب الحكومي للطلاب من سن 15 عاماً فأكثر العمل بدوام جزئي أو مؤقت أو مرن أو عن بُعد.'},
+        {en:'Your employer applies for it, not you. You need a valid residence visa, and a contract approved by MOHRE.', ar:'جهة العمل هي من تتقدّم بطلبه، لا أنت. وتحتاج إلى تأشيرة إقامة سارية وعقد معتمد من الوزارة.'},
+        {en:'The permit lasts 3 months.', ar:'مدة التصريح 3 أشهر.'},
+      ]},
+     ]},
+  ],
+  problems:[
+    {id:'nopermit', q:{en:'My employer says I don’t need a permit', ar:'جهة العمل تقول إنني لا أحتاج إلى تصريح'}, a:{en:'Check with your university’s visa office before starting. You can also ask MOHRE on 600 590000.', ar:'تحقّق من مكتب التأشيرات في جامعتك قبل البدء. ويمكنك أيضاً سؤال وزارة الموارد البشرية والتوطين على الرقم 600590000.'}},
+    {id:'else', q:{en:'Something else', ar:'مشكلة أخرى'}, a:{en:'Ask your university’s visa office, or call MOHRE on 600 590000.', ar:'اسأل مكتب التأشيرات في جامعتك، أو اتصل بوزارة الموارد البشرية والتوطين على الرقم 600590000.'}},
+  ],
+  stuck:{cards:[{title:{en:'Your university’s visa office', ar:'مكتب التأشيرات في جامعتك'}, body:{en:'They know the rules for your visa.', ar:'يعرفون القواعد الخاصة بتأشيرتك.'}},{title:{en:'MOHRE', ar:'وزارة الموارد البشرية والتوطين'}, phone:'600 590000', body:{en:'Available 24/7.', ar:'متاح على مدار الساعة.'}}]},
+  after:[{journey:'dubai.workrights', name:{en:'Know your rights at work', ar:'اعرف حقوقك في العمل'}}],
+};
+DATA.tasks['dubai.work'] = [
+  {journey:'dubai.workrights', name:{en:'Know your rights at work', ar:'اعرف حقوقك في العمل'}, note:{en:'Contract, passport, pay, leave and complaints', ar:'العقد والجواز والراتب والإجازات والشكاوى'}},
+  {journey:'dubai.studentwork', name:{en:'Work part-time as a student', ar:'العمل بدوام جزئي كطالب'}, note:{en:'The permit you need, and who applies', ar:'التصريح الذي تحتاجه ومن يتقدّم به'}},
+];
+
+/* ---------- Education (Dubai): school for your children ---------- */
+SRC.khdaAge = {name:{en:'Khaleej Times: KHDA guide on age cut-offs (2026)', ar:'الخليج تايمز: دليل هيئة المعرفة حول السن المطلوبة (2026)'}, url:'https://www.khaleejtimes.com/uae/dubai-school-admissions-khda-new-guide-age-cut-off'};
+SRC.khdaRatings = {name:{en:'KHDA: Dubai school inspection ratings', ar:'هيئة المعرفة والتنمية البشرية: تقييمات المدارس'}, url:'https://web.khda.gov.ae/en/About-Us/Whats-New/Dubai-school-inspection-ratings'};
+DATA.journeys['dubai.school'] = {
+  city:'dubai', need:'edu', icon:'edu',
+  title:{en:'Find a school for your child', ar:'ابحث عن مدرسة لطفلك'},
+  sources:[SRC.khdaRatings, SRC.khdaAge], checked:CHECKED, trust:{reviewed:false, tested:0},
+  stages:[
+    {id:'choose', level:'source', label:{en:'Choose', ar:'اختر'}, title:{en:'Choosing a school', ar:'اختيار مدرسة'}, help:['else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Private schools in Dubai are regulated by KHDA (the Knowledge and Human Development Authority).', ar:'تشرف هيئة المعرفة والتنمية البشرية (KHDA) على المدارس الخاصة في دبي.'},
+        {en:'KHDA publishes an inspection rating for each school. Check it alongside the curriculum, fees and distance from home.', ar:'تنشر الهيئة تقييماً رقابياً لكل مدرسة. راجعه إلى جانب المنهج والرسوم والمسافة من المنزل.'},
+      ]},
+     ]},
+    {id:'age', level:'source', label:{en:'Age and grade', ar:'السن والصف'}, title:{en:'Which grade your child joins', ar:'في أي صف يلتحق طفلك'}, help:['grade','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'For the youngest children, age decides the grade. For schools starting in September, the age is counted on 31 December.', ar:'بالنسبة لأصغر الأطفال، يحدد العمر الصف. وفي المدارس التي تبدأ في سبتمبر، يُحسب العمر في 31 ديسمبر.'},
+        {en:'For Grade 1 and above, the school looks mainly at your child’s transfer certificate from their last school.', ar:'من الصف الأول فما فوق، تعتمد المدرسة أساساً على شهادة النقل من مدرسة طفلك السابقة.'},
+      ]},
+      {t:'tip', label:'bring', v:{en:'Ask your child’s current school for a transfer certificate and recent reports before you move.', ar:'اطلب من مدرسة طفلك الحالية شهادة نقل وتقارير حديثة قبل الانتقال.'}},
+     ]},
+    {id:'apply', label:{en:'Apply', ar:'التقديم'}, title:{en:'Applying', ar:'التقديم'}, help:['full','else'],
+     blocks:[
+      {t:'steps', v:[
+        {en:'Contact the schools you like. Each one runs its own admissions and may have a waiting list.', ar:'تواصل مع المدارس التي تعجبك، فلكل منها إجراءات قبول خاصة وقد تكون لديها قائمة انتظار.'},
+        {en:'Ask what documents they need and whether there’s an assessment.', ar:'اسأل عن المستندات المطلوبة وهل يوجد اختبار تقييم.'},
+        {en:'Ask for the full fees in writing before you accept a place.', ar:'اطلب الرسوم الكاملة مكتوبة قبل قبول المقعد.'},
+      ]},
+     ]},
+  ],
+  problems:[
+    {id:'grade', q:{en:'I’m not sure which grade my child should join', ar:'لست متأكداً في أي صف يلتحق طفلي'}, a:{en:'Ask the school to explain their placement, based on your child’s age and transfer certificate. The rules follow KHDA’s Student Placement Guidelines.', ar:'اطلب من المدرسة شرح قرار التسكين بناءً على عمر طفلك وشهادة النقل، فالقواعد تتبع إرشادات هيئة المعرفة لتسكين الطلاب.'}},
+    {id:'full', q:{en:'The schools I want are full', ar:'المدارس التي أريدها ممتلئة'}, a:{en:'Join the waiting lists, and ask each school how long it usually takes. Apply to a few schools at once.', ar:'سجّل في قوائم الانتظار، واسأل كل مدرسة عن المدة المعتادة. وقدّم لعدة مدارس في الوقت نفسه.'}},
+    {id:'else', q:{en:'Something else', ar:'مشكلة أخرى'}, a:{en:'Ask the school’s admissions team first. For questions about rules, you can contact KHDA.', ar:'اسأل فريق القبول في المدرسة أولاً. ولأسئلة القواعد، يمكنك التواصل مع هيئة المعرفة والتنمية البشرية.'}},
+  ],
+  stuck:{cards:[{title:{en:'The school’s admissions team', ar:'فريق القبول في المدرسة'}, body:{en:'They handle applications and placement.', ar:'يتولون الطلبات والتسكين.'}},{title:{en:'KHDA', ar:'هيئة المعرفة والتنمية البشرية'}, body:{en:'Dubai’s regulator for private schools.', ar:'الجهة المنظمة للمدارس الخاصة في دبي.'}}]},
+  after:[{journey:'dubai.rent', name:{en:'Rent a home', ar:'استئجار سكن'}}],
+};
+DATA.tasks['dubai.edu'] = [
+  {journey:'dubai.school', name:{en:'Find a school for your child', ar:'ابحث عن مدرسة لطفلك'}, note:{en:'Ratings, age and grade, and applying', ar:'التقييمات والسن والصف والتقديم'}},
+];
+
+/* ---------- Community (Dubai) ---------- */
+SRC.volunteers = {name:{en:'Volunteers.ae: FAQ', ar:'منصة المتطوعين: الأسئلة الشائعة'}, url:'https://www.volunteers.ae/en/faq'};
+SRC.ramadan = {name:{en:'u.ae: Ramadan', ar:'البوابة الرسمية: رمضان'}, url:'https://u.ae/en/information-and-services/public-holidays-and-religious-affairs/ramadan'};
+DATA.journeys['dubai.community'] = {
+  city:'dubai', need:'community', icon:'community',
+  title:{en:'Meet people and settle in', ar:'تعرّف على الناس واستقر'},
+  sources:[SRC.volunteers, SRC.ramadan], checked:CHECKED, trust:{reviewed:false, tested:0},
+  stages:[
+    {id:'lonely', label:{en:'It’s normal', ar:'هذا طبيعي'}, title:{en:'Feeling alone is normal', ar:'الشعور بالوحدة أمر طبيعي'}, help:['talk','else'],
+     blocks:[
+      {t:'p', v:{en:'Most newcomers feel lonely at first. It usually gets easier once you have a routine and a few familiar faces.', ar:'يشعر معظم القادمين الجدد بالوحدة في البداية، وعادةً يصبح الأمر أسهل عندما يكون لديك روتين وبعض الوجوه المألوفة.'}},
+     ]},
+    {id:'meet', label:{en:'Meet people', ar:'تعرّف على الناس'}, title:{en:'Ways to meet people', ar:'طرق للتعرّف على الناس'}, help:['else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Students: join university clubs and societies. They’re one of the easiest ways to make friends.', ar:'للطلاب: انضم إلى أندية الجامعة وجمعياتها، فهي من أسهل الطرق لتكوين صداقات.'},
+        {en:'Look for community groups from your home country or who share your faith or interests.', ar:'ابحث عن مجموعات من بلدك أو تشاركك دينك أو اهتماماتك.'},
+        {en:'Regular routines help: the same gym, café or class each week.', ar:'الروتين المنتظم يساعد: النادي الرياضي أو المقهى أو الصف نفسه كل أسبوع.'},
+      ]},
+     ]},
+    {id:'volunteer', level:'source', label:{en:'Volunteer', ar:'التطوع'}, title:{en:'Volunteer', ar:'تطوّع'}, help:['noeid','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Volunteers.ae is the UAE’s national volunteering platform. It’s open to residents of all nationalities.', ar:'منصة Volunteers.ae هي المنصة الوطنية للتطوع في الإمارات، ومتاحة للمقيمين من جميع الجنسيات.'},
+        {en:'You can sign up with UAE PASS. You’ll need your Emirates ID and passport. Under-18s need a parent’s consent.', ar:'يمكنك التسجيل عبر UAE PASS، وتحتاج إلى هويتك الإماراتية وجواز سفرك. ويحتاج من هم دون 18 عاماً إلى موافقة ولي الأمر.'},
+      ]},
+     ]},
+    {id:'customs', level:'source', label:{en:'Local customs', ar:'العادات المحلية'}, title:{en:'Ramadan and local customs', ar:'رمضان والعادات المحلية'}, help:['else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'During Ramadan, non-Muslims don’t have to fast. Malls have dining areas away from people who are fasting.', ar:'خلال رمضان، لا يُطلب من غير المسلمين الصيام، وتوجد في مراكز التسوق مناطق لتناول الطعام بعيداً عن الصائمين.'},
+        {en:'Working hours are shorter for everyone during Ramadan.', ar:'تُقلَّص ساعات العمل للجميع خلال رمضان.'},
+        {en:'Cities are especially lively after sunset. Many people welcome newcomers to join an iftar, the meal that breaks the fast.', ar:'تصبح المدن حيوية بشكل خاص بعد غروب الشمس، ويرحّب كثيرون بانضمام القادمين الجدد إلى الإفطار.'},
+      ]},
+     ]},
+  ],
+  problems:[
+    {id:'talk', q:{en:'I need to talk to someone', ar:'أحتاج إلى التحدث مع أحد'}, a:{en:'Students can contact their university’s counselling or wellbeing service. If you’re in danger or might harm yourself, call 999 or go to the nearest emergency department now.', ar:'يمكن للطلاب التواصل مع خدمة الإرشاد النفسي في جامعتهم. وإذا كنت في خطر أو قد تؤذي نفسك، اتصل بالرقم 999 أو توجّه إلى أقرب قسم طوارئ الآن.'}},
+    {id:'noeid', q:{en:'I can’t sign up without an Emirates ID', ar:'لا أستطيع التسجيل دون هوية إماراتية'}, a:{en:'Volunteers.ae asks for your Emirates ID, so wait until your card arrives. In the meantime, ask your university or community groups about volunteering.', ar:'تطلب منصة المتطوعين الهوية الإماراتية، فانتظر حتى تصلك البطاقة. وفي الأثناء، اسأل جامعتك أو المجموعات المجتمعية عن فرص التطوع.'}},
+    {id:'else', q:{en:'Something else', ar:'مشكلة أخرى'}, a:{en:'Students can ask their university’s student services. They often know about clubs, events and support.', ar:'يمكن للطلاب سؤال خدمات الطلاب في جامعتهم، فهم غالباً يعرفون الأندية والفعاليات والدعم المتاح.'}},
+  ],
+  stuck:{cards:[{title:{en:'Emergency', ar:'الطوارئ'}, phone:'999', body:{en:'If you or someone else is in danger.', ar:'إذا كنت أنت أو شخص آخر في خطر.'}},{title:{en:'Your university’s student services', ar:'خدمات الطلاب في جامعتك'}, body:{en:'Clubs, events, counselling and support.', ar:'الأندية والفعاليات والإرشاد النفسي والدعم.'}}]},
+  after:[{journey:'dubai.health.student', name:{en:'Looking after your health', ar:'الاهتمام بصحتك'}}],
+};
+DATA.tasks['dubai.community'] = [
+  {journey:'dubai.community', name:{en:'Meet people and settle in', ar:'تعرّف على الناس واستقر'}, note:{en:'Making friends, volunteering, and local customs', ar:'تكوين الصداقات والتطوع والعادات المحلية'}},
+];
