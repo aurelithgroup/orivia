@@ -71,8 +71,8 @@ const topbar = () => `
     <div class="top-left">
     ${S.screen !== 'welcome' ? `<button class="top-back" data-act="back" aria-label="${t('back')}">${svg('chev','chev back-chev')}</button>` : ''}
     <button class="brand" data-act="home" aria-label="Orivia, ${t('home')}">
-      <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 5l3.2 7L12 19l-3.2-7z" fill="var(--amber)"/></svg>
-      orivia
+      <svg class="brand-mark" viewBox="0 0 306 310" aria-hidden="true"><path fill="currentColor" d="M0 0 L0 168 C0 248 60 302 136 308 L136 160 C136 70 78 4 0 0 Z"/><path fill="var(--amber)" d="M160 308 L160 190 C160 108 222 44 306 40 L306 172 C306 254 240 302 160 308 Z"/></svg>
+      <span class="wordmark">ORIVIA</span>
     </button>
     </div>
     <div class="top-actions">
