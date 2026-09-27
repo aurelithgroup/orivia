@@ -105,7 +105,7 @@ const DATA = {
   languages:[
     {code:'en', name:'English', ready:true},
     {code:'ar', name:'العربية', ready:true},
-    {code:'fr', name:'Français', ready:true, beta:true}, {code:'fil', name:'Filipino'}, {code:'hi', name:'हिन्दी'}, {code:'ur', name:'اردو'}
+    {code:'fr', name:'Français'}, {code:'fil', name:'Filipino'}, {code:'hi', name:'हिन्दी'}, {code:'ur', name:'اردو'}
   ],
   needs:[
     {id:'move', icon:'move', name:{en:'Getting around', ar:'التنقل'}},
@@ -1253,5 +1253,3 @@ DATA.tasks['dubai.community'] = [
   {journey:'dubai.community', name:{en:'Meet people and settle in', ar:'تعرّف على الناس واستقر'}, note:{en:'Making friends, volunteering, and local customs', ar:'تكوين الصداقات والتطوع والعادات المحلية'}},
 ];
 
-/* Mark translated languages as ready when their file has loaded */
-DATA.languages.forEach(l => { if(window.I18N && window.I18N[l.code]){ l.ready = true; l.beta = true; } });

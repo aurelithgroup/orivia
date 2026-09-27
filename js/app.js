@@ -44,6 +44,8 @@ const lang = () => S.lang || 'en';
    Anything missing falls back to English. */
 window.I18N = window.I18N || {};
 const RTL = ['ar','ur'];
+/* A language is offered once its translation file has loaded */
+DATA.languages.forEach(l => { if(I18N[l.code]){ l.ready = true; l.beta = true; } });
 const isRtl = l => RTL.includes(l);
 const isBeta = () => !['en','ar'].includes(lang());
 const langName = code => (DATA.languages.find(x=>x.code===code) || {}).name || code;
