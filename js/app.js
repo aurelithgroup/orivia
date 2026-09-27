@@ -28,9 +28,10 @@ const svg = (k, cls='') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" 
 
 /* ---------- State ---------- */
 const KEY = 'orivia-proto-v1';
-let S = {city:'dubai', lang:null, purpose:null, done:{}, finder:{}, screen:'welcome', params:{}, history:[]};
+const FRESH = () => ({city:'dubai', lang:null, purpose:null, done:{}, finder:{}, checks:{}, stuck:{}, touched:{}, recent:[], log:[], screen:'welcome', params:{}, history:[]});
+let S = FRESH();
 try{ const s = JSON.parse(localStorage.getItem(KEY)||'null'); if(s) S = Object.assign(S, s); }catch(e){}
-S.finder = S.finder || {};
+S.finder = S.finder || {}; S.checks = S.checks || {}; S.stuck = S.stuck || {};
 const QS = new URLSearchParams(location.search);
 if(QS.get('city') && DATA.cities[QS.get('city')]) S.city = QS.get('city');
 if(location.hash === '#edinburgh') S.city = 'edinburgh';
@@ -48,6 +49,7 @@ const RTL = ['ar','ur'];
 DATA.languages.forEach(l => { if(I18N[l.code]){ l.ready = true; l.beta = true; } });
 const isRtl = l => RTL.includes(l);
 const isBeta = () => !['en','ar'].includes(lang());
+readDeepLink();
 const langName = code => (DATA.languages.find(x=>x.code===code) || {}).name || code;
 const t = k => { const l = lang(); const tr = I18N[l] && I18N[l].ui;
   if(UI[l] && UI[l][k] !== undefined) return UI[l][k];
@@ -71,6 +73,8 @@ function go(screen, params={}){
 }
 function parentOf(){
   if(S.screen === 'step' || S.screen === 'complete') return {screen:'journey', params:{id:S.params.id}};
+  if(S.screen === 'hub') return {screen:'welcome', params:{}};
+  if(S.screen === 'needs' && hasHub()) return {screen:'hub', params:{}};
   if(S.screen === 'needs' || S.screen === 'purpose') return {screen:'welcome', params:{}};
   return {screen: S.lang ? 'needs' : 'welcome', params:{}};
 }
@@ -84,7 +88,7 @@ window.addEventListener('popstate', () => {
   if(document.getElementById('sheet')){ closeSheet(); try{ history.pushState({orivia:true}, ''); navDepth++; }catch(e){} return; }
   if(S.screen !== 'welcome') back();
 });
-function home(){ S.history = []; S.screen = S.lang ? 'needs' : 'welcome'; S.params = {}; save(); render(true); }
+function home(){ S.history = []; S.screen = S.lang ? (hasHub() ? 'hub' : 'needs') : 'welcome'; S.params = {}; save(); render(true); }
 
 /* ---------- Pieces ---------- */
 const topbar = () => `
@@ -154,6 +158,7 @@ const SCREENS = {
     return {
       body: sign({eyebrow:t('needsEyebrow'), title:t('needsTitle'), sub:t('needsSub')}) + `
         <div class="content">
+          ${hasHub() ? `<button class="choice hub-link" data-act="home"><span class="main"><span>${t('yourJourneys')}</span><small>${(()=>{ const c = ctx(activeJourneys()[0]); return L(c.journey.title) + ' · ' + t('stepsDone')(c.done,c.total); })()}</small></span>${chev()}</button>` : ''}
           ${!hasWeek ? `<div class="tip">${t('cityClosed')}</div>` : ''}
           <div class="grid">
             ${DATA.needs.map(tile).join('')}
@@ -277,7 +282,8 @@ const SCREENS = {
           <div class="sign-tools">${chip(s,true)}${listenBtn()}</div>
         </div>
         <div class="content">
-          ${s.blocks.map(block).join('')}
+          ${s.blocks.filter(b => !(s.need && b.t==='tip' && b.label==='bring')).map(block).join('')}
+          ${needBox(S.params.id, s)}
           ${sourceBlock(j, s)}
         </div>`,
       actions:`<button class="btn btn-help" data-act="wrong">${svg('help','help-ico')}<span>${t('wrong')}</span></button>
@@ -299,6 +305,8 @@ const SCREENS = {
     };
   }
 };
+
+SCREENS.hub = hubScreen;
 
 function block(b){
   const j = DATA.journeys[S.params.id];
@@ -533,23 +541,25 @@ app.addEventListener('click', e => {
     case 'toggleLang': S.lang = lang()==='en' ? 'ar' : 'en'; save(); render(); break;
     case 'langPicker': langSheet(); break;
     case 'setLang': closeSheet(); S.lang = v; save(); render(); break;
-    case 'lang': S.lang = v; go('purpose'); break;
+    case 'lang': S.lang = v; logEv('lang',{detail:v}); if(!applyPending()) go('purpose'); break;
     case 'purpose': S.purpose = +v; save(); render(); break;
     case 'need': go('tasks', {need:v}); break;
     case 'unsure': if(DATA.firstWeek[S.city]) go('unsure'); break;
-    case 'journey': closeSheet(); go('journey', {id:v}); break;
-    case 'step': go('step', {id:S.params.id, i:+v}); break;
+    case 'journey': closeSheet(); touch(v); go('journey', {id:v}); logEv('journey_open'); break;
+    case 'step': go('step', {id:S.params.id, i:+v}); logEv('stage_open'); break;
     case 'stepDone': {
       const j = DATA.journeys[S.params.id], i = S.params.i;
       S.done[S.params.id] = S.done[S.params.id] || {};
-      S.done[S.params.id][j.stages[i].id] = true;
+      S.done[S.params.id][j.stages[i].id] = true; touch(S.params.id);
+      if(S.stuck[S.params.id] === j.stages[i].id) delete S.stuck[S.params.id];
+      logEv('stage_done'); if(i === j.stages.length-1) logEv('journey_complete');
       if(i < j.stages.length-1){ S.params = {id:S.params.id, i:i+1}; save(); render(true); }
       else { S.screen = 'complete'; save(); render(true); }
       break;
     }
     case 'restartJ': S.done[S.params.id] = {}; save(); render(true); break;
-    case 'wrong': wrongSheet(); break;
-    case 'problem': wrongSheet(v); break;
+    case 'wrong': wrongSheet(); logEv('help_open'); break;
+    case 'problem': wrongSheet(v); S.lastProblem = {j:S.params.id, p:v}; logEv('problem', {p:v}); break;
     case 'phrase': phraseSheet(); break;
     case 'closeSheet': closeSheet(); break;
     case 'gstep': guideSheet(curProblem, +v); break;
@@ -577,8 +587,14 @@ app.addEventListener('click', e => {
       S.screen = 'journey'; S.params = {id}; save(); render(true); break;
     }
     case 'listen': speak(b); break;
-    case 'solved': closeSheet(); toast(t('wellDone')); break;
-    case 'stuck': stuckSheet(); break;
+    case 'solved': closeSheet(); if(S.stuck[S.params.id]) delete S.stuck[S.params.id]; logEv('solved', {p:S.lastProblem && S.lastProblem.p}); save(); toast(t('wellDone')); break;
+    case 'stuck': stuckSheet(); if(S.screen==='step'){ S.stuck[S.params.id] = DATA.journeys[S.params.id].stages[S.params.i].id; } logEv('still_stuck', {p:S.lastProblem && S.lastProblem.p}); save(); break;
+    case 'tick': { const jid = S.params.id; S.checks[jid] = S.checks[jid] || {}; S.checks[jid][v] = !S.checks[jid][v]; logEv('tick', {detail:v+':'+S.checks[jid][v]}); save();
+      const sc = document.getElementById('scroll').scrollTop; render(); document.getElementById('scroll').scrollTop = sc; break; }
+    case 'hubStep': { const c = ctx(v); touch(v); go('step', {id:v, i:Math.max(c.index,0)}); if(c.status==='blocked') wrongSheet(); break; }
+    case 'hubHelp': { const c = ctx(v); go('step', {id:v, i:Math.max(c.index,0)}); wrongSheet(); logEv('help_open', {detail:'from_hub'}); break; }
+    case 'exportLog': exportLog(); break;
+    case 'clearLog': S.log = []; save(); render(); break;
   }
 });
 app.addEventListener('input', e => { if(e.target.id === 'dest') updatePhrase(); });
@@ -594,7 +610,7 @@ document.getElementById('scanAs').addEventListener('click', e => {
   S.city = b.dataset.city; S.history = []; S.screen = 'welcome'; S.params = {}; save(); render(true); drawQR(); fillLanding();
 });
 document.getElementById('resetAll').addEventListener('click', () => {
-  S = {city:S.city, lang:null, purpose:null, done:{}, finder:{}, screen:'welcome', params:{}, history:[]}; save(); render(true);
+  S = Object.assign(FRESH(), {city:S.city}); save(); render(true);
 });
 
 /* Decorative stand-in for a QR code (not scannable) */
@@ -602,6 +618,7 @@ function drawQR(){}
 drawQR();
 render();
 fillLanding();
+applyPending();
 if(S.screen !== 'welcome'){ try{ history.pushState({orivia:true}, ''); navDepth++; }catch(e){} }
 
 /* ---------- Installable app + offline ---------- */
@@ -679,3 +696,6 @@ function fillLanding(){
     return `<div class="land-need"><span class="land-need-h">${svg(n.icon)}${n.name.en}</span><ul>${items.map(x=>`<li>${x.name.en}</li>`).join('')}</ul></div>`;
   }).join('');
 }
+
+/* Log taps on outside links and phone numbers (for the test-session log) */
+app.addEventListener('click', e => { const a = e.target.closest('a[href]'); if(!a) return; logEv(a.href.startsWith('tel:') ? 'call' : 'link_open', {detail:a.getAttribute('href')}); save(); });

@@ -405,3 +405,41 @@ a.phone{color:var(--ink);text-decoration:none}
 .phrase .en.big{font-size:26px;line-height:1.35;color:var(--amber)}
 .phrase .mine{font-size:17px;line-height:1.5;font-weight:600;opacity:.9}
 .phrase .mine[lang="ar"],.phrase .mine[lang="ur"]{font-family:var(--arabic);font-size:19px}
+
+/* ---------- Your journeys (hub) ---------- */
+.hub-card{border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:14px;background:var(--surface)}
+.hub-title{all:unset;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:var(--display);font-weight:800;font-size:21px;line-height:1.2}
+.hub-title:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:6px}
+.hub-here{display:flex;align-items:center;gap:10px;font-size:15px}
+.hub-here .dot{width:12px;height:12px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 4px rgba(242,185,15,.25);flex:none}
+.hub-state{border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;background:var(--surface2);border-inline-start:5px solid var(--ink)}
+.hub-state strong{font-size:17px;line-height:1.35}
+.hub-state .muted{font-size:14px;color:var(--muted)}
+.hub-state.next{background:var(--sign);color:var(--signInk);border-color:var(--amber)}
+.hub-state.next .label{color:var(--signMuted)}
+.hub-state.waiting{border-color:var(--amber)}
+.hub-state.blocked{background:var(--warnSoft);border-color:var(--warn)}
+.hub-state.blocked .label{color:var(--warn)}
+.hub-state.blocked .btn{align-self:flex-start;margin-top:6px}
+.hub-state.done{border-color:var(--ok);background:var(--okSoft)}
+.hub-need{all:unset;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-weight:700}
+.hub-need:focus-visible{outline:3px solid var(--focus)}
+.hub-up ol{margin:6px 0 0;padding-inline-start:20px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:4px}
+.hub-link{border-color:var(--amber);border-width:2px}
+.test-panel{border:1px dashed var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--muted)}
+.test-actions{display:flex;gap:12px;align-items:center}
+
+/* ---------- What you'll need (checklist) ---------- */
+.need-box{border:2px solid var(--ink);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.need-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.need-list{display:flex;flex-direction:column;gap:8px}
+.need-item{all:unset;cursor:pointer;display:flex;align-items:flex-start;gap:12px;padding:12px;border-radius:12px;background:var(--surface2);border:1px solid var(--line)}
+.need-item:focus-visible{outline:3px solid var(--focus)}
+.need-item .tickbox{width:24px;height:24px;border-radius:7px;border:2px solid var(--ink);flex:none;display:grid;place-items:center;margin-top:1px}
+.need-item.on .tickbox{background:var(--ok);border-color:var(--ok)}
+.need-item.on .tickbox::after{content:"";width:6px;height:12px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg);margin-top:-3px}
+.need-item.on .need-text > span{text-decoration:line-through;text-decoration-color:var(--muted)}
+.need-text{display:flex;flex-direction:column;gap:2px;flex:1;font-size:16px}
+.need-text small{color:var(--muted);font-size:13px}
+.form-tag{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--line);border-radius:6px;padding:2px 6px;color:var(--muted);flex:none;margin-top:2px}
+.need-hint{font-size:13px;color:var(--muted)}
