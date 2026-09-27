@@ -603,6 +603,7 @@ app.addEventListener('click', e => {
     case 'exportLog': exportLog(); break;
     case 'clearLog': S.log = []; save(); render(); break;
     case 'askOpen': askSheet(); break;
+    case 'statsToggle': S.analytics = S.analytics === false ? true : false; save(); render(); break;
     case 'askGo': askGo(v); break;
     default: placesAct(b.dataset.act, v);
   }

@@ -125,3 +125,5 @@ Object.assign(I18N["fr"].ui, ({
   contactTeam:"Contact",
   partnerHours:"Horaires"
 }));
+
+Object.assign(I18N["fr"].ui, {"statsNote": "Orivia compte des clics anonymes, par exemple l’étape où les gens demandent de l’aide, pour s’améliorer. Jamais votre nom ni ce que vous écrivez.", "statsOff": "Désactiver", "statsOn": "Activer", "statsIsOff": "Les statistiques anonymes sont désactivées sur ce téléphone."});

@@ -116,6 +116,7 @@ function logEv(type, extra){
   S.log = S.log || [];
   S.log.push(Object.assign({ev:type, ts:new Date().toISOString(), city:S.city, lang:lang(), j:S.params && S.params.id || '', stage:(S.params && S.params.id && S.params.i!=null && DATA.journeys[S.params.id]) ? DATA.journeys[S.params.id].stages[S.params.i].id : ''}, extra||{}));
   if(S.log.length > 1000) S.log = S.log.slice(-1000);
+  sendEv(S.log[S.log.length-1]);
 }
 function exportLog(){
   const rows = S.log || []; const cols = ['ts','ev','city','lang','j','stage','p','detail'];
@@ -173,6 +174,7 @@ function hubScreen(){
         ${sug ? `<span class="label">${t('suggested')}</span><div class="choices"><button class="choice" data-act="journey" data-v="${sug.journey}"><span>${L(sug.name)}</span>${chev()}</button></div>` : ''}
         <button class="btn btn-quiet wide" data-act="go" data-v="needs">${t('exploreAll')}</button>
         ${S.testMode ? testPanel() : ''}
+        ${statsNoteHtml()}
       </div>`,
     actions: c.stage ? `<button class="btn btn-primary wide" data-act="hubStep" data-v="${focusId}">${c.status==='blocked' ? t('getHelp') : t('continueBtn')} ${chev()}</button>`
       : `<button class="btn btn-primary wide" data-act="go" data-v="needs">${t('startSomething')} ${chev()}</button>`

@@ -125,3 +125,5 @@ Object.assign(I18N["fil"].ui, ({
   contactTeam:"Kontakin",
   partnerHours:"Oras"
 }));
+
+Object.assign(I18N["fil"].ui, {"statsNote": "Binibilang ng Orivia ang mga anonymous na tap, gaya ng kung saang hakbang humihingi ng tulong ang mga tao, para gumanda pa ito. Hindi kailanman ang pangalan mo o ang anumang tina-type mo.", "statsOff": "I-off", "statsOn": "I-on", "statsIsOff": "Naka-off ang anonymous na bilang sa phone na ito."});

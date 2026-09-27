@@ -125,3 +125,5 @@ Object.assign(I18N["hi"].ui, ({
   contactTeam:"संपर्क करें",
   partnerHours:"समय"
 }));
+
+Object.assign(I18N["hi"].ui, {"statsNote": "Orivia बेहतर बनने के लिए गुमनाम टैप गिनता है, जैसे लोग किस कदम पर मदद माँगते हैं। आपका नाम या आप जो लिखते हैं, वह कभी नहीं।", "statsOff": "बंद करें", "statsOn": "चालू करें", "statsIsOff": "इस फ़ोन पर गुमनाम गिनती बंद है।"});

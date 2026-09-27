@@ -91,6 +91,7 @@ function askResultsHtml(q){
   const good = res.filter(r => r.score > 2.2 && r.cover >= .6);
   if(!q.trim()) return `<p class="ask-try">${t('askTry')}</p>`;
   if(!good.length){
+    clearTimeout(window.__askNone); window.__askNone = setTimeout(() => logEv('ask_none'), 1500);
     const j = cx && DATA.journeys[cx.jid];
     const cards = (j && j.stuck && j.stuck.cards) || [];
     const els = j && (j.problems||[]).find(p=>p.id==='else');

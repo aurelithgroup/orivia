@@ -125,3 +125,5 @@ Object.assign(I18N["ur"].ui, ({
   contactTeam:"رابطہ",
   partnerHours:"اوقات"
 }));
+
+Object.assign(I18N["ur"].ui, {"statsNote": "Orivia بہتر ہونے کے لیے گمنام ٹیپ گنتا ہے، جیسے لوگ کس قدم پر مدد مانگتے ہیں۔ آپ کا نام یا آپ جو لکھتے ہیں، وہ کبھی نہیں۔", "statsOff": "بند کریں", "statsOn": "چالو کریں", "statsIsOff": "اس فون پر گمنام گنتی بند ہے۔"});
