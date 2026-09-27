@@ -443,3 +443,25 @@ a.phone{color:var(--ink);text-decoration:none}
 .need-text small{color:var(--muted);font-size:13px}
 .form-tag{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--line);border-radius:6px;padding:2px 6px;color:var(--muted);flex:none;margin-top:2px}
 .need-hint{font-size:13px;color:var(--muted)}
+
+/* ---------- Places, maps and appointments ---------- */
+.places{display:flex;flex-direction:column;gap:10px}
+.place,.appt,.appt-form{border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.place-head,.appt-when{display:flex;align-items:flex-start;gap:10px}
+.place-head strong{font-size:16px;line-height:1.35}
+.appt-when strong{font-size:19px}
+.place-ico{width:22px;height:22px;flex:none;color:var(--ink)}
+.place p{margin:0;font-size:15px}
+.place-addr{font-size:14px;color:var(--muted)}
+.place-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px}
+.place-actions .btn{flex:0 1 auto;display:inline-flex;align-items:center;gap:8px;text-decoration:none;min-height:44px;padding-inline:14px}
+.btn-ico{width:18px;height:18px;flex:none}
+.place-src{font-size:12px;color:var(--muted)}
+.place-src a{color:inherit}
+.choice.near{text-decoration:none;color:inherit}
+.appt{border:2px solid var(--amber);background:var(--surface2)}
+.appt .muted{font-size:14px;color:var(--muted)}
+.appt.past{border-color:var(--ok)}
+.appt .linkish{align-self:flex-start}
+.appt-add{border-style:dashed}
+.appt-form .field{margin-bottom:4px}

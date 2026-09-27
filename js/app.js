@@ -24,6 +24,7 @@ const ICONS = {
   chev:'<path d="M9 5l7 7-7 7"/>',
   arrow:'<path d="M4 12h15M13 6l6 6-6 6"/>'
 };
+Object.assign(ICONS, window.EXTRA_ICONS || {});
 const svg = (k, cls='') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`;
 
 /* ---------- State ---------- */
@@ -283,7 +284,9 @@ const SCREENS = {
         </div>
         <div class="content">
           ${s.blocks.filter(b => !(s.need && b.t==='tip' && b.label==='bring')).map(block).join('')}
+          ${apptBox(S.params.id, s)}
           ${needBox(S.params.id, s)}
+          ${placesBox(s)}
           ${sourceBlock(j, s)}
         </div>`,
       actions:`<button class="btn btn-help" data-act="wrong">${svg('help','help-ico')}<span>${t('wrong')}</span></button>
@@ -595,6 +598,7 @@ app.addEventListener('click', e => {
     case 'hubHelp': { const c = ctx(v); go('step', {id:v, i:Math.max(c.index,0)}); wrongSheet(); logEv('help_open', {detail:'from_hub'}); break; }
     case 'exportLog': exportLog(); break;
     case 'clearLog': S.log = []; save(); render(); break;
+    default: placesAct(b.dataset.act, v);
   }
 });
 app.addEventListener('input', e => { if(e.target.id === 'dest') updatePhrase(); });

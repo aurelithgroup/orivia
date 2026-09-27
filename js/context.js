@@ -90,7 +90,7 @@ function ctx(jid){
   const cur = j.stages.findIndex(s=>!d[s.id]);
   const stage = cur >= 0 ? j.stages[cur] : null;
   const stuckAt = (S.stuck||{})[jid];
-  const status = !stage ? 'done' : (stuckAt === stage.id ? 'blocked' : (stage.wait ? 'waiting' : 'active'));
+  const status = !stage ? 'done' : (stuckAt === stage.id ? 'blocked' : (stage.wait && !apptOf(jid, stage.id) ? 'waiting' : 'active'));
   const need = stage && stage.need ? stage.need : [], ticks = (S.checks[jid]||{});
   return {
     who: S.purpose, where: j.city, what: jid, journey: j,
@@ -156,6 +156,7 @@ function hubScreen(){
   return {
     body: sign({eyebrow:L(DATA.cities[S.city].kicker), title:t('hubTitle'), sub:t('hubSub')}) + `
       <div class="content">
+        ${hubApptCard()}
         <div class="hub-card">
           <button class="hub-title" data-act="journey" data-v="${focusId}"><span>${L(j.title)}</span>${chev()}</button>
           <div class="progress"><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${c.total}" aria-valuenow="${c.done}"><i style="width:${c.done/c.total*100}%"></i></div>
