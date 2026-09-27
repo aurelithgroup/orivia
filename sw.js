@@ -1,7 +1,7 @@
 /* Orivia service worker: keeps the app and its journeys available offline.
    Bump VERSION whenever you publish changes so phones pick up the new files. */
-const VERSION = 'orivia-v14';
-const SHELL = ['./', 'index.html', 'css/app.css', 'js/content.js', 'js/app.js', 'js/i18n/fr.js', 'js/i18n/fil.js', 'js/i18n/hi.js', 'manifest.webmanifest',
+const VERSION = 'orivia-v15';
+const SHELL = ['./', 'index.html', 'css/app.css', 'js/content.js', 'js/app.js', 'js/i18n/fr.js', 'js/i18n/fil.js', 'js/i18n/hi.js', 'js/i18n/ur.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/qr-dubai.png', 'icons/logo-mark.svg'];
 
 self.addEventListener('install', e => {
