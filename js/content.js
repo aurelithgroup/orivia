@@ -89,13 +89,13 @@ const DATA = {
       kicker:{en:'Dubai · United Arab Emirates', ar:'دبي · الإمارات العربية المتحدة'},
       poster:'Dubai International · Arrivals',
       title:{en:"Welcome. You're here.", ar:'أهلاً بك. لقد وصلت.'},
-      sub:{en:"New place. Same you. Orivia walks you through what comes next, one step at a time.", ar:'مكان جديد. أنت كما أنت. أوريفيا ترشدك إلى ما يأتي بعد ذلك، خطوة بخطوة.'},
+      sub:{en:"Not sure what comes next? Orivia walks you through it, one step at a time.", ar:'لا تعرف ما الخطوة التالية؟ أوريفيا ترشدك خطوة بخطوة.'},
     },
     edinburgh:{
       kicker:{en:'Edinburgh · United Kingdom', ar:'إدنبرة · المملكة المتحدة'},
       poster:'Edinburgh Airport · Arrivals',
       title:{en:"Welcome. You're here.", ar:'أهلاً بك. لقد وصلت.'},
-      sub:{en:"New place. Same you. Orivia walks you through what comes next, one step at a time.", ar:'مكان جديد. أنت كما أنت. أوريفيا ترشدك إلى ما يأتي بعد ذلك، خطوة بخطوة.'},
+      sub:{en:"Not sure what comes next? Orivia walks you through it, one step at a time.", ar:'لا تعرف ما الخطوة التالية؟ أوريفيا ترشدك خطوة بخطوة.'},
     }
   },
   languages:[
