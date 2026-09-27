@@ -6,7 +6,7 @@
    Turn it on by setting GC_CODE to the GoatCounter site code.
    People can switch it off on the home screen.
    ========================================================= */
-const GC_CODE = '';   // e.g. 'orivia' for https://orivia.goatcounter.com
+const GC_CODE = 'orivia';   // e.g. 'orivia' for https://orivia.goatcounter.com
 const GC_SEND = new Set(['journey_open','stage_open','stage_done','journey_complete','help_open','problem','still_stuck','solved',
   'link_open','call','appt_saved','calendar_open','ask_open','ask_pick','ask_none','deeplink','lang','tick']);
 
