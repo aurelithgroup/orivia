@@ -176,7 +176,9 @@ const SCREENS = {
     return {
       body: sign({eyebrow:L(need.name), title:t('tasksAsk'), icon:need.icon}) + `
         <div class="content">${need.id==='health' ? emergencyBox() : ''}<div class="choices">
-          ${list.length ? list.map(x => (x.journey || x.pathway)
+          ${list.length ? list.map(x => x.action
+            ? `<button class="choice" data-act="${x.action}"><span class="main"><span>${L(x.name)}</span><small>${L(x.note)}</small></span>${chev()}</button>`
+            : (x.journey || x.pathway)
             ? `<button class="choice" data-act="${x.pathway?'pathway':'journey'}" data-v="${x.pathway||x.journey}"><span class="main"><span>${L(x.name)}</span><small>${L(x.note)}</small></span>${x.pathway ? pathPill(x.pathway) : progressPill(x.journey)}</button>`
             : `<button class="choice" disabled><span>${L(x.name)}</span><span class="pill pill-soon">${t('soon')}</span></button>`).join('')
             : `<div class="tip">${t('inFull')}</div>`}
@@ -605,7 +607,7 @@ app.addEventListener('click', e => {
     case 'askOpen': askSheet(); break;
     case 'statsToggle': S.analytics = S.analytics === false ? true : false; save(); render(); break;
     case 'askGo': askGo(v); break;
-    default: placesAct(b.dataset.act, v);
+    default: placesAct(b.dataset.act, v) || expiryAct(b.dataset.act, v);
   }
 });
 app.addEventListener('input', e => { if(e.target.id === 'dest') updatePhrase(); if(e.target.id === 'askQ') askInput(e.target.value); });
