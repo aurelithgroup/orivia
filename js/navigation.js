@@ -232,7 +232,7 @@ function waitLonger(){
 
 /* ---------- Something changed ---------- */
 function changedSheet(){
-  const keys = ['appt','missed','away','doc','delay','life','unclear'];
+  const keys = ['appt','missed','away','doc','delay','site','life','unclear'];
   sheet(`<h2>${t('changedTitle')}</h2><p class="lead">${t('changedAsk')}</p>
     <div class="choices">${keys.map(k=>`<button class="choice" data-act="recover" data-v="${k}"><span>${t('ch')[k]}</span>${chev()}</button>`).join('')}</div>
     <button class="btn btn-quiet" data-act="closeSheet">${t('close')}</button>`);
@@ -396,7 +396,7 @@ function navAct(act, v){
     case 'changed': changedSheet(); return true;
     case 'recover': recoverSheet(v); return true;
     case 'recApptEdit': closeSheet(); S.params = Object.assign({}, S.params, {editAppt:curStage().id}); render(); scrollToSel('.appt-form'); return true;
-    case 'recChecklist': closeSheet(); scrollToSel('.need-box'); return true;
+    case 'recChecklist': closeSheet(); scrollToSel(document.querySelector('.device .quick') ? '.quick' : '.need-box'); return true;
     case 'beforeGo': beforeSheet(); return true;
     case 'dkStart': decideSheet(v); logEv('dk_open', {detail:v}); return true;
     case 'dkAns': { const [pid, key, trail] = v.split('|'); decideSheet(pid, key, trail); return true; }

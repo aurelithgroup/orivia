@@ -256,3 +256,48 @@ Object.assign(I18N["hi"].ui, ({
   on:"चालू",
   off:"बंद"
 }));
+
+/* Added: simpler screens */
+Object.assign(I18N["hi"].t, {"Silver card about AED 25, including AED 19 of credit": "सिल्वर कार्ड लगभग AED 25, जिसमें AED 19 का क्रेडिट शामिल है", "Usually 7–15 working days": "आमतौर पर 7–15 कार्य दिवस", "About 3–5 weeks after you arrive, in total": "आपके पहुँचने के बाद कुल मिलाकर लगभग 3–5 हफ़्ते", "£6.00 single, £8.50 open return": "£6.00 एक तरफ़ा, £8.50 ओपन रिटर्न", "About 30 minutes": "लगभग 30 मिनट", "£7.90 from the airport": "एयरपोर्ट से £7.90", "About 30 minutes to the centre": "सेंटर तक लगभग 30 मिनट", "Removed the Princes Street closure notice: the street reopened on 29 Aug 2026.": "Princes Street बंद होने की सूचना हटा दी गई: सड़क 29 Aug 2026 को फिर से खुल गई।", "£2.40 a journey, never more than £5.70 a day": "हर यात्रा £2.40, एक दिन में £5.70 से ज़्यादा नहीं", "Up to 10 working days online": "ऑनलाइन 10 कार्य दिवस तक", "Free": "मुफ़्त", "£180 a year": "£180 प्रति वर्ष", "Up to 4 weeks": "4 हफ़्ते तक", "Enter within 30 days of approval, then finish within 60 days": "मंज़ूरी के 30 दिन के अंदर देश में आएँ, फिर 60 दिन के अंदर पूरा करें", "Finish your residency within 60 days of entering": "देश में आने के 60 दिन के अंदर अपना रेज़िडेंसी का काम पूरा करें", "My accommodation": "मेरी रहने की जगह", "My residence ID": "मेरा रेज़िडेंस ID", "Banking": "बैंकिंग", "University and school": "यूनिवर्सिटी और स्कूल", "My family": "मेरा परिवार", "Phone and everyday life": "फ़ोन और रोज़मर्रा की ज़िंदगी", "Meeting people": "लोगों से मिलना"});
+(function(u){ Object.assign(I18N["hi"].ui, u); const x = I18N["hi"].ui; if(x.ch) x.ch.site = u.siteDown; if(x.rec) x.rec.site = u.recSite; })(({
+  welcomeShort:"स्वागत है",
+  changeAnytime:"आप इसे कभी भी बदल सकते हैं।",
+  needHelpWith:"आपको किस चीज़ में मदद चाहिए?",
+  somethingWrong:"कुछ गड़बड़ हो गई",
+  notSureWhat:"पक्का नहीं पता? हमें बताइए क्या हुआ",
+  nsTitle:"अब तक क्या हुआ है?",
+  ns:{"arrived":"मैं अभी-अभी पहुँचा/पहुँची हूँ","started":"मैंने अपना वीज़ा या ID का काम शुरू कर दिया है","wrong":"कुछ गड़बड़ हो गई","message":"मुझे कोई मैसेज या कागज़ मिला है जो मुझे समझ नहीं आ रहा","dunno":"मुझे सच में नहीं पता"},
+  youreHere:"आप यहाँ हैं",
+  nextLabel:"आगे",
+  doneForNow:"आज आपको कुछ करने की ज़रूरत नहीं है।",
+  youreDone:"हो गया। यहाँ अब कुछ और नहीं करना है।",
+  doNext:"आपका अगला काम",
+  trustBadge:"आधिकारिक स्रोत से जाँचा गया",
+  updated:"अपडेट किया गया",
+  whatChanged:"हमने क्या बदला",
+  firstPublished:"पहली बार प्रकाशित",
+  qDo:"यह करें",
+  qBring:"साथ लाएँ",
+  qWhere:"कहाँ",
+  qCost:"ख़र्च",
+  qTime:"समय",
+  qThen:"फिर",
+  qLast:"यह आख़िरी स्टेप है।",
+  moreDetails:"ज़्यादा जानकारी",
+  lessDetails:"कम जानकारी",
+  wentWrong:"कुछ गड़बड़ हुई?",
+  allProblems:"मुझे मदद चाहिए",
+  siteDown:"वेबसाइट या ऐप काम नहीं कर रहा",
+  staffBtn:"यह स्टाफ़ को दिखाएँ",
+  staffTpl:(j,s)=>`नमस्ते। मैं यहाँ नया/नई हूँ। मैं इस पर काम कर रहा/रही हूँ: ${j} (${s})। क्या आप इस स्टेप में मेरी मदद कर सकते हैं, कृपया?`,
+  offlineSaved:"ऑफ़लाइन इस्तेमाल के लिए सेव किया गया",
+  offline:"आप ऑफ़लाइन हैं। आपकी सेव की हुई यात्राएँ अभी भी उपलब्ध हैं।",
+  yourNextSteps:"आपके अगले स्टेप",
+  notStarted:"शुरू नहीं हुआ",
+  startJourney:"एक यात्रा शुरू करें",
+  needElse:"कुछ और चाहिए?",
+  stepXofY:(x,y)=>`स्टेप ${x} / ${y}`,
+  bringTomorrow:"साथ लाएँ",
+  apptOn:"अपॉइंटमेंट",
+  recSite:["कुछ मिनट रुकें और फिर से कोशिश करें: भीड़ के समय अक्सर गड़बड़ होती है।", "कोई दूसरा ब्राउज़र आज़माएँ, या आधिकारिक ऐप अगर हो तो।", "देख लें कि आप आधिकारिक वेबसाइट पर हैं: Orivia के लिंक सही जगह ले जाते हैं।", "फिर भी काम नहीं कर रहा? संस्था को फ़ोन करें।"]
+}));

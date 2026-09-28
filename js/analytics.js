@@ -8,7 +8,7 @@
    ========================================================= */
 const GC_CODE = 'orivia';   // e.g. 'orivia' for https://orivia.goatcounter.com
 const GC_SEND = new Set(['journey_open','stage_open','stage_done','journey_complete','help_open','problem','still_stuck','solved',
-  'link_open','call','appt_saved','calendar_open','ask_open','ask_pick','ask_none','deeplink','lang','tick','docs_open','doc_saved','doc_calendar','before_open','changed_open','recover','wait_longer','identify_open','identify_word','dk_open','dk_result','term','sources_open','tab','help_center','help_pick']);
+  'link_open','call','appt_saved','calendar_open','ask_open','ask_pick','ask_none','deeplink','lang','tick','docs_open','doc_saved','doc_calendar','before_open','changed_open','recover','wait_longer','identify_open','identify_word','dk_open','dk_result','term','sources_open','tab','help_center','help_pick','notsure_open','notsure_pick','staff_card']);
 
 Object.assign(UI.en, {
   statsNote:'Orivia counts anonymous taps, like which step people ask for help on, so it can get better. Never your name or anything you type.',
@@ -42,7 +42,7 @@ function sendEv(r){
   let extra = r.p;
   if(r.ev === 'link_open' || r.ev === 'call'){ try{ extra = r.ev === 'call' ? 'tel' : new URL(r.detail, location.href).hostname; }catch(e){ extra = ''; } }
   if(r.ev === 'ask_pick') extra = String(r.detail||'').split('|')[0];
-  if(['lang','doc_saved','doc_calendar','recover','identify_word','dk_result','dk_open','term','tab','help_center','help_pick'].includes(r.ev)) extra = r.detail;
+  if(['lang','doc_saved','doc_calendar','recover','identify_word','dk_result','dk_open','term','tab','help_center','help_pick','notsure_pick'].includes(r.ev)) extra = r.detail;
   if(r.ev === 'deeplink') extra = S.partner || 'none';
   if(r.ev === 'tick') extra = String(r.detail||'').split(':')[0];
   const path = ['ev', r.ev, channel(), r.city, r.j, r.stage, extra].map(clean).filter(Boolean).join('/');

@@ -263,7 +263,8 @@ const SCREENS = {
             <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${n}"><i style="width:${n/total*100}%"></i></div>
             <div class="progress-text"><span>${t('stepsDone')(n,total)}</span>${n?`<span>${t('saved')}</span>`:''}</div>
           </div>
-          ${j.finder && cur>=0 && j.stages[cur].now ? `<div class="now-box"><span class="label">${t('youAreHere')}: ${L(j.stages[cur].label)}</span><p>${L(j.stages[cur].now)}</p></div>` : ''}
+          ${trustBadge(S.params.id)}
+          ${statusCard(S.params.id)}
           ${saveCard()}
           <ol class="line">
             ${j.stages.map((s,i)=>`<li class="station ${done[s.id]?'done':''} ${i===cur?'current':''}"><span class="dot"></span>
@@ -286,17 +287,17 @@ const SCREENS = {
           ${stageChips(S.params.id, i)}
           <span class="stepnav"><span>${t('stepOf')(i+1,j.stages.length)}</span></span>
           <h1>${L(s.title)}</h1>
-          <div class="sign-tools">${chip(s,true)}${listenBtn()}</div>
+          <div class="sign-tools">${listenBtn()}<button class="listen staff-btn" data-act="staffCard">${svg('staff','lic')}<span>${t('staffBtn')}</span></button></div>
         </div>
         <div class="content">
           ${waitingCard(S.params.id, s)}
-          ${beforeBtn(s)}
-          ${partnerNote(S.params.id, s)}
-          ${s.blocks.filter(b => !(s.need && b.t==='tip' && b.label==='bring')).map(block).join('')}
-          ${expectBlock(s)}
+          ${(()=>{ const q = quickCard(S.params.id, s), keep = b => b.t === 'emergency' || b.t === 'link' || b.t === 'journeyLink';
+            const blocks = s.blocks.filter(b => !(s.need && b.t==='tip' && b.label==='bring'));
+            const inner = blocks.filter(b => !q || !keep(b)).map(block).join('') + expectBlock(s) + (q ? '' : needBox(S.params.id, s)) + placesBox(s);
+            return (q ? blocks.filter(b => b.t === 'emergency').map(block).join('') + q : '') + beforeBtn(s) + partnerNote(S.params.id, s)
+              + (q ? detailsWrap(s, inner) : inner) + (q ? blocks.filter(b => b.t === 'link' || b.t === 'journeyLink').map(block).join('') : ''); })()}
           ${apptBox(S.params.id, s)}
-          ${needBox(S.params.id, s)}
-          ${placesBox(s)}
+          ${wrongInline(S.params.id, s)}
           ${sourceBlock(j, s)}
         </div>`,
       actions:`<button class="btn btn-help" data-act="wrong">${svg('help','help-ico')}<span>${t('wrong')}</span></button>
@@ -320,8 +321,9 @@ const SCREENS = {
   }
 };
 
-SCREENS.hub = hubScreen;
-SCREENS.needs = goalsScreen;
+SCREENS.hub = simpleHome;
+SCREENS.needs = needFirstScreen;
+SCREENS.welcome = welcomeScreen;
 SCREENS.more = moreScreen;
 
 function block(b){
@@ -530,7 +532,8 @@ function updatePhrase(){
 /* Staff phrase: Dubai shows Arabic + English. Elsewhere, English (for staff) plus the reader's own language underneath. */
 function staffInner(o){
   const c = DATA.cities[S.city];
-  if(c.staffLang === 'ar') return `<div class="ar" lang="ar" dir="rtl">${o.ar}</div><hr><div class="en" lang="en" dir="ltr">${o.en}</div>`;
+  if(c.staffLang === 'ar'){ const l = lang(), mine = !['ar','en'].includes(l) && (o.mine || (I18N[l] && I18N[l].t && I18N[l].t[o.en]));
+    return `<div class="ar" lang="ar" dir="rtl">${o.ar}</div><hr><div class="en" lang="en" dir="ltr">${o.en}</div>` + (mine && mine !== o.en ? `<hr><div class="mine" lang="${l}" dir="${isRtl(l)?'rtl':'ltr'}">${mine}</div>` : ''); }
   const l = lang(), mine = o.mine || (l==='ar' ? o.ar : (I18N[l] && I18N[l].t && I18N[l].t[o.en]));
   return `<div class="en big" lang="en" dir="ltr">${o.en}</div>` + (l!=='en' && mine && mine!==o.en ? `<hr><div class="mine" lang="${l}" dir="${isRtl(l)?'rtl':'ltr'}">${mine}</div>` : '');
 }
@@ -562,7 +565,7 @@ app.addEventListener('click', e => {
     case 'toggleLang': S.lang = lang()==='en' ? 'ar' : 'en'; save(); render(); break;
     case 'langPicker': langSheet(); break;
     case 'setLang': closeSheet(); S.lang = v; save(); render(); break;
-    case 'lang': S.lang = v; logEv('lang',{detail:v}); if(!applyPending()) go('purpose'); break;
+    case 'lang': S.lang = v; logEv('lang',{detail:v}); if(!applyPending()) go('needs'); break;
     case 'purpose': S.purpose = +v; save(); render(); break;
     case 'need': go('tasks', {need:v}); break;
     case 'unsure': if(DATA.firstWeek[S.city]) go('unsure'); break;
@@ -619,7 +622,7 @@ app.addEventListener('click', e => {
     case 'askOpen': askSheet(); break;
     case 'statsToggle': S.analytics = S.analytics === false ? true : false; save(); render(); break;
     case 'askGo': askGo(v); break;
-    default: placesAct(b.dataset.act, v) || expiryAct(b.dataset.act, v) || navAct(b.dataset.act, v) || shellAct(b.dataset.act, v);
+    default: placesAct(b.dataset.act, v) || expiryAct(b.dataset.act, v) || navAct(b.dataset.act, v) || shellAct(b.dataset.act, v) || simpleAct(b.dataset.act, v);
   }
 });
 app.addEventListener('input', e => { if(e.target.id === 'dest') updatePhrase(); if(e.target.id === 'askQ') askInput(e.target.value); });

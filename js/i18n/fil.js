@@ -256,3 +256,48 @@ Object.assign(I18N["fil"].ui, ({
   on:"On",
   off:"Off"
 }));
+
+/* Added: simpler screens */
+Object.assign(I18N["fil"].t, {"Silver card about AED 25, including AED 19 of credit": "Silver card na mga AED 25, kasama na ang AED 19 na credit", "Usually 7–15 working days": "Karaniwan 7–15 working days", "About 3–5 weeks after you arrive, in total": "Mga 3–5 linggo sa kabuuan pagdating mo", "£6.00 single, £8.50 open return": "£6.00 one-way, £8.50 open return", "About 30 minutes": "Mga 30 minuto", "£7.90 from the airport": "£7.90 mula sa airport", "About 30 minutes to the centre": "Mga 30 minuto papunta sa sentro", "Removed the Princes Street closure notice: the street reopened on 29 Aug 2026.": "Tinanggal na ang abiso na sarado ang Princes Street: bukas na ulit ang kalye mula 29 Aug 2026.", "£2.40 a journey, never more than £5.70 a day": "£2.40 bawat biyahe, hindi hihigit sa £5.70 kada araw", "Up to 10 working days online": "Hanggang 10 working days online", "Free": "Libre", "£180 a year": "£180 kada taon", "Up to 4 weeks": "Hanggang 4 na linggo", "Enter within 30 days of approval, then finish within 60 days": "Pumasok sa bansa sa loob ng 30 araw mula sa approval, tapos tapusin sa loob ng 60 araw", "Finish your residency within 60 days of entering": "Tapusin ang residency mo sa loob ng 60 araw mula nang pumasok ka", "My accommodation": "Ang tirahan ko", "My residence ID": "Ang residence ID ko", "Banking": "Bangko", "University and school": "Unibersidad at paaralan", "My family": "Ang pamilya ko", "Phone and everyday life": "Telepono at araw-araw na buhay", "Meeting people": "Makakilala ng mga tao"});
+(function(u){ Object.assign(I18N["fil"].ui, u); const x = I18N["fil"].ui; if(x.ch) x.ch.site = u.siteDown; if(x.rec) x.rec.site = u.recSite; })(({
+  welcomeShort:"Maligayang pagdating",
+  changeAnytime:"Puwede mo itong palitan anumang oras.",
+  needHelpWith:"Saan ka kailangang tulungan?",
+  somethingWrong:"May nangyaring mali",
+  notSureWhat:"Hindi sigurado? Sabihin mo sa amin kung ano ang nangyari",
+  nsTitle:"Ano na ang nangyari sa ngayon?",
+  ns:{"arrived":"Kararating ko lang","started":"Nasimulan ko na ang visa o ID process ko","wrong":"May nangyaring mali","message":"May natanggap akong message o dokumento na hindi ko maintindihan","dunno":"Hindi ko talaga alam"},
+  youreHere:"Nandito ka",
+  nextLabel:"Susunod",
+  doneForNow:"Wala kang kailangang gawin ngayon.",
+  youreDone:"Tapos ka na. Wala ka nang gagawin dito.",
+  doNext:"Ang susunod mong gagawin",
+  trustBadge:"Na-check sa opisyal na source",
+  updated:"Na-update",
+  whatChanged:"Ang binago namin",
+  firstPublished:"Unang na-publish",
+  qDo:"Gawin ito",
+  qBring:"Dalhin",
+  qWhere:"Saan",
+  qCost:"Bayad",
+  qTime:"Tagal",
+  qThen:"Pagkatapos",
+  qLast:"Ito na ang huling hakbang.",
+  moreDetails:"Mas maraming detalye",
+  lessDetails:"Mas kaunting detalye",
+  wentWrong:"May nangyaring mali?",
+  allProblems:"Kailangan ko ng tulong",
+  siteDown:"Hindi gumagana ang website o app",
+  staffBtn:"Ipakita ito sa staff",
+  staffTpl:(j,s)=>`Magandang araw po. Bago lang po ako dito. Inaasikaso ko po ang: ${j} (${s}). Puwede n’yo po ba akong tulungan sa hakbang na ito?`,
+  offlineSaved:"Naka-save para magamit offline",
+  offline:"Offline ka. Magagamit mo pa rin ang mga naka-save mong journey.",
+  yourNextSteps:"Ang mga susunod mong hakbang",
+  notStarted:"Hindi pa nasisimulan",
+  startJourney:"Magsimula ng journey",
+  needElse:"May iba ka pang kailangan?",
+  stepXofY:(x,y)=>`Hakbang ${x} sa ${y}`,
+  bringTomorrow:"Dalhin",
+  apptOn:"Appointment",
+  recSite:["Maghintay ng ilang minuto at subukan ulit: madalas nagkaka-error kapag maraming gumagamit.", "Subukan ang ibang browser, o ang opisyal na app kung meron.", "Siguraduhing nasa opisyal na website ka: tama ang pinupuntahan ng mga link ng Orivia.", "Hindi pa rin gumagana? Tawagan na lang ang organisasyon."]
+}));

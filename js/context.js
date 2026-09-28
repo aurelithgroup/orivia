@@ -83,7 +83,7 @@ Object.assign(UI.ar, {
 })();
 
 /* ---------- The context engine ---------- */
-function started(jid){ const d = S.done[jid]||{}; return Object.keys(d).some(k=>d[k]) || !!(S.touched||{})[jid]; }
+function started(jid){ const d = S.done[jid]||{}; return Object.keys(d).some(k=>d[k]) || !!(S.touched||{})[jid] || Object.keys((S.appts||{})[jid]||{}).length > 0; }
 function ctx(jid){
   const j = DATA.journeys[jid]; if(!j) return null;
   const d = S.done[jid]||{}, n = j.stages.filter(s=>d[s.id]).length, total = j.stages.length;

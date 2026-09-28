@@ -256,3 +256,48 @@ Object.assign(I18N["fr"].ui, ({
   on:"Activé",
   off:"Désactivé"
 }));
+
+/* Added: simpler screens */
+Object.assign(I18N["fr"].t, {"Silver card about AED 25, including AED 19 of credit": "Carte Silver à environ AED 25, dont AED 19 de crédit", "Usually 7–15 working days": "En général 7–15 jours ouvrés", "About 3–5 weeks after you arrive, in total": "Environ 3–5 semaines au total après votre arrivée", "£6.00 single, £8.50 open return": "£6.00 l’aller simple, £8.50 l’aller-retour ouvert", "About 30 minutes": "Environ 30 minutes", "£7.90 from the airport": "£7.90 depuis l’aéroport", "About 30 minutes to the centre": "Environ 30 minutes jusqu’au centre", "Removed the Princes Street closure notice: the street reopened on 29 Aug 2026.": "Avis de fermeture de Princes Street retiré : la rue a rouvert le 29 août 2026.", "£2.40 a journey, never more than £5.70 a day": "£2.40 le trajet, jamais plus de £5.70 par jour", "Up to 10 working days online": "Jusqu’à 10 jours ouvrés en ligne", "Free": "Gratuit", "£180 a year": "£180 par an", "Up to 4 weeks": "Jusqu’à 4 semaines", "Enter within 30 days of approval, then finish within 60 days": "Entrez dans le pays dans les 30 jours après l’approbation, puis terminez dans les 60 jours", "Finish your residency within 60 days of entering": "Terminez vos démarches de résidence dans les 60 jours après votre entrée", "My accommodation": "Mon logement", "My residence ID": "Ma carte de résident", "Banking": "Banque", "University and school": "Université et école", "My family": "Ma famille", "Phone and everyday life": "Téléphone et vie quotidienne", "Meeting people": "Rencontrer des gens"});
+(function(u){ Object.assign(I18N["fr"].ui, u); const x = I18N["fr"].ui; if(x.ch) x.ch.site = u.siteDown; if(x.rec) x.rec.site = u.recSite; })(({
+  welcomeShort:"Bienvenue",
+  changeAnytime:"Vous pouvez changer cela à tout moment.",
+  needHelpWith:"Avec quoi avez-vous besoin d’aide ?",
+  somethingWrong:"Un problème est survenu",
+  notSureWhat:"Pas sûr ? Dites-nous ce qui s’est passé",
+  nsTitle:"Où en êtes-vous ?",
+  ns:{"arrived":"Je viens d’arriver","started":"J’ai commencé mes démarches de visa ou de carte d’identité","wrong":"Un problème est survenu","message":"J’ai reçu un message ou un document que je ne comprends pas","dunno":"Je ne sais vraiment pas"},
+  youreHere:"Vous êtes ici",
+  nextLabel:"Suivant",
+  doneForNow:"Vous n’avez rien à faire aujourd’hui.",
+  youreDone:"C’est terminé. Plus rien à faire ici.",
+  doNext:"Votre prochaine étape",
+  trustBadge:"Source officielle vérifiée",
+  updated:"Mis à jour",
+  whatChanged:"Ce que nous avons changé",
+  firstPublished:"Première publication",
+  qDo:"À faire",
+  qBring:"À apporter",
+  qWhere:"Où",
+  qCost:"Coût",
+  qTime:"Durée",
+  qThen:"Ensuite",
+  qLast:"C’est la dernière étape.",
+  moreDetails:"Plus de détails",
+  lessDetails:"Moins de détails",
+  wentWrong:"Un problème ?",
+  allProblems:"J’ai besoin d’aide",
+  siteDown:"Le site ou l’application ne fonctionne pas",
+  staffBtn:"Montrer au personnel",
+  staffTpl:(j,s)=>`Bonjour. Je viens d’arriver ici. Je m’occupe de : ${j} (${s}). Pouvez-vous m’aider pour cette étape, s’il vous plaît ?`,
+  offlineSaved:"Enregistré pour une utilisation hors ligne",
+  offline:"Vous êtes hors ligne. Vos parcours enregistrés restent disponibles.",
+  yourNextSteps:"Vos prochaines étapes",
+  notStarted:"Pas commencé",
+  startJourney:"Commencer un parcours",
+  needElse:"Besoin d’autre chose ?",
+  stepXofY:(x,y)=>`Étape ${x} sur ${y}`,
+  bringTomorrow:"À apporter",
+  apptOn:"Rendez-vous",
+  recSite:["Attendez quelques minutes et réessayez : les heures chargées causent souvent des erreurs.", "Essayez un autre navigateur, ou l’application officielle s’il y en a une.", "Vérifiez que vous êtes sur le site officiel : les liens d’Orivia mènent au bon endroit.", "Ça ne marche toujours pas ? Contactez plutôt l’organisme par téléphone."]
+}));
