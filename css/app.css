@@ -505,3 +505,33 @@ a.phone{color:var(--ink);text-decoration:none}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .doc-big.doc-warn{background:#3A3010} }
 .muted{color:var(--muted)}
 a.choice{text-decoration:none;color:inherit}
+
+/* ---------- Navigation layer ---------- */
+.wait-card{border-radius:16px;padding:16px;background:var(--surface2);border-inline-start:5px solid var(--amber);display:flex;flex-direction:column;gap:10px}
+.wait-head{display:flex;align-items:center;gap:8px}
+.wait-for{margin:0;font-size:17px;line-height:1.4}
+.wait-calm{margin:0;font-weight:700;color:var(--ok)}
+.wait-tips{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:4px;font-size:15px}
+.before-btn{all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;background:var(--sign);color:var(--signInk)}
+.before-btn .place-ico{color:var(--amber)}
+.before-btn span{display:flex;flex-direction:column;flex:1}
+.before-btn small{color:var(--signMuted);font-size:13px}
+.before-btn:focus-visible{outline:3px solid var(--focus)}
+.bg-sec{display:flex;flex-direction:column;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.bg-sec:last-of-type{border-bottom:0}
+.bg-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.bg-list li{display:flex;gap:10px;align-items:flex-start}
+.tickmini{width:18px;height:18px;border-radius:5px;border:2px solid var(--ink);flex:none;margin-top:2px;display:grid;place-items:center}
+.bg-list li.on .tickmini{background:var(--ok);border-color:var(--ok)}
+.bg-list li.on .tickmini::after{content:"";width:4px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-2px}
+.expect{border:1px dashed var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.expect-list,.rec-steps{margin:0;padding-inline-start:22px;display:flex;flex-direction:column;gap:6px}
+.term{all:unset;cursor:pointer;border-bottom:2px dotted var(--amber);font-weight:inherit}
+.term:focus-visible{outline:2px solid var(--focus)}
+.why-link{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;margin-top:4px}
+.dots{display:flex;gap:6px;align-items:center}
+.dots i{flex:1;height:8px;border-radius:4px;background:var(--line)}
+.dots i.ok{background:var(--ok)}
+.dots i.on{background:var(--amber)}
+.changed-row{border-style:dashed}
+.src-row small{word-break:break-all}

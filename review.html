@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orivia Content Review</title>
+<link rel="icon" href="icons/favicon.svg?v=3" type="image/svg+xml">
+<style>
+:root{--ground:#E9ECE7;--surface:#fff;--ink:#18222D;--muted:#56616C;--line:#D6DBD4;--ok:#1D7F55;--okSoft:#DDF0E6;--warn:#A8480A;--warnSoft:#FBE9DC;--amber:#F2B90F}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ground:#0B1015;--surface:#141B23;--ink:#E6EAEE;--muted:#9AA5B0;--line:#29333E;--okSoft:#123524;--warnSoft:#3A2412}}
+:root[data-theme="dark"]{--ground:#0B1015;--surface:#141B23;--ink:#E6EAEE;--muted:#9AA5B0;--line:#29333E;--okSoft:#123524;--warnSoft:#3A2412}
+*{box-sizing:border-box} body{margin:0;background:var(--ground);color:var(--ink);font-family:"Atkinson Hyperlegible",system-ui,sans-serif;padding:24px 16px}
+.wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{margin:0;font-size:28px} p{margin:0;color:var(--muted)}
+.stats{display:flex;gap:12px;flex-wrap:wrap}.stats div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}.stats b{display:block;font-size:24px}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:14px} th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top} th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}.ok{background:var(--okSoft);color:var(--ok)}.due{background:var(--warnSoft);color:var(--warn)}
+a{color:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Orivia content review</h1>
+  <p>Every journey, when it was last checked against its sources, and when it's due for re-checking (90 days later). Re-check anything marked "Due", update its date, and publish.</p>
+  <div class="stats" id="stats"></div>
+  <div class="tbl"><table><thead><tr><th>Journey</th><th>City</th><th>Steps</th><th>Sources (official / institution / other)</th><th>Last checked</th><th>Review due</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table></div>
+</div>
+<script>window.UI_ONLY = true;</script>
+<script src="js/content.js"></script>
+<script src="js/content-edinburgh.js"></script>
+<script src="js/content-uae-eid.js"></script>
+<script>
+const EXTRA_ICONS = window.EXTRA_ICONS = {};
+const REVIEW_DAYS = 90;
+function srcType(url){ const h=(()=>{try{return new URL(url).hostname}catch(e){return ''}})();
+  if(/\.gov\.|(^|\.)u\.ae$|nhs|nhsinform|nhs24|rta\.ae|dubaihealth\.ae|mygov\.scot|ico\.org\.uk|fscs\.org\.uk|financial-ombudsman|ofcom\.org\.uk|tvlicensing|khda|landlordregistration/.test(h)) return 'official';
+  if(/\.ac\.uk$|\.edu$|\.ac\.ae$|university|murdoch|siu-dubai|ukcisa/.test(h)) return 'institution'; return 'other'; }
+const rows = Object.entries(DATA.journeys).map(([id,j]) => {
+  const srcs = j.sources || (j.source ? [j.source] : []), c = {official:0,institution:0,other:0}; srcs.forEach(s => c[srcType(s.url)]++);
+  const d = new Date((j.checked||{}).en || ''), due = isNaN(d) ? null : new Date(d.getTime() + REVIEW_DAYS*864e5);
+  return {id, title:j.title.en, city:j.city, steps:j.stages.length, c, checked:(j.checked||{}).en || '—', due, over: due && due < new Date()};
+}).sort((a,b) => (a.due||0) - (b.due||0));
+document.getElementById('rows').innerHTML = rows.map(r => `<tr><td><a href="./?j=${r.id}">${r.title}</a></td><td>${r.city}</td><td>${r.steps}</td><td>${r.c.official} / ${r.c.institution} / ${r.c.other}</td><td>${r.checked}</td><td>${r.due ? r.due.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '—'}</td><td><span class="pill ${r.over?'due':'ok'}">${r.over?'Due':'Current'}</span></td></tr>`).join('');
+const tot = rows.reduce((a,r)=>({o:a.o+r.c.official,i:a.i+r.c.institution,x:a.x+r.c.other}),{o:0,i:0,x:0});
+document.getElementById('stats').innerHTML = [[rows.length,'journeys'],[rows.reduce((a,r)=>a+r.steps,0),'steps'],[tot.o,'official source links'],[rows.filter(r=>r.over).length,'due for re-checking']].map(([n,l])=>`<div><b>${n}</b>${l}</div>`).join('');
+</script>
+</body>
+</html>

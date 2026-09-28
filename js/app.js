@@ -69,6 +69,7 @@ function langSheet(){
    back gesture/button works too (important when Orivia is saved to the home screen). */
 let navDepth = 0;
 function go(screen, params={}){
+  window.__welcomeBack = false;
   S.history.push({screen:S.screen, params:S.params}); S.screen = screen; S.params = params; save(); render(true);
   try{ history.pushState({orivia:true}, ''); navDepth++; }catch(e){}
 }
@@ -160,6 +161,7 @@ const SCREENS = {
       body: sign({eyebrow:t('needsEyebrow'), title:t('needsTitle'), sub:t('needsSub')}) + `
         <div class="content">
           <button class="ask-inline" data-act="askOpen">${svg('help','help-ico')}<span>${t('askEntry')}</span></button>
+          <button class="ask-inline" data-act="identify">${svg('docs','help-ico')}<span>${t('idEntry')}</span></button>
           ${hasHub() ? `<button class="choice hub-link" data-act="home"><span class="main"><span>${t('yourJourneys')}</span><small>${(()=>{ const c = ctx(activeJourneys()[0]); return L(c.journey.title) + ' · ' + t('stepsDone')(c.done,c.total); })()}</small></span>${chev()}</button>` : ''}
           ${!hasWeek ? `<div class="tip">${t('cityClosed')}</div>` : ''}
           <div class="grid">
@@ -286,8 +288,11 @@ const SCREENS = {
           <div class="sign-tools">${chip(s,true)}${listenBtn()}</div>
         </div>
         <div class="content">
+          ${waitingCard(S.params.id, s)}
+          ${beforeBtn(s)}
           ${partnerNote(S.params.id, s)}
           ${s.blocks.filter(b => !(s.need && b.t==='tip' && b.label==='bring')).map(block).join('')}
+          ${expectBlock(s)}
           ${apptBox(S.params.id, s)}
           ${needBox(S.params.id, s)}
           ${placesBox(s)}
@@ -303,6 +308,7 @@ const SCREENS = {
       body: `<div class="content">
           <div class="done-hero"><span class="big"></span><span class="label">${t('doneEyebrow')}</span><h1 style="font-family:var(--display);font-stretch:85%;font-weight:800;font-size:30px">${j.doneTitle ? L(j.doneTitle) : t('doneTitle')}</h1>
           <p class="lead">${L(j.title)}</p></div>
+          ${endHtml(S.params.id)}
           <span class="label">${t('nextUp')}</span>
           <div class="choices">${j.after.map(x=> x.journey ? `<button class="choice" data-act="journey" data-v="${x.journey}"><span>${L(x.name)}</span>${chev()}</button>`
             : x.pathway ? `<button class="choice" data-act="pathway" data-v="${x.pathway}"><span>${L(x.name)}</span>${chev()}</button>`
@@ -350,6 +356,7 @@ function sourceBlock(j, s){
     ${j.sources ? `<span>${t('sources')}: ${j.sources.map(x=>`<a href="${x.url}" target="_blank" rel="noopener">${L(x.name)}</a>`).join(' · ')}</span><span>${t('checked')}: ${L(j.checked)}</span>`
       : `<span>${t('source')}: <a href="${j.source.url}" target="_blank" rel="noopener">${L(j.source.name)}</a> · ${t('checked')}: ${L(j.checked)}</span>`}
     <span>${t('disclaimer')}</span>
+    ${S.params && S.params.id ? `<button class="linkish why-link" data-act="whyThis">${svg('info','btn-ico')} ${t('whyThis')}</button>` : ''}
   </div>`;
 }
 function chip(s, onDark){
@@ -420,7 +427,7 @@ function wrongSheet(pid){
     let list = j.problems;
     const st = (S.screen==='step' && j.stages[S.params.i]) ? j.stages[S.params.i] : null;
     if(st && st.help) list = st.help.map(id=>j.problems.find(p=>p.id===id)).concat(j.problems.filter(p=>p.id==='else'));
-    sheet(`<h2>${t('whatHappened')}</h2>${st && st.help ? `<span class="badge" style="align-self:flex-start">${L(st.label)}</span>` : ''}${helpSearchHtml()}<div class="choices">${list.map(p=>`<button class="choice" data-act="problem" data-v="${p.id}"><span>${L(p.q)}</span>${chev()}</button>`).join('')}</div>
+    sheet(`<h2>${t('whatHappened')}</h2>${st && st.help ? `<span class="badge" style="align-self:flex-start">${L(st.label)}</span>` : ''}${helpSearchHtml()}<div class="choices">${list.map(p=>`<button class="choice" data-act="problem" data-v="${p.id}"><span>${L(p.q)}</span>${chev()}</button>`).join('')}<button class="choice changed-row" data-act="changed"><span>${t('changedLink')}</span>${chev()}</button></div>
       <button class="btn btn-quiet" data-act="closeSheet">${t('close')}</button>`);
     return;
   }
@@ -582,7 +589,7 @@ app.addEventListener('click', e => {
       S.screen = 'journey'; S.params = {id}; save(); render(true); break;
     }
     case 'lastUnknown': go('finder', {id:S.params.id, k:0}); break;
-    case 'dontKnow': dontKnowSheet(); break;
+    case 'dontKnow': { const pw = DATA.pathways[S.params.id]; if(pw && pw.decide){ decideSheet(S.params.id); logEv('dk_open', {detail:S.params.id}); } else dontKnowSheet(); break; }
     case 'redo': S.finder[S.params.id] = null; S.done[S.params.id] = {}; S.screen='finder'; S.params={id:S.params.id, mode:'last'}; save(); render(true); break;
     case 'answer': {
       const id = S.params.id, j = DATA.journeys[id], k = S.params.k||0;
@@ -607,7 +614,7 @@ app.addEventListener('click', e => {
     case 'askOpen': askSheet(); break;
     case 'statsToggle': S.analytics = S.analytics === false ? true : false; save(); render(); break;
     case 'askGo': askGo(v); break;
-    default: placesAct(b.dataset.act, v) || expiryAct(b.dataset.act, v);
+    default: placesAct(b.dataset.act, v) || expiryAct(b.dataset.act, v) || navAct(b.dataset.act, v);
   }
 });
 app.addEventListener('input', e => { if(e.target.id === 'dest') updatePhrase(); if(e.target.id === 'askQ') askInput(e.target.value); });
@@ -629,6 +636,7 @@ document.getElementById('resetAll').addEventListener('click', () => {
 /* Decorative stand-in for a QR code (not scannable) */
 function drawQR(){}
 drawQR();
+if(!S.pending && S.lang && hasHub() && S.screen !== 'hub'){ S.screen = 'hub'; S.params = {}; S.history = []; window.__welcomeBack = true; }
 render();
 fillLanding();
 applyPending();
@@ -712,3 +720,8 @@ function fillLanding(){
 
 /* Log taps on outside links and phone numbers (for the test-session log) */
 app.addEventListener('click', e => { const a = e.target.closest('a[href]'); if(!a) return; logEv(a.href.startsWith('tel:') ? 'call' : 'link_open', {detail:a.getAttribute('href')}); save(); });
+
+/* Glossary terms become tappable on every screen and sheet */
+const renderNav = render; render = function(x){ renderNav(x); linkTerms(document.getElementById('scroll')); };
+const sheetNav = sheet; sheet = function(h, f){ sheetNav(h, f); linkTerms(document.getElementById('sheet')); };
+linkTerms(document.getElementById('scroll'));

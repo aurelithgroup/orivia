@@ -155,7 +155,7 @@ function hubScreen(){
   const week = DATA.firstWeek[S.city] || [];
   const sug = week.find(x => x.journey && !started(x.journey)) || null;
   return {
-    body: sign({eyebrow:L(DATA.cities[S.city].kicker), title:t('hubTitle'), sub:t('hubSub')}) + `
+    body: sign({eyebrow: window.__welcomeBack ? t('welcomeBack') : L(DATA.cities[S.city].kicker), title:t('hubTitle'), sub:t('hubSub')}) + `
       <div class="content">
         ${partnerStrip()}
         ${docAlert()}
@@ -164,15 +164,17 @@ function hubScreen(){
           <button class="hub-title" data-act="journey" data-v="${focusId}"><span>${L(j.title)}</span>${chev()}</button>
           <div class="progress"><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${c.total}" aria-valuenow="${c.done}"><i style="width:${c.done/c.total*100}%"></i></div>
             <div class="progress-text"><span>${t('stepsDone')(c.done,c.total)}</span></div></div>
+          <div class="dots" aria-hidden="true">${j.stages.map((s,i)=>`<i class="${(S.done[focusId]||{})[s.id]?'ok':i===c.index?'on':''}"></i>`).join('')}</div>
           ${c.stage ? `<div class="hub-here"><span class="dot"></span><span>${t('hereNow')}: <b>${L(c.stage.label)}</b></span></div>` : ''}
           ${statusBox()}
           ${c.need.length ? `<button class="hub-need" data-act="hubStep" data-v="${focusId}"><span>${t('needTitle')}</span><span class="pill ${c.ready===c.need.length?'pill-ok':'pill-amber'}">${c.ready===c.need.length ? t('allReady') : t('readyN')(c.ready,c.need.length)}</span></button>` : ''}
           ${c.upcoming.length ? `<div class="hub-up"><span class="label">${t('upcoming')}</span><ol>${c.upcoming.map(s=>`<li>${L(s.label)}: ${L(s.title)}</li>`).join('')}</ol></div>` : ''}
         </div>
         <button class="ask-inline" data-act="askOpen">${svg('help','help-ico')}<span>${t('askEntry')}</span></button>
+        <button class="ask-inline" data-act="identify">${svg('docs','help-ico')}<span>${t('idEntry')}</span></button>
         ${docsCard()}
         ${others.length ? `<span class="label">${t('alsoGoing')}</span><div class="choices">${others.map(id=>{ const o = ctx(id);
-          return `<button class="choice" data-act="journey" data-v="${id}"><span class="main"><span>${L(o.journey.title)}</span><small>${o.stage ? (o.status==='waiting' ? t('waitingOn')+': '+L(o.stage.label) : o.status==='blocked' ? t('needsHelp') : t('nextStep')+': '+L(o.stage.title)) : t('allDoneJ')}</small></span><span class="pill pill-ok">${o.done}/${o.total}</span></button>`; }).join('')}</div>` : ''}
+          return `<button class="choice" data-act="journey" data-v="${id}"><span class="main"><span>${L(o.journey.title)}</span><small>${o.stage ? (o.status==='waiting' ? t('waitingOn')+': '+L(o.stage.label) : o.status==='blocked' ? t('needsHelp') : t('nextStep')+': '+L(o.stage.title)) : t('allDoneJ')}</small></span><span class="pill pill-ok">${Math.round(o.done/o.total*100)}%</span></button>`; }).join('')}</div>` : ''}
         ${sug ? `<span class="label">${t('suggested')}</span><div class="choices"><button class="choice" data-act="journey" data-v="${sug.journey}"><span>${L(sug.name)}</span>${chev()}</button></div>` : ''}
         <button class="btn btn-quiet wide" data-act="go" data-v="needs">${t('exploreAll')}</button>
         ${S.testMode ? testPanel() : ''}
