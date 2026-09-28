@@ -76,7 +76,7 @@ function go(screen, params={}){
 function parentOf(){
   if(S.screen === 'step' || S.screen === 'complete') return {screen:'journey', params:{id:S.params.id}};
   if(S.screen === 'hub') return {screen:'welcome', params:{}};
-  if(S.screen === 'needs' && hasHub()) return {screen:'hub', params:{}};
+  if(S.screen === 'needs' || S.screen === 'more') return {screen:'hub', params:{}};
   if(S.screen === 'needs' || S.screen === 'purpose') return {screen:'welcome', params:{}};
   return {screen: S.lang ? 'needs' : 'welcome', params:{}};
 }
@@ -90,7 +90,7 @@ window.addEventListener('popstate', () => {
   if(document.getElementById('sheet')){ closeSheet(); try{ history.pushState({orivia:true}, ''); navDepth++; }catch(e){} return; }
   if(S.screen !== 'welcome') back();
 });
-function home(){ S.history = []; S.screen = S.lang ? (hasHub() ? 'hub' : 'needs') : 'welcome'; S.params = {}; save(); render(true); }
+function home(){ S.history = []; S.screen = S.lang ? 'hub' : 'welcome'; S.params = {}; save(); render(true); }
 
 /* ---------- Pieces ---------- */
 const topbar = () => `
@@ -283,7 +283,8 @@ const SCREENS = {
     const ticks = j.stages.map((x,k)=>`<i class="${k===i?'on':done[x.id]?'ok':''}"></i>`).join('');
     return {
       body: `<div class="sign">
-          <span class="stepnav"><span class="ticks" aria-hidden="true">${ticks}</span><span>${t('stepOf')(i+1,j.stages.length)} · ${L(s.label)}</span></span>
+          ${stageChips(S.params.id, i)}
+          <span class="stepnav"><span>${t('stepOf')(i+1,j.stages.length)}</span></span>
           <h1>${L(s.title)}</h1>
           <div class="sign-tools">${chip(s,true)}${listenBtn()}</div>
         </div>
@@ -320,6 +321,8 @@ const SCREENS = {
 };
 
 SCREENS.hub = hubScreen;
+SCREENS.needs = goalsScreen;
+SCREENS.more = moreScreen;
 
 function block(b){
   const j = DATA.journeys[S.params.id];
@@ -542,7 +545,9 @@ function render(scrollTop){
   const l = lang();
   app.lang = l; app.dir = isRtl(l) ? 'rtl' : 'ltr';
   const scr = (SCREENS[S.screen] || SCREENS.welcome)();
-  app.innerHTML = topbar() + `<div class="scroll" id="scroll">${scr.body}</div><div class="actions">${scr.actions||''}</div>`;
+  const tb = tabbar();
+  app.classList.toggle('big', !!S.big); app.classList.toggle('has-tabs', !!tb);
+  app.innerHTML = topbar() + `<div class="scroll" id="scroll">${scr.body}</div><div class="actions">${(scr.actions||'').trim()}</div>` + tb;
   if(scrollTop) document.getElementById('scroll').scrollTop = 0;
   syncPoster();
 }
@@ -614,7 +619,7 @@ app.addEventListener('click', e => {
     case 'askOpen': askSheet(); break;
     case 'statsToggle': S.analytics = S.analytics === false ? true : false; save(); render(); break;
     case 'askGo': askGo(v); break;
-    default: placesAct(b.dataset.act, v) || expiryAct(b.dataset.act, v) || navAct(b.dataset.act, v);
+    default: placesAct(b.dataset.act, v) || expiryAct(b.dataset.act, v) || navAct(b.dataset.act, v) || shellAct(b.dataset.act, v);
   }
 });
 app.addEventListener('input', e => { if(e.target.id === 'dest') updatePhrase(); if(e.target.id === 'askQ') askInput(e.target.value); });
@@ -725,3 +730,5 @@ app.addEventListener('click', e => { const a = e.target.closest('a[href]'); if(!
 const renderNav = render; render = function(x){ renderNav(x); linkTerms(document.getElementById('scroll')); };
 const sheetNav = sheet; sheet = function(h, f){ sheetNav(h, f); linkTerms(document.getElementById('sheet')); };
 linkTerms(document.getElementById('scroll'));
+/* Keep the current stage chip in view */
+const renderShell = render; render = function(x){ renderShell(x); const on = document.querySelector('.device .schip.on'); if(on) try{ on.scrollIntoView({block:'nearest', inline:'center'}); }catch(e){} };

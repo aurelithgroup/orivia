@@ -142,6 +142,7 @@ function needBox(jid, s){
 /* ---------- "Your journeys" home screen ---------- */
 function hubScreen(){
   const ids = activeJourneys();
+  if(!ids.length) return startScreen();
   const focusId = ids.find(id => ctx(id).status !== 'done') || ids[0];
   const c = ctx(focusId), j = c.journey;
   const statusBox = () => {
@@ -155,7 +156,7 @@ function hubScreen(){
   const week = DATA.firstWeek[S.city] || [];
   const sug = week.find(x => x.journey && !started(x.journey)) || null;
   return {
-    body: sign({eyebrow: window.__welcomeBack ? t('welcomeBack') : L(DATA.cities[S.city].kicker), title:t('hubTitle'), sub:t('hubSub')}) + `
+    body: sign({eyebrow: window.__welcomeBack ? t('welcomeBack') : L(DATA.cities[S.city].kicker), title:greeting(), sub:t('continueWhere')}) + `
       <div class="content">
         ${partnerStrip()}
         ${docAlert()}
@@ -176,7 +177,8 @@ function hubScreen(){
         ${others.length ? `<span class="label">${t('alsoGoing')}</span><div class="choices">${others.map(id=>{ const o = ctx(id);
           return `<button class="choice" data-act="journey" data-v="${id}"><span class="main"><span>${L(o.journey.title)}</span><small>${o.stage ? (o.status==='waiting' ? t('waitingOn')+': '+L(o.stage.label) : o.status==='blocked' ? t('needsHelp') : t('nextStep')+': '+L(o.stage.title)) : t('allDoneJ')}</small></span><span class="pill pill-ok">${Math.round(o.done/o.total*100)}%</span></button>`; }).join('')}</div>` : ''}
         ${sug ? `<span class="label">${t('suggested')}</span><div class="choices"><button class="choice" data-act="journey" data-v="${sug.journey}"><span>${L(sug.name)}</span>${chev()}</button></div>` : ''}
-        <button class="btn btn-quiet wide" data-act="go" data-v="needs">${t('exploreAll')}</button>
+        <span class="label">${t('otherNeeds')}</span>
+        <div class="chip-row">${GOALS.filter(g => goalCount(g.need)).slice(0,6).map(g => `<button class="gchip" data-act="need" data-v="${g.need}">${L(g.v)}</button>`).join('')}</div>
         ${S.testMode ? testPanel() : ''}
         ${statsNoteHtml()}
       </div>`,

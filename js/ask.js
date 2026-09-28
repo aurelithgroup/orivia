@@ -58,6 +58,11 @@ function askIndex(){
       rows.push({type:'problem', jid, pid:p.id, sid:st && st.id, i: st ? j.stages.indexOf(st) : 0, city:j.city, title:L(p.q), sub:L(j.title), text:both(p.q)+' '+ans, head:both(p.q), snippet: p.a ? L(p.a) : p.guide ? L(p.guide.calm) : ''});
     });
   });
+  /* Whole guides, found by the words people actually use ("doctor", "bank") */
+  Object.entries(DATA.tasks).forEach(([key, list]) => { const need = key.split('.')[1];
+    list.forEach(x => { const jid = x.journey || (x.pathway && (DATA.pathways[x.pathway].options.find(o=>o.journey)||{}).journey); if(!jid || !DATA.journeys[jid]) return;
+      const j = DATA.journeys[jid], words = (typeof GOAL_WORDS !== 'undefined' && GOAL_WORDS[need]) || '';
+      rows.push({type:'journey', jid, pw:x.pathway||'', city:j.city, title:L(x.name), sub:L((DATA.needs.find(n=>n.id===need)||{}).name), text:both(x.name)+' '+both(x.note)+' '+both(j.title)+' '+words, head:both(x.name)+' '+both(j.title)+' '+words}); }); });
   Object.entries(PLACES).forEach(([id, p]) => rows.push({type:'place', place:id, city:p.city, title:L(p.name), sub:p.address, text:both(p.name)+' '+both(p.for)+' '+p.address, head:both(p.name)}));
   rows.forEach(r => { r.tk = toks(r.text); r.hk = new Set(toks(r.head)); r.tf = {}; r.tk.forEach(w => r.tf[w] = (r.tf[w]||0) + 1); });
   const df = {}; rows.forEach(r => new Set(r.tk).forEach(w => df[w] = (df[w]||0) + 1));
@@ -75,10 +80,11 @@ function askSearch(q, cx){
     if(!hits) return null;
     sc *= (hits / qt.length) ** 1.2;
     if(r.type === 'problem') sc *= 1.35;
+    if(r.type === 'journey') sc *= qt.length <= 2 ? 2.2 : 1.1;
     if(cx && cx.jid === r.jid) sc *= 1.6;
     if(cx && cx.sid && cx.sid === r.sid) sc *= 1.5;
     return Object.assign({score:sc, cover:hits/qt.length}, r);
-  }).filter(Boolean).sort((a,b)=>b.score-a.score).slice(0,4);
+  }).filter(Boolean).sort((a,b)=>b.score-a.score).filter((r,i,arr)=>arr.findIndex(q=>q.type===r.type&&q.title===r.title)===i).slice(0,5);
 }
 function askContext(){
   if(S.screen === 'step' && S.params.id) return {jid:S.params.id, sid:DATA.journeys[S.params.id].stages[S.params.i].id};
@@ -102,17 +108,17 @@ function askResultsHtml(q){
       ${emergencyBox()}
       <div class="help-card"><strong>${t('showThis')}</strong><div class="phrase">${staffInner({en:UI.en.helpPhrase, ar:UI.ar.helpPhrase, mine:t('helpPhrase')})}</div></div></div>`;
   }
-  const typeName = {problem:t('askTypeProblem'), step:t('askTypeStep'), place:t('askTypePlace')};
+  const typeName = {problem:t('askTypeProblem'), step:t('askTypeStep'), place:t('askTypePlace'), journey:t('askTypeJourney')};
   return `<span class="label">${t('askBest')}</span><div class="choices">${good.map(r => `
-    <button class="choice ask-hit" data-act="askGo" data-v="${r.type}|${r.jid||''}|${r.sid||''}|${r.pid||r.place||''}">
+    <button class="choice ask-hit" data-act="askGo" data-v="${r.type}|${r.jid||''}|${r.sid||''}|${r.pid||r.place||r.pw||''}">
       <span class="main"><span class="ask-type">${typeName[r.type]}${r.jid ? ' · ' + esc(r.sub) : ''}</span><span>${esc(r.title)}</span>${r.snippet ? `<small>${esc(r.snippet.slice(0,140))}${r.snippet.length>140?'…':''}</small>` : ''}</span>${chev()}</button>`).join('')}</div>`;
 }
-function askSheet(prefill){
-  const cx = askContext();
+function askSheet(prefill, mode){
+  const cx = mode === 'need' ? null : askContext();
   const where = cx ? L(DATA.journeys[cx.jid].title) + (cx.sid ? ' · ' + L(DATA.journeys[cx.jid].stages.find(s=>s.id===cx.sid).label) : '') : '';
   sheet(`<h2>${t('askTitle')}</h2>
     ${where ? `<span class="ask-ctx">${t('askLooking')}: <b>${esc(where)}</b></span>` : ''}
-    <input id="askQ" class="field" type="search" dir="auto" autocomplete="off" enterkeyhint="search" placeholder="${t('askPh')}" value="${esc(prefill||'')}">
+    <input id="askQ" class="field" type="search" dir="auto" autocomplete="off" enterkeyhint="search" placeholder="${mode === 'need' ? t('needPh') : t('askPh')}" value="${esc(prefill||'')}">
     <span class="need-hint">${t('askHint')}</span>
     <div id="askOut">${askResultsHtml(prefill||'')}</div>
     <button class="btn btn-quiet" data-act="closeSheet">${t('close')}</button>`, true);
@@ -128,6 +134,7 @@ function askGo(v){
   const [type, jid, sid, x] = v.split('|');
   closeSheet(); logEv('ask_pick', {detail:v});
   if(type === 'place'){ sheet(`${placeCard(x)}<button class="btn btn-quiet" data-act="closeSheet">${t('close')}</button>`); return; }
+  if(type === 'journey'){ if(x) go('pathway', {id:x}); else { touch(jid); go('journey', {id:jid}); } return; }
   const j = DATA.journeys[jid], i = Math.max(0, j.stages.findIndex(s=>s.id===sid));
   touch(jid);
   if(!(S.screen === 'step' && S.params.id === jid && S.params.i === i)) go('step', {id:jid, i});
