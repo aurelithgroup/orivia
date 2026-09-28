@@ -42,6 +42,7 @@ Object.assign(UI.ar, {
 UI.en.ch.site = UI.en.siteDown; UI.ar.ch.site = UI.ar.siteDown;
 UI.en.rec.site = ['Wait a few minutes and try again: busy times often cause errors.','Try another browser, or the official app if there is one.','Check you’re on the official website: Orivia’s links go to the right place.','Still not working? Contact the organisation by phone instead.'];
 UI.ar.rec.site = ['انتظر بضع دقائق وحاول مجدداً، فأوقات الازدحام تسبب الأخطاء غالباً.','جرّب متصفحاً آخر، أو التطبيق الرسمي إن وُجد.','تأكّد أنك على الموقع الرسمي، فروابط أوريفيا توصلك إلى المكان الصحيح.','ما زال لا يعمل؟ تواصل مع الجهة هاتفياً بدلاً من ذلك.'];
+EXTRA_ICONS.check = '<path d="M5 12l5 5 9-10"/>';
 EXTRA_ICONS.alert2 = '<path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5h.01"/>';
 EXTRA_ICONS.staff = '<rect x="5" y="2" width="14" height="20" rx="3"/><path d="M9 7h6M9 11h6M9 15h4"/>';
 EXTRA_ICONS.shield = '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>';
@@ -165,7 +166,7 @@ function quickCard(jid, s){
   const d = doThis(s); if(!d) return '';
   const ticks = S.checks[jid] || {}, a = apptOf(jid, s.id);
   const where = a && a.where ? `<span dir="auto">${esc(a.where)}</span> <a class="linkish" href="${dirUrl(a.where)}" target="_blank" rel="noopener">${t('takeMe')}</a>`
-    : (s.places && s.places.length) ? `${L(PLACES[s.places[0]].name)}${s.places.length > 1 ? ` +${s.places.length-1}` : ''} <a class="linkish" href="${dirUrl(PLACES[s.places[0]].name.en + ', ' + PLACES[s.places[0]].address)}" target="_blank" rel="noopener">${t('takeMe')}</a>` : '';
+    : (!s.appt && s.places && s.places.length) ? `${L(PLACES[s.places[0]].name)}${s.places.length > 1 ? ` +${s.places.length-1}` : ''} <a class="linkish" href="${dirUrl(PLACES[s.places[0]].name.en + ', ' + PLACES[s.places[0]].address)}" target="_blank" rel="noopener">${t('takeMe')}</a>` : '';
   const row = (k, html) => `<div class="q-row"><span class="q-k">${k}</span><div class="q-v">${html}</div></div>`;
   return `<div class="quick">
     ${row(t('qDo'), `<b>${d}</b>`)}
