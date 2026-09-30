@@ -335,6 +335,7 @@ function block(b){
     case 'tip': return `<div class="tip"><b>${t(b.label||'tip')}</b>${L(b.v)}</div>`;
     case 'cards': return `<div class="cards">${b.v.map(c=>`<div class="card ${c.rec?'rec':''}"><div class="card-head"><span class="swatch" style="background:${c.color}"></span><strong>${L(c.name)}</strong>${c.rec?`<span class="pill pill-amber">${t('recommended')}</span>`:''}</div><p>${L(c.desc)}</p></div>`).join('')}</div>`;
     case 'emergency': return emergencyBox();
+    case 'photo': return photoHtml(b);
     case 'phraseCard': return phraseHtml({phrase:b.v});
     case 'journeyLink': { const lj = DATA.journeys[b.journey] || {}; const viaPath = !!(lj.finder && lj.pathway);
       return `<button class="choice jlink" data-act="${viaPath ? 'pathway' : 'journey'}" data-v="${viaPath ? lj.pathway : b.journey}"><span>${L(b.v)}</span>${chev()}</button>`; }
@@ -441,7 +442,7 @@ function wrongSheet(pid){
   if(p.guide) return guideSheet(p, 0);
   if(p.branch) return branchSheet(p);
   sheet(`<h2>${L(p.q)}</h2>
-    <div class="answer"><h3>${t('tryThis')}</h3><p>${L(p.a)}</p></div>
+    <div class="answer"><h3>${t('tryThis')}</h3><p>${L(p.a)}</p></div>${(p.photos||[]).map(photoHtml).join('')}
     ${p.phrase ? phraseHtml(j) : ''}${p.phraseText ? phraseHtml({phrase:p.phraseText}) : ''}
     ${outcomeHtml(false)}`);
 }

@@ -640,3 +640,6 @@ a.choice{text-decoration:none;color:inherit}
 .wide-goal{flex-direction:row;align-items:center;min-height:0;padding:16px}
 .wide-goal .t{flex:1}
 .wide-goal svg{width:24px;height:24px}
+.photo{margin:0;display:flex;flex-direction:column;gap:6px}
+.photo img{width:100%;height:auto;border-radius:14px;border:1px solid var(--line);display:block}
+.photo figcaption{font-size:14px;color:var(--muted);line-height:1.45}
