@@ -1,6 +1,6 @@
 /* Orivia service worker: keeps the app and its journeys available offline.
    Bump VERSION whenever you publish changes so phones pick up the new files. */
-const VERSION = 'orivia-v34';
+const VERSION = 'orivia-v35';
 const SHELL = ['./', 'index.html', 'css/app.css', 'js/content.js', 'js/content-edinburgh.js', 'js/content-uae-eid.js', 'js/photos.js', 'img/gate-please-wait.jpg', 'img/gate-card-not-valid.jpg', 'img/station-sign.jpg', 'js/analytics.js', 'js/partners.js', 'js/places.js', 'js/expiry.js', 'js/ask.js', 'js/navigation.js', 'js/shell.js', 'js/simple.js', 'js/context.js', 'js/app.js', 'js/i18n/fr.js', 'js/i18n/fil.js', 'js/i18n/hi.js', 'js/i18n/ur.js', 'manifest.webmanifest', 'icons/favicon.svg', 'icons/favicon-32.png',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/qr-dubai.png', 'icons/logo-mark.svg'];
 

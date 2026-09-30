@@ -51,9 +51,9 @@ EXTRA_ICONS.shield = '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><pat
 if(typeof GOALS !== 'undefined'){
   const relabel = {docs:{en:'My residence ID', ar:'هويتي وإقامتي'}, housing:{en:'My accommodation', ar:'سكني'}, money:{en:'Banking', ar:'البنوك'}, health:{en:'Healthcare', ar:'الرعاية الصحية'},
     move:{en:'Getting around', ar:'التنقل'}, work:{en:'Work', ar:'العمل'}, edu:{en:'University and school', ar:'الجامعة والمدرسة'}, family:{en:'My family', ar:'عائلتي'},
-    life:{en:'Phone and everyday life', ar:'الهاتف والحياة اليومية'}, community:{en:'Meeting people', ar:'التعرّف على الناس'}};
+    life:{en:'Phone and SIM', ar:'الهاتف والشريحة'}, community:{en:'Meeting people', ar:'التعرّف على الناس'}};
   GOALS.forEach(g => { if(relabel[g.need]) g.v = relabel[g.need]; });
-  const order = ['housing','docs','health','work','money','edu','move','family','life','community'];
+  const order = ['housing','docs','move','life','health','money','work','edu','family','community'];
   GOALS.sort((a,b) => order.indexOf(a.need) - order.indexOf(b.need));
 }
 const LANG_FLAG = {en:'🇬🇧', ar:'🇦🇪', fr:'🇫🇷', fil:'🇵🇭', hi:'🇮🇳', ur:'🇵🇰'};
@@ -101,11 +101,11 @@ function needFirstScreen(){
     body: sign({eyebrow:L(DATA.cities[S.city].kicker), title:t('needHelpWith')}) + `
       <div class="content">
         ${cont ? `<button class="choice hub-link" data-act="journey" data-v="${cont.what}"><span class="main"><span>${t('continueWhere')}</span><small>${L(cont.journey.title)}</small></span>${chev()}</button>` : ''}
-        <div class="goal-grid">${GOALS.filter(g => goalCount(g.need)).slice(0,6).map(g => { const n = DATA.needs.find(x=>x.id===g.need);
+        <div class="goal-grid">${GOALS.filter(g => goalCount(g.need)).slice(0,8).map(g => { const n = DATA.needs.find(x=>x.id===g.need);
           return `<button class="goal" data-act="need" data-v="${g.need}">${svg(n.icon)}<span class="t">${L(g.v)}</span></button>`; }).join('')}</div>
         <button class="goal goal-wrong wide-goal" data-act="somethingWrong">${svg('alert2')}<span class="t">${t('somethingWrong')}</span>${chev()}</button>
         <button class="choice unsure-row" data-act="notSure"><span class="main"><span>${t('notSureWhat')}</span></span>${chev()}</button>
-        <div class="chip-row">${GOALS.filter(g => goalCount(g.need)).slice(6).map(g => `<button class="gchip" data-act="need" data-v="${g.need}">${L(g.v)}</button>`).join('')}</div>
+        <div class="chip-row">${GOALS.filter(g => goalCount(g.need)).slice(8).map(g => `<button class="gchip" data-act="need" data-v="${g.need}">${L(g.v)}</button>`).join('')}</div>
         <button class="ask-inline search-big" data-act="needSearch">${svg('search','help-ico')}<span>${t('needPh')}</span></button>
       </div>`,
     actions:''
@@ -252,3 +252,7 @@ function simpleAct(act, v){
   }
   return false;
 }
+
+/* The "Phone and SIM" tile gets a phone icon instead of a cart */
+window.EXTRA_ICONS = window.EXTRA_ICONS || {};
+EXTRA_ICONS.life = '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/>';
