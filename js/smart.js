@@ -16,7 +16,7 @@
    ========================================================= */
 Object.assign(UI.en, {
   jcTitle:'Just checking…',
-  jcBody:(cur, miss) => `You’re finishing “${cur}”, but ${miss} isn’t marked as done yet. Usually it comes first.`,
+  jcBody:(cur, miss) => `You’re finishing “${cur}”, but “${miss}” isn’t marked as done yet. Usually it comes first.`,
   jcDid:'I did it. I forgot to mark it', jcNot:'I haven’t done it yet', jcUnsure:'I’m not sure',
   jcNotNote:'That’s fine. Let’s do that step first. If your university told you to do things in a different order, follow them.',
   ldTitle:'Just checking: have you done all of these?', ldSub:'Untick anything that didn’t happen.', ldOk:'Yes, that’s right',
@@ -36,7 +36,7 @@ Object.assign(UI.en, {
 });
 Object.assign(UI.ar, {
   jcTitle:'للتأكد فقط…',
-  jcBody:(cur, miss) => `أنت تُنهي «${cur}»، لكن ${miss} لم يُحدَّد بعد على أنه مُنجز. عادةً يأتي ذلك أولاً.`,
+  jcBody:(cur, miss) => `أنت تُنهي «${cur}»، لكن «${miss}» لم يُحدَّد بعد على أنه مُنجز. عادةً يأتي ذلك أولاً.`,
   jcDid:'أنجزته، لكنني نسيت تحديده', jcNot:'لم أنجزه بعد', jcUnsure:'لست متأكداً',
   jcNotNote:'لا بأس. لنبدأ بتلك الخطوة أولاً. وإذا طلبت منك جامعتك ترتيباً مختلفاً، فاتبع تعليماتها.',
   ldTitle:'للتأكد فقط: هل أنجزت كل هذه الخطوات؟', ldSub:'ألغِ تحديد أي خطوة لم تحدث.', ldOk:'نعم، هذا صحيح',
@@ -88,7 +88,7 @@ function contactFor(key){
 }
 /* UAE weekends are Saturday and Sunday */
 function addWorkdays(d, n){ const x = new Date(d); let k = 0; while(k < n){ x.setDate(x.getDate()+1); const w = x.getDay(); if(w !== 0 && w !== 6) k++; } return x; }
-function shortDate(d){ try{ return new Date(d).toLocaleDateString(({ar:'ar-AE',fr:'fr-FR',fil:'fil-PH',hi:'hi-IN',ur:'ur-PK',zh:'zh-CN',ru:'ru-RU',bn:'bn-BD',ml:'ml-IN'})[lang()] || 'en-GB', {weekday:'short', day:'numeric', month:'short'}); }catch(e){ return ''; } }
+function shortDate(d){ try{ return new Date(d).toLocaleDateString(({ar:'ar-AE',fr:'fr-FR',fil:'fil-PH',hi:'hi-IN',ur:'ur-PK',zh:'zh-CN',ru:'ru-RU',bn:'bn-BD',ml:'ml-IN'})[lang()] || 'en-GB', {weekday:'short', day:'numeric', month:'short'}).replace(/\.$/, ''); }catch(e){ return ''; } }
 const escAttr = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 
 /* The escalation card: who, why, have ready, what to say, how, then "I've contacted them" */
@@ -133,7 +133,7 @@ function smartCheckDone(jid, i){
   const pos = order.indexOf(j.stages[i].id); if(pos <= 0) return false;
   const miss = order.slice(0, pos).filter(sid => !d[sid]); if(!miss.length) return false;
   jcPending = {jid, i, miss};
-  const name = sid => `“${L(j.stages.find(s => s.id === sid).label)}”`;
+  const name = sid => L(j.stages.find(s => s.id === sid).label);
   sheet(`<h2>${t('jcTitle')}</h2><p class="lead">${t('jcBody')(L(j.stages[i].label), miss.map(name).join(', '))}</p>
     <div class="choices">
       <button class="choice" data-act="jcDid"><span>${t('jcDid')}</span>${chev()}</button>
