@@ -24,13 +24,13 @@
   <section class="landing" aria-label="About Orivia">
     <header class="land-top">
       <span class="land-brand"><svg class="" viewBox="0 0 306 310" aria-hidden="true"><path fill="currentColor" d="M0 0 L0 168 C0 248 60 302 136 308 L136 160 C136 70 78 4 0 0 Z"/><path fill="var(--amber)" d="M160 308 L160 190 C160 108 222 44 306 40 L306 172 C306 254 240 302 160 308 Z"/></svg><span class="land-brand-text"><span class="wordmark">ORIVIA</span><span class="tagline">New place. Same you.</span></span></span>
-      <span class="badge">Beta · Dubai &amp; Edinburgh</span>
+      <nav class="land-nav" aria-label="Who is this for"><a href="#for-newcomers">For newcomers</a><a href="#for-organisations">For organisations</a></nav>
     </header>
 
-    <div class="land-hero">
+    <div class="land-hero" id="for-newcomers">
       <span class="land-eyebrow">For newcomers to Dubai and Edinburgh</span>
       <h1>Your first weeks in a new country, one step at a time.</h1>
-      <p class="land-lead">Orivia guides newcomers through real tasks, like getting a residence ID, registering with a doctor or opening a bank account, and helps the moment something goes wrong. No app to download. English and Arabic, with French, Filipino, Hindi and Urdu in beta.</p>
+      <p class="land-lead">Orivia guides newcomers through real tasks, like getting a residence ID, registering with a doctor or opening a bank account, and helps the moment something goes wrong. No app to download. In English and Arabic, plus eight more languages in beta: French, Filipino, Hindi, Urdu, Chinese, Russian, Bengali and Malayalam.</p>
       <div class="land-qr">
         <img src="icons/qr-dubai.png" alt="QR code that opens Orivia" width="132" height="132" id="landQr">
         <div><strong>Try it on your phone</strong><span>Scan with your camera. It opens straight in the browser.</span><span class="land-url">aurelithgroup.github.io/orivia</span></div>
@@ -74,10 +74,16 @@
       <div class="land-journeys" id="landJourneys"></div>
     </section>
 
-    <section class="land-sec land-partner">
+    <section class="land-sec land-partner" id="for-organisations">
       <span class="land-label">For universities and organisations</span>
       <h2>Orivia handles the routine questions. Your team handles the people.</h2>
       <p class="land-p">Put an Orivia QR code in your arrival email or at your desk. Newcomers get step-by-step help for the common tasks, and are sent to your team when a person is needed.</p>
+      <div class="land-org">
+        <div><h3>Fewer repeat questions</h3><p>The “what do I do next?” questions that fill inboxes every September get answered on the spot, in the newcomer’s language.</p></div>
+        <div><h3>Safe by design</h3><p>No accounts or personal data needed. Progress stays on the newcomer’s phone, and every step links to its official source.</p></div>
+        <div><h3>Your instructions, on top</h3><p>Your own notes, contacts and deadlines appear on the steps you run, so students hear it your way.</p></div>
+        <div><h3>See where people get stuck</h3><p>Anonymous counts show which step people ask for help on, so you can fix the cause, not just answer the email.</p></div>
+      </div>
       <p class="land-p"><a class="land-cta" href="partners.html">Make a QR code for your newcomers →</a></p>
     </section>
 
@@ -122,6 +128,9 @@
 <script src="js/shell.js"></script>
 <script src="js/voice.js"></script>
 <script src="js/simple.js"></script>
+<script src="js/smart.js"></script>
+<script src="js/journey-student.js"></script>
+<script src="js/qa.js"></script>
 <script src="js/context.js"></script>
 <script src="js/app.js"></script>
 </body>

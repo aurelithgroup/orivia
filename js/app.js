@@ -244,7 +244,8 @@ const SCREENS = {
         <div class="content"><div class="choices">
           ${opt('yes', q.yes ? L(q.yes) : t('yes'))}
           ${opt('no', q.no ? L(q.no) : t('notYet'))}
-          ${q.noUnsure ? '' : opt('unsure', q.unsureLabel ? L(q.unsureLabel) : t('notSure'))}
+          ${q.noUnsure ? '' : q.checks ? `<button class="choice" data-act="dxStart"><span>${q.unsureLabel ? L(q.unsureLabel) : t('notSure')}</span>${chev()}</button>` : opt('unsure', q.unsureLabel ? L(q.unsureLabel) : t('notSure'))}
+          ${q.explain ? `<button class="choice choice-quiet" data-act="explainQ"><span>${t('whatMean')}</span>${chev()}</button>` : ''}
         </div>
         <p class="disclaimer">${t('privacy')}</p></div>`,
       actions:`<button class="btn btn-quiet" data-act="back">${t('back')}</button>`
@@ -430,7 +431,7 @@ function wrongSheet(pid){
   if(p.guide) return guideSheet(p, 0);
   if(p.branch) return branchSheet(p);
   sheet(`<h2>${L(p.q)}</h2>
-    <div class="answer"><h3>${t('tryThis')}</h3><p>${L(p.a)}</p></div>${(p.photos||[]).map(photoHtml).join('')}
+    <div class="answer"><h3>${t('tryThis')}</h3><p>${L(p.a)}</p></div>${(p.photos||[]).map(photoHtml).join('')}${escHtml(p)}
     ${p.phrase ? phraseHtml(j) : ''}${p.phraseText ? phraseHtml({phrase:p.phraseText}) : ''}
     ${outcomeHtml(false)}`);
 }
@@ -480,6 +481,7 @@ function branchSheet(p, pick){
     <h2>${L(o.label)}</h2>
     <div class="answer"><h3>${t('tryThis')}</h3><p>${L(o.a)}</p></div>
     ${o.link ? `<a class="btn btn-primary linkbtn" href="${o.link}" target="_blank" rel="noopener">${t('openIcp')} ${chev()}</a>` : ''}
+    ${o.esc ? escHtml({id:p.id, q:p.q, esc:o.esc}) : ''}${o.report ? `<button class="btn btn-quiet" data-act="diffReport">${t('diffReport')}</button>` : ''}
     ${outcomeHtml()}`);
 }
 function outcomeHtml(){
@@ -564,6 +566,7 @@ app.addEventListener('click', e => {
     case 'step': go('step', {id:S.params.id, i:+v}); logEv('stage_open'); break;
     case 'stepDone': {
       const j = DATA.journeys[S.params.id], i = S.params.i;
+      if(smartCheckDone(S.params.id, i)) break;
       S.done[S.params.id] = S.done[S.params.id] || {};
       S.done[S.params.id][j.stages[i].id] = true; touch(S.params.id);
       if(S.stuck[S.params.id] === j.stages[i].id) delete S.stuck[S.params.id];
@@ -585,7 +588,7 @@ app.addEventListener('click', e => {
       const id = S.params.id, j = DATA.journeys[id], n = j.lastDone.options[+v].done;
       const doneMap = {}; for(let i=0;i<n;i++) doneMap[j.stages[i].id] = true;
       S.done[id] = doneMap; S.finder[id] = {unsure:[]};
-      S.screen = 'journey'; S.params = {id}; save(); render(true); break;
+      S.screen = 'journey'; S.params = {id}; save(); render(true); lastDoneConfirm(id, n); break;
     }
     case 'lastUnknown': go('finder', {id:S.params.id, k:0}); break;
     case 'dontKnow': { const pw = DATA.pathways[S.params.id]; if(pw && pw.decide){ decideSheet(S.params.id); logEv('dk_open', {detail:S.params.id}); } else dontKnowSheet(); break; }
@@ -613,7 +616,7 @@ app.addEventListener('click', e => {
     case 'askOpen': askSheet(); break;
     case 'statsToggle': S.analytics = S.analytics === false ? true : false; save(); render(); break;
     case 'askGo': askGo(v); break;
-    default: placesAct(b.dataset.act, v) || expiryAct(b.dataset.act, v) || navAct(b.dataset.act, v) || shellAct(b.dataset.act, v) || simpleAct(b.dataset.act, v) || voiceAct(b.dataset.act, v);
+    default: placesAct(b.dataset.act, v) || expiryAct(b.dataset.act, v) || navAct(b.dataset.act, v) || shellAct(b.dataset.act, v) || simpleAct(b.dataset.act, v) || voiceAct(b.dataset.act, v) || smartAct(b.dataset.act, v) || qaAct(b.dataset.act, v);
   }
 });
 app.addEventListener('input', e => { if(e.target.id === 'dest') updatePhrase(); if(e.target.id === 'askQ') askInput(e.target.value); });

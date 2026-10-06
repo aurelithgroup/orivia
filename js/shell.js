@@ -200,7 +200,7 @@ function moreScreen(){
         ${row('moreInfo" data-v="about', t('mAbout'), '')}
       </div>
       <p class="disclaimer">${t('listenNote')}</p>
-      ${S.testMode ? testPanel() : ''}
+      ${S.testMode ? `<div class="choices">${row('qaOpen" data-v="', 'Journey check (team only)', 'How hard it is to get stuck in each journey')}</div>` + testPanel() : ''}
       </div>`,
     actions:''
   };
