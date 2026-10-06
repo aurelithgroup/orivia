@@ -394,6 +394,12 @@ a.phone{color:var(--ink);text-decoration:none}
 /* Urdu and Hindi fonts */
 .device[lang="ur"]{font-family:"Noto Naskh Arabic",var(--arabic);line-height:1.75}
 .device[lang="hi"]{font-family:"Noto Sans Devanagari",var(--body)}
+.device[lang="bn"]{font-family:"Noto Sans Bengali",var(--body)}
+.device[lang="bn"] .sign h1,.device[lang="bn"] .hero-sign h1{font-family:"Noto Sans Bengali",var(--display);line-height:1.35}
+.device[lang="ml"]{font-family:"Noto Sans Malayalam",var(--body)}
+.device[lang="ml"] .sign h1,.device[lang="ml"] .hero-sign h1{font-family:"Noto Sans Malayalam",var(--display);line-height:1.35;font-size:26px}
+.device[lang="zh"]{font-family:var(--body),"PingFang SC","Microsoft YaHei","Noto Sans SC","Noto Sans CJK SC",sans-serif}
+.device[lang="zh"] .sign h1,.device[lang="zh"] .hero-sign h1{font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC","Noto Sans CJK SC",sans-serif;letter-spacing:0}
 .device[lang="hi"] .sign h1,.device[lang="hi"] .hero-sign h1{font-family:"Noto Sans Devanagari",var(--display);line-height:1.3}
 .device[lang="hi"] .hero-sign h1{text-transform:none}
 .beta-tr{border-color:var(--warn);color:var(--warn)}
@@ -649,3 +655,6 @@ a.choice{text-decoration:none;color:inherit}
 .photo{margin:0;display:flex;flex-direction:column;gap:6px}
 .photo img{width:100%;height:auto;border-radius:14px;border:1px solid var(--line);display:block}
 .photo figcaption{font-size:14px;color:var(--muted);line-height:1.45}
+
+/* Letter-spacing breaks joined letters in Indic scripts and looks odd in Chinese */
+.device[lang="hi"] *,.device[lang="bn"] *,.device[lang="ml"] *,.device[lang="zh"] *{letter-spacing:0!important}

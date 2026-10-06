@@ -56,7 +56,7 @@ if(typeof GOALS !== 'undefined'){
   const order = ['housing','docs','move','life','health','money','work','edu','family','community'];
   GOALS.sort((a,b) => order.indexOf(a.need) - order.indexOf(b.need));
 }
-const LANG_FLAG = {en:'🇬🇧', ar:'🇦🇪', fr:'🇫🇷', fil:'🇵🇭', hi:'🇮🇳', ur:'🇵🇰'};
+const LANG_FLAG = {en:'🇬🇧', ar:'🇦🇪', fr:'🇫🇷', fil:'🇵🇭', hi:'🇮🇳', ur:'🇵🇰', zh:'🇨🇳', ru:'🇷🇺', bn:'🇧🇩', ml:'🇮🇳'};
 
 /* Short facts for the quick card: only where the official sources give them */
 (function(){
@@ -204,7 +204,9 @@ function staffCard(){
   const j = DATA.journeys[S.params.id], s = curStage();
   const card = (ui, step, journey) => `<p class="sc-hello">${ui.staffHello}</p><p class="sc-l">${ui.staffNeed}</p><p class="sc-step">${step}</p><p class="sc-part">${ui.staffPart} ${journey}</p>`;
   const mineUi = {staffHello:t('staffHello'), staffNeed:t('staffNeed'), staffPart:t('staffPart')};
-  const o = s ? {en:card(UI.en, s.label.en, staffEn(j.title.en)), ar:card(UI.ar, s.label.ar, j.title.ar), mine:card(mineUi, L(s.label), L(j.title))}
+  const ask = (hello, q) => `<p class="sc-hello">${hello}</p><p class="sc-step">${q}</p>`;
+  const o = s && s.staff ? {en:ask(UI.en.staffHello, s.staff.en), ar:ask(UI.ar.staffHello, s.staff.ar || s.staff.en), mine:ask(t('staffHello'), L(s.staff))}
+    : s ? {en:card(UI.en, s.label.en, staffEn(j.title.en)), ar:card(UI.ar, s.label.ar, j.title.ar), mine:card(mineUi, L(s.label), L(j.title))}
     : {en:UI.en.helpPhrase, ar:UI.ar.helpPhrase, mine:t('helpPhrase')};
   const w = document.createElement('div'); w.className = 'staff-full'; w.id = 'sheet';
   w.innerHTML = `<button class="staff-x" data-act="closeSheet" aria-label="${t('close')}">×</button><div class="staff-card">${staffInner(o)}</div>`;

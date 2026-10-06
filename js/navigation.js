@@ -374,7 +374,7 @@ function sourceDrawer(){
   const srcs = j.sources || (j.source ? [j.source] : []);
   const groups = {official:[], institution:[], other:[]}; srcs.forEach(s => groups[srcType(s.url)].push(s));
   const p = partner(), note = p && p.notes[S.params.id];
-  const due = reviewDue(j), loc = ({fil:'fil-PH', ur:'ur-PK', hi:'hi-IN', ar:'ar-AE', fr:'fr-FR'})[lang()] || 'en-GB';
+  const due = reviewDue(j), loc = ({fil:'fil-PH', ur:'ur-PK', hi:'hi-IN', ar:'ar-AE', fr:'fr-FR', zh:'zh-CN', ru:'ru-RU', bn:'bn-BD', ml:'ml-IN'})[lang()] || 'en-GB';
   const fd = d => { try{ return d.toLocaleDateString(loc, {day:'numeric', month:'long', year:'numeric'}); }catch(e){ return d.toDateString(); } };
   const sec = (k, label) => groups[k].length ? `<div class="bg-sec"><span class="label">${label}</span>${groups[k].map(s=>`<a class="choice src-row" href="${s.url}" target="_blank" rel="noopener"><span class="main"><span>${L(s.name)}</span><small dir="ltr">${(()=>{ try{ return new URL(s.url).hostname; }catch(e){ return ''; } })()}</small></span>${chev()}</a>`).join('')}</div>` : '';
   sheet(`<h2>${t('drawerTitle')}</h2>

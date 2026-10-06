@@ -50,7 +50,7 @@ const dayMs = 864e5;
 function daysLeft(date){ const d = new Date(date + 'T00:00:00'), n = new Date(); n.setHours(0,0,0,0); return Math.round((d - n) / dayMs); }
 function docState(id, date){ const k = daysLeft(date), w = (DOC_TYPES[id]||{}).warn || 30; return k < 0 ? 'gone' : k <= 7 ? 'soon' : k <= w ? 'warn' : 'ok'; }
 function docLabel(date){ const k = daysLeft(date); return k < 0 ? t('docsGone')(-k) : k === 0 ? t('docsToday') : t('docsLeft')(k); }
-function fmtDate(date){ const loc = ({fil:'fil-PH', ur:'ur-PK', hi:'hi-IN', ar:'ar-AE', fr:'fr-FR'})[lang()] || 'en-GB';
+function fmtDate(date){ const loc = ({fil:'fil-PH', ur:'ur-PK', hi:'hi-IN', ar:'ar-AE', fr:'fr-FR', zh:'zh-CN', ru:'ru-RU', bn:'bn-BD', ml:'ml-IN'})[lang()] || 'en-GB';
   try{ return new Date(date+'T00:00:00').toLocaleDateString(loc, {day:'numeric', month:'long', year:'numeric'}); }catch(e){ return date; } }
 function myDocs(){ return Object.entries(S.docs||{}).filter(([id]) => DOC_TYPES[id] && DOC_TYPES[id].cities.includes(S.city)).sort((a,b) => a[1].localeCompare(b[1])); }
 

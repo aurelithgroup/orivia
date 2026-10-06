@@ -107,7 +107,7 @@ const DATA = {
   languages:[
     {code:'en', name:'English', ready:true},
     {code:'ar', name:'العربية', ready:true},
-    {code:'fr', name:'Français'}, {code:'fil', name:'Filipino'}, {code:'hi', name:'हिन्दी'}, {code:'ur', name:'اردو'}
+    {code:'fr', name:'Français'}, {code:'fil', name:'Filipino'}, {code:'hi', name:'हिन्दी'}, {code:'ur', name:'اردو'}, {code:'zh', name:'简体中文'}, {code:'ru', name:'Русский'}, {code:'bn', name:'বাংলা'}, {code:'ml', name:'മലയാളം'}
   ],
   needs:[
     {id:'move', icon:'move', name:{en:'Getting around', ar:'التنقل'}},

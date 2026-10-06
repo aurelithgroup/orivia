@@ -131,7 +131,7 @@ function fmtWhen(a){
   const d = apptDate(a); if(!d) return '';
   const day0 = new Date(); day0.setHours(0,0,0,0);
   const diff = Math.round((new Date(d).setHours(0,0,0,0) - day0) / 864e5);
-  const loc = ({fil:'fil-PH', ur:'ur-PK', hi:'hi-IN', ar:'ar-AE', fr:'fr-FR'})[lang()] || 'en-GB';
+  const loc = ({fil:'fil-PH', ur:'ur-PK', hi:'hi-IN', ar:'ar-AE', fr:'fr-FR', zh:'zh-CN', ru:'ru-RU', bn:'bn-BD', ml:'ml-IN'})[lang()] || 'en-GB';
   let day; try{ day = diff===0 ? t('today') : diff===1 ? t('tomorrow') : d.toLocaleDateString(loc, {weekday:'short', day:'numeric', month:'short'}); }catch(e){ day = a.date; }
   let tm; try{ tm = d.toLocaleTimeString(loc, {hour:'2-digit', minute:'2-digit'}); }catch(e){ tm = a.time; }
   return `${day} · ${tm}`;
