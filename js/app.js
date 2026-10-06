@@ -378,19 +378,7 @@ function readable(root){
   return [...root.querySelectorAll('h1,h3,.calm,.blk-p,.blk-list li,.blk-steps li,.card strong,.card p,.gstep > p,.tip')]
     .map(e=>e.innerText.trim()).filter(Boolean).join('. ');
 }
-function speak(btn){
-  const ss = window.speechSynthesis;
-  if(ss.speaking){ ss.cancel(); setListen(false); return; }
-  const code = ({fil:'fil',tl:'fil'})[lang()] || lang();
-  const voices = ss.getVoices();
-  const v = voices.find(x=>x.lang && x.lang.toLowerCase().startsWith(code));
-  if(voices.length && !v){ toast(t('noVoice')); return; }
-  const root = document.getElementById('sheet') || document.getElementById('scroll');
-  const u = new SpeechSynthesisUtterance(readable(root));
-  u.lang = ({en:'en-GB',ar:'ar-AE',fr:'fr-FR',fil:'fil-PH',hi:'hi-IN',ur:'ur-PK'})[lang()] || 'en-GB'; if(v) u.voice = v; u.rate = .92;
-  u.onend = u.onerror = () => setListen(false);
-  ss.speak(u); setListen(true);
-}
+function speak(btn){ speakScreen(); }
 function setListen(on){
   document.querySelectorAll('.listen').forEach(b=>{ b.setAttribute('aria-pressed', on); b.innerHTML = `${svg(on?'stopsq':'speaker','lic')}<span>${on?t('stop'):t('listen')}</span>`; });
 }
@@ -457,7 +445,7 @@ function guideSheet(p, k){
     sheet(`${top}<div class="gstep"><span class="gcount"><span class="ticks gticks">${ticks}</span></span>
       <h3>${t('didItWork')}</h3></div>
       <div class="outcome">
-        <button class="btn btn-primary" data-act="solved">${t('yesTrain')}</button>
+        <button class="btn btn-primary" data-act="solved">${p.yes ? L(p.yes) : t('yesTrain')}</button>
         <button class="btn btn-quiet wide" data-act="stuck">${t('stillLost')}</button>
         <button class="linkish" data-act="gstep" data-v="${n-1}">${t('back')}</button>
       </div>`, true);
@@ -470,6 +458,8 @@ function guideSheet(p, k){
       <span class="gcount"><span class="ticks gticks" aria-hidden="true">${ticks}</span><span>${t('stepOf')(k+1,n)}</span>${listenBtn()}</span>
       <h3>${L(s.title)}</h3>
       <p>${L(s.body)}</p>
+      ${s.list ? `<ol class="blk-steps">${s.list.map(x=>`<li><span>${L(x)}</span></li>`).join('')}</ol>` : ''}
+      ${s.photo ? photoHtml(s.photo) : ''}
       ${s.tip ? `<div class="tip"><b>${t('tip')}</b>${L(s.tip)}</div>` : ''}
     </div>
     <div class="gnav">
@@ -623,7 +613,7 @@ app.addEventListener('click', e => {
     case 'askOpen': askSheet(); break;
     case 'statsToggle': S.analytics = S.analytics === false ? true : false; save(); render(); break;
     case 'askGo': askGo(v); break;
-    default: placesAct(b.dataset.act, v) || expiryAct(b.dataset.act, v) || navAct(b.dataset.act, v) || shellAct(b.dataset.act, v) || simpleAct(b.dataset.act, v);
+    default: placesAct(b.dataset.act, v) || expiryAct(b.dataset.act, v) || navAct(b.dataset.act, v) || shellAct(b.dataset.act, v) || simpleAct(b.dataset.act, v) || voiceAct(b.dataset.act, v);
   }
 });
 app.addEventListener('input', e => { if(e.target.id === 'dest') updatePhrase(); if(e.target.id === 'askQ') askInput(e.target.value); });

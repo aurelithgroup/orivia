@@ -19,7 +19,7 @@ Object.assign(UI.en, {
   qDo:'Do this', qBring:'Bring', qWhere:'Where', qCost:'Cost', qTime:'Time', qThen:'Then', qLast:'This is the last step.',
   moreDetails:'More details', lessDetails:'Fewer details', wentWrong:'Something went wrong?', allProblems:'I need help',
   siteDown:'The website or app isn’t working',
-  staffBtn:'Show this to staff', staffTpl:(j,s)=>`Hello. I’m new here. I’m working on: ${j} (${s}). Can you help me with this step, please?`,
+  staffBtn:'Show this to staff', staffHello:'Hello. I’m new here and I need some help, please.', staffNeed:'I need help with this step:', staffPart:'Part of:', staffTpl:(j,s)=>`Hello. I’m new here. I’m working on: ${j} (${s}). Can you help me with this step, please?`,
   offlineSaved:'Saved for offline use', offline:'You’re offline. Your saved journeys are still available.',
   yourNextSteps:'Your next steps', notStarted:'Not started', startJourney:'Start a journey', needElse:'Need something else?',
   stepXofY:(x,y)=>`Step ${x} of ${y}`, bringTomorrow:'Bring', apptOn:'Appointment',
@@ -33,7 +33,7 @@ Object.assign(UI.ar, {
   qDo:'افعل هذا', qBring:'أحضر', qWhere:'المكان', qCost:'التكلفة', qTime:'المدة', qThen:'ثم', qLast:'هذه آخر خطوة.',
   moreDetails:'تفاصيل أكثر', lessDetails:'تفاصيل أقل', wentWrong:'حدث خطأ ما؟', allProblems:'أحتاج مساعدة',
   siteDown:'الموقع أو التطبيق لا يعمل',
-  staffBtn:'اعرض هذا على الموظفين', staffTpl:(j,s)=>`مرحباً. أنا جديد هنا، وأعمل على: ${j} (${s}). هل يمكنك مساعدتي في هذه الخطوة من فضلك؟`,
+  staffBtn:'اعرض هذا على الموظفين', staffHello:'مرحباً. أنا جديد هنا وأحتاج إلى بعض المساعدة من فضلك.', staffNeed:'أحتاج إلى مساعدة في هذه الخطوة:', staffPart:'ضمن:', staffTpl:(j,s)=>`مرحباً. أنا جديد هنا، وأعمل على: ${j} (${s}). هل يمكنك مساعدتي في هذه الخطوة من فضلك؟`,
   offlineSaved:'محفوظ للاستخدام دون إنترنت', offline:'أنت غير متصل بالإنترنت. رحلاتك المحفوظة ما زالت متاحة.',
   yourNextSteps:'خطواتك التالية', notStarted:'لم تبدأ', startJourney:'ابدأ رحلة', needElse:'تحتاج شيئاً آخر؟',
   stepXofY:(x,y)=>`الخطوة ${x} من ${y}`, bringTomorrow:'أحضر', apptOn:'الموعد',
@@ -198,9 +198,13 @@ function wrongInline(jid, s){
 }
 
 /* ---------- 5 · Show this to staff: one big card ---------- */
+/* Staff read the journey name as the newcomer's own words: "Your visa" becomes "My visa" */
+function staffEn(x){ return x.replace(/^Your /,'My ').replace(/\byour\b/g,'my').replace(/\bYou’re\b/g,'I’m').replace(/\byou’re\b/g,'I’m').replace(/\byou’ve\b/g,'I’ve'); }
 function staffCard(){
   const j = DATA.journeys[S.params.id], s = curStage();
-  const o = s ? {en:UI.en.staffTpl(j.title.en, s.label.en), ar:UI.ar.staffTpl(j.title.ar, s.label.ar), mine:t('staffTpl')(L(j.title), L(s.label))}
+  const card = (ui, step, journey) => `<p class="sc-hello">${ui.staffHello}</p><p class="sc-l">${ui.staffNeed}</p><p class="sc-step">${step}</p><p class="sc-part">${ui.staffPart} ${journey}</p>`;
+  const mineUi = {staffHello:t('staffHello'), staffNeed:t('staffNeed'), staffPart:t('staffPart')};
+  const o = s ? {en:card(UI.en, s.label.en, staffEn(j.title.en)), ar:card(UI.ar, s.label.ar, j.title.ar), mine:card(mineUi, L(s.label), L(j.title))}
     : {en:UI.en.helpPhrase, ar:UI.ar.helpPhrase, mine:t('helpPhrase')};
   const w = document.createElement('div'); w.className = 'staff-full'; w.id = 'sheet';
   w.innerHTML = `<button class="staff-x" data-act="closeSheet" aria-label="${t('close')}">×</button><div class="staff-card">${staffInner(o)}</div>`;

@@ -190,6 +190,7 @@ function moreScreen(){
     body: sign({title:t('moreTitle')}) + `
       <div class="content"><div class="choices">
         ${row('langPicker', t('mLanguage'), langName(lang()))}
+        ${canSpeak ? row('voiceOpen', t('voiceTitle'), currentVoiceLabel()) : ''}
         ${row('bigText', t('bigText'), t('bigTextNote'), `<span class="pill ${S.big?'pill-ok':'pill-soon'}">${S.big?t('on'):t('off')}</span>`)}
         ${row('moreInfo" data-v="offline', t('mOffline'), '')}
         ${row('moreInfo" data-v="saved', t('mSaved'), '')}
