@@ -10,3 +10,5 @@ A Cloudflare Worker with a D1 database. Cloudflare deploys this folder automatic
 Sign-in is Cloudflare Access (an email code). Until `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD` are set in `wrangler.toml`, the team and organisation pages stay locked.
 
 `src/content.js` is generated from the app's journeys. Regenerate it when journeys or stages change.
+
+Deployed by Cloudflare Workers Builds from the `server` folder.
