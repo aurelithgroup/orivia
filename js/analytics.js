@@ -37,6 +37,7 @@ function channel(){
   return matchMedia('(min-width: 900px)').matches ? 'desk' : 'phone';
 }
 function sendEv(r){
+  if(typeof partnerCount === "function") partnerCount(r);
   if(!statsAllowed() || !GC_SEND.has(r.ev)) return;
   const clean = x => String(x||'').replace(/[^a-z0-9._-]/gi,'').slice(0,60);
   let extra = r.p;

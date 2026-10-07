@@ -69,10 +69,52 @@ function partnerNote(jid, s){
 function partnerCard(){
   const p = partner(); if(!p) return '';
   return `<div class="help-card partner-card"><strong>${L(p.name)}: ${L(p.team)}</strong>
-    <p>${L(p.where)} · ${L(p.hours)}</p>${p.email ? `<a class="phone" href="mailto:${p.email}" dir="ltr">${p.email}</a>` : ''}
+    <p>${L(p.where)} · ${L(p.hours)}</p>${p.email ? `<a class="phone" href="mailto:${p.email}" dir="ltr">${p.email}</a>` : ''}${p.phone ? `<a class="phone" href="tel:${p.phone.replace(/[^0-9+]/g, '')}" dir="ltr">${p.phone}</a>` : ''}
     ${p.demo ? `<span class="pill pill-soon" style="align-self:flex-start">${t('examplePartner')}</span>` : ''}</div>`;
 }
 function partnerStrip(){
   const p = partner(); if(!p) return '';
   return `<div class="partner-strip"><span>${t('withPartner')} <b>${L(p.name)}</b></span>${p.demo?`<span class="pill pill-soon">${t('examplePartner')}</span>`:''}</div>`;
 }
+
+/* ---------- Live partner notes from the Orivia server ----------
+   Organisations edit their notes on the Orivia server; the app picks them up here.
+   Everything that comes back is treated as plain text (never as HTML) and kept on
+   the phone so it still works offline. Set ORIVIA_API to the server's address. */
+const ORIVIA_API = '';
+const escText = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+function cleanRemote(x){
+  if(typeof x === 'string') return escText(x);
+  if(Array.isArray(x)) return x.map(cleanRemote);
+  if(x && typeof x === 'object') return Object.fromEntries(Object.entries(x).map(([k, v]) => [k, cleanRemote(v)]));
+  return x;
+}
+function useRemotePartner(id, d){
+  if(!d || !d.city || !d.name) return false;
+  const p = cleanRemote(d);
+  ['name','team','where','hours'].forEach(k => { p[k] = p[k] || {en:'', ar:''}; if(!p[k].ar) p[k].ar = p[k].en; });
+  Object.values(p.notes || {}).forEach(st => Object.values(st).forEach(n => { if(!n.ar) n.ar = n.en; }));
+  p.notes = p.notes || {};
+  DATA.partners[id] = p; return true;
+}
+async function loadRemotePartner(){
+  const id = S && S.partner; if(!id || !/^[a-z0-9-]{2,40}$/.test(id)) return;
+  const key = 'orivia-partner-' + id;
+  try{ const c = JSON.parse(localStorage.getItem(key) || 'null'); if(c) useRemotePartner(id, c); }catch(e){}
+  if(!ORIVIA_API || !navigator.onLine) return;
+  try{
+    const r = await fetch(ORIVIA_API + '/api/partners/' + id, {cache:'no-store'});
+    if(r.status === 404){ try{ localStorage.removeItem(key); }catch(e){} return; }
+    if(!r.ok) return;
+    const d = await r.json();
+    const before = JSON.stringify(DATA.partners[id] || null);
+    if(useRemotePartner(id, d)){ try{ localStorage.setItem(key, JSON.stringify(d)); }catch(e){}
+      if(JSON.stringify(DATA.partners[id]) !== before && typeof render === 'function') render(); }
+  }catch(e){}
+}
+/* Anonymous counts for the organisation's own page: event name, journey and step only */
+function partnerCount(r){
+  if(!ORIVIA_API || !S.partner || S.analytics === false || S.testMode) return;
+  try{ fetch(ORIVIA_API + '/api/ev', {method:'POST', keepalive:true, body:JSON.stringify({p:S.partner, ev:r.ev, j:r.j || '', s:r.stage || ''})}).catch(() => {}); }catch(e){}
+}
+window.addEventListener('load', () => setTimeout(loadRemotePartner, 300));

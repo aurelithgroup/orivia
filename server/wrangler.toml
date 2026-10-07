@@ -1,0 +1,18 @@
+# Orivia server. Cloudflare deploys this folder automatically when it changes on GitHub.
+name = "orivia"                      # must match the Worker's name in Cloudflare
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "orivia-db"
+database_id = "REPLACE_WITH_DATABASE_ID"
+
+[vars]
+# Who sees the Orivia team page (comma-separated emails)
+TEAM_EMAILS = ""
+# Filled in once Cloudflare Access sign-in is set up
+ACCESS_TEAM_DOMAIN = ""              # e.g. orivia.cloudflareaccess.com
+ACCESS_AUD = ""                      # the Access application's "Audience (AUD) tag"
+ALLOWED_ORIGINS = "https://aurelithgroup.github.io"
