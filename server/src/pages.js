@@ -91,8 +91,8 @@ export function teamPage(){
 let ORGS = [];
 async function load(){
   try{
-    const me = await api('/api/me'); $('#who').textContent = me.email;
-    ORGS = await api('/api/admin/orgs'); draw();
+    const me = await api('/admin/api/me'); $('#who').textContent = me.email;
+    ORGS = await api('/admin/api/admin/orgs'); draw();
   }catch(e){ $('#orgErr').hidden = false; $('#orgErr').textContent = e.message; }
 }
 function draw(){
@@ -100,8 +100,8 @@ function draw(){
   if(!ORGS.length) tb.append(el('tr', {}, el('td', {colspan:8, class:'muted', text:'No organisations yet.'})));
   ORGS.forEach(o => {
     const add = el('input', {type:'email', placeholder:'name@organisation.edu', 'aria-label':'Email to add for ' + o.name.en, style:'max-width:220px'});
-    const people = el('td', {}, o.members.map(m => el('span', {class:'chip'}, m, el('button', {'aria-label':'Remove ' + m, title:'Remove', text:'×', onclick: async () => { if(!window.__confirm || window.__confirm !== m){ window.__confirm = m; alertMsg('Tap × again to remove ' + m); return; } await api('/api/admin/orgs/' + o.id + '/members', {method:'DELETE', body:{email:m}}); load(); }}))),
-      el('div', {class:'row', style:'margin-top:6px'}, add, el('button', {text:'Add', onclick: async () => { try{ await api('/api/admin/orgs/' + o.id + '/members', {method:'POST', body:{email:add.value}}); load(); }catch(e){ alertMsg(e.message); } }})));
+    const people = el('td', {}, o.members.map(m => el('span', {class:'chip'}, m, el('button', {'aria-label':'Remove ' + m, title:'Remove', text:'×', onclick: async () => { if(!window.__confirm || window.__confirm !== m){ window.__confirm = m; alertMsg('Tap × again to remove ' + m); return; } await api('/admin/api/admin/orgs/' + o.id + '/members', {method:'DELETE', body:{email:m}}); load(); }}))),
+      el('div', {class:'row', style:'margin-top:6px'}, add, el('button', {text:'Add', onclick: async () => { try{ await api('/admin/api/admin/orgs/' + o.id + '/members', {method:'POST', body:{email:add.value}}); load(); }catch(e){ alertMsg(e.message); } }})));
     const c = o.counts || {};
     tb.append(el('tr', {},
       el('td', {}, el('strong', {text:o.name.en || o.id}), el('div', {class:'muted', text:o.id}), o.demo ? el('span', {class:'pill', text:'Example'}) : null),
@@ -110,9 +110,9 @@ function draw(){
       el('td', {class:'num', text:String(c.journey_open || 0)}), el('td', {class:'num', text:String(c.help_open || 0)}), el('td', {class:'num', text:String(c.staff_card || 0)}),
       el('td', {}, el('span', {class:'pill ' + (o.active ? 'ok' : 'warn'), text:o.active ? 'Live' : 'Paused'})),
       el('td', {}, el('div', {class:'row'},
-        el('a', {href:'/org?id=' + encodeURIComponent(o.id), text:'Open page'}),
+        el('a', {href:'/admin/org?id=' + encodeURIComponent(o.id), text:'Open page'}),
         el('a', {href:APP + '?p=' + encodeURIComponent(o.id), target:'_blank', rel:'noopener', text:'Preview in app'}),
-        el('button', {class:'link', text:o.active ? 'Pause' : 'Make live', onclick: async () => { await api('/api/admin/orgs/' + o.id + '/active', {method:'POST', body:{active:!o.active}}); load(); }})))
+        el('button', {class:'link', text:o.active ? 'Pause' : 'Make live', onclick: async () => { await api('/admin/api/admin/orgs/' + o.id + '/active', {method:'POST', body:{active:!o.active}}); load(); }})))
     ));
   });
 }
@@ -120,7 +120,7 @@ function alertMsg(t){ $('#orgErr').hidden = false; $('#orgErr').textContent = t;
 $('#nAdd').addEventListener('click', async () => {
   $('#nMsg').textContent = '';
   try{
-    await api('/api/admin/orgs', {method:'POST', body:{id:$('#nId').value, city:$('#nCity').value, name:{en:$('#nEn').value, ar:$('#nAr').value}, team:{en:$('#nTeam').value, ar:''}, email:$('#nEmail').value}});
+    await api('/admin/api/admin/orgs', {method:'POST', body:{id:$('#nId').value, city:$('#nCity').value, name:{en:$('#nEn').value, ar:$('#nAr').value}, team:{en:$('#nTeam').value, ar:''}, email:$('#nEmail').value}});
     ['#nId','#nEn','#nAr','#nTeam','#nEmail'].forEach(s => $(s).value = ''); $('#nMsg').textContent = 'Added. Now add the people who can edit it.'; load();
   }catch(e){ $('#nMsg').textContent = e.message; }
 });
@@ -128,7 +128,7 @@ load();`);
 }
 
 export function orgPage(){
-  return shell('Orivia · Organisation', `<header class="top"><span class="brand">ORIV<b>I</b>A</span><span id="orgName">Organisation</span><span class="who"><span id="who"></span> <a id="teamLink" href="/team" hidden>· Team page</a></span></header>
+  return shell('Orivia · Organisation', `<header class="top"><span class="brand">ORIV<b>I</b>A</span><span id="orgName">Organisation</span><span class="who"><span id="who"></span> <a id="teamLink" href="/admin/team" hidden>· Team page</a></span></header>
 <main>
   <div class="row" id="pickWrap" hidden><label style="flex-direction:row;align-items:center;gap:8px">Organisation <select id="pick" style="width:auto"></select></label></div>
   <p id="err" class="err" hidden></p>
@@ -162,11 +162,11 @@ let ME, J, ORG, NOTES = {}, dirty = false;
 const F = ['name','team','where','hours'];
 async function init(){
   try{
-    [ME, J] = await Promise.all([api('/api/me'), api('/api/journeys')]);
+    [ME, J] = await Promise.all([api('/admin/api/me'), api('/admin/api/journeys')]);
     $('#who').textContent = ME.email; $('#teamLink').hidden = !ME.team;
     const want = new URLSearchParams(location.search).get('id');
     let ids = ME.orgs;
-    if(ME.team){ const all = await api('/api/admin/orgs'); ids = all.map(o => o.id); }
+    if(ME.team){ const all = await api('/admin/api/admin/orgs'); ids = all.map(o => o.id); }
     if(!ids.length){ $('#none').hidden = false; return; }
     if(ids.length > 1){ $('#pickWrap').hidden = false; ids.forEach(i => $('#pick').append(el('option', {value:i, text:i}))); $('#pick').value = ids.includes(want) ? want : ids[0];
       $('#pick').addEventListener('change', () => { if(dirty && !confirmLeave()) return; location.search = '?id=' + encodeURIComponent($('#pick').value); }); }
@@ -175,7 +175,7 @@ async function init(){
 }
 function confirmLeave(){ return window.__leave ? true : (window.__leave = true, $('#saveMsg').textContent = 'You have unsaved changes. Choose again to leave without saving.', false); }
 async function open(id){
-  ORG = await api('/api/org/' + id);
+  ORG = await api('/admin/api/org/' + id);
   NOTES = JSON.parse(JSON.stringify(ORG.notes || {}));
   $('#body').hidden = false; $('#savebar').hidden = false;
   $('#orgName').textContent = ORG.name.en || ORG.id; $('#title').textContent = ORG.name.en || ORG.id;
@@ -209,13 +209,13 @@ $('#save').addEventListener('click', async () => {
   F.forEach(f => body[f] = {en:$('#' + f + 'En').value, ar:$('#' + f + 'Ar').value});
   const [ej, es] = $('#entry').value.split('|'); body.entry = {j:ej, s:es};
   $('#save').disabled = true; $('#saveMsg').textContent = 'Saving…';
-  try{ ORG = await api('/api/org/' + ORG.id, {method:'PUT', body}); NOTES = JSON.parse(JSON.stringify(ORG.notes || {})); dirty = false; $('#saveMsg').textContent = 'Saved. Students see it within a few minutes.'; }
+  try{ ORG = await api('/admin/api/org/' + ORG.id, {method:'PUT', body}); NOTES = JSON.parse(JSON.stringify(ORG.notes || {})); dirty = false; $('#saveMsg').textContent = 'Saved. Students see it within a few minutes.'; }
   catch(e){ $('#saveMsg').textContent = e.message; }
   $('#save').disabled = false;
 });
 window.addEventListener('beforeunload', e => { if(dirty){ e.preventDefault(); e.returnValue = ''; } });
 async function drawStats(){
-  const rows = await api('/api/org/' + ORG.id + '/stats'), tb = $('#stats'); tb.textContent = '';
+  const rows = await api('/admin/api/org/' + ORG.id + '/stats'), tb = $('#stats'); tb.textContent = '';
   const name = (jid, sid) => { const j = J.find(x => x.id === jid); if(!j) return jid || 'Your link'; const s = j.stages.find(x => x.id === sid); return j.title + (s ? ' → ' + s.title : ''); };
   const help = rows.filter(r => ['help_open','problem','still_stuck','staff_card','escalate','escalate_sent','journey_open','deeplink'].includes(r.ev)).slice(0, 25);
   if(!help.length){ tb.append(el('tr', {}, el('td', {colspan:4, class:'muted', text:'No activity yet. Numbers appear here once students start using your link.'}))); return; }

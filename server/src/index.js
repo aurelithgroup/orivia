@@ -2,8 +2,9 @@
    ORIVIA SERVER (Cloudflare Worker + D1)
    - Public:  GET  /api/partners/:id  → an organisation's notes for the app
               POST /api/ev            → anonymous counts for partner links
-   - Team:    /team  (Orivia team: all organisations, members, numbers)
-   - Org:     /org   (one organisation: its details, notes per step, numbers)
+   - Team:    /admin/team  (Orivia team: all organisations, members, numbers)
+   - Org:     /admin/org   (one organisation: its details, notes per step, numbers)
+   Everything private lives under /admin, so sign-in protects one path only.
    Sign-in is Cloudflare Access (email code). Until Access is set up,
    the team and org pages stay locked.
    Nothing about newcomers is stored: no names, no emails, nothing typed.
@@ -69,10 +70,15 @@ async function accessEmail(req, env){
   if(!ok || !aud.includes(env.ACCESS_AUD) || body.exp * 1000 < Date.now() || body.iss !== `https://${env.ACCESS_TEAM_DOMAIN}`) return null;
   return String(body.email || '').toLowerCase() || null;
 }
-async function who(req, env){
+/* When Access protects the Worker itself, Cloudflare hands over the checked identity directly */
+async function ctxEmail(ctx){
+  try{ if(ctx && ctx.access && ctx.access.getIdentity){ const id = await ctx.access.getIdentity(); return id && id.email ? String(id.email).toLowerCase() : null; } }catch(e){}
+  return null;
+}
+async function who(req, env, ctx){
   /* Local testing only: never works on the real web address */
   const host = new URL(req.url).hostname;
-  const email = (env.DEV_EMAIL && (host === 'localhost' || host === '127.0.0.1')) ? env.DEV_EMAIL.toLowerCase() : await accessEmail(req, env);
+  const email = (env.DEV_EMAIL && (host === 'localhost' || host === '127.0.0.1')) ? env.DEV_EMAIL.toLowerCase() : (await ctxEmail(ctx)) || await accessEmail(req, env);
   if(!email) return null;
   const team = (env.TEAM_EMAILS || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean).includes(email);
   const { results } = await (await db(env)).prepare("SELECT org_id FROM members WHERE email = ? AND role = 'org'").bind(email).all();
@@ -111,8 +117,8 @@ async function stats(env, org, days = 30){
 
 /* ---------- Router ---------- */
 export default {
-  async fetch(req, env){
-    const url = new URL(req.url), path = url.pathname.replace(/\/+$/, '') || '/';
+  async fetch(req, env, ctx){
+    const url = new URL(req.url); let path = url.pathname.replace(/\/+$/, '') || '/';
     try{
       /* Public: an organisation's notes for the app */
       if(req.method === 'OPTIONS' && path.startsWith('/api/')) return new Response(null, { status: 204, headers: { ...cors(env, req), 'access-control-allow-methods': 'GET, POST', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '86400' } });
@@ -136,15 +142,18 @@ export default {
         return json({ ok: true }, 200, cors(env, req));
       }
 
-      /* Everything below needs sign-in */
-      const me = await who(req, env);
+      /* Everything below is private and lives under /admin */
+      if(path === '/') return Response.redirect(url.origin + '/admin', 302);
+      if(path !== '/admin' && !path.startsWith('/admin/')) return html(lockedPage(true), 404);
+      path = path.slice(6) || '/';
+      const me = await who(req, env, ctx);
       if(path === '/' ){
         if(!me) return html(lockedPage(!!(env.ACCESS_TEAM_DOMAIN && env.ACCESS_AUD)), 401);
-        return Response.redirect(url.origin + (me.team ? '/team' : '/org'), 302);
+        return Response.redirect(url.origin + (me.team ? '/admin/team' : '/admin/org'), 302);
       }
       if(path === '/team' || path === '/org'){
         if(!me) return html(lockedPage(!!(env.ACCESS_TEAM_DOMAIN && env.ACCESS_AUD)), 401);
-        if(path === '/team' && !me.team) return Response.redirect(url.origin + '/org', 302);
+        if(path === '/team' && !me.team) return Response.redirect(url.origin + '/admin/org', 302);
         return html(path === '/team' ? teamPage() : orgPage());
       }
       if(!path.startsWith('/api/')) return html(lockedPage(true), 404);
