@@ -9,7 +9,7 @@ keep_vars = true
 [[d1_databases]]
 binding = "DB"
 database_name = "orivia-db"
-database_id = "REPLACE_WITH_DATABASE_ID"
+database_id = "631cf128-00f2-4590-b5a6-403f25024715"
 
 [vars]
 # TEAM_EMAILS (who sees the team page) is set in the Cloudflare dashboard as a secret,
