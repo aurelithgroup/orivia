@@ -1,8 +1,10 @@
 # Orivia server. Cloudflare deploys this folder automatically when it changes on GitHub.
-name = "orivia"                      # must match the Worker's name in Cloudflare
+name = "orivia-api"                  # must match the Worker's name in Cloudflare
 main = "src/index.js"
 compatibility_date = "2026-09-01"
 workers_dev = true
+# Keep settings added in the Cloudflare dashboard (like TEAM_EMAILS) when deploying
+keep_vars = true
 
 [[d1_databases]]
 binding = "DB"
@@ -10,8 +12,8 @@ database_name = "orivia-db"
 database_id = "REPLACE_WITH_DATABASE_ID"
 
 [vars]
-# Who sees the Orivia team page (comma-separated emails)
-TEAM_EMAILS = ""
+# TEAM_EMAILS (who sees the team page) is set in the Cloudflare dashboard as a secret,
+# so personal emails never appear in this public repo.
 # Filled in once Cloudflare Access sign-in is set up
 ACCESS_TEAM_DOMAIN = ""              # e.g. orivia.cloudflareaccess.com
 ACCESS_AUD = ""                      # the Access application's "Audience (AUD) tag"

@@ -81,7 +81,7 @@ function partnerStrip(){
    Organisations edit their notes on the Orivia server; the app picks them up here.
    Everything that comes back is treated as plain text (never as HTML) and kept on
    the phone so it still works offline. Set ORIVIA_API to the server's address. */
-const ORIVIA_API = '';
+const ORIVIA_API = 'https://orivia-api.habeebahsallah27.workers.dev';
 const escText = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 function cleanRemote(x){
   if(typeof x === 'string') return escText(x);
