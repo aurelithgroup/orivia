@@ -15,6 +15,6 @@ database_id = "631cf128-00f2-4590-b5a6-403f25024715"
 # TEAM_EMAILS (who sees the team page) is set in the Cloudflare dashboard as a secret,
 # so personal emails never appear in this public repo.
 # Filled in once Cloudflare Access sign-in is set up
-ACCESS_TEAM_DOMAIN = ""              # e.g. orivia.cloudflareaccess.com
-ACCESS_AUD = ""                      # the Access application's "Audience (AUD) tag"
+ACCESS_TEAM_DOMAIN = ""              # optional: pin it, e.g. orivia.cloudflareaccess.com
+ACCESS_AUD = "2debc7539f13bf017d05d6b577213bfd6048fc15eefd0faa5cd0dee1978e260d"                      # the Access application's "Audience (AUD) tag"
 ALLOWED_ORIGINS = "https://aurelithgroup.github.io"

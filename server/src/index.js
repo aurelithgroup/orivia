@@ -50,24 +50,28 @@ function cors(env, req){
 }
 
 /* ---------- Sign-in: Cloudflare Access ---------- */
-let certs = null, certsAt = 0;
+let certs = null, certsAt = 0, certsFor = '';
 const b64u = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(s.length / 4) * 4, '=')), c => c.charCodeAt(0));
 async function accessEmail(req, env){
-  if(!env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD) return null;
+  if(!env.ACCESS_AUD) return null;
   const token = req.headers.get('cf-access-jwt-assertion');
   if(!token) return null;
   const [h, p, s] = token.split('.'); if(!s) return null;
   let head, body;
   try{ head = JSON.parse(new TextDecoder().decode(b64u(h))); body = JSON.parse(new TextDecoder().decode(b64u(p))); }catch(e){ return null; }
-  if(Date.now() - certsAt > 3600e3 || !certs){
-    const r = await fetch(`https://${env.ACCESS_TEAM_DOMAIN}/cdn-cgi/access/certs`);
+  /* Team domain: the pinned one, or the Cloudflare Access domain that issued the token (the AUD check below ties it to our app) */
+  const issHost = String(body.iss || '').replace(/^https:\/\//, '');
+  const team = env.ACCESS_TEAM_DOMAIN || (/^[a-z0-9-]+\.cloudflareaccess\.com$/.test(issHost) ? issHost : '');
+  if(!team) return null;
+  if(Date.now() - certsAt > 3600e3 || !certs || certsFor !== team){
+    const r = await fetch(`https://${team}/cdn-cgi/access/certs`); certsFor = team;
     certs = (await r.json()).keys; certsAt = Date.now();
   }
   const jwk = certs.find(k => k.kid === head.kid); if(!jwk) return null;
   const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
   const ok = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, b64u(s), new TextEncoder().encode(`${h}.${p}`));
   const aud = Array.isArray(body.aud) ? body.aud : [body.aud];
-  if(!ok || !aud.includes(env.ACCESS_AUD) || body.exp * 1000 < Date.now() || body.iss !== `https://${env.ACCESS_TEAM_DOMAIN}`) return null;
+  if(!ok || !aud.includes(env.ACCESS_AUD) || body.exp * 1000 < Date.now() || body.iss !== `https://${team}`) return null;
   return String(body.email || '').toLowerCase() || null;
 }
 /* When Access protects the Worker itself, Cloudflare hands over the checked identity directly */
@@ -148,11 +152,11 @@ export default {
       path = path.slice(6) || '/';
       const me = await who(req, env, ctx);
       if(path === '/' ){
-        if(!me) return html(lockedPage(!!(env.ACCESS_TEAM_DOMAIN && env.ACCESS_AUD)), 401);
+        if(!me) return html(lockedPage(!!env.ACCESS_AUD), 401);
         return Response.redirect(url.origin + (me.team ? '/admin/team' : '/admin/org'), 302);
       }
       if(path === '/team' || path === '/org'){
-        if(!me) return html(lockedPage(!!(env.ACCESS_TEAM_DOMAIN && env.ACCESS_AUD)), 401);
+        if(!me) return html(lockedPage(!!env.ACCESS_AUD), 401);
         if(path === '/team' && !me.team) return Response.redirect(url.origin + '/admin/org', 302);
         return html(path === '/team' ? teamPage() : orgPage());
       }
