@@ -71,9 +71,9 @@ function recogniseIntent(text){
  const q=String(text||'').trim().toLowerCase();
  if(!q)return null;
  const match=[
-  ['family',/\\b(family|families|children|child|kids|kid|dependent|dependant|school|spouse|wife|husband|sponsor|residen(?:cy|ce)|visa)\\b/i],
-  ['student',/\\b(university|campus|college|student|studying|lecture|course|semester)\\b/i],
-  ['everyday',/\\b(groceries|grocery|transport|metro|bus|train|shopping|shops|food|clinic|pharmacy|doctor|bank|sim|phone|everyday|daily)\\b/i]
+  ['family',/\b(family|families|children|child|kids|kid|dependent|dependant|school|spouse|wife|husband|sponsor|residen(?:cy|ce)|visa)\b/i],
+  ['student',/\b(university|campus|college|student|studying|lecture|course|semester)\b/i],
+  ['everyday',/\b(groceries|grocery|transport|metro|bus|train|shopping|shops|food|clinic|pharmacy|doctor|bank|sim|phone|everyday|daily)\b/i]
  ];
  const found=match.filter(([,rx])=>rx.test(q));
  return found.length===1?found[0][0]:null;
