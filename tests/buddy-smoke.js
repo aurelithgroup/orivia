@@ -18,7 +18,7 @@ function boot(stored){
  vm.runInNewContext(src,{window});
  const instrumented=buddy.replace(
   "if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();",
-  "window.__test={get:()=>s,set:x=>Object.assign(s,x),checks:()=>actionPlan().map(q=>[q.id,status(q.id)]),next:()=>nextQuestion()?.key,html:dashboard,status:changeStatus,trust:trustRecord};"
+  "window.__test={get:()=>s,set:x=>Object.assign(s,x),checks:()=>actionPlan().map(q=>[q.id,status(q.id)]),next:()=>nextQuestion()?.key,html:focusScreen,intent:recogniseIntent,status:changeStatus,trust:trustRecord};"
  );
  assert.notEqual(instrumented,buddy,'Test injection point must be present');
  vm.runInNewContext(instrumented,{window,localStorage,document:{readyState:'loading',addEventListener:()=>{}}});
@@ -26,9 +26,17 @@ function boot(stored){
 }
 let t=boot();
 assert.equal(t.get().goal,'undecided');
-assert.match(t.html(),/data-buddy-goal="family"/);
+assert.match(t.html(),/id="buddy-first-input"/);
+assert.doesNotMatch(t.html(),/buddy-goal-options/);
+assert.equal(t.intent("I am moving with my children"),"family");
+assert.equal(t.intent("I study at university"),"student");
+assert.equal(t.intent("Which metro do I take?"),"everyday");
+assert.equal(t.intent("I need help"),null);
+assert.equal(t.intent("university and children"),null);
 assert.doesNotMatch(t.html(),/Confirm permitted-stay dates/);
 t.set({goal:'family'});
+assert.match(t.html(),/Orivia has a question/);
+assert.doesNotMatch(t.html(),/buddy-metrics/);
 assert.equal(t.next(),'dependants');
 t.set({dependants:'yes'});
 assert.equal(t.next(),'school');
