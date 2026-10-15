@@ -2,8 +2,8 @@
 (function(){
 'use strict';
 const KEY='orivia-buddy-lab-v2';
-const EMPTY=()=>({tone:'friendly',dependants:'unknown',school:'unknown',foreignRecords:'unknown',stayDates:'unknown',goal:'family',checked:{},actions:{},notes:{},deferred:[],view:'home'});
-const VALID={tone:['friendly','formal','simple'],dependants:['unknown','yes','no'],school:['unknown','yes','no'],foreignRecords:['unknown','yes','no'],stayDates:['unknown','known'],goal:['family','student','everyday'],view:['home','chat','profile']};
+const EMPTY=()=>({tone:'friendly',dependants:'unknown',school:'unknown',foreignRecords:'unknown',stayDates:'unknown',goal:'undecided',checked:{},actions:{},notes:{},deferred:[],view:'home'});
+const VALID={tone:['friendly','formal','simple'],dependants:['unknown','yes','no'],school:['unknown','yes','no'],foreignRecords:['unknown','yes','no'],stayDates:['unknown','known'],goal:['undecided','family','student','everyday'],view:['home','chat','profile']};
 /* No free-text fields or document uploads in this prototype. */
 function read(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');const b=EMPTY();if(s&&typeof s==='object'){Object.keys(VALID).forEach(k=>{if(VALID[k].includes(s[k]))b[k]=s[k]});if(s.checked&&typeof s.checked==='object')Object.keys(s.checked).slice(0,30).forEach(k=>{if(s.checked[k]===true)b.checked[k]=true});if(s.actions&&typeof s.actions==='object')Object.keys(s.actions).filter(k=>QUESTIONS.some(q=>q.id===k)).forEach(k=>{if(['todo','waiting','checked'].includes(s.actions[k]))b.actions[k]=s.actions[k]});if(Array.isArray(s.deferred))b.deferred=s.deferred.filter(k=>['dependants','school','foreignRecords','stayDates'].includes(k)).slice(0,4);}return b}catch(_){return EMPTY()}}
 let s, open=false,previousFocus=null,reply='';
@@ -26,7 +26,7 @@ function actionPlan(){const a=active();const ordered=[...a].sort((x,y)=>{const r
 function save(){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(_){}}
 function field(k,title,opts){return '<label class="buddy-field"><span>'+esc(title)+'</span><select data-buddy-field="'+k+'">'+opts.map(([v,t])=>'<option value="'+v+'"'+(s[k]===v?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select></label>'}
 function profile(){
- return '<div class="buddy-fields">'+field('tone','How should I speak to you?',[['friendly','Friendly'],['formal','Professional'],['simple','Simple']])+field('goal','What matters most at the moment?',[['family','Family relocation'],['student','Student life'],['everyday','Everyday life']])+
+ return '<div class="buddy-fields">'+field('tone','How should I speak to you?',[['friendly','Friendly'],['formal','Professional'],['simple','Simple']])+field('goal','What matters most at the moment?',[['undecided','Not sure yet'],['family','Family relocation'],['student','Student life'],['everyday','Everyday life']])+
  (s.goal==='family'?field('dependants','Are you arranging residency for dependants?',[['unknown','Not sure / prefer not to say'],['yes','Yes'],['no','No']])+field('school','Will children be attending school?',[['unknown','Not sure'],['yes','Yes'],['no','No']])+field('foreignRecords','Were any school records issued abroad?',[['unknown','Not sure'],['yes','Yes'],['no','No']])+field('stayDates','Have you confirmed relevant stay dates?',[['unknown','Not yet / unsure'],['known','Yes, with the responsible source']]):'')+'</div>'
 }
 function trustRecord(id){
@@ -67,9 +67,15 @@ function discoveryCard(){
  return '<section class="buddy-discovery" aria-label="A question from Orivia"><span class="buddy-discovery-kicker">✦ Orivia has a question</span><h3>'+esc(q.ask)+'</h3><p>'+esc(q.why)+'</p><div class="buddy-answer-options">'+q.options.map(([v,l])=>'<button type="button" data-buddy-answer="'+q.key+'" data-answer-value="'+v+'">'+esc(l)+'</button>').join('')+'<button type="button" class="buddy-later" data-buddy-later="'+q.key+'">Not sure / ask later</button></div></section>';
 }
 
+function firstVisit(){
+ return '<section class="buddy-intro"><span class="buddy-discovery-kicker">✦ Your own Orivia</span><h2>'+esc(tone('Hey! What are we figuring out together?','What would you like help with?','What do you need help with?'))+'</h2><p>I can help you organise what matters without sending you through a library of instructions. You can change this later.</p><div class="buddy-goal-options">'+
+ [['family','I’m getting my family settled','household and paperwork'],['student','I’m settling in as a student','university and everyday life'],['everyday','I need help with everyday life','transport, services and essentials']].map(([k,title,sub])=>'<button type="button" data-buddy-goal="'+k+'"><strong>'+esc(title)+'</strong><small>'+esc(sub)+'</small></button>').join('')+
+ '</div><p class="buddy-intro-foot">No account needed for this prototype. Please don’t enter real immigration details.</p></section>';
+}
 function dashboard(){
  const a=actionPlan(),out=a.filter(x=>status(x.id)==='todo'),waiting=a.filter(x=>status(x.id)==='waiting'),done=a.filter(x=>status(x.id)==='checked');
  const first=out[0]||waiting[0];
+ if(s.goal==='undecided')return firstVisit();
  return '<h2>'+esc(tone('Hey! Here’s your plan.','Your relocation action plan','Your plan'))+'</h2><p class="buddy-sub">Your plan is shaped by what you tell Orivia. It adjusts when your circumstances change.</p>'+discoveryCard()+
  '<div class="buddy-metrics"><span><b>'+out.length+'</b> to check</span><span><b>'+waiting.length+'</b> waiting</span><span><b>'+done.length+'</b> checked by you</span></div>'+
  (first?'<div class="buddy-spotlight"><span>YOUR NEXT USEFUL ACTION</span><h3>'+esc(first.headline)+'</h3><p>'+esc(status(first.id)==='waiting'?'Follow up with the relevant organisation when appropriate.':first.detail)+'</p></div>':'<p class="buddy-caution">No outstanding checks in this limited demo. This is not confirmation that all requirements are satisfied.</p>')+
@@ -110,6 +116,7 @@ function start(){
   if(e.target.closest('[data-buddy-resume]')){s.deferred=[];save();draw();return}
   const answer=e.target.closest('[data-buddy-answer]');if(answer){const k=answer.dataset.buddyAnswer,v=answer.dataset.answerValue;if(VALID[k]&&VALID[k].includes(v)){s[k]=v;s.deferred=s.deferred.filter(x=>x!==k);reply='';save();draw()}return}
   const later=e.target.closest('[data-buddy-later]');if(later){const k=later.dataset.buddyLater;if(DISCOVERY.some(q=>q.key===k)){s.deferred=[...new Set([...s.deferred,k])];save();draw()}return}
+  const goal=e.target.closest('[data-buddy-goal]');if(goal){const g=goal.dataset.buddyGoal;if(VALID.goal.includes(g)&&g!=='undecided'){s.goal=g;s.view='home';s.deferred=[];save();draw()}return}
   const v=e.target.closest('[data-buddy-view]');if(v){s.view=v.dataset.buddyView;save();draw();return}
   const q=e.target.closest('[data-buddy-question]');if(q){reply=q.dataset.buddyQuestion;draw();return}
   const del=e.target.closest('[data-buddy-reset]');if(del){if(!confirm('Delete all Buddy Lab answers saved on this device?'))return;s=EMPTY();reply='';try{localStorage.removeItem(KEY)}catch(_){}draw();return}
