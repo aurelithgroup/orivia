@@ -2,10 +2,10 @@
 (function(){
 'use strict';
 const KEY='orivia-buddy-lab-v2';
-const EMPTY=()=>({tone:'friendly',dependants:'unknown',school:'unknown',foreignRecords:'unknown',stayDates:'unknown',goal:'family',checked:{},notes:{},deferred:[],view:'home'});
+const EMPTY=()=>({tone:'friendly',dependants:'unknown',school:'unknown',foreignRecords:'unknown',stayDates:'unknown',goal:'family',checked:{},actions:{},notes:{},deferred:[],view:'home'});
 const VALID={tone:['friendly','formal','simple'],dependants:['unknown','yes','no'],school:['unknown','yes','no'],foreignRecords:['unknown','yes','no'],stayDates:['unknown','known'],goal:['family','student','everyday'],view:['home','chat','profile']};
-const LIMIT=200;
-function read(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');const b=EMPTY();if(s&&typeof s==='object'){Object.keys(VALID).forEach(k=>{if(VALID[k].includes(s[k]))b[k]=s[k]});if(s.checked&&typeof s.checked==='object')Object.keys(s.checked).slice(0,30).forEach(k=>{if(s.checked[k]===true)b.checked[k]=true});if(Array.isArray(s.deferred))b.deferred=s.deferred.filter(k=>['dependants','school','foreignRecords','stayDates'].includes(k)).slice(0,4);}return b}catch(_){return EMPTY()}}
+/* No free-text fields or document uploads in this prototype. */
+function read(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');const b=EMPTY();if(s&&typeof s==='object'){Object.keys(VALID).forEach(k=>{if(VALID[k].includes(s[k]))b[k]=s[k]});if(s.checked&&typeof s.checked==='object')Object.keys(s.checked).slice(0,30).forEach(k=>{if(s.checked[k]===true)b.checked[k]=true});if(s.actions&&typeof s.actions==='object')Object.keys(s.actions).filter(k=>QUESTIONS.some(q=>q.id===k)).forEach(k=>{if(['todo','waiting','checked'].includes(s.actions[k]))b.actions[k]=s.actions[k]});if(Array.isArray(s.deferred))b.deferred=s.deferred.filter(k=>['dependants','school','foreignRecords','stayDates'].includes(k)).slice(0,4);}return b}catch(_){return EMPTY()}}
 let s=read(), open=false,previousFocus=null,reply='';
 const esc=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const tone=(a,b,c)=>s.tone==='formal'?b:s.tone==='simple'?c:a;
@@ -19,6 +19,9 @@ const QUESTIONS=[
 {id:'budget',when:()=>s.goal==='everyday',headline:'Map your essential local options',why:'You want help with day-to-day life.',detail:'Choose one need, like groceries, transport or healthcare, and compare information from current providers. Local recommendations are not connected yet.',kind:'Everyday life'}
 ];
 function active(){return QUESTIONS.filter(x=>x.when())}
+function status(id){return s.actions[id]|| (s.checked[id]?'checked':'todo')}
+function changeStatus(id,value){if(!QUESTIONS.some(x=>x.id===id)||!['todo','waiting','checked'].includes(value))return;s.actions[id]=value;s.checked[id]=value==='checked';save()}
+function actionPlan(){const a=active();const ordered=[...a].sort((x,y)=>{const rank={todo:0,waiting:1,checked:2};return rank[status(x.id)]-rank[status(y.id)]});return ordered}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(_){}}
 function field(k,title,opts){return '<label class="buddy-field"><span>'+esc(title)+'</span><select data-buddy-field="'+k+'">'+opts.map(([v,t])=>'<option value="'+v+'"'+(s[k]===v?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select></label>'}
 function profile(){
@@ -26,7 +29,10 @@ function profile(){
  (s.goal==='family'?field('dependants','Are you arranging residency for dependants?',[['unknown','Not sure / prefer not to say'],['yes','Yes'],['no','No']])+field('school','Will children be attending school?',[['unknown','Not sure'],['yes','Yes'],['no','No']])+field('foreignRecords','Were any school records issued abroad?',[['unknown','Not sure'],['yes','Yes'],['no','No']])+field('stayDates','Have you confirmed relevant stay dates?',[['unknown','Not yet / unsure'],['known','Yes, with the responsible source']]):'')+'</div>'
 }
 function adviceCard(c){
- return '<article class="buddy-card"><div class="buddy-card-top"><strong>'+esc(c.headline)+'</strong><span>'+(s.checked[c.id]?'Checked by you':'To check')+'</span></div><p>'+esc(c.detail)+'</p><details><summary>Why did Orivia suggest this?</summary><p>'+esc(c.why)+'</p><p class="buddy-caution">Prototype suggestion only. No case-specific requirement has been independently verified here; contact the responsible organisation.</p></details><label class="buddy-check"><input type="checkbox" data-buddy-check="'+c.id+'" '+(s.checked[c.id]?'checked':'')+'> I checked this with the responsible source</label></article>'
+ const st=status(c.id),isDone=st==='checked',isWaiting=st==='waiting';
+ const label=isDone?'I checked this':isWaiting?'Waiting on someone':'To check';
+ const next=isDone?'You marked this as checked; Orivia has not independently verified the outcome.':isWaiting?'Follow up with the relevant organisation and update this status when you hear back.':'Start by contacting the responsible school, sponsor, provider or authority described below.';
+ return '<article class="buddy-card"><div class="buddy-card-top"><strong>'+esc(c.headline)+'</strong><span>'+label+'</span></div><span class="buddy-category">'+esc(c.kind)+'</span><p>'+esc(c.detail)+'</p><div class="buddy-next-action"><b>Next action</b><p>'+esc(next)+'</p></div><details><summary>Why did Orivia suggest this?</summary><p>'+esc(c.why)+'</p><p class="buddy-caution">Suggested check, not a verified requirement for your case. No official source review has been recorded for this prototype.</p></details><label class="buddy-field buddy-status"><span>Track this check</span><select data-buddy-status="'+esc(c.id)+'"><option value="todo"'+(st==='todo'?' selected':'')+'>I need to check</option><option value="waiting"'+(isWaiting?' selected':'')+'>I contacted someone; waiting</option><option value="checked"'+(isDone?' selected':'')+'>I checked with a responsible source</option></select></label></article>'
 }
 
 const DISCOVERY=[
@@ -43,12 +49,17 @@ function discoveryCard(){
 }
 
 function dashboard(){
- const a=active(),out=a.filter(c=>!s.checked[c.id]),done=a.filter(c=>s.checked[c.id]);
- return '<h2>'+esc(tone('Hey! Here’s what I noticed.','Your relocation overview','Your plan'))+'</h2><p class="buddy-sub">Your priorities change when your situation changes. Here are some useful questions to investigate.</p>'+discoveryCard()+'<div class="buddy-metrics"><span><b>'+out.length+'</b> to check</span><span><b>'+done.length+'</b> checked by you</span></div>'+
- (out.length?'<div class="buddy-section-title"><h3>Worth checking next</h3></div>'+out.map(adviceCard).join(''):'<p class="buddy-caution">No outstanding prompts in this limited scenario. This does not establish that all your requirements are complete.</p>')+
- (done.length?'<details class="buddy-previous"><summary>Checks you marked as reviewed ('+done.length+')</summary>'+done.map(adviceCard).join('')+'</details>':'')+
- '<div class="buddy-next"><h3>Something changed?</h3><p>Update your situation and Orivia will reconsider which checks might matter.</p><button type="button" class="buddy-secondary" data-buddy-view="profile">Update my situation →</button></div>';
+ const a=actionPlan(),out=a.filter(x=>status(x.id)==='todo'),waiting=a.filter(x=>status(x.id)==='waiting'),done=a.filter(x=>status(x.id)==='checked');
+ const first=out[0]||waiting[0];
+ return '<h2>'+esc(tone('Hey! Here’s your plan.','Your relocation action plan','Your plan'))+'</h2><p class="buddy-sub">Your plan is shaped by what you tell Orivia. It adjusts when your circumstances change.</p>'+discoveryCard()+
+ '<div class="buddy-metrics"><span><b>'+out.length+'</b> to check</span><span><b>'+waiting.length+'</b> waiting</span><span><b>'+done.length+'</b> checked by you</span></div>'+
+ (first?'<div class="buddy-spotlight"><span>YOUR NEXT USEFUL ACTION</span><h3>'+esc(first.headline)+'</h3><p>'+esc(status(first.id)==='waiting'?'Follow up with the relevant organisation when appropriate.':first.detail)+'</p></div>':'<p class="buddy-caution">No outstanding checks in this limited demo. This is not confirmation that all requirements are satisfied.</p>')+
+ (out.length?'<div class="buddy-section-title"><h3>To check</h3></div>'+out.map(adviceCard).join(''):'')+
+ (waiting.length?'<div class="buddy-section-title"><h3>Waiting for a reply</h3></div>'+waiting.map(adviceCard).join(''):'')+
+ (done.length?'<details class="buddy-previous"><summary>Checked by you ('+done.length+')</summary>'+done.map(adviceCard).join('')+'</details>':'')+
+ '<div class="buddy-next"><h3>Something changed?</h3><p>Update your situation, and Orivia will reconsider which questions may be relevant.</p><button type="button" class="buddy-secondary" data-buddy-view="profile">Update my situation →</button></div>';
 }
+
 function safeReply(id){
  const a=active();
  const relevant=a.find(c=>c.id===id);
@@ -78,15 +89,15 @@ function start(){
  layer.addEventListener('click',e=>{
   if(e.target===layer||e.target.closest('[data-buddy-close]')){close();return}
   if(e.target.closest('[data-buddy-resume]')){s.deferred=[];save();draw();return}
-  const answer=e.target.closest('[data-buddy-answer]');if(answer){const k=answer.dataset.buddyAnswer,v=answer.dataset.answerValue;if(VALID[k]&&VALID[k].includes(v)){s[k]=v;s.deferred=s.deferred.filter(x=>x!==k);s.checked={};reply='';save();draw()}return}
+  const answer=e.target.closest('[data-buddy-answer]');if(answer){const k=answer.dataset.buddyAnswer,v=answer.dataset.answerValue;if(VALID[k]&&VALID[k].includes(v)){s[k]=v;s.deferred=s.deferred.filter(x=>x!==k);reply='';save();draw()}return}
   const later=e.target.closest('[data-buddy-later]');if(later){const k=later.dataset.buddyLater;if(DISCOVERY.some(q=>q.key===k)){s.deferred=[...new Set([...s.deferred,k])];save();draw()}return}
   const v=e.target.closest('[data-buddy-view]');if(v){s.view=v.dataset.buddyView;save();draw();return}
   const q=e.target.closest('[data-buddy-question]');if(q){reply=q.dataset.buddyQuestion;draw();return}
   const del=e.target.closest('[data-buddy-reset]');if(del){if(!confirm('Delete all Buddy Lab answers saved on this device?'))return;s=EMPTY();reply='';try{localStorage.removeItem(KEY)}catch(_){}draw();return}
  });
  layer.addEventListener('change',e=>{
-  const fld=e.target.closest('[data-buddy-field]');if(fld){const k=fld.dataset.buddyField;if(!VALID[k]||!VALID[k].includes(fld.value))return;const changed=s[k]!==fld.value;s[k]=fld.value;if(changed){s.deferred=[];if(k!=='tone')s.checked={};reply=''}save();draw();return}
-  const check=e.target.closest('[data-buddy-check]');if(check){s.checked[check.dataset.buddyCheck]=check.checked;save();draw()}
+  const fld=e.target.closest('[data-buddy-field]');if(fld){const k=fld.dataset.buddyField;if(!VALID[k]||!VALID[k].includes(fld.value))return;const changed=s[k]!==fld.value;s[k]=fld.value;if(changed){s.deferred=[];reply=''}save();draw();return}
+  const select=e.target.closest('[data-buddy-status]');if(select){changeStatus(select.dataset.buddyStatus,select.value);draw()}
  });
  document.addEventListener('keydown',e=>{if(!open)return;if(e.key==='Escape'){close()}else if(e.key==='Tab'){const focusable=[...layer.querySelectorAll('button,select,input,summary')].filter(x=>!x.disabled);if(!focusable.length)return;const first=focusable[0],last=focusable[focusable.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
 }
