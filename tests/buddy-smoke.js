@@ -18,7 +18,7 @@ function boot(stored){
  vm.runInNewContext(src,{window});
  const instrumented=buddy.replace(
   "if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();",
-  "window.__test={get:()=>s,set:x=>Object.assign(s,x),checks:()=>actionPlan().map(q=>[q.id,status(q.id)]),next:()=>nextQuestion()?.key,html:focusScreen,intro,introSetup:basics,intent:recogniseIntent,status:changeStatus,trust:trustRecord,respond:conversationResult};"
+  "window.__test={get:()=>s,set:x=>Object.assign(s,x),checks:()=>actionPlan().map(q=>[q.id,status(q.id)]),next:()=>nextQuestion()?.key,ask,turns:()=>turns.slice(),html:focusScreen,intro,introSetup:basics,intent:recogniseIntent,status:changeStatus,trust:trustRecord,respond:conversationResult};"
  );
  assert.notEqual(instrumented,buddy,'Test injection point must be present');
  vm.runInNewContext(instrumented,{window,localStorage,document:{readyState:'loading',addEventListener:()=>{}}});
@@ -43,6 +43,13 @@ assert.match(t.html(),/id="buddy-home-input"/);
 assert.doesNotMatch(t.html(),/buddy-discovery/);
 assert.equal(t.respond('I am studying at university').goal,'student');
 assert.equal(t.respond('Tell me everything').kind,'unknown');
+assert.equal(t.turns().length,0);
+t.ask('I need a metro route');
+assert.equal(t.turns().length,2);
+t.ask('My children need school');
+assert.equal(t.turns().length,4);
+assert.match(t.html(),/I need a metro route/);
+assert.match(t.html(),/My children need school/);
 assert.doesNotMatch(t.html(),/buddy-metrics/);
 assert.equal(t.next(),'dependants');
 t.set({dependants:'yes'});
