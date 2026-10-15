@@ -18,7 +18,7 @@ function boot(stored){
  vm.runInNewContext(src,{window});
  const instrumented=buddy.replace(
   "if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();",
-  "window.__test={get:()=>s,set:x=>Object.assign(s,x),checks:()=>actionPlan().map(q=>[q.id,status(q.id)]),next:()=>nextQuestion()?.key,html:focusScreen,intent:recogniseIntent,status:changeStatus,trust:trustRecord};"
+  "window.__test={get:()=>s,set:x=>Object.assign(s,x),checks:()=>actionPlan().map(q=>[q.id,status(q.id)]),next:()=>nextQuestion()?.key,html:focusScreen,intro,introSetup:basics,intent:recogniseIntent,status:changeStatus,trust:trustRecord};"
  );
  assert.notEqual(instrumented,buddy,'Test injection point must be present');
  vm.runInNewContext(instrumented,{window,localStorage,document:{readyState:'loading',addEventListener:()=>{}}});
@@ -26,6 +26,10 @@ function boot(stored){
 }
 let t=boot();
 assert.equal(t.get().goal,'undecided');
+assert.equal(t.get().onboarded,false);
+assert.match(t.intro(),/WELCOME TO ORIVIA/);
+assert.match(t.introSetup(),/name="firstName"/);
+assert.match(t.introSetup(),/currently in English/);
 assert.match(t.html(),/id="buddy-first-input"/);
 assert.doesNotMatch(t.html(),/buddy-goal-options/);
 assert.equal(t.intent("I am moving with my children"),"family");
@@ -59,4 +63,6 @@ t=boot({goal:'family',dependants:'yes',actions:{family:'waiting'}});
 assert.equal(t.checks().find(q=>q[0]==='family')[1],'waiting');
 t=boot({actions:{family:'fake-status',bogus:'checked'}});
 assert.equal(t.get().actions.family,undefined);
+t=boot({onboarded:true,goal:'family',firstName:'Mariam',tone:'formal'});
+assert.match(t.html(),/Mariam/);
 console.log('Buddy smoke checks passed');
