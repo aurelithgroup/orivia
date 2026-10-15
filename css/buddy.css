@@ -119,3 +119,22 @@ body.buddy-open .buddy-launch{visibility:hidden}
 .buddy-chat-next{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #d5dee7}
 .buddy-chat-next p{font-size:13px;line-height:1.45;margin:0 0 8px}
 .buddy-chat-next button{min-height:44px}
+
+/* Primary structure: four sections, with the conversation as the home action. */
+.buddy-main-nav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.buddy-main-nav button{min-width:0;padding:10px 3px;font-size:12px}
+.buddy-main-home,.buddy-help,.buddy-more{padding:12px 0 22px}
+.buddy-main-home h2{margin-bottom:5px}
+.buddy-chat-entry{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#1c2733;color:white;border:0;border-radius:15px;padding:18px;margin:22px 0;cursor:pointer;min-height:82px}
+.buddy-chat-entry>span:first-child{font-size:18px;font-weight:700}
+.buddy-chat-entry small{flex:1;line-height:1.4;color:#d8e1eb}
+.buddy-chat-entry>span:last-child{font-size:23px;color:#f2b90f}
+.buddy-home-priority{display:grid;gap:7px;border:1px solid #dee4eb;border-radius:12px;padding:14px;margin:15px 0}
+.buddy-home-priority>span{font-size:10px;letter-spacing:.06em;font-weight:700;color:#596a7b}
+.buddy-home-priority>strong{font-size:15px}
+.buddy-home-priority button,.buddy-home-footer button,.buddy-help-line button,.buddy-more button{border:0;background:transparent;color:#26384a;text-align:left;font-weight:650;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:8px 0}
+.buddy-home-footer{display:flex;gap:22px;margin-top:12px}
+.buddy-help-line{border-bottom:1px solid #e4e9ee;padding:17px 0}
+.buddy-help-line p{font-size:14px;line-height:1.55;color:#495a69}
+.buddy-more>button{display:block;width:100%;padding:15px 4px;border-bottom:1px solid #e4e9ee}
+@media(max-width:420px){.buddy-chat-entry{flex-wrap:wrap}.buddy-chat-entry small{flex-basis:100%;order:3}.buddy-chat-entry>span:last-child{margin-left:auto}}
