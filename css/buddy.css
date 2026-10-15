@@ -90,3 +90,13 @@ body.buddy-open .buddy-launch{visibility:hidden}
 .buddy-focus{padding:8px 0 20px;min-height:240px}
 .buddy-focus h2{font-size:clamp(24px,5vw,30px)}
 .buddy-focus .buddy-discovery{margin-top:26px}
+
+.buddy-onboard{padding:18px 2px 24px;display:grid;gap:14px}
+.buddy-onboard h2{font-size:clamp(25px,5vw,30px);line-height:1.2;margin:0}
+.buddy-onboard>p{line-height:1.55;font-size:14px;color:#465568;margin:0}
+.buddy-onboard .buddy-discovery-kicker{color:#977100}
+.buddy-intro-preview{display:grid;gap:7px;padding:14px;border-radius:12px;background:#f2f5f7;font-size:13px}
+.buddy-onboard form{display:grid;gap:14px}
+.buddy-onboard input{box-sizing:border-box;width:100%;border:1px solid #aab4c1;border-radius:10px;padding:11px 12px;color:#1c2733;font:400 16px 'Atkinson Hyperlegible',sans-serif;min-height:44px}
+.buddy-onboard .buddy-submit{justify-self:start}
+.buddy-onboard .buddy-subtle-link{justify-self:start}
