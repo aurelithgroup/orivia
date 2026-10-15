@@ -18,7 +18,7 @@ function boot(stored){
  vm.runInNewContext(src,{window});
  const instrumented=buddy.replace(
   "if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();",
-  "window.__test={get:()=>s,set:x=>Object.assign(s,x),checks:()=>actionPlan().map(q=>[q.id,status(q.id)]),next:()=>nextQuestion()?.key,ask,turns:()=>turns.slice(),html:focusScreen,intro,introSetup:basics,intent:recogniseIntent,status:changeStatus,trust:trustRecord,respond:conversationResult};"
+  "window.__test={get:()=>s,set:x=>Object.assign(s,x),checks:()=>actionPlan().map(q=>[q.id,status(q.id)]),next:()=>nextQuestion()?.key,ask,turns:()=>turns.slice(),html:focusScreen,intro,introSetup:basics,intent:recogniseIntent,status:changeStatus,trust:trustRecord,respond:conversationResult,homeSection:homeDashboard,helpSection:helpScreen,moreSection:moreScreen,planSection:dashboard};"
  );
  assert.notEqual(instrumented,buddy,'Test injection point must be present');
  vm.runInNewContext(instrumented,{window,localStorage,document:{readyState:'loading',addEventListener:()=>{}}});
@@ -27,6 +27,10 @@ function boot(stored){
 let t=boot();
 assert.equal(t.get().goal,'undecided');
 assert.equal(t.get().onboarded,false);
+assert.match(t.homeSection(),/Ask Orivia/);
+assert.doesNotMatch(t.homeSection(),/buddy-card/);
+assert.match(t.helpSection(),/emergency services/);
+assert.match(t.moreSection(),/My details & preferences/);
 assert.match(t.intro(),/WELCOME TO ORIVIA/);
 assert.match(t.introSetup(),/name="firstName"/);
 assert.match(t.introSetup(),/currently in English/);
