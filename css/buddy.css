@@ -34,3 +34,11 @@
 .buddy-user{background:#fff1c0;margin-left:16px}
 body.buddy-open{overflow:hidden}
 .buddy-panel button:focus-visible,.buddy-panel select:focus-visible,.buddy-launch:focus-visible{outline:3px solid #c28b00;outline-offset:3px}
+
+.buddy-discovery{background:#1c2733;color:white;border-radius:15px;padding:18px;margin:16px 0}
+.buddy-discovery-kicker{display:block;color:#f2b90f;font-size:12px;font-weight:700;letter-spacing:.025em;margin-bottom:8px}
+.buddy-discovery h3{font-size:20px;line-height:1.3;margin:0 0 8px}
+.buddy-discovery p{font-size:13px;line-height:1.55;color:#e1e8ef;margin:0 0 16px}
+.buddy-answer-options{display:grid;gap:9px}
+.buddy-answer-options button{border:1px solid #f2b90f;background:#f2b90f;color:#1c2733;border-radius:10px;min-height:44px;font:700 14px 'Atkinson Hyperlegible',sans-serif;cursor:pointer;padding:10px}
+.buddy-answer-options .buddy-later{background:transparent;color:white;border-color:#a6b1bf}
