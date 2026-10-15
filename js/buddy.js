@@ -38,7 +38,7 @@ const DISCOVERY=[
 function nextQuestion(){return DISCOVERY.find(q=>q.when()&&s[q.key]==='unknown'&&!s.deferred.includes(q.key))}
 function discoveryCard(){
  const q=nextQuestion();
- if(!q)return '';
+ if(!q)return s.deferred.length?'<section class="buddy-discovery"><span class="buddy-discovery-kicker">✦ Questions paused</span><h3>Want to pick up where we left off?</h3><p>You can revisit anything you weren’t sure about.</p><button type="button" class="buddy-secondary" data-buddy-resume>Ask me again</button></section>':'';
  return '<section class="buddy-discovery" aria-label="A question from Orivia"><span class="buddy-discovery-kicker">✦ Orivia has a question</span><h3>'+esc(q.ask)+'</h3><p>'+esc(q.why)+'</p><div class="buddy-answer-options">'+q.options.map(([v,l])=>'<button type="button" data-buddy-answer="'+q.key+'" data-answer-value="'+v+'">'+esc(l)+'</button>').join('')+'<button type="button" class="buddy-later" data-buddy-later="'+q.key+'">Not sure / ask later</button></div></section>';
 }
 
@@ -77,6 +77,7 @@ function start(){
  function close(){open=false;draw();if(previousFocus&&previousFocus.focus)previousFocus.focus()}
  layer.addEventListener('click',e=>{
   if(e.target===layer||e.target.closest('[data-buddy-close]')){close();return}
+  if(e.target.closest('[data-buddy-resume]')){s.deferred=[];save();draw();return}
   const answer=e.target.closest('[data-buddy-answer]');if(answer){const k=answer.dataset.buddyAnswer,v=answer.dataset.answerValue;if(VALID[k]&&VALID[k].includes(v)){s[k]=v;s.deferred=s.deferred.filter(x=>x!==k);s.checked={};reply='';save();draw()}return}
   const later=e.target.closest('[data-buddy-later]');if(later){const k=later.dataset.buddyLater;if(DISCOVERY.some(q=>q.key===k)){s.deferred=[...new Set([...s.deferred,k])];save();draw()}return}
   const v=e.target.closest('[data-buddy-view]');if(v){s.view=v.dataset.buddyView;save();draw();return}
@@ -84,7 +85,7 @@ function start(){
   const del=e.target.closest('[data-buddy-reset]');if(del){if(!confirm('Delete all Buddy Lab answers saved on this device?'))return;s=EMPTY();reply='';try{localStorage.removeItem(KEY)}catch(_){}draw();return}
  });
  layer.addEventListener('change',e=>{
-  const fld=e.target.closest('[data-buddy-field]');if(fld){const k=fld.dataset.buddyField;if(!VALID[k]||!VALID[k].includes(fld.value))return;s[k]=fld.value;s.deferred=[];s.checked={};reply='';save();draw();return}
+  const fld=e.target.closest('[data-buddy-field]');if(fld){const k=fld.dataset.buddyField;if(!VALID[k]||!VALID[k].includes(fld.value))return;const changed=s[k]!==fld.value;s[k]=fld.value;if(changed){s.deferred=[];if(k!=='tone')s.checked={};reply=''}save();draw();return}
   const check=e.target.closest('[data-buddy-check]');if(check){s.checked[check.dataset.buddyCheck]=check.checked;save();draw()}
  });
  document.addEventListener('keydown',e=>{if(!open)return;if(e.key==='Escape'){close()}else if(e.key==='Tab'){const focusable=[...layer.querySelectorAll('button,select,input,summary')].filter(x=>!x.disabled);if(!focusable.length)return;const first=focusable[0],last=focusable[focusable.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
