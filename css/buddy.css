@@ -75,3 +75,18 @@ body.buddy-open .buddy-launch{visibility:hidden}
 .buddy-goal-options strong{font-size:15px}
 .buddy-goal-options small{font-size:12px;color:#58687a}
 .buddy-intro-foot{font-size:12px!important}
+
+/* Quiet starting point: one prompt, with tools revealed only when relevant. */
+.buddy-first{padding:18px 4px 28px}
+.buddy-first h2{font-size:clamp(24px,5vw,32px);line-height:1.2;max-width:360px}
+.buddy-first>p{max-width:380px}
+.buddy-first form{margin:22px 0;display:grid;gap:10px}
+.buddy-first textarea{box-sizing:border-box;width:100%;min-height:125px;border:1px solid #b9c4d1;border-radius:14px;background:#fff;color:#1c2733;padding:16px;font:400 16px 'Atkinson Hyperlegible',sans-serif;resize:vertical}
+.buddy-first textarea:focus-visible{outline:3px solid #e8ae14;outline-offset:2px}
+.buddy-submit{justify-self:end;background:#f2b90f;color:#1c2733;border:0;border-radius:10px;padding:12px 17px;min-height:44px;font:700 14px 'Atkinson Hyperlegible',sans-serif;cursor:pointer}
+.buddy-entry-help{background:#f4f6f8;border-left:3px solid #e8ae14;border-radius:6px;padding:11px;font-size:13px}
+.buddy-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.buddy-subtle-link{border:0;background:transparent;color:#34495d;text-decoration:underline;text-underline-offset:3px;font:600 13px 'Atkinson Hyperlegible',sans-serif;padding:12px 0;cursor:pointer;text-align:left}
+.buddy-focus{padding:8px 0 20px;min-height:240px}
+.buddy-focus h2{font-size:clamp(24px,5vw,30px)}
+.buddy-focus .buddy-discovery{margin-top:26px}
