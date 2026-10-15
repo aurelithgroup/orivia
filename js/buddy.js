@@ -6,7 +6,7 @@ const EMPTY=()=>({tone:'friendly',dependants:'unknown',school:'unknown',foreignR
 const VALID={tone:['friendly','formal','simple'],dependants:['unknown','yes','no'],school:['unknown','yes','no'],foreignRecords:['unknown','yes','no'],stayDates:['unknown','known'],goal:['family','student','everyday'],view:['home','chat','profile']};
 /* No free-text fields or document uploads in this prototype. */
 function read(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');const b=EMPTY();if(s&&typeof s==='object'){Object.keys(VALID).forEach(k=>{if(VALID[k].includes(s[k]))b[k]=s[k]});if(s.checked&&typeof s.checked==='object')Object.keys(s.checked).slice(0,30).forEach(k=>{if(s.checked[k]===true)b.checked[k]=true});if(s.actions&&typeof s.actions==='object')Object.keys(s.actions).filter(k=>QUESTIONS.some(q=>q.id===k)).forEach(k=>{if(['todo','waiting','checked'].includes(s.actions[k]))b.actions[k]=s.actions[k]});if(Array.isArray(s.deferred))b.deferred=s.deferred.filter(k=>['dependants','school','foreignRecords','stayDates'].includes(k)).slice(0,4);}return b}catch(_){return EMPTY()}}
-let s=read(), open=false,previousFocus=null,reply='';
+let s, open=false,previousFocus=null,reply='';
 const esc=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const tone=(a,b,c)=>s.tone==='formal'?b:s.tone==='simple'?c:a;
 const QUESTIONS=[
@@ -18,6 +18,7 @@ const QUESTIONS=[
 {id:'studentAdmin',when:()=>s.goal==='student',headline:'Find out who manages your paperwork',why:'Universities often coordinate some, but not all, arrival processes.',detail:'Ask your university what it handles, how it sends appointment updates, and what you must complete yourself.',kind:'University'},
 {id:'budget',when:()=>s.goal==='everyday',headline:'Map your essential local options',why:'You want help with day-to-day life.',detail:'Choose one need, like groceries, transport or healthcare, and compare information from current providers. Local recommendations are not connected yet.',kind:'Everyday life'}
 ];
+s=read();
 function active(){return QUESTIONS.filter(x=>x.when())}
 function status(id){return s.actions[id]|| (s.checked[id]?'checked':'todo')}
 function changeStatus(id,value){if(!QUESTIONS.some(x=>x.id===id)||!['todo','waiting','checked'].includes(value))return;s.actions[id]=value;s.checked[id]=value==='checked';save()}
