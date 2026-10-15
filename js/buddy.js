@@ -29,11 +29,29 @@ function profile(){
  return '<div class="buddy-fields">'+field('tone','How should I speak to you?',[['friendly','Friendly'],['formal','Professional'],['simple','Simple']])+field('goal','What matters most at the moment?',[['family','Family relocation'],['student','Student life'],['everyday','Everyday life']])+
  (s.goal==='family'?field('dependants','Are you arranging residency for dependants?',[['unknown','Not sure / prefer not to say'],['yes','Yes'],['no','No']])+field('school','Will children be attending school?',[['unknown','Not sure'],['yes','Yes'],['no','No']])+field('foreignRecords','Were any school records issued abroad?',[['unknown','Not sure'],['yes','Yes'],['no','No']])+field('stayDates','Have you confirmed relevant stay dates?',[['unknown','Not yet / unsure'],['known','Yes, with the responsible source']]):'')+'</div>'
 }
+function trustRecord(id){
+ const registry=window.ORIVIA_BUDDY_SOURCES||{};
+ const source=Object.prototype.hasOwnProperty.call(registry,id)?registry[id]:null;
+ if(!source)return {label:'Source not recorded',detail:'No official source has been assigned to this suggested check.',url:null};
+ /* A link does not constitute verification, even when it points to a government website. */
+ if(source.status!=='approved'||!source.reviewedAt||!source.reviewer||!source.reviewDue||Date.parse(source.reviewDue)<Date.now()){
+  return {label:source.url?'Official source linked · not independently reviewed':'Applicable source not yet established',
+    detail:source.scope||'Applicability has not been checked.',url:source.url||null,title:source.title||null};
+ }
+ return {label:'Source reviewed · check current applicability',
+   detail:source.scope||'',url:source.url||null,title:source.title||null};
+}
+function trustHtml(id){
+ const tr=trustRecord(id);
+ return '<div class="buddy-trust"><strong>'+esc(tr.label)+'</strong><p>'+esc(tr.detail)+'</p>'+
+ (tr.url?'<a href="'+esc(tr.url)+'" target="_blank" rel="noopener noreferrer">Open '+esc(tr.title||'official source')+' ↗</a>':'<span>Ask the responsible institution for the applicable official guidance.</span>')+
+ '</div>';
+}
 function adviceCard(c){
  const st=status(c.id),isDone=st==='checked',isWaiting=st==='waiting';
  const label=isDone?'I checked this':isWaiting?'Waiting on someone':'To check';
  const next=isDone?'You marked this as checked; Orivia has not independently verified the outcome.':isWaiting?'Follow up with the relevant organisation and update this status when you hear back.':'Start by contacting the responsible school, sponsor, provider or authority described below.';
- return '<article class="buddy-card"><div class="buddy-card-top"><strong>'+esc(c.headline)+'</strong><span>'+label+'</span></div><span class="buddy-category">'+esc(c.kind)+'</span><p>'+esc(c.detail)+'</p><div class="buddy-next-action"><b>Next action</b><p>'+esc(next)+'</p></div><details><summary>Why did Orivia suggest this?</summary><p>'+esc(c.why)+'</p><p class="buddy-caution">Suggested check, not a verified requirement for your case. No official source review has been recorded for this prototype.</p></details><label class="buddy-field buddy-status"><span>Track this check</span><select data-buddy-status="'+esc(c.id)+'"><option value="todo"'+(st==='todo'?' selected':'')+'>I need to check</option><option value="waiting"'+(isWaiting?' selected':'')+'>I contacted someone; waiting</option><option value="checked"'+(isDone?' selected':'')+'>I checked with a responsible source</option></select></label></article>'
+ return '<article class="buddy-card"><div class="buddy-card-top"><strong>'+esc(c.headline)+'</strong><span>'+label+'</span></div><span class="buddy-category">'+esc(c.kind)+'</span><p>'+esc(c.detail)+'</p><div class="buddy-next-action"><b>Next action</b><p>'+esc(next)+'</p></div><details><summary>Why did Orivia suggest this?</summary><p>'+esc(c.why)+'</p><p class="buddy-caution">Suggested check, not a verified requirement for your case.</p>'+trustHtml(c.id)+'</details><label class="buddy-field buddy-status"><span>Track this check</span><select data-buddy-status="'+esc(c.id)+'"><option value="todo"'+(st==='todo'?' selected':'')+'>I need to check</option><option value="waiting"'+(isWaiting?' selected':'')+'>I contacted someone; waiting</option><option value="checked"'+(isDone?' selected':'')+'>I checked with a responsible source</option></select></label></article>'
 }
 
 const DISCOVERY=[
