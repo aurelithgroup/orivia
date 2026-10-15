@@ -96,6 +96,22 @@ function firstVisit(){
 function conversationResult(text){
  const goal=recogniseIntent(text),raw=String(text||'').trim();
  if(!raw)return null;
+ const lastAnswer=[...turns].reverse().find(t=>t.role==='orivia');
+ const previousPrompt=lastAnswer?lastAnswer.text:'';
+ // A short message can answer the question Orivia just asked, even without a keyword.
+ if(previousPrompt.includes('Which university or campus are you heading to')){
+  const parts=raw.split(/\s+from\s+/i);
+  const campus=parts[0]&&parts[0].trim(),origin=parts.length===2&&parts[1].trim();
+  if(campus&&origin){
+   return {kind:'travel-details',goal:'student',message:'Got it — you want to travel from '+origin+' to '+campus+'. Would you prefer public transport, driving, or comparing both? I can help you plan what to check, but I cannot confirm live routes, fares or journey times.'};
+  }
+  return {kind:'travel-details',goal:'student',message:'Thanks. To help with your university journey, could you tell me both the campus and the general area you would travel from? You can say something like “my campus from Sharjah”.'};
+ }
+ if(previousPrompt.includes('Would you prefer public transport, driving, or comparing both?')){
+  const mode=/\b(public transport|bus|metro|train)\\b/i.test(raw)?'public transport':/\b(drive|driving|car)\\b/i.test(raw)?'driving':/\b(both|compare)\\b/i.test(raw)?'both options':null;
+  if(mode)return {kind:'travel-preference',goal:'student',message:'Okay, let’s look at '+mode+'. For a journey between Sharjah and Dubai, start by checking current journey-planning information from the relevant transport operators, and verify where your campus entrance actually is. I cannot check live connections, fares or travel times yet, so I won’t invent a route. Would you like to work through what to verify first?'};
+  return {kind:'travel-preference',goal:'student',message:'Would you prefer public transport, driving, or a comparison of both?'};
+ }
  const recentStudentContext=turns.filter(t=>t.role==='user').slice(-4).some(t=>/university|college|campus|student/i.test(t.text));
  const askingToTravel=/how do i get there|how can i get there|how to get there|getting there|travel there|directions there/i.test(raw);
  if(askingToTravel&&recentStudentContext&&!/hospital|airport|office/i.test(raw)){
