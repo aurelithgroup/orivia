@@ -3,10 +3,10 @@
 'use strict';
 const KEY='orivia-buddy-lab-v2';
 const EMPTY=()=>({tone:'friendly',dependants:'unknown',school:'unknown',foreignRecords:'unknown',stayDates:'unknown',goal:'undecided',checked:{},actions:{},notes:{},deferred:[],view:'home'});
-const VALID={tone:['friendly','formal','simple'],dependants:['unknown','yes','no'],school:['unknown','yes','no'],foreignRecords:['unknown','yes','no'],stayDates:['unknown','known'],goal:['undecided','family','student','everyday'],view:['home','chat','profile']};
+const VALID={tone:['friendly','formal','simple'],dependants:['unknown','yes','no'],school:['unknown','yes','no'],foreignRecords:['unknown','yes','no'],stayDates:['unknown','known'],goal:['undecided','family','student','everyday'],view:['home','chat','profile','plan']};
 /* No free-text fields or document uploads in this prototype. */
 function read(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');const b=EMPTY();if(s&&typeof s==='object'){Object.keys(VALID).forEach(k=>{if(VALID[k].includes(s[k]))b[k]=s[k]});if(s.checked&&typeof s.checked==='object')Object.keys(s.checked).slice(0,30).forEach(k=>{if(s.checked[k]===true)b.checked[k]=true});if(s.actions&&typeof s.actions==='object')Object.keys(s.actions).filter(k=>QUESTIONS.some(q=>q.id===k)).forEach(k=>{if(['todo','waiting','checked'].includes(s.actions[k]))b.actions[k]=s.actions[k]});if(Array.isArray(s.deferred))b.deferred=s.deferred.filter(k=>['dependants','school','foreignRecords','stayDates'].includes(k)).slice(0,4);}return b}catch(_){return EMPTY()}}
-let s, open=false,previousFocus=null,reply='';
+let s, open=false,previousFocus=null,reply='',entryHelp='';
 const esc=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const tone=(a,b,c)=>s.tone==='formal'?b:s.tone==='simple'?c:a;
 const QUESTIONS=[
@@ -67,11 +67,33 @@ function discoveryCard(){
  return '<section class="buddy-discovery" aria-label="A question from Orivia"><span class="buddy-discovery-kicker">✦ Orivia has a question</span><h3>'+esc(q.ask)+'</h3><p>'+esc(q.why)+'</p><div class="buddy-answer-options">'+q.options.map(([v,l])=>'<button type="button" data-buddy-answer="'+q.key+'" data-answer-value="'+v+'">'+esc(l)+'</button>').join('')+'<button type="button" class="buddy-later" data-buddy-later="'+q.key+'">Not sure / ask later</button></div></section>';
 }
 
-function firstVisit(){
- return '<section class="buddy-intro"><span class="buddy-discovery-kicker">✦ Your own Orivia</span><h2>'+esc(tone('Hey! What are we figuring out together?','What would you like help with?','What do you need help with?'))+'</h2><p>I can help you organise what matters without sending you through a library of instructions. You can change this later.</p><div class="buddy-goal-options">'+
- [['family','I’m getting my family settled','household and paperwork'],['student','I’m settling in as a student','university and everyday life'],['everyday','I need help with everyday life','transport, services and essentials']].map(([k,title,sub])=>'<button type="button" data-buddy-goal="'+k+'"><strong>'+esc(title)+'</strong><small>'+esc(sub)+'</small></button>').join('')+
- '</div><p class="buddy-intro-foot">No account needed for this prototype. Please don’t enter real immigration details.</p></section>';
+function recogniseIntent(text){
+ const q=String(text||'').trim().toLowerCase();
+ if(!q)return null;
+ const match=[
+  ['family',/\\b(family|families|children|child|kids|kid|dependent|dependant|school|spouse|wife|husband|sponsor|residen(?:cy|ce)|visa)\\b/i],
+  ['student',/\\b(university|campus|college|student|studying|lecture|course|semester)\\b/i],
+  ['everyday',/\\b(groceries|grocery|transport|metro|bus|train|shopping|shops|food|clinic|pharmacy|doctor|bank|sim|phone|everyday|daily)\\b/i]
+ ];
+ const found=match.filter(([,rx])=>rx.test(q));
+ return found.length===1?found[0][0]:null;
 }
+function firstVisit(){
+ return '<section class="buddy-intro buddy-first"><h2>'+esc(tone('What can I help you with?','What would you like help with?','What do you need help with?'))+'</h2>'+
+ '<p>Tell me what’s on your mind. We’ll figure out the next step together.</p>'+
+ '<form id="buddy-start-form"><label class="buddy-sr" for="buddy-first-input">What would you like help with?</label><textarea id="buddy-first-input" name="question" rows="3" maxlength="240" placeholder="For example: I’m moving here with my children..." required></textarea><button type="submit" class="buddy-submit">Continue <span aria-hidden="true">→</span></button></form>'+
+ (entryHelp?'<p class="buddy-entry-help" role="status">'+esc(entryHelp)+'</p>':'')+
+ '<p class="buddy-intro-foot">Early prototype: I can currently help with a few family, student and everyday-life situations. Please don’t share personal identifiers or immigration case details.</p></section>';
+}
+function focusScreen(){
+ if(s.goal==='undecided')return firstVisit();
+ const q=nextQuestion(),remaining=actionPlan().filter(x=>status(x.id)!=='checked'),next=remaining[0];
+ return '<section class="buddy-focus"><h2>'+esc(tone('What can I help you with today?','How can I assist you today?','How can I help?'))+'</h2>'+
+ '<p class="buddy-sub">We’ll focus on one thing at a time.</p>'+
+ (q?discoveryCard():next?'<div class="buddy-spotlight"><span>ONE THING WORTH CHECKING</span><h3>'+esc(next.headline)+'</h3><p>'+esc(next.detail)+'</p><button type="button" class="buddy-secondary" data-buddy-view="plan">See why and track it →</button></div>':'<p class="buddy-sub">Nothing new is waiting in this limited example. You can ask about your plan whenever you need it.</p>')+
+ '<button type="button" class="buddy-subtle-link" data-buddy-view="plan">View my plan'+(remaining.length?' ('+remaining.length+')':'')+' →</button></section>';
+}
+
 function dashboard(){
  const a=actionPlan(),out=a.filter(x=>status(x.id)==='todo'),waiting=a.filter(x=>status(x.id)==='waiting'),done=a.filter(x=>status(x.id)==='checked');
  const first=out[0]||waiting[0];
@@ -101,9 +123,11 @@ function chat(){
 function draw(){
  const layer=document.getElementById('buddy-lab');if(!layer)return;layer.hidden=!open;
  document.body.classList.toggle('buddy-open',open);if(!open)return;
- layer.innerHTML='<section class="buddy-panel" role="dialog" aria-modal="true" aria-label="Orivia Buddy Lab"><header><span class="buddy-brand">orivia <small>buddy lab · local prototype</small></span><button type="button" data-buddy-close aria-label="Close Buddy Lab">×</button></header><div class="buddy-inner"><nav class="buddy-tabs" aria-label="Buddy Lab navigation">'+[['home','My Life'],['chat','Ask Orivia'],['profile','About me']].map(([k,v])=>'<button type="button" data-buddy-view="'+k+'" aria-current="'+(s.view===k?'page':'false')+'">'+v+'</button>').join('')+'</nav><p class="buddy-caution">Demo only: don’t enter sensitive information. Answers are stored on this device. No official immigration decisions or live government connections.</p>'+
- (s.view==='home'?dashboard():s.view==='chat'?chat():'<h2>What would you like Orivia to know?</h2><p class="buddy-sub">You control what you share. Every answer is optional.</p>'+profile())+
- '<button class="buddy-reset" type="button" data-buddy-reset>Delete my Buddy Lab answers</button></div></section>';
+ layer.innerHTML='<section class="buddy-panel" role="dialog" aria-modal="true" aria-label="Orivia Buddy Lab"><header><span class="buddy-brand">orivia <small>buddy lab · local prototype</small></span><button type="button" data-buddy-close aria-label="Close Buddy Lab">×</button></header><div class="buddy-inner">'+
+ (s.goal==='undecided'?'': '<nav class="buddy-tabs" aria-label="Buddy Lab navigation">'+[['home','Home'],['chat','Ask Orivia'],['plan','My plan']].map(([k,v])=>'<button type="button" data-buddy-view="'+k+'" aria-current="'+(s.view===k?'page':'false')+'">'+v+'</button>').join('')+'</nav>')+
+ (s.view==='home'?focusScreen():s.view==='plan'?dashboard():s.view==='chat'?chat():'<h2>What would you like Orivia to know?</h2><p class="buddy-sub">You control what you share. Every answer is optional.</p>'+profile())+
+ (s.goal==='undecided'?'':'<button class="buddy-subtle-link" type="button" data-buddy-view="profile">Preferences and my situation</button>')+
+ '<button class="buddy-reset" type="button" data-buddy-reset>Delete Buddy Lab answers</button></div></section>';
 }
 function start(){
  const css=document.createElement('link');css.rel='stylesheet';css.href='css/buddy.css';document.head.appendChild(css);
@@ -111,6 +135,7 @@ function start(){
  document.body.appendChild(button);
  const layer=document.createElement('div');layer.id='buddy-lab';layer.className='buddy-overlay';layer.hidden=true;document.body.appendChild(layer);
  function close(){open=false;draw();if(previousFocus&&previousFocus.focus)previousFocus.focus()}
+ layer.addEventListener('submit',e=>{if(e.target.id!=='buddy-start-form')return;e.preventDefault();const input=e.target.querySelector('#buddy-first-input');const goal=recogniseIntent(input&&input.value);if(!goal){entryHelp='I’m still learning. I can currently help with family relocation, student life, or everyday needs such as transport and groceries. Could you tell me which of those is closest?';draw();return}s.goal=goal;s.view='home';entryHelp='';save();draw()});
  layer.addEventListener('click',e=>{
   if(e.target===layer||e.target.closest('[data-buddy-close]')){close();return}
   if(e.target.closest('[data-buddy-resume]')){s.deferred=[];save();draw();return}
@@ -119,7 +144,7 @@ function start(){
   const goal=e.target.closest('[data-buddy-goal]');if(goal){const g=goal.dataset.buddyGoal;if(VALID.goal.includes(g)&&g!=='undecided'){s.goal=g;s.view='home';s.deferred=[];save();draw()}return}
   const v=e.target.closest('[data-buddy-view]');if(v){s.view=v.dataset.buddyView;save();draw();return}
   const q=e.target.closest('[data-buddy-question]');if(q){reply=q.dataset.buddyQuestion;draw();return}
-  const del=e.target.closest('[data-buddy-reset]');if(del){if(!confirm('Delete all Buddy Lab answers saved on this device?'))return;s=EMPTY();reply='';try{localStorage.removeItem(KEY)}catch(_){}draw();return}
+  const del=e.target.closest('[data-buddy-reset]');if(del){if(!confirm('Delete all Buddy Lab answers saved on this device?'))return;s=EMPTY();reply='';entryHelp='';try{localStorage.removeItem(KEY)}catch(_){}draw();return}
  });
  layer.addEventListener('change',e=>{
   const fld=e.target.closest('[data-buddy-field]');if(fld){const k=fld.dataset.buddyField;if(!VALID[k]||!VALID[k].includes(fld.value))return;const changed=s[k]!==fld.value;s[k]=fld.value;if(changed){s.deferred=[];reply=''}save();draw();return}
