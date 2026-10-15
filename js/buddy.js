@@ -161,8 +161,8 @@ function draw(){
  const layer=document.getElementById('buddy-lab');if(!layer)return;layer.hidden=!open;
  document.body.classList.toggle('buddy-open',open);if(!open)return;
  layer.innerHTML='<section class="buddy-panel" role="dialog" aria-modal="true" aria-label="Orivia Buddy Lab"><header><span class="buddy-brand">orivia <small>buddy lab · local prototype</small></span><button type="button" data-buddy-close aria-label="Close Buddy Lab">×</button></header><div class="buddy-inner">'+
- (!s.onboarded||s.goal==='undecided'?'': '<nav class="buddy-tabs" aria-label="Buddy Lab navigation">'+[['home','Home'],['chat','Ask Orivia'],['plan','My plan']].map(([k,v])=>'<button type="button" data-buddy-view="'+k+'" aria-current="'+(s.view===k?'page':'false')+'">'+v+'</button>').join('')+'</nav>')+
- (!s.onboarded?(s.introStep==='basics'?basics():intro()):s.view==='home'?focusScreen():s.view==='plan'?dashboard():s.view==='chat'?chat():'<h2>What would you like Orivia to know?</h2><p class="buddy-sub">You control what you share. Every answer is optional.</p>'+profile())+
+ (!s.onboarded||s.goal==='undecided'?'': '<nav class="buddy-tabs" aria-label="Buddy Lab navigation">'+[['home','Ask Orivia'],['plan','My plan']].map(([k,v])=>'<button type="button" data-buddy-view="'+k+'" aria-current="'+(s.view===k?'page':'false')+'">'+v+'</button>').join('')+'</nav>')+
+ (!s.onboarded?(s.introStep==='basics'?basics():intro()):s.view==='home'?focusScreen():s.view==='plan'?dashboard():s.view==='chat'?focusScreen():'<h2>What would you like Orivia to know?</h2><p class="buddy-sub">You control what you share. Every answer is optional.</p>'+profile())+
  (!s.onboarded||s.goal==='undecided'?'':'<button class="buddy-subtle-link" type="button" data-buddy-view="profile">Preferences and my situation</button>')+
  '<button class="buddy-reset" type="button" data-buddy-reset>Delete Buddy Lab answers</button></div></section>';
 }
@@ -185,7 +185,7 @@ function start(){
   const answer=e.target.closest('[data-buddy-answer]');if(answer){const k=answer.dataset.buddyAnswer,v=answer.dataset.answerValue;if(VALID[k]&&VALID[k].includes(v)){s[k]=v;s.deferred=s.deferred.filter(x=>x!==k);reply='';save();draw()}return}
   const later=e.target.closest('[data-buddy-later]');if(later){const k=later.dataset.buddyLater;if(DISCOVERY.some(q=>q.key===k)){s.deferred=[...new Set([...s.deferred,k])];save();draw()}return}
   const goal=e.target.closest('[data-buddy-goal]');if(goal){const g=goal.dataset.buddyGoal;if(VALID.goal.includes(g)&&g!=='undecided'){s.goal=g;s.view='home';s.deferred=[];save();draw()}return}
-  const v=e.target.closest('[data-buddy-view]');if(v){s.view=v.dataset.buddyView;save();draw();return}
+  const v=e.target.closest('[data-buddy-view]');if(v){s.view=v.dataset.buddyView==='chat'?'home':v.dataset.buddyView;save();draw();return}
   const q=e.target.closest('[data-buddy-question]');if(q){reply=q.dataset.buddyQuestion;draw();return}
   const del=e.target.closest('[data-buddy-reset]');if(del){if(!confirm('Delete all Buddy Lab answers saved on this device?'))return;s=EMPTY();reply='';entryHelp='';conversation=null;turns=[];try{sessionStorage.removeItem(CHAT_KEY)}catch(_){}try{localStorage.removeItem(KEY)}catch(_){}draw();return}
  });
