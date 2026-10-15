@@ -96,6 +96,11 @@ function firstVisit(){
 function conversationResult(text){
  const goal=recogniseIntent(text),raw=String(text||'').trim();
  if(!raw)return null;
+ const recentStudentContext=turns.filter(t=>t.role==='user').slice(-4).some(t=>/university|college|campus|student/i.test(t.text));
+ const askingToTravel=/how do i get there|how can i get there|how to get there|getting there|travel there|directions there/i.test(raw);
+ if(askingToTravel&&recentStudentContext&&!/hospital|airport|office/i.test(raw)){
+  return {kind:'followup',goal:'student',message:'Do you mean getting to your university? Which university or campus are you heading to, and roughly which area will you travel from? I can help you identify what to check, but I cannot provide live routes yet.'};
+ }
  if(!goal)return {kind:'unknown',message:'I don’t know enough to answer that yet. I can currently help explore family relocation, student life and some everyday needs. Could you say a little more about what you need? Please avoid personal case details.'};
  const known=s.goal!=='undecided'&&goal===s.goal;
  const headline={family:'family relocation',student:'student life',everyday:'everyday needs'}[goal];
