@@ -102,7 +102,7 @@ function draw(){
 function start(){
  const css=document.createElement('link');css.rel='stylesheet';css.href='css/buddy.css';document.head.appendChild(css);
  const button=document.createElement('button');button.type='button';button.className='buddy-launch';button.textContent='✦ Try Orivia Buddy';button.addEventListener('click',()=>{previousFocus=document.activeElement;open=true;draw();let b=document.querySelector('[data-buddy-close]');if(b)b.focus()});
- (document.querySelector('.demo-tools')||document.body).appendChild(button);
+ document.body.appendChild(button);
  const layer=document.createElement('div');layer.id='buddy-lab';layer.className='buddy-overlay';layer.hidden=true;document.body.appendChild(layer);
  function close(){open=false;draw();if(previousFocus&&previousFocus.focus)previousFocus.focus()}
  layer.addEventListener('click',e=>{
