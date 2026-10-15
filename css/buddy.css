@@ -100,3 +100,12 @@ body.buddy-open .buddy-launch{visibility:hidden}
 .buddy-onboard input{box-sizing:border-box;width:100%;border:1px solid #aab4c1;border-radius:10px;padding:11px 12px;color:#1c2733;font:400 16px 'Atkinson Hyperlegible',sans-serif;min-height:44px}
 .buddy-onboard .buddy-submit{justify-self:start}
 .buddy-onboard .buddy-subtle-link{justify-self:start}
+
+.buddy-home-form{display:grid;gap:10px;margin:20px 0 12px}
+.buddy-home-form textarea{box-sizing:border-box;width:100%;min-height:115px;border:1px solid #b9c4d1;border-radius:14px;background:#fff;color:#1c2733;padding:15px;font:400 16px 'Atkinson Hyperlegible',sans-serif;resize:vertical}
+.buddy-home-form textarea:focus-visible{outline:3px solid #e8ae14;outline-offset:2px}
+.buddy-home-form .buddy-submit{justify-self:end}
+.buddy-response{margin:20px 0 8px;padding:15px;border-radius:13px;background:#eff3f7;border-left:3px solid #f2b90f}
+.buddy-response strong{font-size:13px}
+.buddy-response p{font-size:14px;line-height:1.55;margin:7px 0 12px}
+.buddy-muted{font-size:13px;color:#58687a}
