@@ -3,11 +3,11 @@
 ## Status (15 October 2026)
 - Worker source: `workers/orivia-ai-preview.mjs`.
 - Mock/test contract: `tests/ai-preview.test.mjs`; no real inference used in tests.
-- **Not connected** to the public Buddy UI. Current preview Buddy remains rule-based.
+- Cloudflare Worker **orivia-ai-preview** was deployed separately on 15 Oct 2026 with an **AI** binding and allowlisted staging origin.\n- **Intentionally locked:** the Worker has no DEMO_TOKEN configured. Chat requests fail authentication before invoking the model; no public AI requests or user-facing AI chat are enabled.\n- **Not connected** to the public Buddy UI. Current preview Buddy remains rule-based.
 - **Do not use orivia-api** for this experiment: it serves a different purpose.
 - No live routes, government retrieval, calendar, uploads or long-term user memory exist yet.
 
-## Conversation contract
+## Current deployment notes\nDeployment on Cloudflare succeeded and settings inspection confirmed the AI binding. A live model inference test and public browser integration have **not** been performed. Do not advertise the Buddy preview as AI-enabled. The existing **orivia-api** Worker was not changed.\n\n## Conversation contract
 `POST /v1/chat` with up to 12 messages:
 ```json
 {
