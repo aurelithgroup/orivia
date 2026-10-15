@@ -14,6 +14,8 @@ function boot(stored){
   getItem:()=>stored?JSON.stringify(stored):null,
   setItem:()=>{}
  };
+ const sessionData={};
+ const sessionStorage={getItem:key=>sessionData[key]||null,setItem:(key,value)=>{sessionData[key]=value},removeItem:key=>{delete sessionData[key]}};
  const window={};
  vm.runInNewContext(src,{window});
  const instrumented=buddy.replace(
@@ -21,7 +23,7 @@ function boot(stored){
   "window.__test={get:()=>s,set:x=>Object.assign(s,x),checks:()=>actionPlan().map(q=>[q.id,status(q.id)]),next:()=>nextQuestion()?.key,ask,turns:()=>turns.slice(),html:focusScreen,intro,introSetup:basics,intent:recogniseIntent,status:changeStatus,trust:trustRecord,respond:conversationResult,homeSection:homeDashboard,helpSection:helpScreen,moreSection:moreScreen,planSection:dashboard};"
  );
  assert.notEqual(instrumented,buddy,'Test injection point must be present');
- vm.runInNewContext(instrumented,{window,localStorage,document:{readyState:'loading',addEventListener:()=>{}}});
+ vm.runInNewContext(instrumented,{window,localStorage,sessionStorage,document:{readyState:'loading',addEventListener:()=>{}}});
  return window.__test;
 }
 let t=boot();
