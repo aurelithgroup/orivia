@@ -109,3 +109,13 @@ body.buddy-open .buddy-launch{visibility:hidden}
 .buddy-response strong{font-size:13px}
 .buddy-response p{font-size:14px;line-height:1.55;margin:7px 0 12px}
 .buddy-muted{font-size:13px;color:#58687a}
+
+.buddy-history{display:grid;gap:12px;max-height:42vh;overflow-y:auto;overscroll-behavior:contain;margin:17px 0;padding:3px}
+.buddy-history-msg{max-width:91%;padding:12px 14px;border-radius:13px;background:#f1f4f7}
+.buddy-history-msg strong{display:block;font-size:11px;margin-bottom:4px}
+.buddy-history-msg p{font-size:14px;line-height:1.5;margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.buddy-history-user{justify-self:end;background:#fff2c8}
+.buddy-history-orivia{justify-self:start}
+.buddy-chat-next{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px solid #d5dee7}
+.buddy-chat-next p{font-size:13px;line-height:1.45;margin:0 0 8px}
+.buddy-chat-next button{min-height:44px}
