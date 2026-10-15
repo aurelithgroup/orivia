@@ -64,3 +64,14 @@ body.buddy-open{overflow:hidden}
 body.buddy-open .buddy-launch{visibility:hidden}
 @media(min-width:901px){.buddy-launch{right:22px;bottom:22px}}
 @media(max-width:600px){.buddy-panel{max-height:calc(100dvh - 16px);border-radius:16px}.buddy-overlay{padding:8px}.buddy-inner{padding:15px}.buddy-launch{font-size:13px}}
+
+.buddy-intro{padding:4px 0 10px}
+.buddy-intro>h2{font-size:25px;line-height:1.22;margin:9px 0}
+.buddy-intro>p{font-size:14px;line-height:1.55;color:#4b5969}
+.buddy-intro .buddy-discovery-kicker{color:#926700}
+.buddy-goal-options{display:grid;gap:10px;margin:20px 0}
+.buddy-goal-options button{display:grid;gap:4px;text-align:left;padding:15px;border:1px solid #cdd6e0;border-radius:13px;background:#fff;color:#1c2733;cursor:pointer;min-height:70px}
+.buddy-goal-options button:focus-visible,.buddy-goal-options button:hover{border-color:#a77b00;background:#fff8e7}
+.buddy-goal-options strong{font-size:15px}
+.buddy-goal-options small{font-size:12px;color:#58687a}
+.buddy-intro-foot{font-size:12px!important}
