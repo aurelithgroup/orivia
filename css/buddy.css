@@ -1,0 +1,20 @@
+/* Isolated Orivia Buddy Lab styling; does not modify the existing app screens. */
+.buddy-launch{background:#f2b90f;color:#1c2733;border:0;border-radius:11px;padding:11px 14px;font:700 14px 'Atkinson Hyperlegible',sans-serif;cursor:pointer;margin:10px 0;min-height:44px}
+.buddy-overlay[hidden]{display:none!important}
+.buddy-overlay{position:fixed;inset:0;z-index:10000;background:rgba(15,25,35,.78);display:flex;align-items:center;justify-content:center;padding:12px}
+.buddy-panel{width:min(100%,550px);max-height:min(92vh,800px);background:#fff;color:#1c2733;border-radius:20px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 70px #0004;font-family:'Atkinson Hyperlegible',sans-serif}
+.buddy-panel header{background:#1c2733;color:white;display:flex;align-items:center;justify-content:space-between;padding:15px 20px}
+.buddy-brand{font:800 23px Archivo,sans-serif;letter-spacing:.04em}.buddy-brand small{display:block;font:400 11px 'Atkinson Hyperlegible',sans-serif;color:#f2b90f;letter-spacing:0}
+.buddy-panel header button{background:none;border:0;color:white;font-size:30px;cursor:pointer;min-width:44px;min-height:44px}
+.buddy-inner{overflow:auto;padding:20px}.buddy-inner h2{font-size:25px;line-height:1.2;margin:3px 0 10px}.buddy-sub{line-height:1.5;margin:0 0 12px;color:#465568}
+.buddy-caution{font-size:12px;line-height:1.5;background:#fff5dc;border-left:3px solid #c69200;padding:10px;margin:12px 0}
+.buddy-fields{display:grid;gap:12px;margin:17px 0 22px}
+.buddy-field{display:grid;gap:5px;font-weight:700;font-size:13px}
+.buddy-field select{background:#fff;border:1px solid #aab4c1;border-radius:10px;font:400 15px 'Atkinson Hyperlegible',sans-serif;color:#1c2733;padding:10px;min-height:44px;max-width:100%}
+.buddy-section-title{display:flex;justify-content:space-between;align-items:center;gap:10px}.buddy-section-title h3{font-size:19px;margin:4px 0 10px}.buddy-section-title span{font-size:12px;color:#536173}
+.buddy-card{padding:14px;margin:10px 0;border:1px solid #d6dfe6;border-radius:13px}.buddy-important{border-left:4px solid #d09e10}
+.buddy-card-top{display:flex;justify-content:space-between;gap:10px;align-items:start}.buddy-card-top strong{font-size:15px}.buddy-card-top span{font-size:11px;white-space:nowrap;color:#5a6571}
+.buddy-card p{font-size:13px;line-height:1.5;margin:10px 0}.buddy-card details{font-size:13px}.buddy-card summary{cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.buddy-check{display:flex;gap:10px;align-items:start;border-top:1px solid #e5eaf0;margin-top:12px;padding-top:12px;font-size:13px;cursor:pointer}.buddy-check input{width:18px;height:18px;flex:none;accent-color:#1c2733}
+.buddy-reset{border:0;background:transparent;text-decoration:underline;color:#465568;cursor:pointer;margin:15px 0 0;font-size:13px;min-height:44px}
+@media(prefers-reduced-motion:reduce){.buddy-panel *{scroll-behavior:auto}}
