@@ -108,7 +108,7 @@ function conversationResult(text){
   return {kind:'travel-details',goal:'student',message:'Thanks. To help with your university journey, could you tell me both the campus and the general area you would travel from? You can say something like “my campus from Sharjah”.'};
  }
  if(previousPrompt.includes('Would you prefer public transport, driving, or comparing both?')){
-  const mode=/\b(public transport|bus|metro|train)\\b/i.test(raw)?'public transport':/\b(drive|driving|car)\\b/i.test(raw)?'driving':/\b(both|compare)\\b/i.test(raw)?'both options':null;
+  const mode=/\b(public transport|bus|metro|train)\b/i.test(raw)?'public transport':/\b(drive|driving|car)\b/i.test(raw)?'driving':/\b(both|compare)\b/i.test(raw)?'both options':null;
   if(mode)return {kind:'travel-preference',goal:'student',message:'Okay, let’s look at '+mode+'. Check current journey-planning information from the relevant local transport operators, and verify your campus entrance and departure point. I cannot check live connections, fares or travel times yet, so I won’t invent a route. Would you like to work through what to verify first?'};
   return {kind:'travel-preference',goal:'student',message:'Would you prefer public transport, driving, or a comparison of both?'};
  }
