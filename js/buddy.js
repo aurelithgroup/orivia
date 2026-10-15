@@ -2,10 +2,10 @@
 (function(){
 'use strict';
 const KEY='orivia-buddy-lab-v2';
-const EMPTY=()=>({tone:'friendly',dependants:'unknown',school:'unknown',foreignRecords:'unknown',stayDates:'unknown',goal:'family',checked:{},notes:{},view:'home'});
+const EMPTY=()=>({tone:'friendly',dependants:'unknown',school:'unknown',foreignRecords:'unknown',stayDates:'unknown',goal:'family',checked:{},notes:{},deferred:[],view:'home'});
 const VALID={tone:['friendly','formal','simple'],dependants:['unknown','yes','no'],school:['unknown','yes','no'],foreignRecords:['unknown','yes','no'],stayDates:['unknown','known'],goal:['family','student','everyday'],view:['home','chat','profile']};
 const LIMIT=200;
-function read(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');const b=EMPTY();if(s&&typeof s==='object'){Object.keys(VALID).forEach(k=>{if(VALID[k].includes(s[k]))b[k]=s[k]});if(s.checked&&typeof s.checked==='object')Object.keys(s.checked).slice(0,30).forEach(k=>{if(s.checked[k]===true)b.checked[k]=true});}return b}catch(_){return EMPTY()}}
+function read(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');const b=EMPTY();if(s&&typeof s==='object'){Object.keys(VALID).forEach(k=>{if(VALID[k].includes(s[k]))b[k]=s[k]});if(s.checked&&typeof s.checked==='object')Object.keys(s.checked).slice(0,30).forEach(k=>{if(s.checked[k]===true)b.checked[k]=true});if(Array.isArray(s.deferred))b.deferred=s.deferred.filter(k=>['dependants','school','foreignRecords','stayDates'].includes(k)).slice(0,4);}return b}catch(_){return EMPTY()}}
 let s=read(), open=false,previousFocus=null,reply='';
 const esc=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const tone=(a,b,c)=>s.tone==='formal'?b:s.tone==='simple'?c:a;
@@ -28,9 +28,23 @@ function profile(){
 function adviceCard(c){
  return '<article class="buddy-card"><div class="buddy-card-top"><strong>'+esc(c.headline)+'</strong><span>'+(s.checked[c.id]?'Checked by you':'To check')+'</span></div><p>'+esc(c.detail)+'</p><details><summary>Why did Orivia suggest this?</summary><p>'+esc(c.why)+'</p><p class="buddy-caution">Prototype suggestion only. No case-specific requirement has been independently verified here; contact the responsible organisation.</p></details><label class="buddy-check"><input type="checkbox" data-buddy-check="'+c.id+'" '+(s.checked[c.id]?'checked':'')+'> I checked this with the responsible source</label></article>'
 }
+
+const DISCOVERY=[
+ {key:'dependants',when:()=>s.goal==='family',ask:'Are you organising residency for children or other dependants?',why:'This helps identify whether family-specific checks might be relevant.',options:[['yes','Yes'],['no','No']]},
+ {key:'school',when:()=>s.goal==='family'&&s.dependants==='yes',ask:'Will any children be enrolling in school?',why:'School enrolment and residency can require separate checks.',options:[['yes','Yes'],['no','No']]},
+ {key:'foreignRecords',when:()=>s.goal==='family'&&s.dependants==='yes'&&s.school==='yes',ask:'Were their school records issued outside the UAE?',why:'We may need to check whether the school expects document verification.',options:[['yes','Yes'],['no','No']]},
+ {key:'stayDates',when:()=>s.goal==='family'&&s.dependants==='yes',ask:'Have you confirmed each person’s permitted-stay dates?',why:'An application being processed does not itself establish permission to remain.',options:[['known','Yes, with the responsible source']]}
+];
+function nextQuestion(){return DISCOVERY.find(q=>q.when()&&s[q.key]==='unknown'&&!s.deferred.includes(q.key))}
+function discoveryCard(){
+ const q=nextQuestion();
+ if(!q)return '';
+ return '<section class="buddy-discovery" aria-label="A question from Orivia"><span class="buddy-discovery-kicker">✦ Orivia has a question</span><h3>'+esc(q.ask)+'</h3><p>'+esc(q.why)+'</p><div class="buddy-answer-options">'+q.options.map(([v,l])=>'<button type="button" data-buddy-answer="'+q.key+'" data-answer-value="'+v+'">'+esc(l)+'</button>').join('')+'<button type="button" class="buddy-later" data-buddy-later="'+q.key+'">Not sure / ask later</button></div></section>';
+}
+
 function dashboard(){
  const a=active(),out=a.filter(c=>!s.checked[c.id]),done=a.filter(c=>s.checked[c.id]);
- return '<h2>'+esc(tone('Hey! Here’s what I noticed.','Your relocation overview','Your plan'))+'</h2><p class="buddy-sub">Your priorities change when your situation changes. Here are some useful questions to investigate.</p><div class="buddy-metrics"><span><b>'+out.length+'</b> to check</span><span><b>'+done.length+'</b> checked by you</span></div>'+
+ return '<h2>'+esc(tone('Hey! Here’s what I noticed.','Your relocation overview','Your plan'))+'</h2><p class="buddy-sub">Your priorities change when your situation changes. Here are some useful questions to investigate.</p>'+discoveryCard()+'<div class="buddy-metrics"><span><b>'+out.length+'</b> to check</span><span><b>'+done.length+'</b> checked by you</span></div>'+
  (out.length?'<div class="buddy-section-title"><h3>Worth checking next</h3></div>'+out.map(adviceCard).join(''):'<p class="buddy-caution">No outstanding prompts in this limited scenario. This does not establish that all your requirements are complete.</p>')+
  (done.length?'<details class="buddy-previous"><summary>Checks you marked as reviewed ('+done.length+')</summary>'+done.map(adviceCard).join('')+'</details>':'')+
  '<div class="buddy-next"><h3>Something changed?</h3><p>Update your situation and Orivia will reconsider which checks might matter.</p><button type="button" class="buddy-secondary" data-buddy-view="profile">Update my situation →</button></div>';
@@ -63,12 +77,14 @@ function start(){
  function close(){open=false;draw();if(previousFocus&&previousFocus.focus)previousFocus.focus()}
  layer.addEventListener('click',e=>{
   if(e.target===layer||e.target.closest('[data-buddy-close]')){close();return}
+  const answer=e.target.closest('[data-buddy-answer]');if(answer){const k=answer.dataset.buddyAnswer,v=answer.dataset.answerValue;if(VALID[k]&&VALID[k].includes(v)){s[k]=v;s.deferred=s.deferred.filter(x=>x!==k);s.checked={};reply='';save();draw()}return}
+  const later=e.target.closest('[data-buddy-later]');if(later){const k=later.dataset.buddyLater;if(DISCOVERY.some(q=>q.key===k)){s.deferred=[...new Set([...s.deferred,k])];save();draw()}return}
   const v=e.target.closest('[data-buddy-view]');if(v){s.view=v.dataset.buddyView;save();draw();return}
   const q=e.target.closest('[data-buddy-question]');if(q){reply=q.dataset.buddyQuestion;draw();return}
   const del=e.target.closest('[data-buddy-reset]');if(del){if(!confirm('Delete all Buddy Lab answers saved on this device?'))return;s=EMPTY();reply='';try{localStorage.removeItem(KEY)}catch(_){}draw();return}
  });
  layer.addEventListener('change',e=>{
-  const fld=e.target.closest('[data-buddy-field]');if(fld){const k=fld.dataset.buddyField;if(!VALID[k]||!VALID[k].includes(fld.value))return;s[k]=fld.value;reply='';save();draw();return}
+  const fld=e.target.closest('[data-buddy-field]');if(fld){const k=fld.dataset.buddyField;if(!VALID[k]||!VALID[k].includes(fld.value))return;s[k]=fld.value;s.deferred=[];s.checked={};reply='';save();draw();return}
   const check=e.target.closest('[data-buddy-check]');if(check){s.checked[check.dataset.buddyCheck]=check.checked;save();draw()}
  });
  document.addEventListener('keydown',e=>{if(!open)return;if(e.key==='Escape'){close()}else if(e.key==='Tab'){const focusable=[...layer.querySelectorAll('button,select,input,summary')].filter(x=>!x.disabled);if(!focusable.length)return;const first=focusable[0],last=focusable[focusable.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
