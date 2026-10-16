@@ -26,6 +26,8 @@ jobs:
         run: node tests/ai-bridge.test.js
       - name: Consent and open-ended AI entry tests
         run: node tests/ai-chat-consent.test.js
+      - name: Native calendar and Google draft flow
+        run: node tests/native-calendar.test.cjs
       - name: Live official fetch and calendar alarms
         run: node tests/live-official-and-reminders.test.mjs
       - name: Official-only source policy and Heriot-Watt details
