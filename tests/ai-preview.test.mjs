@@ -1,6 +1,6 @@
 /* Run with node tests/ai-preview.test.mjs. No AI requests or secrets required. */
 import assert from 'node:assert/strict';
-import {createHandler, normaliseMessages, makeMessages} from '../workers/orivia-ai-preview.mjs';
+import {createHandler, normaliseMessages, makeMessages, reviewUnsupportedClaims} from '../workers/orivia-ai-preview.mjs';
 
 const ORIGIN = 'https://orivia-buddy-preview.pages.dev';
 const secret = 'server-only-demo-test';
@@ -61,4 +61,12 @@ response=await app.fetch(request(),{...env,AI_QUOTA:null});
 assert.equal(response.status,503);
 response=await app.fetch(request(),{...env,AI_QUOTA:{async limit(){return {success:false}}}});
 assert.equal(response.status,429);
-console.log('AI preview backend: 14 assertions/check groups passed');
+const trip=[{role:'user',content:'How do I get to university from Sharjah by bus?'}];
+const docs=[{role:'user',content:'Must school certificates be attested?'}];
+assert.doesNotMatch(reviewUnsupportedClaims(trip,'Driving takes 2 hours.'),/takes 2 hours/);
+assert.doesNotMatch(reviewUnsupportedClaims(trip,'Take bus route 123.'),/bus route 123/);
+assert.equal(reviewUnsupportedClaims(trip,'Driving offers flexibility.'),'Driving offers flexibility.');
+assert.doesNotMatch(reviewUnsupportedClaims(docs,'You must attest school certificates.'),/You must attest/);
+assert.equal(reviewUnsupportedClaims(docs,'Ask the intended school first.'),'Ask the intended school first.');
+
+console.log('AI preview backend: model input, quota and unverified-claim guards tested');
