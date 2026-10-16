@@ -26,6 +26,8 @@ jobs:
         run: node tests/ai-bridge.test.js
       - name: Consent and open-ended AI entry tests
         run: node tests/ai-chat-consent.test.js
+      - name: Live official fetch and calendar alarms
+        run: node tests/live-official-and-reminders.test.mjs
       - name: Official-only source policy and Heriot-Watt details
         run: node tests/official-sources.test.mjs
       - name: Verified university journey resources
