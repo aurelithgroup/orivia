@@ -14,9 +14,13 @@ function saveChat(){try{sessionStorage.setItem(CHAT_KEY,JSON.stringify(turns.sli
 function addTurn(role,text){turns.push({role,text:String(text).slice(0,900)});turns=turns.slice(-12);saveChat()}
 function ask(text){const raw=String(text||'').trim().slice(0,240);if(!raw)return;const result=conversationResult(raw);if(!result)return;conversation=result;addTurn('user',raw);addTurn('orivia',result.message);return result}
 let aiPending=false;
+const AI_CONSENT_KEY='orivia-ai-consent-session-v1';
+let aiConsent='unset';try{const stored=sessionStorage.getItem(AI_CONSENT_KEY);if(stored==='accepted'||stored==='declined')aiConsent=stored}catch(_){}
+const privateAIConfigured=()=>Boolean(window.ORIVIA_AI_BRIDGE?.allowed(window.ORIVIA_AI_CONFIG));
+function aiConsentPanel(){return '<div class="buddy-ai-consent"><h3>Try Orivia’s new AI conversations?</h3><p>If you continue, what you type and recent chat messages will be sent to our Cloudflare AI service to generate responses. Don’t share sensitive personal details. The AI has no live maps, legal databases or verified routes yet.</p><button type="button" class="buddy-submit" data-buddy-ai-consent="accepted">I agree — try private AI</button><button type="button" class="buddy-subtle-link" data-buddy-ai-consent="declined">Keep using the limited prototype</button></div>';}
 async function askOrivia(text){
  const raw=String(text||'').trim().slice(0,240);
- if(!raw||aiPending)return;
+ if(!raw||aiPending||aiConsent!=='accepted')return;
  const bridge=window.ORIVIA_AI_BRIDGE,config=window.ORIVIA_AI_CONFIG;
  if(!bridge||!bridge.allowed(config))return ask(raw);
  const history=turns.slice();conversation=null;addTurn('user',raw);aiPending=true;draw();
@@ -149,7 +153,7 @@ function focusScreen(){
  const last=conversation;
  return '<section class="buddy-focus"><h2>'+esc(s.firstName?tone('What can I help you with, '+s.firstName+'?','How may I assist you, '+s.firstName+'?','What do you need, '+s.firstName+'?'):tone('What can I help you with?','How may I assist?','What do you need help with?'))+'</h2>'+
  '<p class="buddy-sub">Tell me what you need. We’ll work on one thing at a time.</p>'+
- chatHistory()+homeComposer()+
+ chatHistory()+(privateAIConfigured()&&aiConsent==='unset'?aiConsentPanel():homeComposer())+
  (last&&last.kind==='supported'?'<div class="buddy-chat-next"><p>Would you like me to connect this to your plan?</p><button type="button" class="buddy-secondary" data-buddy-switch-goal="'+last.goal+'">Add related checks to my plan</button></div>':'')+
  (turns.length?'<button type="button" class="buddy-subtle-link" data-buddy-clear-chat>Clear conversation</button>':'')+
  '<button type="button" class="buddy-subtle-link" data-buddy-view="plan">My plan'+(remaining.length?' ('+remaining.length+')':'')+' →</button></section>';
@@ -233,9 +237,10 @@ function start(){
  document.body.appendChild(button);
  const layer=document.createElement('div');layer.id='buddy-lab';layer.className='buddy-overlay';layer.hidden=true;document.body.appendChild(layer);
  function close(){open=false;draw();if(previousFocus&&previousFocus.focus)previousFocus.focus()}
- layer.addEventListener('submit',e=>{if(e.target.id==='buddy-basics-form'){e.preventDefault();const el=e.target.elements;const name=el.namedItem('firstName').value;s.firstName=String(name).trim().slice(0,40).replace(/[<>]/g,'');const lang=el.namedItem('preferredLanguage').value;const style=el.namedItem('tone').value;if(VALID.preferredLanguage.includes(lang))s.preferredLanguage=lang;if(VALID.tone.includes(style))s.tone=style;s.onboarded=true;s.view='home';save();draw();return}if(e.target.id==='buddy-home-form'){e.preventDefault();const input=e.target.querySelector('#buddy-home-input');if(window.ORIVIA_AI_BRIDGE?.allowed(window.ORIVIA_AI_CONFIG)){void askOrivia(input&&input.value);return}ask(input&&input.value);draw();return}if(e.target.id!=='buddy-start-form')return;e.preventDefault();const input=e.target.querySelector('#buddy-first-input');const goal=recogniseIntent(input&&input.value);if(!goal){entryHelp='I’m still learning. I can currently help with family relocation, student life, or everyday needs such as transport and groceries. Could you tell me which of those is closest?';draw();return}s.goal=goal;s.view='chat';entryHelp='';ask(input&&input.value);save();draw()});
+ layer.addEventListener('submit',e=>{if(e.target.id==='buddy-basics-form'){e.preventDefault();const el=e.target.elements;const name=el.namedItem('firstName').value;s.firstName=String(name).trim().slice(0,40).replace(/[<>]/g,'');const lang=el.namedItem('preferredLanguage').value;const style=el.namedItem('tone').value;if(VALID.preferredLanguage.includes(lang))s.preferredLanguage=lang;if(VALID.tone.includes(style))s.tone=style;s.onboarded=true;s.view='home';save();draw();return}if(e.target.id==='buddy-home-form'){e.preventDefault();const input=e.target.querySelector('#buddy-home-input');if(privateAIConfigured()&&aiConsent==='accepted'){void askOrivia(input&&input.value);return}ask(input&&input.value);draw();return}if(e.target.id!=='buddy-start-form')return;e.preventDefault();const input=e.target.querySelector('#buddy-first-input');const goal=recogniseIntent(input&&input.value);if(!goal){entryHelp='I’m still learning. I can currently help with family relocation, student life, or everyday needs such as transport and groceries. Could you tell me which of those is closest?';draw();return}s.goal=goal;s.view='chat';entryHelp='';ask(input&&input.value);save();draw()});
  layer.addEventListener('click',e=>{
   if(e.target===layer||e.target.closest('[data-buddy-close]')){close();return}
+  const consentButton=e.target.closest('[data-buddy-ai-consent]');if(consentButton){const choice=consentButton.dataset.buddyAiConsent;if(choice==='accepted'||choice==='declined'){aiConsent=choice;try{sessionStorage.setItem(AI_CONSENT_KEY,choice)}catch(_){}draw()}return}
   if(e.target.closest('[data-buddy-edit-basics]')){s.onboarded=false;s.introStep='basics';save();draw();return}
   if(e.target.closest('[data-buddy-intro-next]')){s.introStep='basics';save();draw();return}
   if(e.target.closest('[data-buddy-skip]')){s.onboarded=true;s.view='home';save();draw();return}
@@ -248,7 +253,7 @@ function start(){
   const goal=e.target.closest('[data-buddy-goal]');if(goal){const g=goal.dataset.buddyGoal;if(VALID.goal.includes(g)&&g!=='undecided'){s.goal=g;s.view='home';s.deferred=[];save();draw()}return}
   const v=e.target.closest('[data-buddy-view]');if(v){s.view=v.dataset.buddyView;save();draw();return}
   const q=e.target.closest('[data-buddy-question]');if(q){reply=q.dataset.buddyQuestion;draw();return}
-  const del=e.target.closest('[data-buddy-reset]');if(del){if(!confirm('Delete all Buddy Lab answers saved on this device?'))return;s=EMPTY();reply='';entryHelp='';conversation=null;turns=[];try{sessionStorage.removeItem(CHAT_KEY)}catch(_){}try{localStorage.removeItem(KEY)}catch(_){}draw();return}
+  const del=e.target.closest('[data-buddy-reset]');if(del){if(!confirm('Delete all Buddy Lab answers saved on this device?'))return;s=EMPTY();reply='';entryHelp='';conversation=null;turns=[];aiConsent='unset';try{sessionStorage.removeItem(AI_CONSENT_KEY)}catch(_){}try{sessionStorage.removeItem(CHAT_KEY)}catch(_){}try{localStorage.removeItem(KEY)}catch(_){}draw();return}
  });
  layer.addEventListener('change',e=>{
   const fld=e.target.closest('[data-buddy-field]');if(fld){const k=fld.dataset.buddyField;if(!VALID[k]||!VALID[k].includes(fld.value))return;const changed=s[k]!==fld.value;s[k]=fld.value;if(changed){s.deferred=[];reply=''}save();draw();return}
