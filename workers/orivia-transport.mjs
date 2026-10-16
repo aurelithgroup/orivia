@@ -6,6 +6,7 @@
  * Nothing here is stored.
  */
 import {UNIVERSITY_SOURCES} from './orivia-journey-sources.mjs';
+import {mapHandoffs} from './orivia-device-handoffs.mjs';
 
 const RTA_PLANNER='https://www.rta.ae/wps/portal/rta/ae/home';
 /* Emirates and big cities: real places, but too broad for a useful route */
@@ -175,23 +176,30 @@ export function mapsLink(plan,mode){
 
 /* Links plus the facts the AI may use to phrase its reply */
 export function tripActions(plan){
+ const destination=plan.dest.address||plan.dest.name+', United Arab Emirates';
+ const origin=plan.origin?(\/united arab emirates|\\buae\\b\/i.test(plan.origin)?plan.origin:plan.origin+', United Arab Emirates'):'';
+ const transit=mapHandoffs({origin,destination,mode:'transit'});
+ const drive=mapHandoffs({origin,destination,mode:'driving'});
  const actions=[
-  {title:'Public transport in Google Maps ↗',url:mapsLink(plan,'transit'),externalProvider:'Google Maps',mode:'transit'},
-  {title:'Driving in Google Maps ↗',url:mapsLink(plan,'driving'),externalProvider:'Google Maps',mode:'driving'}
+  {...transit.find(x=>x.id==='device'),title:'Open destination in device maps ↗'},
+  {...transit.find(x=>x.id==='apple'),title:'Public transport in Apple Maps ↗'},
+  {...transit.find(x=>x.id==='google'),title:'Public transport in Google Maps ↗'},
+  {...drive.find(x=>x.id==='apple'),title:'Driving in Apple Maps ↗'},
+  {...drive.find(x=>x.id==='google'),title:'Driving in Google Maps ↗'}
  ];
  if(/dubai/i.test((plan.dest.address||plan.dest.name)+' '+plan.origin))actions.push({title:'Dubai RTA journey planner (official) ↗',url:RTA_PLANNER,externalProvider:'Dubai RTA'});
  const prefLine={
-  time:'Their priority is TIME. Tell them to open both links and compare the journey times Google Maps shows for each, and to set the departure time in Maps to when they actually leave, because traffic and timetables change through the day.',
-  cost:'Their priority is COST. Tell them Google Maps’ public transport view shows fares where available, and that driving costs include fuel, tolls (Salik) and parking, which Maps does not total for them.',
-  reliability:'Their priority is RELIABILITY. Tell them to compare the options in Maps at the time they normally travel, and that the official RTA planner is the authority for Dubai public transport.'
- }[plan.pref]||'They have not given a priority. Suggest comparing both links in Maps.';
- const context=['TRANSPORT FACTS (prepared by Orivia; the links are shown to the person as buttons under your reply):',
+  time:'Their priority is TIME. Tell them to open their preferred maps provider and compare the journey times its directions show, and to set the departure time in Maps to when they actually leave, because traffic and timetables change through the day.',
+  cost:'Their priority is COST. Tell them their preferred maps provider may show transit fares, and that driving costs include fuel, tolls (Salik) and parking, which Maps does not total for them.',
+  reliability:'Their priority is RELIABILITY. Tell them to compare the options in their preferred maps app at the time they normally travel, and that the official RTA planner is the authority for Dubai public transport.'
+ }[plan.pref]||'They have not given a priority. Suggest comparing transit and driving in whichever supported maps provider they use.';
+ const context=['TRANSPORT FACTS (prepared by Orivia; provider choices are shown as buttons under your reply):',
   'Destination: '+(plan.dest.name)+(plan.dest.address?' ('+plan.dest.address+', from the university’s official page)':' (place name only; Google Maps will search for it, so ask them to check the pin is right)')+'.',
   plan.origin?'Leaving from: '+plan.origin+(broad(plan.origin)?' (a whole emirate, so Maps will start from its centre; they can change the start point in Maps)':'')+'.':'Leaving from: not given, so Maps will start from their current location.',
-  'Prepared links: public transport and driving in Google Maps, already filled in'+(actions.length>2?', plus the official Dubai RTA journey planner':'')+'.',
+  'Prepared handoffs: destination lookup for device maps (does NOT include the origin or navigation), plus driving and transit directions in Apple Maps and Google Maps'+(actions.length>2?', plus the official Dubai RTA journey planner':'')+'.',
   prefLine,
-  'You have NOT seen any route, journey time, fare, distance or traffic. Never state or estimate one, and never name bus numbers, lines or stations. Google Maps shows them live.',
-  'HOW TO REPLY: In 1-3 short sentences, point them to the buttons below and say how to compare them for what they care about. Do not give general advice about driving versus public transport. Do not suggest a reminder or calendar event unless they ask. If they ask a follow-up, answer it; if they change a place or priority, say the links are updated.'
+  'You have NOT seen any route, journey time, fare, distance or traffic. Never state or estimate one, and never name bus numbers, lines or stations. Their chosen maps app may show them live.',
+  'HOW TO REPLY: In 1-3 short sentences, point them to the available Apple Maps, Google Maps and device-map handoff choices and explain how to compare them for what they care about. Do not give general advice about driving versus public transport. Do not suggest a reminder or calendar event unless they ask. If they ask a follow-up, answer it; if they change a place or priority, say the links are updated.'
  ].join('\n');
  return {actions,context};
 }
