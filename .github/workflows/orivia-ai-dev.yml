@@ -38,6 +38,8 @@ jobs:
         run: node --experimental-sqlite tests/journey-api.test.mjs
       - name: Journey chat does not loop (16 Oct regression)
         run: node tests/journey-adapter-loop.test.mjs
+      - name: Natural first-contact conversations
+        run: node tests/natural-entry.test.mjs
       - name: Transport is actionable (Maps links, no made-up times, no stray reminders)
         run: node tests/transport-actions.test.mjs
       - name: AI Worker contract and safety tests
