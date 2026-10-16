@@ -103,7 +103,7 @@ export default {async fetch(req,env,ctx){
  if(!env.BUDGET_DB?.prepare)return reply({error:'Daily trial limit is not configured'},503);
  try{
   const day=new Date().toISOString().slice(0,10);
-  const used=await env.BUDGET_DB.prepare('INSERT INTO trial_usage (day,calls) VALUES (?,1) ON CONFLICT(day) DO UPDATE SET calls=calls+1 WHERE calls < 30 RETURNING calls').bind(day).first();
+  const used=await env.BUDGET_DB.prepare('INSERT INTO trial_usage (day,calls) VALUES (?,1) ON CONFLICT(day) DO UPDATE SET calls=calls+1 WHERE calls < 200 RETURNING calls').bind(day).first();
   if(!used)return reply({error:'Daily private AI trial limit reached'},429);
  }catch(_){return reply({error:'Daily trial limit unavailable'},503)}
  const latest=input.messages.filter(m=>m.role==='user').slice(-3).map(m=>m.content).join(' ');
