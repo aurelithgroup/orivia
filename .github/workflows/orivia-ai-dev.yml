@@ -36,3 +36,5 @@ jobs:
         run: node tests/journey-sources.test.mjs
       - name: AI Worker contract and safety tests
         run: node tests/ai-preview.test.mjs
+      - name: Read-only journey tool regression tests
+        run: node tests/ai-journey-tools.test.mjs
