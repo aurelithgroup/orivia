@@ -177,7 +177,7 @@ export function mapsLink(plan,mode){
 /* Links plus the facts the AI may use to phrase its reply */
 export function tripActions(plan){
  const destination=plan.dest.address||plan.dest.name+', United Arab Emirates';
- const origin=plan.origin?(plan.origin.match(/united arab emirates|\\buae\\b/i)?plan.origin:plan.origin+', United Arab Emirates'):'';
+ const origin=plan.origin?(/united arab emirates|uae/i.test(plan.origin)?plan.origin:plan.origin+', United Arab Emirates'):'';
  const transit=mapHandoffs({origin,destination,mode:'transit'});
  const drive=mapHandoffs({origin,destination,mode:'driving'});
  const actions=[
