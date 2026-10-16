@@ -44,6 +44,12 @@ export default {async fetch(req,env){
  if(!check(input?.messages))return reply({error:'Invalid conversation'},400);
  if(!env.AI?.run||!env.AI_QUOTA?.limit)return reply({error:'AI not configured'},503);
  try{const q=await env.AI_QUOTA.limit({key:'private-test-global'});if(!q.success)return reply({error:'Try later'},429)}catch(_){return reply({error:'Quota unavailable'},503)}
+ if(!env.BUDGET_DB?.prepare)return reply({error:'Daily trial limit is not configured'},503);
+ try{
+  const day=new Date().toISOString().slice(0,10);
+  const used=await env.BUDGET_DB.prepare('INSERT INTO trial_usage (day,calls) VALUES (?,1) ON CONFLICT(day) DO UPDATE SET calls=calls+1 WHERE calls < 30 RETURNING calls').bind(day).first();
+  if(!used)return reply({error:'Daily private AI trial limit reached'},429);
+ }catch(_){return reply({error:'Daily trial limit unavailable'},503)}
  try{const out=await env.AI.run(MODEL,{messages:[{role:'system',content:SYSTEM},...input.messages],max_tokens:340,temperature:0.25,stream:false});
    const text=String(out?.response||'').trim();if(!text)return reply({error:'No answer'},502);
    return reply({reply:safety(text,input.messages).slice(0,1200),verifiedSources:[],liveInformation:false})
