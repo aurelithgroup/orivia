@@ -1,3 +1,4 @@
+import {journeyResources} from './orivia-journey-sources.mjs';
 const MODEL='@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const HOST='orivia-ai-preview.habeebahsallah27.workers.dev';
 const SYSTEM="You are Orivia, a warm proactive real-life companion for newcomers. Stay concise, conversational, specific and action-oriented. Read the whole conversation, including implied references like there or it. If a user wants to get to their university and the destination is unknown, ask which university or campus AND where they are travelling from. Do not give a generic lecture about driving, parking or public transit before knowing their journey. If one of destination or origin is known, ask only for the missing location. When the user asks can you check for me, recognise this as a request for YOU to research, not a request for generic advice; collect only missing places. You have no connected maps, search, transport schedules or official government sources yet. Never say you have checked a source. When both travel locations are known, compare driving and transit honestly in general terms and explain that exact routes await verified live sources; do not invent journey times, stations, route numbers or fares. Do not send the user to a university administrator as the default transport answer. Never invent visa, school, document or legal requirements, prices, deadlines or completed actions. Never request passport, visa IDs or sensitive personal identifiers. Be supportive and practical; avoid repeated congratulations and repetitive boilerplate.";
@@ -51,8 +52,11 @@ export default {async fetch(req,env,ctx){
   const used=await env.BUDGET_DB.prepare('INSERT INTO trial_usage (day,calls) VALUES (?,1) ON CONFLICT(day) DO UPDATE SET calls=calls+1 WHERE calls < 30 RETURNING calls').bind(day).first();
   if(!used)return reply({error:'Daily private AI trial limit reached'},429);
  }catch(_){return reply({error:'Daily trial limit unavailable'},503)}
- try{const out=await env.AI.run(MODEL,{messages:[{role:'system',content:SYSTEM},...input.messages],max_tokens:340,temperature:0.25,stream:false});
+ const latest=input.messages.filter(m=>m.role==='user').slice(-3).map(m=>m.content).join(' ');
+ const wantsTrip=/how do i get there|check for me|direction|commut|transport|route|driv|travel|bus|metro|compare both/i.test(latest);
+ const resources=wantsTrip?journeyResources(input.messages):{context:'',sources:[],actions:[]};
+ try{const out=await env.AI.run(MODEL,{messages:[{role:'system',content:SYSTEM+(resources.context?'\n'+resources.context:'')},...input.messages],max_tokens:340,temperature:0.25,stream:false});
    const text=String(out?.response||'').trim();if(!text)return reply({error:'No answer'},502);
-   return reply({reply:safety(text,input.messages).slice(0,1200),verifiedSources:[],liveInformation:false})
+   return reply({reply:safety(text,input.messages).slice(0,1200),verifiedSources:resources.sources,actions:resources.actions,liveInformation:false})
  }catch(_){return reply({error:'AI currently unavailable'},503)}
 }};
