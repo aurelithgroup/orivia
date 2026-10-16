@@ -7,6 +7,7 @@
  */
 import {UNIVERSITY_SOURCES} from './orivia-journey-sources.mjs';
 import {mapHandoffs} from './orivia-device-handoffs.mjs';
+import {mapHandoffs} from './orivia-device-handoffs.mjs';
 
 const RTA_PLANNER='https://www.rta.ae/wps/portal/rta/ae/home';
 /* Emirates and big cities: real places, but too broad for a useful route */
@@ -176,6 +177,10 @@ export function mapsLink(plan,mode){
 
 /* Links plus the facts the AI may use to phrase its reply */
 export function tripActions(plan){
+ const destination=plan.dest.address||plan.dest.name+', United Arab Emirates';
+ const origin=plan.origin?(\/united arab emirates|\\buae\\b\/i.test(plan.origin)?plan.origin:plan.origin+', United Arab Emirates'):'';
+ const transit=mapHandoffs({origin,destination,mode:'transit'});
+ const drive=mapHandoffs({origin,destination,mode:'driving'});
  const destination=plan.dest.address||plan.dest.name+', United Arab Emirates';
  const origin=plan.origin?(\/united arab emirates|\\buae\\b\/i.test(plan.origin)?plan.origin:plan.origin+', United Arab Emirates'):'';
  const transit=mapHandoffs({origin,destination,mode:'transit'});
