@@ -184,6 +184,20 @@ form.stack{display:flex;flex-direction:column;gap:10px}
 @media (max-width:440px){header.top .top-title{display:none}header.top .gear{margin-inline-start:auto}}
 #cal-add{white-space:nowrap;flex:none}
 .toggle span{flex:1 1 200px;min-width:0}
+/* My Life */
+.about-summary{font-size:17px;line-height:1.45}
+.about-summary:empty{display:none}
+.about-pick{display:flex;flex-direction:column;gap:12px}
+.pick{display:flex;flex-direction:column;gap:6px}
+.pick-q{font-weight:700;font-size:14px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+#place-other input{flex:1;min-width:0}
+.now-item{display:flex;align-items:center;gap:10px;border:0;background:var(--surface2);border-radius:12px;padding:10px 12px;text-align:start;color:var(--ink);width:100%;min-height:52px}
+.now-item svg{width:20px;height:20px;flex:none;color:var(--muted)}
+.now-item span{flex:1;min-width:0;display:flex;flex-direction:column}
+.now-item small{color:var(--muted);font-size:13px}
+button.link-card{font:inherit;width:100%;text-align:start;cursor:pointer}
+.remember{border:1px solid var(--line);border-inline-start:5px solid var(--ok);border-radius:14px;padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:8px;max-width:94%;align-self:flex-start;margin:4px 16px 0}
 /* Settings */
 .gear{margin-inline-start:8px;border:0;background:none;color:var(--signInk);width:40px;height:40px;border-radius:10px;display:grid;place-items:center}
 .gear svg{width:22px;height:22px}
@@ -276,21 +290,26 @@ nav.bottom .help-tab{color:var(--ink)}
   <div class="list" id="officials"></div>
  </div></section>
  <section id="mylife" class="view" hidden><div class="pad section" style="overflow:auto">
-  <h2>My Life</h2>
-  <section class="card"><h3>About me</h3>
-   <p class="notice">Optional. Saved only in this browser. Never enter passport, visa or ID numbers.</p>
-   <form id="profile-form" class="stack">
-    <label class="field" for="p-city">Where you live<select id="p-city"><option value="">Choose</option><option>Dubai</option><option>Sharjah</option><option>Abu Dhabi</option><option>Ajman</option><option>Somewhere else in the UAE</option><option>Not in the UAE yet</option></select></label>
-    <label class="field" for="p-who">I’m here to<select id="p-who"><option value="">Choose</option><option>study</option><option>work</option><option>join or bring my family</option><option>something else</option></select></label>
-    <label class="field" for="p-place">University or workplace <small>Optional</small><input id="p-place" maxlength="60" placeholder="e.g. Heriot-Watt University Dubai"></label>
-    <label class="check"><input type="checkbox" id="p-use" checked> <span>Let Orivia use this to personalise answers (on by default). It’s sent with your messages to Cloudflare Workers AI. You can switch it off here or in Settings.</span></label>
-    <button class="btn" type="submit">Save</button><p id="profile-status" class="notice" role="status"></p>
-   </form></section>
-  <section class="card"><h3>Coming up</h3><div id="upcoming" class="list"></div></section>
-  <section class="card"><h3>What I’m working on</h3><div id="life-journeys" class="list"></div></section>
-  <p class="soon">Coming soon: saved documents, plans and ongoing responsibilities, with your permission.</p>
-  <section class="card"><h3>Your data and settings</h3><p class="notice">Clear your conversation, delete saved information, change the theme or how Orivia talks to you.</p><button type="button" class="btn quiet" id="life-settings">Open Settings</button></section>
-  <p class="notice">Only the approved tester may access this trial. Official pages may be checked live; transport routes still need an external journey planner.</p>
+  <div class="jhead"><div><h2>My Life</h2><p class="notice">What Orivia knows about you, and what’s coming up.</p></div></div>
+  <section class="card life-about" aria-labelledby="about-h">
+   <div class="jtop"><h3 id="about-h">About you</h3><button type="button" class="ask" id="about-edit" hidden>Change</button></div>
+   <p id="about-summary" class="about-summary"></p>
+   <div id="about-pick" class="about-pick">
+    <p class="tiny">Tap what fits, skip anything. It saves straight away.</p>
+    <div class="pick"><span class="pick-q">Where do you live?</span><div class="seg" id="pick-city" role="radiogroup" aria-label="Where do you live?"></div></div>
+    <div class="pick"><span class="pick-q">What brings you here?</span><div class="seg" id="pick-who" role="radiogroup" aria-label="What brings you here?"></div></div>
+    <div class="pick" id="pick-place-row"><span class="pick-q" id="pick-place-q">Your university</span><div class="seg" id="pick-place" role="radiogroup" aria-labelledby="pick-place-q"></div>
+     <form id="place-other" class="row" hidden><label class="sr" for="p-place">Name</label><input id="p-place" maxlength="60" placeholder="Type the name"><button class="btn small" type="submit">Save</button></form></div>
+    <button type="button" class="btn quiet small" id="about-done" hidden>Done</button>
+   </div>
+   <p class="tiny" id="about-use"></p>
+  </section>
+  <section class="card" aria-labelledby="now-h"><h3 id="now-h">Right now</h3>
+   <div id="life-journeys" class="list"></div>
+   <div id="upcoming" class="list"></div>
+  </section>
+  <button type="button" class="link-card" id="life-settings"><span><strong>Settings and your data</strong><small class="tiny">Theme, how Orivia talks to you, clear or delete what’s saved</small></span>›</button>
+  <p class="tiny">Saved only in this browser. Never enter passport, visa or ID numbers.</p>
  </div></section>
  <section id="settings-view" class="view" hidden><div class="pad section" style="overflow:auto">
   <div class="jhead"><button type="button" class="ask" id="settings-back">← Back</button></div>

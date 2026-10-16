@@ -36,5 +36,13 @@ assert.match(js, /at\.getTime\(\)<Date\.now\(\)\+60000/, 'no reminders in the pa
 /* Defaults: guide suggestions and About me are on until someone switches them off */
 assert.match(js, /const SET_DEFAULT=\{[^}]*suggest:true/);
 assert.match(js, /p\.use===false\)return undefined/, 'About me is shared unless explicitly switched off');
-assert.match(html, /id="p-use" checked/); assert.match(html, /id="set-aboutme-use"/);
+assert.match(html, /id="set-aboutme-use"/);
+/* My Life: tap-to-pick, saves on tap, no long form; chat offers to remember, never saves on its own */
+for (const id of ['pick-city', 'pick-who', 'pick-place', 'about-summary', 'life-journeys', 'upcoming']) assert.match(html, new RegExp('id="' + id + '"'), id);
+assert.doesNotMatch(html, /id="profile-form"/, 'no long About me form');
+assert.match(js, /function rememberCard/); assert.match(js, /Remember this for next time\?/);
+const rc = js.slice(js.indexOf('function rememberCard'), js.indexOf("$('about-edit').onclick"));
+assert.equal((rc.match(/saveProfile\(/g) || []).length, 1, 'saves only from the Remember button');
+const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
+assert.deepEqual(ids.filter((x, i) => ids.indexOf(x) !== i), [], 'every id on the page is unique (no leftover markup)');
 console.log('Settings and Calendar: tone, guide suggestions, theme override, safe reminders: passed');

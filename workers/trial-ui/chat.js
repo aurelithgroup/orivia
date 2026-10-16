@@ -107,9 +107,8 @@ $('wk-next').onclick=()=>{weekOffset++;selectedDay=null;renderEvents()};
 function renderUpcoming(){
  loadEvents();const root=$('upcoming');root.replaceChildren();
  const next=events.filter(e=>new Date(e.at).getTime()>Date.now()).sort((a,b)=>a.at.localeCompare(b.at)).slice(0,3);
- if(!next.length){const p=document.createElement('p');p.className='notice';p.textContent='Nothing coming up yet.';root.append(p);return}
- for(const e of next){const p=document.createElement('p');const s=document.createElement('strong');s.textContent=e.title;const t=document.createElement('span');t.className='tiny';t.textContent=' · '+when(e);p.append(s,t);root.append(p)}
- const open=document.createElement('button');open.type='button';open.className='ask';open.textContent='Open My calendar';open.onclick=()=>tab('calendar');root.append(open);
+ for(const e of next){const b=button('','now-item',()=>tab('calendar'));b.append(icon('M3.5 5h17v15h-17zM3.5 10h17M8 3v4M16 3v4'));const sp=el('span');sp.append(el('strong','',e.title),el('small','',when(e)));b.append(sp,document.createTextNode('›'));root.append(b)}
+ if(!next.length)root.append(button('+ Add a reminder','ask',()=>{tab('calendar');openAdd()}));
 }
 /* Switching sections: the bottom bar, and Orivia herself (window.oriviaGo) */
 function tab(which){
@@ -144,11 +143,67 @@ const OFFICIAL=[
  ['KHDA','https://web.khda.gov.ae','Private schools and universities in Dubai']];
 /* My Life: About me, only shared with the AI when the user ticks the box */
 function readProfile(){try{const p=JSON.parse(localStorage.getItem(profileKey)||'null');return p&&typeof p==='object'?p:null}catch(_){return null}}
-function loadProfile(){const p=readProfile()||{};$('p-city').value=p.city||'';$('p-who').value=p.who||'';$('p-place').value=p.place||'';$('p-use').checked=aboutMeOn()}
 /* About me is used by default; only an explicit 'off' stops it */
 function aboutMeOn(){const p=readProfile();return !(p&&p.use===false)}
 function setAboutMe(on){const p=readProfile()||{};try{localStorage.setItem(profileKey,JSON.stringify({...p,use:on}))}catch(_){}}
-$('profile-form').addEventListener('submit',e=>{e.preventDefault();const p={city:$('p-city').value.slice(0,40),who:$('p-who').value.slice(0,40),place:$('p-place').value.trim().slice(0,60),use:$('p-use').checked};try{localStorage.setItem(profileKey,JSON.stringify(p));$('profile-status').textContent=p.use?'Saved. Orivia will use this in your chats.':'Saved on this device. Orivia won’t use it until you tick the box.'}catch(_){$('profile-status').textContent='Could not save on this device.'}});
+/* About you: tap-to-pick, saves on tap, no form */
+const CITY=[['Dubai','Dubai'],['Sharjah','Sharjah'],['Abu Dhabi','Abu Dhabi'],['Ajman','Ajman'],['Somewhere else in the UAE','Elsewhere in the UAE'],['Not in the UAE yet','Not here yet']];
+const WHO=[['study','Study'],['work','Work'],['join or bring my family','Family'],['something else','Something else']];
+const UNIS=['Heriot-Watt University Dubai','University of Wollongong in Dubai'];
+let aboutEditing=false,aboutSkipped=false;
+function saveProfile(patch){const p=readProfile()||{};const n={...p,...patch};for(const k of ['city','who','place'])if(typeof n[k]==='string')n[k]=n[k].slice(0,60);try{localStorage.setItem(profileKey,JSON.stringify(n))}catch(_){}loadProfile()}
+function aboutSentence(p){
+ const bits=[];
+ if(p.city)bits.push(/Not in the UAE/.test(p.city)?'You’re not in the UAE yet':/Somewhere else/.test(p.city)?'You live in the UAE':'You live in '+p.city);
+ const role={study:'here to study',work:'here to work','join or bring my family':'here with family','something else':''}[p.who]||'';
+ if(role)bits.push((bits.length?'you’re ':'You’re ')+role+(p.place&&(p.who==='study'||p.who==='work')?' at '+p.place:''));
+ else if(p.place)bits.push((bits.length?'at ':'At ')+p.place);
+ return bits.length?bits.join(', ')+'.':'';
+}
+function loadProfile(){
+ const p=readProfile()||{},filled=!!(p.city||p.who||p.place);
+ const pick=(id,opts,cur,field)=>seg(id,opts,cur,v=>saveProfile({[field]:cur===v?'':v}));
+ pick('pick-city',CITY,p.city||'','city');
+ pick('pick-who',WHO,p.who||'','who');
+ const showPlace=p.who==='study'||p.who==='work';
+ $('pick-place-row').hidden=!showPlace;
+ $('pick-place-q').textContent=p.who==='work'?'Where you work':'Your university';
+ const placeOpts=(p.who==='study'?UNIS:[]).map(u=>[u,u.replace(' in Dubai','').replace(' Dubai','')]);
+ if(p.place&&!UNIS.includes(p.place))placeOpts.push([p.place,p.place]);
+ placeOpts.push(['__other','Other…']);
+ seg('pick-place',placeOpts,p.place||'',v=>{if(v==='__other'){$('place-other').hidden=false;$('p-place').value='';$('p-place').focus();return}saveProfile({place:p.place===v?'':v})});
+ $('about-summary').textContent=filled?aboutSentence(p):'';
+ const complete=!!(p.city&&p.who&&(!showPlace||p.place)); // collapses once everything that applies is answered
+ const open=(!complete&&!aboutSkipped)||aboutEditing;
+ $('about-pick').hidden=!open;
+ $('about-edit').hidden=open;
+ $('about-done').hidden=!(open&&filled);
+ $('about-use').textContent=aboutMeOn()?'Orivia uses this so you don’t have to repeat yourself. You can switch that off in Settings.':'Orivia isn’t using this right now. You can switch it on in Settings.';
+}
+/* Chat fills My Life: when you've said where you live or study, offer to remember it. Nothing is saved until you tap. */
+const EMIRATES=['Abu Dhabi','Dubai','Sharjah','Ajman'],noKey='orivia-private-remember-no';
+function rememberCard(t){
+ $('remember-card')?.remove();
+ if(!t||(!t.origin&&!t.destination)||$('guide-offer'))return;
+ const p=readProfile()||{},patch={},lines=[];
+ const city=EMIRATES.find(c=>new RegExp('\\b'+c+'\\b','i').test(String(t.origin||'')));
+ if(city&&!p.city){patch.city=city;lines.push('You live in '+city)}
+ const dest=String(t.destination||'').slice(0,60);
+ if(/universit|college|campus|institute/i.test(dest)&&!p.place){patch.place=dest;lines.push('You study at '+dest);if(!p.who)patch.who='study'}
+ if(!lines.length)return;
+ let no=[];try{no=JSON.parse(sessionStorage.getItem(noKey)||'[]')}catch(_){}
+ const sig=JSON.stringify(patch);if(no.includes(sig))return;
+ const card=el('section','remember');card.id='remember-card';card.setAttribute('aria-label','Remember in My Life');
+ card.append(el('strong','','Remember this for next time?'),el('p','notice',lines.join(' · ')+'. Then you won’t need to say it again.'));
+ const row=el('div','row');
+ row.append(button('Remember','btn small',()=>{saveProfile(patch);card.replaceChildren(el('p','','Saved to My Life. You can change it any time.'))}),
+  button('No thanks','btn text small',()=>{no.push(sig);try{sessionStorage.setItem(noKey,JSON.stringify(no.slice(-20)))}catch(_){}card.remove()}));
+ card.append(row);($('journey-actions')||$('history')).after(card);
+ const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight;
+}
+$('about-edit').onclick=()=>{aboutEditing=true;aboutSkipped=false;loadProfile()};
+$('about-done').onclick=()=>{aboutEditing=false;aboutSkipped=true;loadProfile()}; // Done closes it even if some questions are skipped
+$('place-other').addEventListener('submit',e=>{e.preventDefault();const v=$('p-place').value.trim();if(v){saveProfile({place:v});$('place-other').hidden=true}});
 function profileForAI(){const p=readProfile();if(!p||p.use===false)return undefined;const out={};for(const k of ['city','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
 $('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.sure='';b.textContent='Delete About me, calendar and journeys'},4000);return}try{localStorage.removeItem(profileKey);localStorage.removeItem(eventKey);localStorage.removeItem(journeysKey)}catch(_){}events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent='Deleted'};
 /* Help: always one tap away in the middle of the bar */
@@ -344,9 +399,8 @@ function renderJourneys(){
  const life=$('life-journeys');
  if(life){
   life.replaceChildren();const now=items.filter(([,v])=>v.status==='active'||v.status==='paused').slice(0,3);
-  if(!now.length)life.append(el('p','notice','Nothing in progress.'));
-  for(const [,v] of now){const st=shownState(v);const p=el('p');p.append(el('strong','',(st==='paused'?'Paused: ':st==='waiting'?'Waiting: ':'In progress: ')),document.createTextNode(v.title+' · '+progressLine(v).replace(/ · \d+ of \d+ done$/,'')));life.append(p)}
-  life.append(button('Open Journeys','ask',()=>tab('journeys')));
+  for(const [id,v] of now){const st=shownState(v);const b=button('','now-item',()=>openGuide(id,{from:'mylife'}));b.append(icon('M6 18a2.5 2.5 0 1 0 0-.1M18 6a2.5 2.5 0 1 0 0-.1M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5'));const sp=el('span');sp.append(el('strong','',v.title),el('small','',(st==='paused'?'Paused · ':st==='waiting'?'Waiting · ':'')+progressLine(v)));b.append(sp,document.createTextNode('›'));life.append(b)}
+  if(!now.length)life.append(button('Browse guides in Journeys','ask',()=>tab('journeys')));
  }
  if(!$('journeys').hidden)renderLibrary();
 }
@@ -495,6 +549,7 @@ $('form').onsubmit=async e=>{
   $('guide-offer')?.remove();
   resources([...(d.actions||[]),...(d.liveSources||[]).map(s=>({title:'Live checked source: '+s.url,url:s.url}))]);
   guideCard(d.guideOffer);
+  if(!d.guideOffer&&!d.journey)rememberCard(d.transport);else $('remember-card')?.remove();
   if(!d.guideOffer)placementCard(d.journey);
   if(/\b(calendar|reminders?|appointments?|schedule)\b/i.test(text))chip('Open My calendar',()=>tab('calendar'));
   $('status').textContent=d.liveSources?.length?'Checked approved official page(s) live. Routes and schedules are not checked.':d.verifiedSources?.length?'Verified campus references attached; live pages unavailable.':'AI reply • No approved live sources checked.';
