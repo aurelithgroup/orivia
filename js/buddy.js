@@ -13,6 +13,23 @@ let turns=readChat();
 function saveChat(){try{sessionStorage.setItem(CHAT_KEY,JSON.stringify(turns.slice(-12)))}catch(_){}}
 function addTurn(role,text){turns.push({role,text:String(text).slice(0,900)});turns=turns.slice(-12);saveChat()}
 function ask(text){const raw=String(text||'').trim().slice(0,240);if(!raw)return;const result=conversationResult(raw);if(!result)return;conversation=result;addTurn('user',raw);addTurn('orivia',result.message);return result}
+let aiPending=false;
+async function askOrivia(text){
+ const raw=String(text||'').trim().slice(0,240);
+ if(!raw||aiPending)return;
+ const bridge=window.ORIVIA_AI_BRIDGE,config=window.ORIVIA_AI_CONFIG;
+ if(!bridge||!bridge.allowed(config))return ask(raw);
+ const history=turns.slice();conversation=null;addTurn('user',raw);aiPending=true;draw();
+ let result;
+ try{
+  result=await bridge.send({history,text:raw,preferences:{language:s.preferredLanguage,style:s.tone},
+    config,request:(path,options)=>fetch(path,options)});
+ }catch(_){result={ok:false,reason:'network-unavailable'}}
+ aiPending=false;
+ addTurn('orivia',result&&result.ok?result.reply:'Sorry, the private AI connection is unavailable right now. Your message is still here. Please try again later.');
+ draw();
+ return result;
+}
 function chatHistory(){return turns.length?'<div class="buddy-history" role="log" aria-label="Your conversation" aria-live="polite">'+turns.map(t=>'<div class="buddy-history-msg '+(t.role==='user'?'buddy-history-user':'buddy-history-orivia')+'"><strong>'+(t.role==='user'?'You':'Orivia')+'</strong><p>'+esc(t.text)+'</p></div>').join('')+'</div>':''}
 const esc=x=>String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const tone=(a,b,c)=>s.tone==='formal'?b:s.tone==='simple'?c:a;
@@ -216,7 +233,7 @@ function start(){
  document.body.appendChild(button);
  const layer=document.createElement('div');layer.id='buddy-lab';layer.className='buddy-overlay';layer.hidden=true;document.body.appendChild(layer);
  function close(){open=false;draw();if(previousFocus&&previousFocus.focus)previousFocus.focus()}
- layer.addEventListener('submit',e=>{if(e.target.id==='buddy-basics-form'){e.preventDefault();const el=e.target.elements;const name=el.namedItem('firstName').value;s.firstName=String(name).trim().slice(0,40).replace(/[<>]/g,'');const lang=el.namedItem('preferredLanguage').value;const style=el.namedItem('tone').value;if(VALID.preferredLanguage.includes(lang))s.preferredLanguage=lang;if(VALID.tone.includes(style))s.tone=style;s.onboarded=true;s.view='home';save();draw();return}if(e.target.id==='buddy-home-form'){e.preventDefault();const input=e.target.querySelector('#buddy-home-input');ask(input&&input.value);draw();return}if(e.target.id!=='buddy-start-form')return;e.preventDefault();const input=e.target.querySelector('#buddy-first-input');const goal=recogniseIntent(input&&input.value);if(!goal){entryHelp='I’m still learning. I can currently help with family relocation, student life, or everyday needs such as transport and groceries. Could you tell me which of those is closest?';draw();return}s.goal=goal;s.view='chat';entryHelp='';ask(input&&input.value);save();draw()});
+ layer.addEventListener('submit',e=>{if(e.target.id==='buddy-basics-form'){e.preventDefault();const el=e.target.elements;const name=el.namedItem('firstName').value;s.firstName=String(name).trim().slice(0,40).replace(/[<>]/g,'');const lang=el.namedItem('preferredLanguage').value;const style=el.namedItem('tone').value;if(VALID.preferredLanguage.includes(lang))s.preferredLanguage=lang;if(VALID.tone.includes(style))s.tone=style;s.onboarded=true;s.view='home';save();draw();return}if(e.target.id==='buddy-home-form'){e.preventDefault();const input=e.target.querySelector('#buddy-home-input');if(window.ORIVIA_AI_BRIDGE?.allowed(window.ORIVIA_AI_CONFIG)){void askOrivia(input&&input.value);return}ask(input&&input.value);draw();return}if(e.target.id!=='buddy-start-form')return;e.preventDefault();const input=e.target.querySelector('#buddy-first-input');const goal=recogniseIntent(input&&input.value);if(!goal){entryHelp='I’m still learning. I can currently help with family relocation, student life, or everyday needs such as transport and groceries. Could you tell me which of those is closest?';draw();return}s.goal=goal;s.view='chat';entryHelp='';ask(input&&input.value);save();draw()});
  layer.addEventListener('click',e=>{
   if(e.target===layer||e.target.closest('[data-buddy-close]')){close();return}
   if(e.target.closest('[data-buddy-edit-basics]')){s.onboarded=false;s.introStep='basics';save();draw();return}
