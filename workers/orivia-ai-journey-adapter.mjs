@@ -70,6 +70,13 @@ export function tryJourneyReply(messages,opts={}){
  }
  const d=full();
  if(!d)return response('I cannot load the approved student residency journey at the moment. Please try again later.');
+ // Informal reports that someone else is arranging a visa are NOT evidence that
+ // an application or any official step is complete. Let the AI ask one natural
+ // clarification, with no speculative placement or guessed requirements.
+ const thirdParty=/\b(?:mum|mom|mother|dad|father|parent|university|uni|college|school)\b.{0,100}\b(?:sort(?:ing|ed)?|handl(?:e|ing)|arrang(?:e|ing)|appl(?:y|ying)|doing|taking care)\b|\b(?:sort(?:ing|ed)?|handl(?:e|ing)|arrang(?:e|ing)|appl(?:y|ying)|doing)\b.{0,70}\b(?:mum|mom|mother|dad|father|parent|university|uni|college|school)\b/i;
+ if(!history.length&&explicit&&thirdParty.test(last)){
+  return {journeyContext:'STUDENT RESIDENCY: This student says someone else is handling or arranging their visa, but there is no confirmed evidence that any process step has occurred. Do not infer an application was submitted, approved, or that any check-up answer is yes. Respond naturally to their uncertainty. Ask ONE brief question about what the university or sponsor has actually confirmed (for example an email, appointment or application update). If they do not know, offer to help draft a short request for a status update. No requirements, deadlines, or completed steps may be invented. Do not ask for personal ID numbers.',verifiedSources:[],journey:{id:ID,status:'needs_clarification',requiresConfirmation:true}};
+ }
  const j=d.journey, checkups=get_checkups(j);
  if(!checkups.ok)return response('I cannot load the journey check-up questions right now.');
  const questions=checkups.questions;
