@@ -107,10 +107,10 @@ function recogniseIntent(text){
  return found.length===1?found[0][0]:null;
 }
 function firstVisit(){
+ if(privateAIConfigured()&&aiConsent==='unset')return '<section class="buddy-intro buddy-first">'+aiConsentPanel()+'</section>';
  return '<section class="buddy-intro buddy-first"><h2>'+esc(tone('What can I help you with?','What would you like help with?','What do you need help with?'))+'</h2>'+
  '<p>Tell me what’s on your mind. We’ll figure out the next step together.</p>'+
  '<form id="buddy-start-form"><label class="buddy-sr" for="buddy-first-input">What would you like help with?</label><textarea id="buddy-first-input" name="question" rows="3" maxlength="240" placeholder="For example: I’m moving here with my children..." required></textarea><button type="submit" class="buddy-submit">Continue <span aria-hidden="true">→</span></button></form>'+
- (privateAIConfigured()&&aiConsent==='unset'?aiConsentPanel():'')+
  (entryHelp?'<p class="buddy-entry-help" role="status">'+esc(entryHelp)+'</p>':'')+
  '<p class="buddy-intro-foot">Early prototype: I can currently help with a few family, student and everyday-life situations. Please don’t share personal identifiers or immigration case details.</p></section>';
 }
