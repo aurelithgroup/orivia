@@ -110,6 +110,7 @@ function firstVisit(){
  return '<section class="buddy-intro buddy-first"><h2>'+esc(tone('What can I help you with?','What would you like help with?','What do you need help with?'))+'</h2>'+
  '<p>Tell me what’s on your mind. We’ll figure out the next step together.</p>'+
  '<form id="buddy-start-form"><label class="buddy-sr" for="buddy-first-input">What would you like help with?</label><textarea id="buddy-first-input" name="question" rows="3" maxlength="240" placeholder="For example: I’m moving here with my children..." required></textarea><button type="submit" class="buddy-submit">Continue <span aria-hidden="true">→</span></button></form>'+
+ (privateAIConfigured()&&aiConsent==='unset'?aiConsentPanel():'')+
  (entryHelp?'<p class="buddy-entry-help" role="status">'+esc(entryHelp)+'</p>':'')+
  '<p class="buddy-intro-foot">Early prototype: I can currently help with a few family, student and everyday-life situations. Please don’t share personal identifiers or immigration case details.</p></section>';
 }
@@ -148,7 +149,7 @@ function homeComposer(){
  return '<form id="buddy-home-form" class="buddy-home-form"><label class="buddy-sr" for="buddy-home-input">What can Orivia help you with?</label><textarea id="buddy-home-input" maxlength="240" rows="3" placeholder="Tell me what’s on your mind..." required></textarea><button class="buddy-submit" type="submit">Ask Orivia →</button></form>';
 }
 function focusScreen(){
- if(s.goal==='undecided')return firstVisit();
+ if(s.goal==='undecided'&&!turns.length)return firstVisit();
  const remaining=actionPlan().filter(x=>status(x.id)!=='checked');
  const last=conversation;
  return '<section class="buddy-focus"><h2>'+esc(s.firstName?tone('What can I help you with, '+s.firstName+'?','How may I assist you, '+s.firstName+'?','What do you need, '+s.firstName+'?'):tone('What can I help you with?','How may I assist?','What do you need help with?'))+'</h2>'+
@@ -237,7 +238,7 @@ function start(){
  document.body.appendChild(button);
  const layer=document.createElement('div');layer.id='buddy-lab';layer.className='buddy-overlay';layer.hidden=true;document.body.appendChild(layer);
  function close(){open=false;draw();if(previousFocus&&previousFocus.focus)previousFocus.focus()}
- layer.addEventListener('submit',e=>{if(e.target.id==='buddy-basics-form'){e.preventDefault();const el=e.target.elements;const name=el.namedItem('firstName').value;s.firstName=String(name).trim().slice(0,40).replace(/[<>]/g,'');const lang=el.namedItem('preferredLanguage').value;const style=el.namedItem('tone').value;if(VALID.preferredLanguage.includes(lang))s.preferredLanguage=lang;if(VALID.tone.includes(style))s.tone=style;s.onboarded=true;s.view='home';save();draw();return}if(e.target.id==='buddy-home-form'){e.preventDefault();const input=e.target.querySelector('#buddy-home-input');if(privateAIConfigured()&&aiConsent==='accepted'){void askOrivia(input&&input.value);return}ask(input&&input.value);draw();return}if(e.target.id!=='buddy-start-form')return;e.preventDefault();const input=e.target.querySelector('#buddy-first-input');const goal=recogniseIntent(input&&input.value);if(!goal){entryHelp='I’m still learning. I can currently help with family relocation, student life, or everyday needs such as transport and groceries. Could you tell me which of those is closest?';draw();return}s.goal=goal;s.view='chat';entryHelp='';ask(input&&input.value);save();draw()});
+ layer.addEventListener('submit',e=>{if(e.target.id==='buddy-basics-form'){e.preventDefault();const el=e.target.elements;const name=el.namedItem('firstName').value;s.firstName=String(name).trim().slice(0,40).replace(/[<>]/g,'');const lang=el.namedItem('preferredLanguage').value;const style=el.namedItem('tone').value;if(VALID.preferredLanguage.includes(lang))s.preferredLanguage=lang;if(VALID.tone.includes(style))s.tone=style;s.onboarded=true;s.view='home';save();draw();return}if(e.target.id==='buddy-home-form'){e.preventDefault();const input=e.target.querySelector('#buddy-home-input');if(privateAIConfigured()&&aiConsent==='accepted'){void askOrivia(input&&input.value);return}ask(input&&input.value);draw();return}if(e.target.id!=='buddy-start-form')return;e.preventDefault();const input=e.target.querySelector('#buddy-first-input');if(privateAIConfigured()&&aiConsent==='accepted'){s.view='chat';save();void askOrivia(input&&input.value);return}const goal=recogniseIntent(input&&input.value);if(!goal){entryHelp='I’m still learning. I can currently help with family relocation, student life, or everyday needs such as transport and groceries. Could you tell me which of those is closest?';draw();return}s.goal=goal;s.view='chat';entryHelp='';ask(input&&input.value);save();draw()});
  layer.addEventListener('click',e=>{
   if(e.target===layer||e.target.closest('[data-buddy-close]')){close();return}
   const consentButton=e.target.closest('[data-buddy-ai-consent]');if(consentButton){const choice=consentButton.dataset.buddyAiConsent;if(choice==='accepted'||choice==='declined'){aiConsent=choice;try{sessionStorage.setItem(AI_CONSENT_KEY,choice)}catch(_){}draw()}return}
