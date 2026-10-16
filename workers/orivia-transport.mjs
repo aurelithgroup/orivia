@@ -81,6 +81,13 @@ export function planTrip(messages,profile){
  const msgs=Array.isArray(messages)?messages:[];
  const lastUser=msgs.findLastIndex(m=>m.role==='user');
  if(lastUser<0)return {active:false};
+ // A terse answer belongs to the immediately preceding question, not to an
+ // older trip. In particular, visa check-ups must not resurrect Maps buttons.
+ const lastText=clean(msgs[lastUser].content);
+ const previous=msgs[lastUser-1];
+ if(previous?.role==='assistant'&&/^(?:yes|yep|yeah|no|nope|nah|not yet|not sure|unsure|idk|i don'?t know)[.!?\s]*$/i.test(lastText)
+   &&/\b(?:medical fitness test|entry permit|residence visa|emirates id|fingerprint|biometric|visa application)\b/i.test(String(previous.content))
+   &&/\?/.test(String(previous.content)))return {active:false};
  /* Is the latest message part of a transport conversation? Walk back to the last message that set a topic. */
  let topic=null,start=-1;
  const topicAt=i=>topicOf(msgs[i].content,Object.values(ASK).some(q=>isOurs(msgs[i-1],q)));
