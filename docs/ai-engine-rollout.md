@@ -1,13 +1,13 @@
 # Orivia: AI conversation engine, development phase
 
-## Status (15 October 2026)
+## Status (16 October 2026)
 - Worker source: `workers/orivia-ai-preview.mjs`.
 - Mock/test contract: `tests/ai-preview.test.mjs`; no real inference used in tests.
-- Cloudflare Worker **orivia-ai-preview** was deployed separately on 15 Oct 2026 with an **AI** binding and allowlisted staging origin.\n- **Intentionally locked:** the Worker has no DEMO_TOKEN configured. Chat requests fail authentication before invoking the model; no public AI requests or user-facing AI chat are enabled.\n- **Not connected** to the public Buddy UI. Current preview Buddy remains rule-based.
+- Cloudflare Worker **orivia-ai-preview** was deployed separately on 15 Oct 2026 and updated on 16 Oct 2026 with an **AI** binding, a **five-request/minute rate limiter per Cloudflare rate-limiting location**, and an allowlisted staging origin.\n- **Intentionally locked:** the Worker has no DEMO_TOKEN configured. Chat requests fail authentication before invoking the model; no public AI requests or user-facing AI chat are enabled.\n- Chat-to-AI bridge source **js/orivia-ai-bridge.js** is loaded by staging Buddy and its optional AI path is wired behind a **disabled configuration switch** and an explicit per-session user consent step. It uses a same-origin path and sends no browser secrets.\n- **Not live for users.** The staging preview remains rule-based by default; the protected same-origin authentication route does not exist yet.
 - **Do not use orivia-api** for this experiment: it serves a different purpose.
 - No live routes, government retrieval, calendar, uploads or long-term user memory exist yet.
 
-## Current deployment notes\nDeployment on Cloudflare succeeded and settings inspection confirmed the AI binding. A live model inference test and public browser integration have **not** been performed. Do not advertise the Buddy preview as AI-enabled. The existing **orivia-api** Worker was not changed.\n\n## Conversation contract
+## Current deployment notes\nDeployment on Cloudflare succeeded and settings inspection confirmed the AI binding. Live model inference through the account-level Workers AI API **has been performed** (small and large models); browser integration with real inference **has not**. The larger model was less reckless in two targeted examples, but neither model is reliable without retrieval. Do not advertise the Buddy preview as AI-enabled. The existing **orivia-api** Worker was not changed.\n\n## Conversation contract
 `POST /v1/chat` with up to 12 messages:
 ```json
 {
@@ -42,3 +42,11 @@ Before the browser is connected:
 
 ## Next integrations
 A verified transport information interface, an auditable official-source retrieval registry, an optional structured user context store with explicit permission, and safe action confirmation. Each source result needs provenance, retrieval date and validity; model-generated claims are not evidence.
+
+## 16 October findings and gates
+- Live private model tests: the smaller Llama 3.1 8B confidently invented a travel duration and overgeneralised school attestation; Llama 3.3 70B offered an unsourced but better-calibrated comparison and explicitly recommended checking school-specific requirements. This is a small exploratory sample, not a formal benchmark.
+- The private Worker is configured to call `@cf/meta/llama-3.3-70b-instruct-fp8-fast`; public requests are still denied because `DEMO_TOKEN` is deliberately unset. The Worker refuses to call AI if the rate limiter is missing or exhausted.
+- A conservative response check blocks some patterns of invented travel times, bus route numbers and mandatory attestation claims. **It cannot guarantee factual accuracy**. Only authoritative source retrieval can justify a route, price or requirement.
+- The private frontend bridge supports passing recent messages, a server-validated same-origin endpoint, disabled/failure states, and opt-in AI data processing. These are mock-tested, not yet tested against the live service.
+- Automated offline test definitions are in `.github/workflows/orivia-ai-dev.yml`; workflow execution status has not been independently confirmed.
+- **Next blocker:** create and verify an actual private login policy (Cloudflare Access), protect a same-origin gateway, add a durable per-user and account-wide budget control, then ask the owner to test live AI in the preview. Do not enable on the public site before that.
