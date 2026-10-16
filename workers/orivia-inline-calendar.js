@@ -1,4 +1,4 @@
-'use strict';
+export default String.raw`'use strict';
 (function(){
  const $=id=>document.getElementById(id);
  const key='orivia-private-events-v1';
@@ -35,3 +35,4 @@
  },true);
  $('clear')?.addEventListener('click',()=>$('inline-calendar')?.remove());
 })();
+`;
