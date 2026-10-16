@@ -72,6 +72,21 @@ form.stack{display:flex;flex-direction:column;gap:10px}
 .soon{border:1px dashed var(--line);border-radius:14px;padding:13px 14px;color:var(--muted);font-size:14px}
 .check{display:flex;gap:10px;align-items:flex-start;font-size:14px}
 .check input{width:20px;height:20px;flex:none;margin-top:2px}
+/* Journey card and guide view */
+.guide-card{border:1px solid var(--line);border-inline-start:5px solid var(--amber);border-radius:14px;padding:14px 14px 12px;background:var(--surface);display:flex;flex-direction:column;gap:8px;max-width:94%;align-self:flex-start;margin:4px 16px 0}
+.guide-card h3{font-size:17px}
+.kicker{font-size:12px;font-weight:700;letter-spacing:.03em;color:var(--muted);margin:0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn.small{min-height:42px;padding:9px 14px;font-size:14px}
+.btn.text{background:none;color:var(--muted);border:0;font-weight:600}
+.progress{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;border:1px solid var(--line)}
+.progress i{display:block;height:100%;background:var(--amber)}
+.label{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+#guide-body ol,#guide-body ul{margin:0;padding-inline-start:22px;display:flex;flex-direction:column;gap:4px}
+#guide-body details{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}
+#guide-body summary{font-weight:700;cursor:pointer}
+#guide-body details p{margin-top:6px}
+.say{border-inline-start:3px solid var(--amber);padding:6px 10px;background:var(--amberSoft);border-radius:8px}
 /* Bottom navigation with Help in the middle */
 nav.bottom{display:grid;grid-template-columns:repeat(5,1fr);align-items:end;border-top:1px solid var(--line);background:var(--surface);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
 nav.bottom button{border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:600;padding:4px 2px;min-height:48px;border-radius:12px}
@@ -138,6 +153,8 @@ nav.bottom .help-tab{color:var(--ink)}
  <section id="explore" class="view" hidden><div class="pad section" style="overflow:auto">
   <h2>Explore</h2>
   <p class="notice">Checked guides and official sources. Tap “Ask Orivia” to talk any of them through.</p>
+  <h3>My journeys</h3>
+  <div class="list" id="my-journeys"></div>
   <h3>Step-by-step guides</h3>
   <div class="list" id="guides"></div>
   <h3>Official sources</h3>
@@ -156,14 +173,16 @@ nav.bottom .help-tab{color:var(--ink)}
     <button class="btn" type="submit">Save</button><p id="profile-status" class="notice" role="status"></p>
    </form></section>
   <section class="card"><h3>Coming up</h3><div id="upcoming" class="list"></div></section>
+  <section class="card"><h3>My journeys</h3><div id="life-journeys" class="list"></div></section>
   <p class="soon">Coming soon: saved documents, plans and ongoing responsibilities, with your permission.</p>
   <section class="card"><h3>Your data</h3>
-   <p class="notice">Your conversation is kept in this browser tab only. Your calendar and About me stay in this browser.</p>
+   <p class="notice">Your conversation is kept in this browser tab only. Your calendar, journeys and About me stay in this browser.</p>
    <button id="clear" type="button" class="btn quiet">Clear conversation</button>
-   <button id="forget" type="button" class="btn quiet">Delete About me and calendar</button>
+   <button id="forget" type="button" class="btn quiet">Delete About me, calendar and journeys</button>
   </section>
   <p class="notice">Only the approved tester may access this trial. Official pages may be checked live; transport routes still need an external journey planner.</p>
  </div></section>
+ <section id="guide-view" class="view" hidden><div class="pad section" style="overflow:auto" id="guide-body"></div></section>
 </section>
 </main>
 <nav class="bottom" id="nav" aria-label="Main" hidden>

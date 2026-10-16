@@ -20,7 +20,10 @@ export const ASK={
  pref:'What matters most for this trip: time, cost or reliability?'
 };
 
-const TRANSPORT=/\b(get(?:ting)? to|go(?:ing)? to (?:uni|university|campus|college|class|work)|commut\w*|directions?|routes?|bus(?:es)?|metro|tram|taxi|careem|uber|driv(?:e|ing)|travel(?:l?ing)? (?:to|from)|compare (?:both|them|the (?:two|options))|how (?:do|can|should|would) i get|get there|getting there|transport|fastest way|quickest way|cheapest way|way to (?:uni|campus|university|college))\b/i;
+/* Asking for help getting somewhere starts a trip; just naming a way to travel ("I'll take the metro",
+   "the bus was late") only continues a trip that is already being planned. */
+const TRANSPORT=/\b(get(?:ting)? to|go(?:ing)? to (?:uni|university|campus|college|class|work)|commut\w*|directions?|routes?|travel(?:l?ing)? (?:to|from)|compare (?:both|them|the (?:two|options))|how (?:do|can|should|would) i get|get there|getting there|fastest way|quickest way|cheapest way|way to (?:uni|campus|university|college))\b|\b(?:transport|metro|bus|taxi|tram|drive|driving)\b.{0,25}\bto (?:uni|university|campus|college|work|class)\b/i;
+const MODE=/\b(bus(?:es)?|metro|tram|taxi|careem|uber|driv(?:e|ing)|transport|nol)\b/i;
 const VISA=/\b(visa|emirates id|residen\w*|entry permit|permit|medical (?:test|fitness)|biometric\w*|fingerprint\w*|passport|attest\w*|certificate|document\w*)\b/i;
 const REMIND=/\b(remind\w*|calendar|deadline|due|appointment|alarm|schedule)\b/i;
 const CONFUSED=/^(?:what|huh|sorry|pardon|eh)\s*\?*[.!]*$|^(?:i don'?t (?:understand|get it)|what do you mean|confus\w*|i'?m (?:lost|confused))/i;
@@ -33,6 +36,7 @@ const isOurs=(m,part)=>m?.role==='assistant'&&String(m.content).toLowerCase().in
 export function topicOf(text,answeringTransport=false){
  const t=clean(text);
  if(TRANSPORT.test(t))return 'transport';
+ if(MODE.test(t)&&!VISA.test(t))return null;
  if(VISA.test(t))return 'visa';
  if(answeringTransport||CONFUSED.test(t))return null;
  const p=placesIn(t);if(p.origin||p.dest)return null; // "actually I live in Muwaileh" carries on the trip
@@ -79,13 +83,20 @@ export function planTrip(messages,profile){
  if(lastUser<0)return {active:false};
  /* Is the latest message part of a transport conversation? Walk back to the last message that set a topic. */
  let topic=null,start=-1;
+ const topicAt=i=>topicOf(msgs[i].content,Object.values(ASK).some(q=>isOurs(msgs[i-1],q)));
  for(let i=lastUser;i>=0;i--){
   if(msgs[i].role!=='user')continue;
-  const prev=msgs[i-1], answering=Object.values(ASK).some(q=>isOurs(prev,q));
-  const t=topicOf(msgs[i].content,answering);
+  const t=topicAt(i);
   if(t){topic=t;start=i;break}
  }
  if(topic!=='transport')return {active:false};
+ /* The trip began at the first message of this run of transport talk, so "I'll take the metro" keeps what's known */
+ for(let i=start-1;i>=0;i--){
+  if(msgs[i].role!=='user')continue;
+  const t=topicAt(i);
+  if(t&&t!=='transport')break;
+  if(t==='transport')start=i;
+ }
  const s={origin:'',dest:null,pref:null,asked:{dest:0,origin:0,area:0,pref:0}};
  const prof=profile&&typeof profile==='object'?profile:{};
  if(typeof prof.city==='string'&&!/not in the uae|somewhere else/i.test(prof.city)&&prof.city.trim())s.origin=clean(prof.city).slice(0,40),s.originFromProfile=true;
