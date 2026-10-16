@@ -12,31 +12,42 @@ const fetchData=path=>{const r=callJourneyApi(path);return r.status===200?r.data
 const full=()=>{const d=fetchData('/api/v1/journeys/'+ID);return d?.journey?.aiReady&&normaliseJourney(d.journey)?d:null};
 const cleanse=s=>String(s||'').trim();
 const answerFor=t=>{
- const x=cleanse(t).toLowerCase().replace(/[.!?]+$/,'');
- if(/^(yes|yep|yeah|yup|i have|already|i did|done|yes i have|yes i did|i'm in the uae|i am in the uae|i've arrived|i have arrived)$/.test(x))return 'yes';
- if(/^(no|nope|not yet|i haven't|i have not|haven't|no i haven't|no i have not|i'm not in the uae|i am not in the uae)$/.test(x))return 'no';
- if(/^(not sure|i'm not sure|i am not sure|i don't know|idk|unsure|maybe)$/.test(x))return 'unsure';
+ const x=cleanse(t).toLowerCase().replace(/[.!?,]+/g,' ').replace(/\s+/g,' ').trim();
+ if(/\b(not sure|unsure|no idea|don'?t know|do not know|idk|maybe|i think so|not certain)\b/.test(x))return 'unsure';
+ if(/^(yes|yep|yeah|yup|ya|sure|correct|i have|i did|already|done|i'?m in the uae|i am in the uae|i'?ve arrived|i have arrived|arrived)\b/.test(x))return 'yes';
+ if(/^(no|nope|nah|not yet|i haven'?t|i have not|haven'?t|i'?m not in the uae|i am not in the uae|not in the uae)\b/.test(x))return 'no';
  return null;
 };
 function response(reply,extra={}){
  return {reply,verifiedSources:[],liveSources:[],actions:[],liveInformation:false,liveJourneyData:false,...extra};
 }
-function stepReply(data,stepId){
+const list=(xs,max=6)=>(Array.isArray(xs)?xs:[]).map(cleanse).filter(Boolean).slice(0,max);
+/* Facts for the current step, handed to the AI to explain in its own words.
+   The AI phrases; the journey decides the facts. Nothing here is stored. */
+function stepContext(stepId){
  const detail=fetchData('/api/v1/journeys/'+ID+'/steps/'+stepId);
- if(!detail?.step)return response('I could not retrieve the checked next step. Please ask your university visa office to confirm what comes next.');
- const source=detail.step.source;
- // A journey-level official source is a starting reference, not proof of
- // university-specific requirements. Don't turn it into verified legal advice.
- const inspected=inspectSource(source?.url,'residency');
- if(!inspected.accepted||!/^\d{4}-\d{2}-\d{2}$/.test(source.checkedAt||'')){
-   return response('I found a possible step, but its official source has not passed the AI evidence check. Please confirm the requirement with your university visa office.');
- }
- const title=cleanse(detail.step.title)||'Your next step';
- const description=cleanse(detail.step.now)||cleanse(detail.step.doThis?.[0]);
- const caveat=detail.fresh?'':' This journey needs rechecking against current official guidance.';
- const summary=[title+'.',description, 'Journey guide reviewed '+source.checkedAt+'. General Emirates ID reference: '+inspected.url+'. This is a journey-level source, not verification of this university-specific step; please confirm the precise requirements with your university visa office.'+caveat].filter(Boolean).join(' ');
- const evidence=validateEvidence({title:'ICP source referenced by Orivia journey',description:'Journey-level government reference; review date '+source.checkedAt,url:source.url,verifiedOn:source.checkedAt},'residency');
- return response(summary+' Want me to help you draft a message to your university visa office, or prepare a reminder?',{verifiedSources:evidence?[evidence]:[],journey:{id:ID,currentStep:stepId,requiresConfirmation:true}});
+ if(!detail?.step)return {reply:'I couldn’t load the checked details for that step just now. Your university visa office can tell you what comes next.',verifiedSources:[],liveSources:[],actions:[],liveInformation:false,liveJourneyData:false};
+ const st=detail.step, source=st.source||{};
+ const inspected=inspectSource(source.url,'residency');
+ const sourceOk=inspected.accepted&&/^\d{4}-\d{2}-\d{2}$/.test(source.checkedAt||'');
+ const evidence=sourceOk?validateEvidence({title:'ICP source referenced by Orivia journey',description:'Journey-level government reference; review date '+source.checkedAt,url:source.url,verifiedOn:source.checkedAt},'residency'):null;
+ const contacts=(detail.contacts||[]).map(c=>cleanse(c.who)+': '+cleanse(c.why)+' How to reach them: '+cleanse(c.how)+(Array.isArray(c.ready)&&c.ready.length?' Have ready: '+list(c.ready).join('; ')+'.':'')).join('\n');
+ const templates=(detail.problems||[]).filter(p=>p.contact?.say).slice(0,4).map(p=>'- If "'+cleanse(p.question)+'": '+cleanse(p.answer)+' Message to send: "'+cleanse(p.contact.say)+'"').join('\n');
+ const lines=[
+  'CHECKED ORIVIA JOURNEY FACTS (the only source for process steps, documents, timings and contacts in your reply):',
+  'Journey: '+cleanse(detail.journey?.title)+'. The person is at step '+detail.position.index+' of '+detail.position.of+': '+cleanse(st.title)+'.',
+  st.now?'Right now: '+cleanse(st.now):'',
+  list(st.doThis).length?'What happens: '+list(st.doThis).join(' '):'',
+  list((st.bring||[]).map(b=>b.item)).length?'Bring: '+list((st.bring||[]).map(b=>b.item)).join('; ')+'.':'',
+  st.waitingFor?'Waiting for: '+cleanse(st.waitingFor):'',
+  st.time?'Usual time: '+cleanse(st.time):'',
+  list(st.tips,3).length?'Tips: '+list(st.tips,3).join(' '):'',
+  contacts?'Who to contact:\n'+contacts:'',
+  templates?'Common problems and the exact messages to send (keep [brackets] for details the person hasn’t given):\n'+templates:'',
+  'Guide reviewed '+(source.checkedAt||'unknown')+(sourceOk?'; general official reference: '+inspected.url+' (journey-level, not proof of university-specific details).':'.')+(detail.fresh?'':' This guide is due for review: say so and suggest confirming with the visa office.'),
+  'HOW TO REPLY: Answer the person’s latest message directly, warmly, in 2-5 short sentences. The first time, tell them where they are and the one next thing to do. Mention the guide and its review date once, briefly, not in every message. If they accept help drafting a message, write it from the matching template. If they want a reminder, tell them to type "remind me to …" and Orivia will set it up. Offer at most one next action. Never ask for passport, visa or ID numbers.'
+ ].filter(Boolean).join('\n');
+ return {journeyContext:lines,verifiedSources:evidence?[evidence]:[],journey:{id:ID,currentStep:stepId,requiresConfirmation:true}};
 }
 export function tryJourneyReply(messages){
  if(!Array.isArray(messages)||!messages.length)return null;
@@ -72,7 +83,7 @@ export function tryJourneyReply(messages){
  const currentQuestion=prev?.role==='assistant'?questions.find(q=>prev.content.includes(q.question)):null;
  if(currentQuestion){
    const a=answerFor(last);
-   if(!a)return response('You can answer yes or no'+(currentQuestion.options.some(o=>o.value==='not_sure')?', or say “not sure”':'')+'. '+currentQuestion.question);
+   if(!a)return null;
    answers[currentQuestion.id]=a;
  }
  const query=last.slice(0,200);
@@ -88,7 +99,8 @@ export function tryJourneyReply(messages){
  if(!placement)return response('I could not check your position in this journey just now.');
  if(placement.status==='needs_answer'&&placement.nextQuestion){
   const q=placement.nextQuestion;
-  return response('I can help you work out which step applies. '+cleanse(q.question)+' You can say yes, no'+(q.allowsUnsure?', or not sure':'')+'.',{journey:{id:ID,status:'needs_answer',questionId:q.id}});
+  const first=!Object.keys(answers).length;
+  return response((first?'Let’s work out where you are, one quick question at a time. ':'')+cleanse(q.question)+' (yes / no'+(q.allowsUnsure?' / not sure':'')+')',{journey:{id:ID,status:'needs_answer',questionId:q.id}});
  }
  if(placement.status==='not_sure'){
   return response('That is okay—we will not guess which steps are complete. '+(cleanse(placement.confirmHow)||'Your university visa office can confirm the status.')+' Would you like me to help draft a message?',{journey:{id:ID,status:'not_sure'}});
@@ -97,7 +109,7 @@ export function tryJourneyReply(messages){
  if(placement.stepId){
   const s=get_step(j,placement.stepId);
   if(!s.ok)return response('I could not validate that step. Let’s verify it with the university visa office.');
-  return stepReply(d,placement.stepId);
+  return stepContext(placement.stepId);
  }
  return response('I cannot determine the correct step yet. Could you tell me what your university has already confirmed?');
 }
