@@ -34,6 +34,8 @@ jobs:
         run: node tests/official-sources.test.mjs
       - name: Verified university journey resources
         run: node tests/journey-sources.test.mjs
+      - name: Journey API contract tests
+        run: node --experimental-sqlite tests/journey-api.test.mjs
       - name: AI Worker contract and safety tests
         run: node tests/ai-preview.test.mjs
       - name: Read-only journey tool regression tests

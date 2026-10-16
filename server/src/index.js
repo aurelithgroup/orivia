@@ -11,6 +11,7 @@
    ========================================================= */
 import { JOURNEYS, SEED_PARTNERS } from './content.js';
 import { teamPage, orgPage, lockedPage } from './pages.js';
+import { journeyRoute } from './journeys.js';
 
 const EVENTS = new Set(['journey_open','stage_open','stage_done','journey_complete','help_open','problem','still_stuck','solved','staff_card','deeplink','escalate','escalate_sent']);
 const ID_RE = /^[a-z0-9][a-z0-9-]{1,39}$/;
@@ -144,6 +145,12 @@ export default {
         await D.prepare('INSERT INTO counts (day, org_id, ev, journey, stage, n) VALUES (?, ?, ?, ?, ?, 1) ON CONFLICT (day, org_id, ev, journey, stage) DO UPDATE SET n = n + 1')
           .bind(now().slice(0, 10), org, ev, j, s).run();
         return json({ ok: true }, 200, cors(env, req));
+      }
+
+      /* Public, read-only checked journeys for the app and the AI (no user data) */
+      if(req.method === 'GET'){
+        const jr = journeyRoute(url, json, { ...cors(env, req), 'cache-control': 'public, max-age=300' });
+        if(jr) return jr;
       }
 
       /* Everything below is private and lives under /admin */
