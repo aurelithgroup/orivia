@@ -9,7 +9,7 @@ const AI = {async run(model,options){
   calls.push({model,options});
   return {response:'Do you mean getting to the University of Wollongong Dubai? For a useful comparison, I need your departure area and preferred mode.'};
 }};
-const env = {ALLOWED_ORIGIN:ORIGIN, DEMO_TOKEN:secret, AI};
+const env = {ALLOWED_ORIGIN:ORIGIN, DEMO_TOKEN:secret, AI, AI_QUOTA:{async limit(){return {success:true}}}};
 const app = createHandler();
 const history = [
   {role:'user',content:"I'm starting university next month"},
@@ -57,4 +57,8 @@ assert.equal(calls.length,1);
 response=await app.fetch(request('/v1/chat',{body:JSON.stringify({messages:history})}),{...env,AI:null});
 assert.equal(response.status,503);
 assert.equal(calls.length,1);
-console.log('AI preview backend: 12 assertions/check groups passed');
+response=await app.fetch(request(),{...env,AI_QUOTA:null});
+assert.equal(response.status,503);
+response=await app.fetch(request(),{...env,AI_QUOTA:{async limit(){return {success:false}}}});
+assert.equal(response.status,429);
+console.log('AI preview backend: 14 assertions/check groups passed');
