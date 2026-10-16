@@ -5,9 +5,13 @@
 export const UNIVERSITY_SOURCES=Object.freeze([
  {id:'uowd', aliases:['university of wollongong','wollongong dubai','uowd'],
   name:'University of Wollongong in Dubai',address:'UOWD Building, Dubai Knowledge Park, Dubai, United Arab Emirates',
-  url:'https://www.uowdubai.ac.ae/contact-us',checkedOn:'2026-10-16'}
+  url:'https://www.uowdubai.ac.ae/contact-us',checkedOn:'2026-10-16'},
+ {id:'hwu',aliases:['heriot-watt','heriot watt','heriotwatt','heriot watt dubai'],name:'Heriot-Watt University Dubai',
+ address:'Heriot-Watt University Dubai Campus, Dubai Knowledge Park, Dubai, United Arab Emirates',
+ url:'https://www.hw.ac.uk/dubai/visit/maps-and-directions',contactUrl:'https://hw.ac.uk/dubai/visit/contact-us',
+ contactEmail:'dubaienquiries@hw.ac.uk',contactPhone:'+971 4 571 7000',checkedOn:'2026-10-16'}
 ]);
-const OFFICIAL_RTA='https://rta.ae/wps/portal/rta/ae/home/rta-services/service-details?serviceId=209';
+const OFFICIAL_RTA='https://www.rta.ae/wps/portal/rta/ae/home';
 function safeText(value){return typeof value==='string'?value.trim().slice(0,160):''}
 export function findUniversity(history){
  const text=(Array.isArray(history)?history:[]).filter(x=>x?.role==='user').map(x=>safeText(x.content)).join(' ').toLowerCase();
@@ -35,17 +39,19 @@ export function journeyResources(history){
  };
  const sources=[
   {title:'University official campus address',url:uni.url,description:uni.address,verifiedOn:uni.checkedOn},
+  ...(uni.contactUrl?[{title:'University official contact information',url:uni.contactUrl,description:'Admissions and enquiries',verifiedOn:uni.checkedOn}]:[]),
   {title:'Dubai RTA public transport planning',url:OFFICIAL_RTA,description:'Official journey planning information',verifiedOn:uni.checkedOn}
  ];
  const actions=[
+  ...(uni.contactUrl?[{title:'Contact university (official)',url:uni.contactUrl,externalProvider:uni.name}]:[]),
   {title:'Check public transport options',url:directions('transit'),externalProvider:'Google Maps'},
   {title:'Check driving options',url:directions('driving'),externalProvider:'Google Maps'},
   {title:'Check official Dubai transport planner',url:OFFICIAL_RTA,externalProvider:'Dubai RTA'}
  ];
  const context='Verified source registry: '+uni.name+' campus address: '+uni.address+
  '. Official university source: '+uni.url+'. Dubai RTA public transport planning: '+OFFICIAL_RTA+
- '. Source links checked '+uni.checkedOn+'. No route, fare, trip duration, or availability was retrieved. '+
+ '. Source links checked '+uni.checkedOn+'. '+(uni.contactEmail?'Official institution contact email: '+uni.contactEmail+'. Phone: '+uni.contactPhone+'. Only use for enquiries relevant to institution policies or campus support, not as a substitute for a transport journey planner. ':'')+'No route, fare, trip duration, or availability was retrieved. '+
  (departure?'User described an origin: '+departure+'. ':'No confirmed origin yet. ')+
  'You may invite the user to open the prepared driving and transit journey-planner links. Do not imply live routes were fetched.';
- return {context,sources,actions,departure,university:uni.name};
+ return {context,sources,actions,departure,university:uni.name,contactEmail:uni.contactEmail||null,contactPhone:uni.contactPhone||null};
 }
