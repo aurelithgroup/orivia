@@ -175,6 +175,7 @@ form.stack{display:flex;flex-direction:column;gap:10px}
 .ev .b strong{overflow-wrap:anywhere}
 .ev .acts{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .ev .acts a{color:var(--focus);font-size:14px;font-weight:600}
+.ev .acts a.dev{background:var(--amber);color:#1C2733;text-decoration:none;border-radius:999px;padding:7px 12px;font-weight:700}
 .ev .acts button{border:0;background:none;color:var(--muted);font-size:14px;font-weight:600;padding:4px 0;min-height:32px}
 .ev.past{opacity:.7}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -256,8 +257,9 @@ nav.bottom .help-tab{color:var(--ink)}
    <div class="weekhead"><button id="wk-prev" type="button" class="icon-btn" aria-label="Previous week">‹</button><strong id="wk-label"></strong><button id="wk-next" type="button" class="icon-btn" aria-label="Next week">›</button></div>
    <div class="days" id="wk-days"></div>
   </section>
+  <p id="cal-flash" class="banner" role="status" hidden></p>
   <div id="events" class="agenda"></div>
-  <p class="tiny">Phone alerts: open an event in Google Calendar, choose a notification and press Save.</p>
+  <p class="tiny">Orivia’s calendar doesn’t send alerts by itself. For a phone alert, tap “Add to phone calendar”, then press Save or Add in your calendar app (Apple Calendar, Samsung Calendar, Outlook or Google Calendar). Google Calendar also works directly.</p>
  </div></section>
  <section id="journeys" class="view" hidden><div class="pad section" style="overflow:auto">
   <div class="jhead"><div><h2>Journeys</h2><p class="notice">Everything you’re working through, in one place.</p></div><button id="back-chat" type="button" class="chip-btn" aria-label="Return to Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Chat</button></div>
@@ -331,6 +333,7 @@ nav.bottom .help-tab{color:var(--ink)}
   <label class="field" for="reminder-title">What should I remind you about?<input id="reminder-title" required maxlength="100" placeholder="e.g. Book my medical test"></label>
   <div class="field" role="group" aria-labelledby="when-label"><span id="when-label">When?</span><div class="seg" id="when-quick"></div></div>
   <div class="two"><label class="field" for="reminder-date">Date<input id="reminder-date" type="date" required></label><label class="field" for="reminder-time">Time<input id="reminder-time" type="time" value="09:00" required></label></div>
+  <label class="field" for="reminder-alarm">Phone alert<select id="reminder-alarm"><option value="0">At the time</option><option value="10">10 minutes before</option><option value="30" selected>30 minutes before</option><option value="60">1 hour before</option><option value="1440">1 day before</option></select><small class="tiny">Used when you add it to your phone calendar.</small></label>
   <button class="btn" type="submit">Save in Orivia calendar</button>
   <p id="reminder-status" role="status" class="notice"></p>
   <button type="button" class="btn text" id="add-cancel">Cancel</button>

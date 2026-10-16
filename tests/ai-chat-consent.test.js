@@ -27,12 +27,14 @@ let app=boot();app.set({onboarded:true,goal:'undecided'});
 assert.match(app.intro(),/buddy-ai-consent/);
 assert.doesNotMatch(app.intro(),/buddy-first-input/);
 assert.equal(outgoing.length,0);
-assert.equal(app.askAI('What now?'),undefined);
+// askOrivia is async, so it returns a Promise even when it refuses to send before consent
+const blocked=app.askAI('What now?');
 assert.equal(outgoing.length,0);
 saved['orivia-ai-consent-session-v1']='accepted';
 app=boot();app.set({onboarded:true,goal:'undecided'});
 assert.match(app.intro(),/buddy-first-input/);
 (async()=>{
+ assert.equal(await blocked,undefined,'nothing is sent or answered before consent');
  const reply=await app.askAI("I've just moved. What can I do first?");
  assert.equal(reply.ok,true);
  assert.equal(outgoing.length,1);

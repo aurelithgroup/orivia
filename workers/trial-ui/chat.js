@@ -25,6 +25,10 @@ function googleEvent(e){
  const q=new URLSearchParams({action:'TEMPLATE',text:e.title,dates:stamp(start)+'/'+stamp(end),details:'Reminder created by Orivia. Confirm Save in Google Calendar.'});
  return 'https://calendar.google.com/calendar/render?'+q.toString();
 }
+/* Standard calendar file from the Worker: opens the phone's own calendar app (or downloads on some Android browsers).
+   It is only in their calendar once they confirm there: Orivia never assumes it was accepted. */
+const ALARMS=[[0,'At the time'],[10,'10 minutes before'],[30,'30 minutes before'],[60,'1 hour before'],[1440,'1 day before']];
+function deviceCalendarUrl(e){const alarm=ALARMS.some(([m])=>m===e.alarm)?e.alarm:30;return '/reminder.ics?'+new URLSearchParams({title:e.title,when:new Date(e.at).toISOString(),alarm:String(alarm)}).toString()}
 const when=e=>new Date(e.at).toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
 /* Calendar: a week strip (dots on days with something) and an agenda grouped by when */
 let weekOffset=0,selectedDay=null;
@@ -36,9 +40,18 @@ function eventRow(e,past){
  const t=el('div','t');const time=d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});const m=time.match(/^(.*?)\s*([AaPp]\.?[Mm]\.?)$/);
  t.append(el('b','',m?m[1]:time),el('small','',m?m[2]:d.toLocaleDateString(undefined,{weekday:'short'})));
  const b=el('div','b');b.append(el('strong','',e.title),el('span','tiny',d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})+' · saved in Orivia'));
- const acts=el('div','acts');const device=el('a','','Add to device calendar ↗');device.href='/reminder.ics?'+new URLSearchParams({title:e.title,when:new Date(e.at).toISOString(),alarm:'30'}).toString();device.setAttribute('aria-label','Download calendar event for '+e.title+'; confirm import in your device calendar');device.title='Opens or downloads a calendar file. Confirm Save in your calendar app.';const a=el('a','','Google Calendar ↗');a.href=googleEvent(e);a.setAttribute('aria-label','Add '+e.title+' to Google Calendar');a.target='_blank';a.rel='noopener noreferrer';
+ const acts=el('div','acts');
+ if(!past){
+  const dev=el('a','dev','Add to phone calendar');dev.href=deviceCalendarUrl(e);dev.setAttribute('aria-label','Add '+e.title+' to your phone calendar');
+  dev.addEventListener('click',()=>{setTimeout(()=>{note.hidden=false;note.textContent='Your calendar app should ask you to add it. It’s only in your phone calendar after you tap Add or Save there. On some Android phones the file downloads first: open it from your notifications or Downloads.'},300)});
+  const g=el('a','','Google Calendar ↗');g.href=googleEvent(e);g.target='_blank';g.rel='noopener noreferrer';g.setAttribute('aria-label','Add '+e.title+' to Google Calendar');
+  acts.append(dev,g);
+ }
  const rm=button('Remove','',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent='Tap again to remove';return}removeEvent(e.id)});
- if(new Date(e.at).getTime()>Date.now()+60000)acts.append(device);acts.append(a,rm);b.append(acts);row.append(t,b);return row;
+ acts.append(rm);
+ const note=el('p','hint');note.hidden=true;note.setAttribute('role','status');
+ if(!past&&typeof e.alarm==='number')b.append(el('span','tiny','Alert: '+(ALARMS.find(([m])=>m===e.alarm)||[,'30 minutes before'])[1].toLowerCase()));
+ b.append(acts,note);row.append(t,b);return row;
 }
 function renderEvents(){
  loadEvents();
@@ -80,8 +93,10 @@ function openAdd(day){
  $('reminder-date').value=day||dayKey(new Date(Date.now()+86400000));
  const picks=[['Tomorrow',1],['In 3 days',3],['Next week',7]],q=$('when-quick');q.replaceChildren();
  for(const [label,n] of picks){const d=new Date(today);d.setDate(today.getDate()+n);q.append(button(label,'seg-btn'+($('reminder-date').value===dayKey(d)?' on':''),()=>{$('reminder-date').value=dayKey(d);for(const x of q.children)x.classList.toggle('on',x.textContent===label)}))}
+ $('reminder-alarm').value='30';
  $('add-sheet').hidden=false;$('reminder-title').focus();
 }
+function flash(msg){const f=$('cal-flash');f.textContent=msg;f.hidden=false;clearTimeout(flash.t);flash.t=setTimeout(()=>{f.hidden=true},6000)}
 function closeAdd(){$('add-sheet').hidden=true;$('cal-add').focus()}
 $('cal-add').onclick=()=>openAdd(selectedDay);
 $('add-cancel').onclick=closeAdd;
@@ -452,9 +467,11 @@ $('reminder-form').addEventListener('submit',event=>{
  if(!title||!Number.isFinite(at.getTime())||at.getTime()<Date.now()+60000||at.getTime()>Date.now()+366*86400000){
   $('reminder-status').textContent='Please choose a time in the future, within the next year.';return
  }
- const saved={id:'evt-'+Date.now()+'-'+Math.random().toString(36).slice(2),title,at:at.toISOString()};
+ const alarm=Number($('reminder-alarm').value);
+ const saved={id:'evt-'+Date.now()+'-'+Math.random().toString(36).slice(2),title,at:at.toISOString(),alarm:ALARMS.some(([m])=>m===alarm)?alarm:30};
  events.push(saved);storeEvents();
  selectedDay=null;weekOffset=0;closeAdd();renderEvents();renderUpcoming();
+ flash('Saved in Orivia. Tap “Add to phone calendar” to get an alert on your phone.');
 });
 /* Message box grows with the text; Enter sends, Shift+Enter adds a line */
 function grow(){const m=$('msg');m.style.height='auto';m.style.height=Math.min(m.scrollHeight,140)+'px'}

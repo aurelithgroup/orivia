@@ -22,11 +22,13 @@ export default String.raw`'use strict';
   form.onsubmit=e=>{
    e.preventDefault();const date=new Date(when.value);if(!when.value||!Number.isFinite(date.getTime())||date.getTime()<Date.now()+60000||date.getTime()>Date.now()+366*86400000){status.textContent='Choose a future date within one year.';return}
    let items=[];try{items=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(items))items=[]}catch(_){}
-   const item={id:'evt-'+Date.now()+'-'+Math.random().toString(36).slice(2),title:title.value.trim().slice(0,100),at:date.toISOString()};
+   const item={id:'evt-'+Date.now()+'-'+Math.random().toString(36).slice(2),title:title.value.trim().slice(0,100),at:date.toISOString(),alarm:30};
    if(!item.title)return;
    try{localStorage.setItem(key,JSON.stringify([...items.slice(-99),item]))}catch(_){status.textContent='Could not save on this device.';return}
-   status.textContent='Saved to Orivia on this device. Google Calendar still needs your approval.';save.disabled=true;
-   const a=document.createElement('a');a.href=eventDraft(item);a.target='_blank';a.rel='noopener noreferrer';a.textContent='Open in Google Calendar ↗';form.append(a);
+   status.textContent='Saved in Orivia on this device. For a phone alert, add it to your calendar app and confirm there.';save.disabled=true;
+   const d=document.createElement('a');d.href='/reminder.ics?'+new URLSearchParams({title:item.title,when:item.at,alarm:'30'});d.textContent='Add to phone calendar';d.style.cssText='display:inline-block;background:#F2B90F;color:#1C2733;border-radius:999px;padding:8px 14px;font-weight:700;text-decoration:none;justify-self:start';form.append(d);
+   d.addEventListener('click',()=>{status.textContent='Your calendar app should ask you to add it. It’s only in your phone calendar after you tap Add or Save there.'});
+   const a=document.createElement('a');a.href=eventDraft(item);a.target='_blank';a.rel='noopener noreferrer';a.textContent='Or use Google Calendar ↗';form.append(a);
    if(window.oriviaGo){const v=document.createElement('button');v.type='button';v.textContent='View in My calendar';v.style.cssText='background:none;border:0;padding:4px 0;color:inherit;text-decoration:underline;font-weight:700;text-align:left';v.onclick=()=>window.oriviaGo('calendar');form.append(v)}
   }
  }
