@@ -40,6 +40,8 @@ jobs:
         run: node tests/journey-adapter-loop.test.mjs
       - name: Natural first-contact conversations
         run: node tests/natural-entry.test.mjs
+      - name: Realistic journey intelligence scenarios (with tracked TODO gaps)
+        run: node --test tests/journey-intelligence.test.mjs
       - name: Transport is actionable (Maps links, no made-up times, no stray reminders)
         run: node tests/transport-actions.test.mjs
       - name: Journey cards (decision-only, three choices, route-aware nol guide)
