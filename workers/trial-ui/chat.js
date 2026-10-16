@@ -129,9 +129,12 @@ const OFFICIAL=[
  ['KHDA','https://web.khda.gov.ae','Private schools and universities in Dubai']];
 /* My Life: About me, only shared with the AI when the user ticks the box */
 function readProfile(){try{const p=JSON.parse(localStorage.getItem(profileKey)||'null');return p&&typeof p==='object'?p:null}catch(_){return null}}
-function loadProfile(){const p=readProfile()||{};$('p-city').value=p.city||'';$('p-who').value=p.who||'';$('p-place').value=p.place||'';$('p-use').checked=!!p.use}
+function loadProfile(){const p=readProfile()||{};$('p-city').value=p.city||'';$('p-who').value=p.who||'';$('p-place').value=p.place||'';$('p-use').checked=aboutMeOn()}
+/* About me is used by default; only an explicit 'off' stops it */
+function aboutMeOn(){const p=readProfile();return !(p&&p.use===false)}
+function setAboutMe(on){const p=readProfile()||{};try{localStorage.setItem(profileKey,JSON.stringify({...p,use:on}))}catch(_){}}
 $('profile-form').addEventListener('submit',e=>{e.preventDefault();const p={city:$('p-city').value.slice(0,40),who:$('p-who').value.slice(0,40),place:$('p-place').value.trim().slice(0,60),use:$('p-use').checked};try{localStorage.setItem(profileKey,JSON.stringify(p));$('profile-status').textContent=p.use?'Saved. Orivia will use this in your chats.':'Saved on this device. Orivia won’t use it until you tick the box.'}catch(_){$('profile-status').textContent='Could not save on this device.'}});
-function profileForAI(){const p=readProfile();if(!p||!p.use)return undefined;const out={};for(const k of ['city','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
+function profileForAI(){const p=readProfile();if(!p||p.use===false)return undefined;const out={};for(const k of ['city','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
 $('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.sure='';b.textContent='Delete About me, calendar and journeys'},4000);return}try{localStorage.removeItem(profileKey);localStorage.removeItem(eventKey);localStorage.removeItem(journeysKey)}catch(_){}events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent='Deleted'};
 /* Help: always one tap away in the middle of the bar */
 function openHelp(){$('help-sheet').hidden=false;$('help-wrong').focus()}
@@ -169,10 +172,12 @@ function renderSettings(){
  seg('set-tone',[['friendly','Friendly'],['simple','Simple words'],['brief','Short answers']],s.tone,v=>writeSettings({tone:v}));
  $('tone-note').textContent=TONE_NOTE[s.tone]||'';
  $('set-suggest').checked=s.suggest!==false;
- const p=readProfile();$('aboutme-state').textContent=p&&p.use?'On: Orivia uses what you saved in My Life':'Off: Orivia doesn’t use My Life details';
+ const on=aboutMeOn(),p=readProfile(),filled=!!(p&&(p.city||p.who||p.place));$('set-aboutme-use').checked=on;
+ $('aboutme-state').textContent=on?(filled?'On: Orivia uses what you saved in My Life':'On, but nothing saved yet. Add details in My Life'):'Off: Orivia doesn’t use My Life details';
 }
 $('set-suggest').addEventListener('change',e=>writeSettings({suggest:e.target.checked}));
 $('set-aboutme').onclick=()=>tab('mylife');
+$('set-aboutme-use').addEventListener('change',e=>{setAboutMe(e.target.checked);renderSettings()});
 $('open-settings').onclick=()=>tab('settings');
 $('settings-back').onclick=()=>tab(lastTab||'chat');
 $('life-settings').onclick=()=>tab('settings');

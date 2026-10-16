@@ -281,7 +281,7 @@ nav.bottom .help-tab{color:var(--ink)}
     <label class="field" for="p-city">Where you live<select id="p-city"><option value="">Choose</option><option>Dubai</option><option>Sharjah</option><option>Abu Dhabi</option><option>Ajman</option><option>Somewhere else in the UAE</option><option>Not in the UAE yet</option></select></label>
     <label class="field" for="p-who">I’m here to<select id="p-who"><option value="">Choose</option><option>study</option><option>work</option><option>join or bring my family</option><option>something else</option></select></label>
     <label class="field" for="p-place">University or workplace <small>Optional</small><input id="p-place" maxlength="60" placeholder="e.g. Heriot-Watt University Dubai"></label>
-    <label class="check"><input type="checkbox" id="p-use"> <span>Let Orivia use this to personalise answers. It’s sent with your messages to Cloudflare Workers AI.</span></label>
+    <label class="check"><input type="checkbox" id="p-use" checked> <span>Let Orivia use this to personalise answers (on by default). It’s sent with your messages to Cloudflare Workers AI. You can switch it off here or in Settings.</span></label>
     <button class="btn" type="submit">Save</button><p id="profile-status" class="notice" role="status"></p>
    </form></section>
   <section class="card"><h3>Coming up</h3><div id="upcoming" class="list"></div></section>
@@ -300,7 +300,8 @@ nav.bottom .help-tab{color:var(--ink)}
   <section class="set-group"><h3>Orivia</h3>
    <div class="set-row col"><span>How Orivia talks to you</span><div class="seg" id="set-tone" role="radiogroup" aria-label="How Orivia talks to you"></div><p class="tiny" id="tone-note"></p></div>
    <label class="set-row toggle"><span>Suggest guides in chat<small class="tiny">When a step-by-step guide could help with something you’ve decided</small></span><input type="checkbox" id="set-suggest" role="switch"></label>
-   <div class="set-row"><span>About me in chats<small class="tiny" id="aboutme-state"></small></span><button type="button" class="btn quiet small" id="set-aboutme">Edit</button></div>
+   <label class="set-row toggle"><span>Use About me in chats<small class="tiny" id="aboutme-state"></small></span><input type="checkbox" id="set-aboutme-use" role="switch" checked></label>
+   <button type="button" class="ask" id="set-aboutme">Edit About me in My Life</button>
   </section>
   <section class="set-group"><h3>Privacy &amp; data</h3>
    <p class="tiny">Your conversation is kept in this browser tab only. Your calendar, journeys, About me and settings stay in this browser. Messages are sent to Cloudflare Workers AI to get a reply. Orivia never needs passport, visa or ID numbers.</p>

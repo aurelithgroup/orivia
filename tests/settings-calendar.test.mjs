@@ -33,4 +33,8 @@ assert.match(html, /:root:not\(\[data-theme="light"\]\)/, 'an explicit Light cho
 assert.match(js, /suggestGuides:readSettings\(\)\.suggest!==false/); assert.match(js, /style:readSettings\(\)\.tone/);
 assert.match(js, /Tap again to remove/, 'removing a reminder asks first');
 assert.match(js, /at\.getTime\(\)<Date\.now\(\)\+60000/, 'no reminders in the past');
+/* Defaults: guide suggestions and About me are on until someone switches them off */
+assert.match(js, /const SET_DEFAULT=\{[^}]*suggest:true/);
+assert.match(js, /p\.use===false\)return undefined/, 'About me is shared unless explicitly switched off');
+assert.match(html, /id="p-use" checked/); assert.match(html, /id="set-aboutme-use"/);
 console.log('Settings and Calendar: tone, guide suggestions, theme override, safe reminders: passed');
