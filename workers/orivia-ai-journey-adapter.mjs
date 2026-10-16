@@ -34,7 +34,7 @@ function stepReply(data,stepId){
  const title=cleanse(detail.step.title)||'Your next step';
  const description=cleanse(detail.step.now)||cleanse(detail.step.doThis?.[0]);
  const caveat=detail.fresh?'':' This journey needs rechecking against current official guidance.';
- const summary=[title+'.',description, 'Source: '+inspected.url+' (reviewed '+source.checkedAt+').'+caveat].filter(Boolean).join(' ');
+ const summary=[title+'.',description, 'Journey guide reviewed '+source.checkedAt+'. General Emirates ID reference: '+inspected.url+'. This is a journey-level source, not verification of this university-specific step; please confirm the precise requirements with your university visa office.'+caveat].filter(Boolean).join(' ');
  const evidence=validateEvidence({title:'ICP source referenced by Orivia journey',description:'Journey-level government reference; review date '+source.checkedAt,url:source.url,verifiedOn:source.checkedAt},'residency');
  return response(summary+' Want me to help you draft a message to your university visa office, or prepare a reminder?',{verifiedSources:evidence?[evidence]:[],journey:{id:ID,currentStep:stepId,requiresConfirmation:true}});
 }
