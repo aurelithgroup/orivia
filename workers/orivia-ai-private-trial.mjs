@@ -1,0 +1,51 @@
+const MODEL='@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+const HOST='orivia-ai-preview.habeebahsallah27.workers.dev';
+const SYSTEM='You are Orivia, a warm, practical relocation companion. Understand follow-ups from previous messages and answers to your questions. Ask at most one question if truly missing information. You have NO current transport route, map, fare, school-policy or government data. NEVER invent travel times, bus numbers, routes, prices, visa deadlines or universal legal requirements. For route requests compare driving and transit conceptually and explain that accurate routes require verified live transport data. For overseas school document attestation never say mandatory without school-specific official confirmation. Never ask for passport, visa or child identifying details. Be helpful, grounded, succinct.';
+let cached=null,until=0;
+function reply(body,status=200){return new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}})}
+function decode64(x){return atob(x.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(x.length/4)*4,'='))}
+async function access(req,env){
+ const jwt=req.headers.get('Cf-Access-Jwt-Assertion');
+ if(!jwt||!env.ACCESS_TEAM_DOMAIN||!env.ACCESS_AUD||!env.ACCESS_TEST_EMAIL)return false;
+ try{
+  const p=jwt.split('.');if(p.length!==3)return false;
+  const h=JSON.parse(decode64(p[0])),cl=JSON.parse(decode64(p[1]));
+  const now=Math.floor(Date.now()/1000),issuer='https://'+env.ACCESS_TEAM_DOMAIN;
+  if(h.alg!=='RS256'||!h.kid||cl.iss!==issuer||!cl.exp||cl.exp<=now||cl.exp>now+86400
+     ||(cl.nbf&&cl.nbf>now+60)||!(Array.isArray(cl.aud)?cl.aud.includes(env.ACCESS_AUD):cl.aud===env.ACCESS_AUD)
+     ||String(cl.email||'').toLowerCase()!==env.ACCESS_TEST_EMAIL.toLowerCase())return false;
+  if(!cached||Date.now()>until){const r=await fetch(issuer+'/cdn-cgi/access/certs',{redirect:'error'});if(!r.ok)return false;const j=await r.json();if(!Array.isArray(j.keys))return false;cached=j.keys;until=Date.now()+300000}
+  const jwk=cached.find(k=>k.kid===h.kid&&k.kty==='RSA');if(!jwk)return false;
+  const key=await crypto.subtle.importKey('jwk',jwk,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['verify']);
+  const data=new TextEncoder().encode(p[0]+'.'+p[1]),sig=Uint8Array.from(decode64(p[2]),x=>x.charCodeAt(0));
+  return crypto.subtle.verify('RSASSA-PKCS1-v1_5',key,sig,data)
+ }catch(_){return false}
+}
+function check(messages){
+ if(!Array.isArray(messages)||messages.length<1||messages.length>12)return false;
+ return messages.every(m=>m&&['user','assistant'].includes(m.role)&&typeof m.content==='string'&&m.content.trim()&&m.content.length<=1200)&&messages.at(-1).role==='user'
+}
+function safety(text,messages){
+ const user=messages.filter(m=>m.role==='user').slice(-4).map(m=>m.content).join(' ');
+ if(/travel|university|transport|bus|metro|commute|drive|route/i.test(user)&&/\b\d+\s*(minutes?|hours?|km|aed|dirhams?)\b|bus route\s*\d+/i.test(text))return 'I can compare driving and public transport conceptually, but I cannot verify an exact route, journey time or fare yet. What matters most: cost, time or reliability?';
+ if(/certificate|attest|school record/i.test(user)&&/(must|mandatory|always|required).{0,70}(attest|certificate)|(attest|certificate).{0,70}(must|mandatory|always|required)/i.test(text))return 'I cannot confirm that document requirement without guidance from the intended school or relevant authority. Which institution are you dealing with?';
+ return text
+}
+export default {async fetch(req,env){
+ const url=new URL(req.url);
+ if(url.hostname!==HOST)return reply({error:'Not found'},404);
+ if(!(await access(req,env)))return reply({error:'Private sign-in required'},401);
+ if(url.pathname==='/'&&req.method==='GET')return new Response("<!doctype html><html lang=\"en\"><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Orivia private AI trial</title><style>body{font:16px system-ui;background:#ecf0f5;color:#1c2733;margin:0;padding:15px}.app{max-width:650px;margin:auto;background:white;min-height:90vh;border-radius:16px;overflow:hidden}header{background:#1c2733;color:white;padding:19px 24px;font-size:25px;font-weight:700}header small{color:#f2c74b;font-size:12px;float:right}main{padding:22px}p{line-height:1.5}#history{display:grid;gap:10px;max-height:54vh;overflow:auto;margin:20px 0}.bubble{padding:12px;border-radius:10px;background:#eef2f5;white-space:pre-wrap;overflow-wrap:anywhere}.bubble.user{background:#fff0c1;margin-left:10%}.bubble b{display:block;font-size:12px;margin-bottom:5px}textarea{width:100%;box-sizing:border-box;padding:12px;border:1px solid #a6b5c5;border-radius:9px;font:16px system-ui}button{padding:11px 17px;background:#f1bf37;color:#18283a;border:0;border-radius:9px;font-weight:650;cursor:pointer;min-height:42px}button:disabled{opacity:.55}#intro{border:1px solid #ccd5df;padding:17px;border-radius:11px}small,.notice{color:#586778;font-size:13px}#status{font-size:13px}form{display:grid;gap:8px}form button{justify-self:end}</style><div class=\"app\"><header>orivia <small>PRIVATE AI TRIAL</small></header><main><h2>What can I help you with?</h2><p class=\"notice\">This early AI trial cannot look up live routes or verify immigration rules. Please do not enter sensitive personal identifiers.</p><section id=\"intro\"><p>I agree to send my messages and recent conversation to Cloudflare Workers AI. Messages are held in this browser tab, not stored in Orivia's database.</p><label><input type=\"checkbox\" id=\"consent\"> I agree to start my private AI trial</label><p><button id=\"start\" type=\"button\">Start trial</button></p></section><section id=\"chat\" hidden><div id=\"history\" role=\"log\" aria-live=\"polite\"></div><form id=\"form\"><label for=\"msg\">Your message</label><textarea id=\"msg\" rows=\"3\" maxlength=\"900\" required placeholder=\"Ask anything about settling in...\"></textarea><button id=\"send\">Send →</button></form><p id=\"status\" role=\"status\"></p></section><button id=\"clear\" type=\"button\">Clear conversation</button><p><small>Only the approved tester may access this trial. No real-time information or official sources are connected.</small></p></main></div><script src=\"/chat.js\" defer></script></html>",{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"}});
+ if(url.pathname==='/chat.js'&&req.method==='GET')return new Response("'use strict';const key='orivia-ai-private-turns',ck='orivia-ai-private-consent';let turns=[],busy=false;const $=id=>document.getElementById(id);function show(){ $('intro').hidden=true;$('chat').hidden=false;try{const d=JSON.parse(sessionStorage.getItem(key)||'[]');turns=Array.isArray(d)?d.slice(-12).filter(x=>x&&['user','assistant'].includes(x.role)&&typeof x.content==='string'):[]}catch(_){turns=[]}draw()}function save(){sessionStorage.setItem(key,JSON.stringify(turns.slice(-12)))}function draw(){const el=$('history');el.replaceChildren();for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant');const b=document.createElement('b');b.textContent=t.role==='user'?'You':'Orivia';const txt=document.createElement('span');txt.textContent=t.content;p.append(b,txt);el.append(p)}el.scrollTop=el.scrollHeight}if(sessionStorage.getItem(ck)==='yes')show();$('start').onclick=()=>{if(!$('consent').checked)return;$('consent').checked=false;sessionStorage.setItem(ck,'yes');show()};$('clear').onclick=()=>{if(busy)return;turns=[];sessionStorage.removeItem(key);draw()};$('form').onsubmit=async e=>{e.preventDefault();if(busy||sessionStorage.getItem(ck)!=='yes')return;const text=$('msg').value.trim();if(!text)return;$('msg').value='';turns.push({role:'user',content:text.slice(0,900)});turns=turns.slice(-12);save();draw();busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';try{const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:turns,preferences:{language:'en',style:'friendly'}})});const d=await r.json().catch(()=>({}));if(!r.ok){$('status').textContent=r.status===429?'Trial limit reached. Try again in a minute.':'Private AI is temporarily unavailable. Please try again.';return}if(typeof d.reply!=='string'||!d.reply.trim())throw Error('empty');turns.push({role:'assistant',content:d.reply.slice(0,1200)});turns=turns.slice(-12);save();draw();$('status').textContent='AI response • No live sources verified.'}catch(_){$('status').textContent='Could not reach the private AI. Please try again.'}finally{busy=false;$('send').disabled=false}};",{headers:{'Content-Type':'application/javascript','Cache-Control':'no-store'}});
+ if(url.pathname!=='/v1/chat'||req.method!=='POST')return reply({error:'Not found'},404);
+ if(req.headers.get('Origin')!=='https://'+HOST)return reply({error:'Origin not allowed'},403);
+ if(Number(req.headers.get('Content-Length')||0)>16000)return reply({error:'Too large'},413);
+ let input;try{const raw=await req.text();if(raw.length>16000)return reply({error:'Too large'},413);input=JSON.parse(raw)}catch(_){return reply({error:'Invalid JSON'},400)}
+ if(!check(input?.messages))return reply({error:'Invalid conversation'},400);
+ if(!env.AI?.run||!env.AI_QUOTA?.limit)return reply({error:'AI not configured'},503);
+ try{const q=await env.AI_QUOTA.limit({key:'private-test-global'});if(!q.success)return reply({error:'Try later'},429)}catch(_){return reply({error:'Quota unavailable'},503)}
+ try{const out=await env.AI.run(MODEL,{messages:[{role:'system',content:SYSTEM},...input.messages],max_tokens:340,temperature:0.25,stream:false});
+   const text=String(out?.response||'').trim();if(!text)return reply({error:'No answer'},502);
+   return reply({reply:safety(text,input.messages).slice(0,1200),verifiedSources:[],liveInformation:false})
+ }catch(_){return reply({error:'AI currently unavailable'},503)}
+}};
