@@ -27,6 +27,7 @@ export default String.raw`'use strict';
    try{localStorage.setItem(key,JSON.stringify([...items.slice(-99),item]))}catch(_){status.textContent='Could not save on this device.';return}
    status.textContent='Saved to Orivia on this device. Google Calendar still needs your approval.';save.disabled=true;
    const a=document.createElement('a');a.href=eventDraft(item);a.target='_blank';a.rel='noopener noreferrer';a.textContent='Open in Google Calendar ↗';form.append(a);
+   if(window.oriviaGo){const v=document.createElement('button');v.type='button';v.textContent='View in My calendar';v.style.cssText='background:none;border:0;padding:4px 0;color:inherit;text-decoration:underline;font-weight:700;text-align:left';v.onclick=()=>window.oriviaGo('calendar');form.append(v)}
   }
  }
  $('form')?.addEventListener('submit',()=>{
