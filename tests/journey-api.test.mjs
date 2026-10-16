@@ -56,4 +56,8 @@ assert.deepEqual([d.placement.status, d.placement.stepId], ['candidate', 'medica
 /* Existing features untouched: private pages stay locked, public partner notes still work */
 [s] = await get('/admin/api/me'); assert.equal(s, 401);
 [s, d] = await get('/api/partners/demo-uni'); assert.equal(s, 200); assert.equal(d.id, 'demo-uni');
+/* No-network call for Workers in this repo returns the same as HTTP */
+const { callJourneyApi } = await import('../server/src/journeys.js');
+const direct = callJourneyApi('/api/v1/journeys/dubai.eid.student/steps/medical');
+assert.equal(direct.status, 200); assert.equal(direct.data.step.id, 'medical');
 console.log('Journey API v1: list, match, step, place, problems, freshness, CORS, and existing auth: passed');

@@ -27,6 +27,17 @@
 
 **Errors:** `404 { "error": "not_found", "detail": "journey" | "step" | "problem" | "pathway" | "contact" | "path" }`.
 
+## Calling it without the network (works today)
+
+The AI Worker lives in this repo, so it can use the same data and logic directly, with no deployment or network call:
+
+```js
+import { callJourneyApi } from '../server/src/journeys.js';
+const { status, data } = callJourneyApi('/api/v1/journeys/dubai.eid.student/steps/biometrics');
+```
+
+`data` is exactly what the HTTP endpoint returns. Use fixed path templates only, filled with validated ids (never a path the model wrote).
+
 ## Matches Ina's contract
 
 `GET /api/v1/journeys/{id}` returns, inside `journey`, exactly the fields in `docs/ai-journey-integration-contract.md`, so it can go straight into `normaliseJourney()`:

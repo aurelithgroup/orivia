@@ -132,3 +132,13 @@ export function journeyRoute(url, json, headers){
   }
   return ok({ journey: { ...flat({ ...j, keywords: undefined }, lang), aiReady: AI_READY.includes(j.id), statuses: STATUSES }, ...freshness(j) });
 }
+
+/* Same answers without HTTP, for Workers in this repo (e.g. the private AI trial):
+   const { status, data } = callJourneyApi('/api/v1/journeys/dubai.eid.student/steps/biometrics');
+   Returns exactly what the HTTP endpoint would return. */
+export function callJourneyApi(pathWithQuery){
+  const url = new URL(pathWithQuery, 'https://orivia-api.internal');
+  let out = { status: 404, data: { version: API_VERSION, error: 'not_found', detail: 'path' } };
+  journeyRoute(url, (data, status) => { out = { status, data }; return null; }, {});
+  return out;
+}
