@@ -87,9 +87,18 @@ test('ongoing conversation does not restart the one-time unsure-student introduc
 
 // SPECIFICATION GAPS: keep visible in test output, not silently reported as passing.
 // To convert a TODO to a required test, first implement the expected behaviour.
-test('TODO: third-party visa updates should trigger careful clarification, not a generic q1 reset',{todo:'Needs consent-aware context extraction and non-assumptive clarification'},()=>{
- const result=tryJourneyReply(opening('Mum says my university is sorting my residence visa, but idk what has actually been done'));
- assert.ok(!result?.reply?.includes('Are you in the UAE now?'),'should clarify what is confirmed before restarting checkups');
+test('third-party visa updates trigger clarification, not a fictional completed step or q1 reset',()=>{
+ for(const phrase of [
+  'Mum says my university is sorting my residence visa, but idk what has actually been done',
+  'My uni is handling my visa, no idea where things are at',
+  'Dad is arranging my student visa but he has not told me anything'
+ ]){
+  const result=tryJourneyReply(opening(phrase));
+  assert.equal(result?.reply,undefined,phrase);
+  assert.equal(result?.journey?.status,'needs_clarification',phrase);
+  assert.match(result?.journeyContext||'',/no confirmed evidence|no confirmed/i,phrase);
+  assert.doesNotMatch(result?.journeyContext||'',/at step [1-8] of 8/,phrase);
+ }
 });
 test('TODO: corrections must override an earlier statement instead of relying on adjacent yes/no answers',{todo:'Needs structured, user-confirmed placement revisions'},()=>{
  const {messages,first}=start();
