@@ -27,6 +27,20 @@
 
 **Errors:** `404 { "error": "not_found", "detail": "journey" | "step" | "problem" | "pathway" | "contact" | "path" }`.
 
+## Matches Ina's contract
+
+`GET /api/v1/journeys/{id}` returns, inside `journey`, exactly the fields in `docs/ai-journey-integration-contract.md`, so it can go straight into `normaliseJourney()`:
+
+| Contract field | Here |
+| --- | --- |
+| `id`, `title` | `journey.id`, `journey.title` (plain strings with the default `lang=en`) |
+| `checkedAt` | `journey.checkedAt` (same as `verifiedOn`) |
+| `steps[].source {url, checkedAt}` | Every step has `source: { name, url, checkedAt }`. **Honest note:** sources are reviewed per journey today, so each step carries the journey's primary official source; the full list is in `journey.sources`. Per-step sources are a later improvement. |
+| `checkups[].options[{value, label, stepId?}]` | Every check-up has `options`: `yes` (its `stepId` is the step *after* the one asked about, because yes means it's done), `no` (`stepId` = the step asked about) and, where allowed, `not_sure` (no `stepId`) |
+| `place_user` result | `/place` returns `placement.status`: `candidate` (with `stepId` and `requiresConfirmation: true`), `not_sure` (`stepId: null`, plus `confirmHow`), or `needs_answer` (plus `nextQuestion`). It never saves anything. `not_sure` and `unsure` are both accepted in `answers`. |
+
+The server-side `/place` evaluates all check-ups in order, so it handles several answers at once, which a single-mapping `place_user()` can't.
+
 ## Endpoints
 
 | Tool (suggested name) | Method and path | Returns |

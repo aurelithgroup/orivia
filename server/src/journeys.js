@@ -8,10 +8,21 @@
 import { AI_READY, JOURNEYS, PATHWAYS, CONTACTS } from './journeys-data.js';
 
 export const API_VERSION = '2026-10-16';
-/* Every check-up offers plain answer labels, including "I'm not sure" where allowed */
-for(const j of Object.values(JOURNEYS)) for(const c of j.checkups){
-  c.answers = { yes: (c.answers && c.answers.yes) || { en: 'Yes', ar: 'نعم' }, no: (c.answers && c.answers.no) || { en: 'No', ar: 'لا' } };
-  if(c.allowsUnsure) c.answers.unsure = { en: 'I’m not sure', ar: 'لست متأكداً' };
+/* Shape the data for the AI tools (matches docs/ai-journey-integration-contract.md):
+   - every check-up offers plain answers, including "I'm not sure" where allowed, as answers{} and options[]
+   - options carry the step they point to: yes = that step is done, so the next step; no = that step
+   - every step carries source {name, url, checkedAt}: the journey's primary reviewed source (sources are journey-level today) */
+for(const j of Object.values(JOURNEYS)){
+  j.checkedAt = j.checked;
+  const ids = j.steps.map(s => s.id), primary = (j.sources || []).find(x => /^https:\/\//.test(x.url));
+  for(const s of j.steps) s.source = primary ? { name: primary.name, url: primary.url, checkedAt: j.checked } : null;
+  for(const c of j.checkups){
+    c.answers = { yes: (c.answers && c.answers.yes) || { en: 'Yes', ar: 'نعم' }, no: (c.answers && c.answers.no) || { en: 'No', ar: 'لا' } };
+    if(c.allowsUnsure) c.answers.unsure = { en: 'I’m not sure', ar: 'لست متأكداً' };
+    const after = ids[ids.indexOf(c.step) + 1] || null;
+    c.options = [{ value: 'yes', label: c.answers.yes, stepId: after }, { value: 'no', label: c.answers.no, stepId: c.step }];
+    if(c.allowsUnsure) c.options.push({ value: 'not_sure', label: c.answers.unsure });
+  }
 }
 const REVIEW_DAYS = 90;
 const STATUSES = ['not_started', 'in_progress', 'waiting', 'done', 'unsure'];
@@ -62,18 +73,19 @@ export function place(j, answers, lang){
   const done = [], unsure = [];
   const ids = j.steps.map(s => s.id), idx = id => ids.indexOf(id);
   for(const c of j.checkups){
-    const a = answers[c.id];
+    const a = answers[c.id] === 'not_sure' ? 'unsure' : answers[c.id];
     if(a === 'yes'){ for(const id of ids.slice(0, idx(c.step) + 1)) if(!done.includes(id)) done.push(id); continue; }
     if(a === 'no' || a === 'unsure'){
       if(a === 'unsure') unsure.push(c.step);
-      return { currentStep: c.step, currentStatus: a === 'unsure' ? 'unsure' : 'in_progress', done, unsure,
+      return { status: a === 'unsure' ? 'not_sure' : 'candidate', stepId: a === 'unsure' ? null : c.step, requiresConfirmation: true,
+        currentStep: c.step, currentStatus: a === 'unsure' ? 'unsure' : 'in_progress', done, unsure,
         confirmHow: a === 'unsure' ? flat(c.confirm || null, lang) : null, nextQuestion: null, complete: false };
     }
-    return { currentStep: null, currentStatus: null, done, unsure, confirmHow: null, nextQuestion: flat(c, lang), complete: false };
+    return { status: 'needs_answer', stepId: null, requiresConfirmation: true, currentStep: null, currentStatus: null, done, unsure, confirmHow: null, nextQuestion: flat(c, lang), complete: false };
   }
   const last = j.checkups.length ? idx(j.checkups.at(-1).step) : -1;
   const next = ids[last + 1] || null;
-  return { currentStep: next, currentStatus: next ? 'in_progress' : 'done', done, unsure, confirmHow: null, nextQuestion: null, complete: !next };
+  return { status: 'candidate', stepId: next, requiresConfirmation: true, currentStep: next, currentStatus: next ? 'in_progress' : 'done', done, unsure, confirmHow: null, nextQuestion: null, complete: !next };
 }
 /* Candidate journeys for what someone said. Never picks one: the AI must ask what they want first. */
 export function match(q, city){
@@ -115,7 +127,7 @@ export function journeyRoute(url, json, headers){
   if(m[2] === 'problems'){ const pr = j.problems.find(x => x.id === m[3]); return pr ? ok({ journey: { id: j.id }, problem: expandProblem(j, pr, lang), sources: flat(sourceList(j), lang), ...freshness(j) }) : notFound('problem'); }
   if(m[4] === 'place'){
     const answers = {};
-    for(const part of (url.searchParams.get('answers') || '').split(',')){ const [k, v] = part.split(':'); if(/^q\d{1,2}$/.test(k) && ['yes', 'no', 'unsure'].includes(v)) answers[k] = v; }
+    for(const part of (url.searchParams.get('answers') || '').split(',')){ const [k, v] = part.split(':'); if(/^q\d{1,2}$/.test(k) && ['yes', 'no', 'unsure', 'not_sure'].includes(v)) answers[k] = v === 'not_sure' ? 'unsure' : v; }
     return ok({ journey: { id: j.id }, answers, placement: place(j, answers, lang), ...freshness(j) });
   }
   return ok({ journey: { ...flat({ ...j, keywords: undefined }, lang), aiReady: AI_READY.includes(j.id), statuses: STATUSES }, ...freshness(j) });

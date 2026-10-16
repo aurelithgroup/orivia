@@ -43,6 +43,16 @@ assert.equal(s, 200); assert.ok(d.problem.contacts.length);
 [s] = await get('/api/v1/journeys/nope'); assert.equal(s, 404);
 [s] = await get('/api/v1/journeys/dubai.eid.student/steps/nope'); assert.equal(s, 404);
 
+/* Matches Ina's contract (docs/ai-journey-integration-contract.md) */
+[s, d] = await get('/api/v1/journeys/dubai.eid.student');
+assert.equal(typeof d.journey.title, 'string'); assert.match(d.journey.checkedAt, /^\d{4}-\d{2}-\d{2}$/);
+for(const st of d.journey.steps){ assert.ok(st.source && st.source.url.startsWith('https://')); assert.match(st.source.checkedAt, /^\d{4}-\d{2}-\d{2}$/); }
+for(const c of d.journey.checkups){ assert.ok(c.options.length >= 2); assert.ok(c.options.every(o => o.value && typeof o.label === 'string')); }
+[s, d] = await get('/api/v1/journeys/dubai.eid.student/place?answers=q1:yes,q2:not_sure');
+assert.equal(d.placement.status, 'not_sure'); assert.equal(d.placement.stepId, null); assert.equal(d.placement.requiresConfirmation, true);
+[s, d] = await get('/api/v1/journeys/dubai.eid.student/place?answers=q1:yes,q2:yes,q3:no');
+assert.deepEqual([d.placement.status, d.placement.stepId], ['candidate', 'medical']);
+
 /* Existing features untouched: private pages stay locked, public partner notes still work */
 [s] = await get('/admin/api/me'); assert.equal(s, 401);
 [s, d] = await get('/api/partners/demo-uni'); assert.equal(s, 200); assert.equal(d.id, 'demo-uni');
