@@ -1,0 +1,28 @@
+name: Orivia AI development checks
+on:
+  push:
+    branches:
+      - feature/proactive-requirements
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check js/buddy.js
+          node --check js/orivia-ai-bridge.js
+          node --check workers/orivia-ai-preview.mjs
+      - name: Buddy rule and conversation regression tests
+        run: node tests/buddy-smoke.js
+      - name: Secure AI bridge tests
+        run: node tests/ai-bridge.test.js
+      - name: AI Worker contract and safety tests
+        run: node tests/ai-preview.test.mjs
