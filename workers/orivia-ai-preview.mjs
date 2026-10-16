@@ -76,43 +76,71 @@ function reviewUnsupportedClaims(history, answer) {
  }
  return answer;
 }
+
+/* Cloudflare Access issues RS256 JWTs to verified signed-in users.
+   Every request is validated independently, not by trusting the browser. */
+let cachedKeys=null, cachedUntil=0;
+async function verifyAccess(request, env) {
+ const token=request.headers.get('Cf-Access-Jwt-Assertion');
+ const team=String(env.ACCESS_TEAM_DOMAIN||'').trim().replace(/^https?:\/\//,'').replace(/\/$/,'');
+ const audience=String(env.ACCESS_AUD||'');
+ const onlyEmail=String(env.ACCESS_TEST_EMAIL||'').toLowerCase();
+ if(!token||!team.endsWith('.cloudflareaccess.com')||!audience||!onlyEmail)return false;
+ try {
+  const parts=token.split('.');
+  if(parts.length!==3||parts.some(x=>x.length>9000))return false;
+  const decode=x=>JSON.parse(atob(x.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(x.length/4)*4,'=')));
+  const header=decode(parts[0]),claims=decode(parts[1]);
+  if(header.alg!=='RS256'||typeof header.kid!=='string')return false;
+  const issuer='https://'+team;
+  const now=Math.floor(Date.now()/1000);
+  if(claims.iss!==issuer||!(Array.isArray(claims.aud)?claims.aud.includes(audience):claims.aud===audience)
+     ||!Number.isFinite(claims.exp)||claims.exp<=now||claims.exp>now+86400
+     ||(claims.nbf&&claims.nbf>now+60)||typeof claims.email!=='string'
+     ||claims.email.toLowerCase()!==onlyEmail)return false;
+  if(!cachedKeys||Date.now()>cachedUntil){
+    const response=await fetch(issuer+'/cdn-cgi/access/certs',{redirect:'error'});
+    if(!response.ok)return false;
+    const jwks=await response.json();
+    if(!Array.isArray(jwks.keys))return false;
+    cachedKeys=jwks.keys;cachedUntil=Date.now()+300000;
+  }
+  const jwk=cachedKeys.find(k=>k.kid===header.kid&&k.kty==='RSA');
+  if(!jwk)return false;
+  const key=await crypto.subtle.importKey('jwk',jwk,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['verify']);
+  const sig=Uint8Array.from(atob(parts[2].replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(parts[2].length/4)*4,'=')),ch=>ch.charCodeAt(0));
+  const data=new TextEncoder().encode(parts[0]+'.'+parts[1]);
+  return await crypto.subtle.verify('RSASSA-PKCS1-v1_5',key,sig,data);
+ }catch(_){return false}
+}
+
 function createHandler() {
   return {
     async fetch(request, env) {
-      const origin = trustedOrigin(request, env);
-      if (request.method === 'OPTIONS') {
-        if (!origin) return json({error:'Origin not allowed'},403);
-        return new Response(null,{status:204,headers:{
-          'Access-Control-Allow-Origin':origin,
-          'Access-Control-Allow-Methods':'POST, OPTIONS',
-          'Access-Control-Allow-Headers':'Content-Type, Authorization',
-          'Access-Control-Max-Age':'600','Vary':'Origin'
-        }});
-      }
-      const url = new URL(request.url);
-      if (url.pathname === '/health' && request.method === 'GET') {
-        return json({status:'ok', aiConfigured:Boolean(env.AI), publicChatEnabled:false});
-      }
-      if (url.pathname !== '/v1/chat' || request.method !== 'POST') return json({error:'Not found'},404);
-      if (!origin) return json({error:'Origin not allowed'},403);
-      // A demo token is for server-to-server tests only; never ship it to client JavaScript.
-      // Before browser use, add VERIFIED identity and an abuse-resistant quota.
-      if (!env.DEMO_TOKEN || request.headers.get('Authorization') !== 'Bearer '+env.DEMO_TOKEN) {
-        return json({error:'Authentication required'},401,origin);
-      }
-      if (Number(request.headers.get('Content-Length')||0) > LIMITS.bodyBytes) return json({error:'Request too large'},413,origin);
+      const url=new URL(request.url);
+      const expected='orivia-ai-preview.habeebahsallah27.workers.dev';
+      if(url.hostname!==expected)return json({error:'Not found'},404);
+      // Reject unauthenticated traffic even if Access edge routing is misconfigured.
+      if(!(await verifyAccess(request,env)))return json({error:'Private sign-in required'},401);
+      if(url.pathname==='/'&&request.method==='GET')return privatePage();
+      if(url.pathname==='/private-chat.js'&&request.method==='GET')return privateScript();
+      if(url.pathname==='/health'&&request.method==='GET')return json({status:'ok',aiConfigured:Boolean(env.AI),privateTrial:true});
+      if(url.pathname!=='/v1/chat'||request.method!=='POST')return json({error:'Not found'},404);
+      const origin=request.headers.get('Origin')||'';
+      if(origin!=='https://'+expected)return json({error:'Origin not allowed'},403);
+      if (Number(request.headers.get('Content-Length')||0) > LIMITS.bodyBytes) return json({error:'Request too large'},413);
       let body;
       try { const raw = await request.text(); if (raw.length > LIMITS.bodyBytes) throw Error('too large'); body = JSON.parse(raw); }
-      catch (_) { return json({error:'Invalid request'},400,origin); }
+      catch (_) { return json({error:'Invalid request'},400); }
       const messages = normaliseMessages(body?.messages);
-      if (!messages) return json({error:'Provide 1–12 ordered, short conversation turns ending in a user message'},400,origin);
-      if (!env.AI || typeof env.AI.run !== 'function') return json({error:'AI not configured'},503,origin);
+      if (!messages) return json({error:'Provide 1–12 ordered, short conversation turns ending in a user message'},400);
+      if (!env.AI || typeof env.AI.run !== 'function') return json({error:'AI not configured'},503);
       // Fail closed without the platform-backed limiter; CORS is not authentication.
-      if (!env.AI_QUOTA || typeof env.AI_QUOTA.limit !== 'function') return json({error:'AI quota not configured'},503,origin);
+      if (!env.AI_QUOTA || typeof env.AI_QUOTA.limit !== 'function') return json({error:'AI quota not configured'},503);
       try {
         const quota = await env.AI_QUOTA.limit({key:'orivia-private-preview-global'});
-        if (!quota.success) return json({error:'Trial usage limit reached. Try later.'},429,origin);
-      } catch (_) { return json({error:'Trial usage limit unavailable'},503,origin); }
+        if (!quota.success) return json({error:'Trial usage limit reached. Try later.'},429);
+      } catch (_) { return json({error:'Trial usage limit unavailable'},503); }
       try {
         const output = await env.AI.run(MODEL,{
           messages:makeMessages(messages,body.preferences),
@@ -122,14 +150,14 @@ function createHandler() {
         });
         const draft = typeof output?.response === 'string' ? output.response.trim() : '';
         const reply = reviewUnsupportedClaims(messages,draft);
-        if (!reply) return json({error:'Model returned no answer'},502,origin);
+        if (!reply) return json({error:'Model returned no answer'},502);
         return json({reply:reply.slice(0,2400),verifiedSources:[],toolsUsed:[],
-          liveInformation:false,disclaimer:'No external information was fetched or verified.'},200,origin);
+          liveInformation:false,disclaimer:'No external information was fetched or verified.'},200);
       } catch (_) {
-        return json({error:'AI is temporarily unavailable. Please try again later.'},503,origin);
+        return json({error:'AI is temporarily unavailable. Please try again later.'},503);
       }
     }
   };
 }
-export {createHandler, makeMessages, normaliseMessages, reviewUnsupportedClaims};
+export {createHandler, makeMessages, normaliseMessages, reviewUnsupportedClaims, verifyAccess};
 export default createHandler();
