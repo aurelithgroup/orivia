@@ -8,6 +8,7 @@ export const TRUSTED_HOSTS=Object.freeze({
  'www.uowdubai.ac.ae':'institution',
  'www.rta.ae':'government', 'rta.ae':'government',
  'u.ae':'government', 'www.dubai.ae':'government',
+ 'icp.gov.ae':'government', 'www.icp.gov.ae':'government',
  'www.mohre.gov.ae':'government', 'www.mofa.gov.ae':'government'
 });
 export function inspectSource(url, purpose='general'){
