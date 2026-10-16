@@ -26,5 +26,7 @@ jobs:
         run: node tests/ai-bridge.test.js
       - name: Consent and open-ended AI entry tests
         run: node tests/ai-chat-consent.test.js
+      - name: Verified university journey resources
+        run: node tests/journey-sources.test.mjs
       - name: AI Worker contract and safety tests
         run: node tests/ai-preview.test.mjs
