@@ -24,5 +24,7 @@ jobs:
         run: node tests/buddy-smoke.js
       - name: Secure AI bridge tests
         run: node tests/ai-bridge.test.js
+      - name: Consent and open-ended AI entry tests
+        run: node tests/ai-chat-consent.test.js
       - name: AI Worker contract and safety tests
         run: node tests/ai-preview.test.mjs
