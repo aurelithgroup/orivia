@@ -74,3 +74,13 @@ A sourced, non-live university journey handoff has been added and deployed to th
 - **This is NOT a live route lookup.** The Worker does not fetch Google Maps directions or RTA schedules, cannot compare actual journey durations, and must not claim it has. The external planner computes current routes only when the user opens it.
 - Regression test added: `tests/journey-sources.test.mjs`. Deployment and AI access/budget bindings verified; the owner has not yet tested the updated journey UI.
 - Next: complete a proper routed-journey integration through a licensed data provider or official API, with departure times, provenance, user consent, results validation and per-request cost controls.
+
+## Official-information source policy (16 October 2026)
+- Deployed `workers/orivia-source-policy.mjs`, a **deny-by-default** approved-domain policy for evidence. Reddit, social media, random blogs, and unsupported search snippets do not qualify as proof.
+- Evidence must include source URL, summary, and checked date; links are independently validated by domain and HTTPS. Government/legal requirements must use a government authority, not an institutional website.
+- Heriot-Watt University Dubai: official maps and directions https://www.hw.ac.uk/dubai/visit/maps-and-directions (Dubai Knowledge Park); official contact https://hw.ac.uk/dubai/visit/contact-us, dubaienquiries@hw.ac.uk, +971 4 571 7000. This is institutional information, not transport timetable data.
+- RTA source registry updated to its official journey-planning page https://www.rta.ae/wps/portal/rta/ae/home.
+- Verified model-facing facts are drawn from curated official source records only; this release **does not yet perform arbitrary live web search**. The model may still make unsupported assertions; the evidence allowlist does not guarantee the whole generated answer is trustworthy.
+- Added regression tests in `tests/official-sources.test.mjs`, included in the development workflow. A direct in-session simulation verified that official Heriot-Watt contacts, driving and transit links appear and Reddit/unapproved institutional claims fail the relevant trust checks.
+- Cloudflare's Web Search API requires AI Gateway credits or a provider key; do not enable it until pricing/budget and per-result official-domain filtering have been reviewed with the owner.
+- The future reminders feature must be opt-in, with explicit timing, permissions and confirmation. Never claim a reminder was scheduled until the scheduling service has confirmed it.
