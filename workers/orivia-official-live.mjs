@@ -3,7 +3,7 @@
  * No redirects, arbitrary hosts, social sites, JavaScript execution or bot bypass.
  */
 import {inspectSource} from './orivia-source-policy.mjs';
-const MAX_BYTES=125000;
+const MAX_BYTES=650000;
 const TIMEOUT_MS=6500;
 function removeMarkup(raw){
  return raw
@@ -39,9 +39,19 @@ export async function readApprovedPage({url,query=[],purpose='general',fetcher=f
   if(!type.includes('text/html')&&!type.includes('text/plain'))return {ok:false,reason:'unsupported-content-type'};
   if(Number(result.headers.get('content-length')||0)>MAX_BYTES)return {ok:false,reason:'source-too-large'};
   // Bound reads even when the server omits Content-Length.
-  const buffer=await result.arrayBuffer();
-  if(buffer.byteLength>MAX_BYTES)return {ok:false,reason:'source-too-large'};
-  const text=removeMarkup(new TextDecoder().decode(buffer));
+  const body=result.body?.getReader?.();
+  let bytes;
+  if(body){
+   const chunks=[];let count=0;
+   while(true){const {done,value}=await body.read();if(done)break;count+=value.byteLength;
+    if(count>MAX_BYTES){await body.cancel();return {ok:false,reason:'source-too-large'}}
+    chunks.push(value)}
+   bytes=new Uint8Array(count);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength}
+  }else{
+   bytes=new Uint8Array(await result.arrayBuffer());
+   if(bytes.byteLength>MAX_BYTES)return {ok:false,reason:'source-too-large'};
+  }
+  const text=removeMarkup(new TextDecoder().decode(bytes));
   if(text.length<75)return {ok:false,reason:'insufficient-content'};
   const snippet=findExcerpt(text,query);
   return {ok:true,url:accepted.url,category:accepted.category,checkedAt:new Date().toISOString(),
