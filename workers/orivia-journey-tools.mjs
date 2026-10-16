@@ -16,7 +16,7 @@ export function normaliseJourney(raw){
  if(!raw||typeof raw!=='object'||Array.isArray(raw)||!text(raw.id,90)||!text(raw.title))return null;
  if(!Array.isArray(raw.steps)||!raw.steps.length||raw.steps.length>100)return null;
  const steps=raw.steps.map(step=>{
-  if(!step||!text(step.id,90)||!text(step.title)||!step.source||!validUrl(step.source.url)||!/^\\d{4}-\\d{2}-\\d{2}$/.test(text(step.source.checkedAt,20)))return null;
+  if(!step||!text(step.id,90)||!text(step.title)||!step.source||!validUrl(step.source.url)||!/^\d{4}-\d{2}-\d{2}$/.test(text(step.source.checkedAt,20)))return null;
   return {...step,id:text(step.id,90),title:text(step.title),source:{url:step.source.url,checkedAt:step.source.checkedAt}};
  });
  if(steps.some(s=>!s)||new Set(steps.map(s=>s.id)).size!==steps.length)return null;
