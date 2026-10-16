@@ -36,9 +36,9 @@ function eventRow(e,past){
  const t=el('div','t');const time=d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});const m=time.match(/^(.*?)\s*([AaPp]\.?[Mm]\.?)$/);
  t.append(el('b','',m?m[1]:time),el('small','',m?m[2]:d.toLocaleDateString(undefined,{weekday:'short'})));
  const b=el('div','b');b.append(el('strong','',e.title),el('span','tiny',d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})+' · saved in Orivia'));
- const acts=el('div','acts');const a=el('a','','Google Calendar ↗');a.href=googleEvent(e);a.setAttribute('aria-label','Add '+e.title+' to Google Calendar');a.target='_blank';a.rel='noopener noreferrer';
+ const acts=el('div','acts');const device=el('a','','Add to device calendar ↗');device.href='/reminder.ics?'+new URLSearchParams({title:e.title,when:new Date(e.at).toISOString(),alarm:'30'}).toString();device.setAttribute('aria-label','Download calendar event for '+e.title+'; confirm import in your device calendar');device.title='Opens or downloads a calendar file. Confirm Save in your calendar app.';const a=el('a','','Google Calendar ↗');a.href=googleEvent(e);a.setAttribute('aria-label','Add '+e.title+' to Google Calendar');a.target='_blank';a.rel='noopener noreferrer';
  const rm=button('Remove','',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent='Tap again to remove';return}removeEvent(e.id)});
- acts.append(a,rm);b.append(acts);row.append(t,b);return row;
+ if(new Date(e.at).getTime()>Date.now()+60000)acts.append(device);acts.append(a,rm);b.append(acts);row.append(t,b);return row;
 }
 function renderEvents(){
  loadEvents();
