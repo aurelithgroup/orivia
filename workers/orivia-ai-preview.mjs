@@ -59,6 +59,23 @@ function makeMessages(history, prefs) {
   const language = languages[lang] || 'English';
   return [{role:'system',content:SYSTEM+'\nRequested response language: '+language+'. Conversation style: '+style+'.'}, ...history];
 }
+/**
+ * Conservative last-line sanity check for claims that require live sources.
+ * This supplements, but cannot replace, official-source retrieval and audits.
+ */
+function reviewUnsupportedClaims(history, answer) {
+ const lastUser=history.filter(t=>t.role==='user').slice(-3).map(t=>t.content).join(' ');
+ const trip=/university|commut|travel|transport|route|metro|bus|drive|driving|directions|campus/i.test(lastUser);
+ const documents=/attest|certificat|visa|residen|document|school record/i.test(lastUser);
+ const specifics=/\b\d+(?:\.\d+)?\s*(?:minutes?|mins?|hours?|hrs?|km|kilomet(?:er|re)s?|AED|dirhams?)\b|\bbus\s*(?:route|number|no\.?|#)\s*\d+\b/i.test(answer);
+ if(trip&&specifics){
+  return 'I can help compare driving and public transport in terms of convenience, cost factors and flexibility, but I cannot confirm exact routes, times or fares without live transport data. What matters most for your journey: cost, journey time or reliability?';
+ }
+ if(documents&&/(?:must|mandatory|always|required)\b.{0,85}\b(?:attest|certificate|visa|document)|(?:attest|certificate)\b.{0,85}\b(?:must|mandatory|always|required)/i.test(answer)){
+  return 'I cannot confirm that requirement for your particular situation from verified sources yet. Please check with the school or relevant authority before paying for document services. Which institution are you dealing with?';
+ }
+ return answer;
+}
 function createHandler() {
   return {
     async fetch(request, env) {
@@ -103,7 +120,8 @@ function createHandler() {
           temperature:0.3,
           stream:false
         });
-        const reply = typeof output?.response === 'string' ? output.response.trim() : '';
+        const draft = typeof output?.response === 'string' ? output.response.trim() : '';
+        const reply = reviewUnsupportedClaims(messages,draft);
         if (!reply) return json({error:'Model returned no answer'},502,origin);
         return json({reply:reply.slice(0,2400),verifiedSources:[],toolsUsed:[],
           liveInformation:false,disclaimer:'No external information was fetched or verified.'},200,origin);
@@ -113,5 +131,5 @@ function createHandler() {
     }
   };
 }
-export {createHandler, makeMessages, normaliseMessages};
+export {createHandler, makeMessages, normaliseMessages, reviewUnsupportedClaims};
 export default createHandler();
