@@ -93,3 +93,13 @@ The founder-only private AI Worker was updated with two new modules:
 - Security: the existing Cloudflare founder-only Access policy, runtime identity check, 5/min rate limit and 30 AI inferences/day counter remain unchanged. Official-site fetch is bounded to at most two pages per conversational request.
 - Tests: `tests/live-official-and-reminders.test.mjs` checks URL filtering, simulated live fetch, overdue-time rejection and valid ICS alarm generation; direct isolated checks also passed. We have NOT yet verified actual live official-page fetch or calendar import inside the user's browser.
 - Future: site-wide official search needs a reviewed search API/index and per-domain citation and crawl policies; true automated reminders need explicit user authorization, calendar integration or push infrastructure.
+
+## Conversational app + direct calendar handoff (16 October 2026)
+- Reworked **private founder trial** to present Chat and My calendar as adjacent tabs. The conversational style prompt now prioritises topic continuity, concise useful answers and natural tone over rote customer-service scripts.
+- Users can save events with a title and explicit future date/time in **Orivia’s own browser-local calendar**. Events appear in the calendar tab and can be removed. They are stored only in browser `localStorage` for the current origin, not synced between devices; clearing site storage removes them.
+- Each event has a **Google Calendar event draft link**, with its name and exact UTC start/end prefilled. No downloadable ICS file is involved in the new UI. Google must be signed into and the user must explicitly click **Save** in Google Calendar to add it there. Custom Google reminders use the user's Google Calendar settings: the current draft link does not configure notification timing.
+- The old authenticated `/reminder.ics` endpoint remains for backward compatibility, but is not shown in the interface.
+- No OAuth access or server write to a calendar was configured. **Orivia cannot confirm that a Google event has been saved**, read existing Google Calendar events, or send push notifications, and must not claim that it can.
+- Reminder intent in the chat offers a pre-filled event title as a UI convenience, not a claim of reliable date extraction or automatic scheduling.
+- Source of truth in this stage: locally saved Orivia events and the user's own Google Calendar account after confirmation. Future next phase is Google Calendar OAuth integration with permission scopes, revocation and genuine sync.
+- Added `tests/native-calendar.test.cjs` to CI for UI and Google draft construction.
