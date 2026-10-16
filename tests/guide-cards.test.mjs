@@ -28,9 +28,9 @@ assert.equal(kind([u('I just moved here with my kids')]), null);
 /* 3–6. Three choices; Not now never saves; the card is not repeated */
 const js = fs.readFileSync('workers/trial-ui/chat.js', 'utf8');
 for (const label of ['Follow guide', 'Save for later', 'Not now']) assert.ok(js.includes("'" + label + "'"), label);
-const notNow = js.slice(js.indexOf("button('Not now'"), js.indexOf('card.append(row)'));
+const notNow = js.slice(js.indexOf("button('Not now'"), js.indexOf('card.append(row)', js.indexOf("button('Not now'")));
 assert.doesNotMatch(notNow, /setJourney/, 'Not now must not save the guide');
-assert.match(js, /status:'following'/); assert.match(js, /status:'saved'/);
+assert.match(js, /status:'active'/); assert.match(js, /status:'saved'/);
 assert.equal(kind([u("I'll take the metro")], { offered: ['dubai.nol'] }), null, 'once per conversation');
 assert.equal(kind([u("I'll take the metro")], { following: ['dubai.nol'] }), null, 'not offered again while following');
 assert.equal(kind([u("I'll take the metro")], { saved: ['dubai.nol'] }), null);
@@ -38,9 +38,20 @@ assert.equal(kind([u("I'll take the metro")], { saved: ['dubai.nol'] }), null);
 /* 7. Asking later brings the same guide back, even if it was offered, dismissed or followed */
 assert.equal(kind([u('wait how does the nol card work again?')], { offered: ['dubai.nol'] }), 'refresher:dubai.nol');
 const back = offer([u('remind me how the metro works')], { following: ['dubai.nol'] }).offer;
-assert.deepEqual([back.kind, back.status], ['refresher', 'following']);
+assert.deepEqual([back.kind, back.status], ['refresher', 'active']);
 const gate = offer([u("the gate won't open")]).offer;
 assert.equal(gate.kind, 'problem'); assert.equal(gate.problem.id, 'gate'); assert.ok(gate.problem.answer.length > 20);
+
+/* Journeys tab: paused or completed journeys aren't re-offered; "where was I?" resolves against the person's own journeys */
+assert.equal(kind([u("I'll take the metro")], { paused: ['dubai.nol'] }), null);
+assert.equal(kind([u("I'll take the metro")], { done: ['dubai.nol'] }), null);
+assert.equal(offer([u('show me my transport guide')], { paused: ['dubai.nol'] }).offer.status, 'paused');
+assert.equal(kind([u('where was I?')], { following: ['dubai.nol'] }), 'refresher:dubai.nol');
+assert.match(offer([u('where was I?')], { following: ['dubai.nol', 'dubai.sim'] }).context, /Ask which one/);
+assert.match(offer([u('what do I do next?')], {}).context, /not following any guide/);
+for (const label of ['Pause journey', 'Resume journey', 'Mark completed', 'Mark this step done', 'Mark as not done', 'Open saved guide', 'Preview guide', 'Return to Chat'])
+  assert.ok(js.includes(label) || fs.readFileSync('workers/trial-ui/page.html', 'utf8').includes(label), label);
+assert.match(js, /removes it and its progress from this device/, 'remove asks before losing progress');
 
 /* 8. The Dubai nol guide only when it fits the actual route */
 const dubaiTrip = [u('How do I get to Heriot-Watt from JLT?'), a('What matters most for this trip: time, cost or reliability?'), u('time'), a('Open the buttons below'), u("I think I'll take public transport")];
@@ -76,6 +87,10 @@ assert.equal(d.guideOffer.kind, 'problem'); assert.doesNotMatch(d.reply, /travel
 let r = await worker.fetch(new Request(HOST + '/v1/guides/dubai.nol'), env, ctx);
 assert.equal(r.status, 200); assert.equal((await r.json()).guide.id, 'dubai.nol');
 r = await worker.fetch(new Request(HOST + '/v1/guides/dubai.nope'), env, ctx); assert.equal(r.status, 404);
+r = await worker.fetch(new Request(HOST + '/v1/guides'), env, ctx);
+const lib = (await r.json()).guides;
+assert.ok(lib.length >= 15 && lib.every(x => x.city === 'dubai' && x.category && x.checkedAt), 'library lists only real Dubai guides');
+assert.ok(!lib.some(x => x.id.startsWith('edinburgh')));
 r = await worker.fetch(new Request(HOST + '/v1/guides/dubai.nol'), env, {}); assert.equal(r.status, 401, 'guides stay behind founder-only access');
 
 console.log('Journey cards: reusable, decision-only, three choices, no nagging, refreshers, route-aware nol guide: passed');

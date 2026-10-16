@@ -1,4 +1,15 @@
-# Journey cards (private AI trial)
+# Journeys (private AI trial)
+
+Bottom navigation: **Chat | Calendar | Help | Journeys | My Life**. Journeys replaces Explore.
+
+- **My Journeys** (top): guides the person chose to follow or save. Active first, then Paused, Saved for later and Completed. Each card has ⋯ to pause or resume, mark completed, or remove (asks first if progress would be lost). Empty state: "No journeys yet. Explore below, or ask Orivia what you need help with."
+- **Explore Journeys** (below): the checked Dubai guides from `GET /v1/guides`, grouped into categories that only appear when guides exist, with search. Each card offers Follow guide, Save for later and Preview.
+- **Inside a journey**: status, reviewed date, step N of M, progress, All steps (the person's own ticks; tap to jump), What to do now / What you'll need / What to expect / Ask staff, Mark this step done (and Mark as not done), Things that might go wrong, Official sources, Ask Orivia about this step. Journeys and Chat buttons at the top; returning to Chat keeps the conversation.
+- **In Chat**, asking again shows the same card in its current state: Continue guide · Step N (active), Resume (paused), Open saved guide (saved), Preview guide (not saved). "Where was I?" uses the person's own journeys, and asks which one if there are several.
+- **My Life** shows a short "What I'm working on" summary only.
+- Progress is saved on this device only. Only journey ids and states are sent to the AI, never step content or anything personal. Steps change only when the person ticks them.
+
+## Journey cards
 
 When something the person **decides** makes a checked guide useful, Orivia shows a card under her reply:
 

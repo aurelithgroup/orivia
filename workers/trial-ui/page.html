@@ -53,7 +53,7 @@ textarea#msg{flex:1;min-width:0;resize:none;max-height:140px;padding:11px 14px;b
 #send{width:46px;height:46px;border-radius:50%;border:0;background:var(--amber);color:#1C2733;display:grid;place-items:center;flex:none}
 #send svg{width:20px;height:20px}
 #status{font-size:12px;color:var(--muted);padding:4px 6px 0;min-height:18px}
-/* Calendar, explore, my life */
+/* Calendar, journeys, my life */
 .section{display:flex;flex-direction:column;gap:12px}
 .list{display:flex;flex-direction:column;gap:10px}
 #events{display:flex;flex-direction:column;gap:10px}
@@ -72,15 +72,49 @@ form.stack{display:flex;flex-direction:column;gap:10px}
 .soon{border:1px dashed var(--line);border-radius:14px;padding:13px 14px;color:var(--muted);font-size:14px}
 .check{display:flex;gap:10px;align-items:flex-start;font-size:14px}
 .check input{width:20px;height:20px;flex:none;margin-top:2px}
+/* Journeys tab */
+.jhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.chip-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 14px;font-weight:700;font-size:14px;min-height:40px;flex:none}
+.chip-btn svg{width:18px;height:18px}
+.sechead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.rule{border:0;border-top:1px solid var(--line);margin:8px 0;width:100%}
+.empty{border:1px dashed var(--line);border-radius:14px;padding:16px;color:var(--muted);font-size:14px}
+.jcard{flex:none;border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.jcard h3{font-size:17px}
+.jtop{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:24px}
+.state{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.state.active{background:#DDF0E6;color:#1D7F55;border-color:transparent}
+.state.paused{background:var(--amberSoft);color:#7A5B00;border-color:transparent}
+.state.done{background:#E3E8F3;color:#2C4A86;border-color:transparent}
+@media (prefers-color-scheme:dark){.state.active{background:#15342A;color:#46C08A}.state.paused{color:var(--amber)}.state.done{background:#1D2A44;color:#9DB8F2}}
+.more{border:0;background:none;color:var(--ink);font-size:22px;line-height:1;min-width:44px;min-height:40px;border-radius:10px}
+.menu{border-top:1px solid var(--line);padding-top:8px}
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);padding:0 12px}
+.search svg{width:18px;height:18px;color:var(--muted);flex:none}
+.search input{border:0;background:none;padding:11px 0}
+.btn.wide{width:100%}
+.row.spread{justify-content:space-between}
+.cats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.cat{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:start;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:10px 12px;min-height:76px}
+.cat svg{width:24px;height:24px;margin-bottom:4px}
+.cat.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-radius:12px;padding:10px 12px;background:var(--amberSoft)}
+.steps{border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.steps summary{font-weight:700;cursor:pointer}
+.steps ol{margin:8px 0 0}
+.linkish{border:0;background:none;color:var(--ink);text-align:start;padding:6px 0;font-size:15px;min-height:36px}
+.linkish.here{font-weight:800}
+.sources{margin:0;padding-inline-start:20px}
 /* Journey card and guide view */
+.jcard.suggest{border-inline-start:5px solid var(--amber);max-width:94%;align-self:flex-start;margin:4px 16px 0}
 .guide-card{border:1px solid var(--line);border-inline-start:5px solid var(--amber);border-radius:14px;padding:14px 14px 12px;background:var(--surface);display:flex;flex-direction:column;gap:8px;max-width:94%;align-self:flex-start;margin:4px 16px 0}
 .guide-card h3{font-size:17px}
 .kicker{font-size:12px;font-weight:700;letter-spacing:.03em;color:var(--muted);margin:0}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .btn.small{min-height:42px;padding:9px 14px;font-size:14px}
 .btn.text{background:none;color:var(--muted);border:0;font-weight:600}
-.progress{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;border:1px solid var(--line)}
-.progress i{display:block;height:100%;background:var(--amber)}
+.progress{flex:none;height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;border:1px solid var(--line)}
+.progress i{display:block;height:100%;background:var(--ok)}
 .label{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-top:4px}
 #guide-body ol,#guide-body ul{margin:0;padding-inline-start:22px;display:flex;flex-direction:column;gap:4px}
 #guide-body details{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}
@@ -150,16 +184,19 @@ nav.bottom .help-tab{color:var(--ink)}
    <button class="btn" type="submit">Save in Orivia calendar</button></form>
    <p id="reminder-status" role="status" class="notice"></p></section>
  </div></section>
- <section id="explore" class="view" hidden><div class="pad section" style="overflow:auto">
-  <h2>Explore</h2>
-  <p class="notice">Checked guides and official sources. Tap “Ask Orivia” to talk any of them through.</p>
-  <h3>My journeys</h3>
+ <section id="journeys" class="view" hidden><div class="pad section" style="overflow:auto">
+  <div class="jhead"><div><h2>Journeys</h2><p class="notice">Everything you’re working through, in one place.</p></div><button id="back-chat" type="button" class="chip-btn" aria-label="Return to Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Chat</button></div>
+  <div class="sechead"><h3>My Journeys</h3><span id="j-count" class="tiny"></span></div>
+  <p class="tiny">Pick up where you left off. Saved on this device.</p>
   <div class="list" id="my-journeys"></div>
-  <h3>Step-by-step guides</h3>
-  <div class="list" id="guides"></div>
+  <hr class="rule">
+  <div class="sechead"><h3>Explore Journeys</h3></div>
+  <label class="search" for="j-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg><input id="j-search" type="search" placeholder="Search guides" autocomplete="off"></label>
+  <div class="cats" id="j-cats"></div>
+  <div class="list" id="j-library"></div>
+  <p class="tiny">Checked guides for Dubai. Not every guide applies to everyone: ask Orivia if you’re not sure which one fits you.</p>
   <h3>Official sources</h3>
   <div class="list" id="officials"></div>
-  <p class="soon">Coming soon: useful places near you, services and opportunities, all from verified sources.</p>
  </div></section>
  <section id="mylife" class="view" hidden><div class="pad section" style="overflow:auto">
   <h2>My Life</h2>
@@ -173,7 +210,7 @@ nav.bottom .help-tab{color:var(--ink)}
     <button class="btn" type="submit">Save</button><p id="profile-status" class="notice" role="status"></p>
    </form></section>
   <section class="card"><h3>Coming up</h3><div id="upcoming" class="list"></div></section>
-  <section class="card"><h3>My journeys</h3><div id="life-journeys" class="list"></div></section>
+  <section class="card"><h3>What I’m working on</h3><div id="life-journeys" class="list"></div></section>
   <p class="soon">Coming soon: saved documents, plans and ongoing responsibilities, with your permission.</p>
   <section class="card"><h3>Your data</h3>
    <p class="notice">Your conversation is kept in this browser tab only. Your calendar, journeys and About me stay in this browser.</p>
@@ -189,7 +226,7 @@ nav.bottom .help-tab{color:var(--ink)}
  <button id="tab-chat" type="button" class="active" data-tab="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Chat</span></button>
  <button id="tab-calendar" type="button" data-tab="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Calendar</span></button>
  <button id="tab-help" type="button" class="help-tab" aria-haspopup="dialog"><span class="bub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/></svg></span>Help</button>
- <button id="tab-explore" type="button" data-tab="explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span>Explore</span></button>
+ <button id="tab-journeys" type="button" data-tab="journeys"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg><span>Journeys</span></button>
  <button id="tab-mylife" type="button" data-tab="mylife"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>My Life</span></button>
 </nav>
 <div id="help-sheet" class="scrim" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="help-title"><span class="grab"></span>
@@ -198,7 +235,7 @@ nav.bottom .help-tab{color:var(--ink)}
  <div class="em"><a href="tel:999"><b>999</b>Police</a><a href="tel:998"><b>998</b>Ambulance</a><a href="tel:997"><b>997</b>Fire</a></div>
  <button type="button" class="btn" id="help-wrong">Something went wrong? Tell Orivia</button>
  <button type="button" class="btn quiet" id="help-staff">Show a card asking staff for help</button>
- <a class="link-card" href="https://aurelithgroup.github.io/orivia/" target="_blank" rel="noopener noreferrer"><span><strong>Step-by-step guides</strong><small>Checked guides for visas, transport, health and more</small></span>↗</a>
+ <button type="button" class="btn quiet" id="help-journeys">Step-by-step guides in Journeys</button>
  <button type="button" class="btn quiet" id="help-close">Close</button>
 </div></div>
 <div id="staff-card" class="staff" hidden role="dialog" aria-modal="true" aria-label="Help card for staff"><button type="button" class="x" id="staff-close" aria-label="Close">×</button>
