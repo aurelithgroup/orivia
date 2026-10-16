@@ -50,3 +50,16 @@ A verified transport information interface, an auditable official-source retriev
 - The private frontend bridge supports passing recent messages, a server-validated same-origin endpoint, disabled/failure states, and opt-in AI data processing. These are mock-tested, not yet tested against the live service.
 - Automated offline test definitions are in `.github/workflows/orivia-ai-dev.yml`; workflow execution status has not been independently confirmed.
 - **Next blocker:** create and verify an actual private login policy (Cloudflare Access), protect a same-origin gateway, add a durable per-user and account-wide budget control, then ask the owner to test live AI in the preview. Do not enable on the public site before that.
+
+## Private founder AI trial (16 October 2026)
+A separate, authenticated Workers domain has been enabled:
+- Private URL: `https://orivia-ai-preview.habeebahsallah27.workers.dev/`
+- Cloudflare Access application: `Orivia Private AI Trial`; its only allowed email is the founder-provided tester account.
+- Current deployed source: `workers/orivia-ai-private-trial.mjs` (not the earlier development reference `workers/orivia-ai-preview.mjs`).
+- The Worker verifies the signed Cloudflare Access JWT: issuer, audience, expiration, email and RS256 signature against Cloudflare Access JWKS before serving content or invoking AI.
+- The conversation page requires browser consent before forwarding messages to Workers AI. Messages remain in browser session storage and are not intentionally stored in Orivia's database.
+- Limits: up to 5 requests per minute through Cloudflare's per-location rate limiter, plus a separate D1-backed hard daily ceiling of **30 inference attempts per UTC day**. Token output limit is 340. The daily counter does not contain chat messages or personal identifiers.
+- The private trial uses a real Cloudflare Workers AI model. It is **not** connected to the public Orivia preview, whose original Buddy remains limited and rule-based.
+- Access app, email allow rule, Worker deployment, AI and quota bindings, D1 counter table, and Workers subdomain were verified via Cloudflare's API. **Browser sign-in and real conversation request through this protected endpoint still require the founder's manual test.**
+- This is a research prototype, not a validated tool for actual travel, immigration, education or emergency decisions. It cannot retrieve live data or confirm legal requirements. Its heuristic response guard cannot guarantee accuracy.
+- Do not ask the user to share their Cloudflare one-time login code.
