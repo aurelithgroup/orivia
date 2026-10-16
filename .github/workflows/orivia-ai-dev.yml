@@ -44,6 +44,8 @@ jobs:
         run: node --test tests/journey-intelligence.test.mjs
       - name: Transport is actionable (Maps links, no made-up times, no stray reminders)
         run: node tests/transport-actions.test.mjs
+      - name: Device-first Maps and calendar handoffs
+        run: node tests/device-handoffs.test.mjs
       - name: Journey cards (decision-only, three choices, route-aware nol guide)
         run: node tests/guide-cards.test.mjs
       - name: Settings and Calendar
