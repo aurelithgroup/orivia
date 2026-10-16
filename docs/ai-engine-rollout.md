@@ -63,3 +63,14 @@ A separate, authenticated Workers domain has been enabled:
 - Access app, email allow rule, Worker deployment, AI and quota bindings, D1 counter table, and Workers subdomain were verified via Cloudflare's API. **Browser sign-in and real conversation request through this protected endpoint still require the founder's manual test.**
 - This is a research prototype, not a validated tool for actual travel, immigration, education or emergency decisions. It cannot retrieve live data or confirm legal requirements. Its heuristic response guard cannot guarantee accuracy.
 - Do not ask the user to share their Cloudflare one-time login code.
+
+## Milestone 5 — First verified university lookup (16 October 2026)
+A sourced, non-live university journey handoff has been added and deployed to the founder-only private AI Worker:
+- `workers/orivia-journey-sources.mjs` contains an explicit university registry with source date and official campus address for the University of Wollongong Dubai. Official source: https://www.uowdubai.ac.ae/contact-us.
+- During relevant trip conversations, this registry provides the model with independently confirmed campus context. The Worker sends `verifiedSources` and `actions` separately from generated prose.
+- Links open Google Maps driving/transit directions with the university destination and an origin if explicitly recoverable from user messages. URL scheme based on official Google Maps URLs docs: https://developers.google.com/maps/documentation/urls/get-started
+- Official Dubai Roads & Transport Authority public journey planning: https://rta.ae/wps/portal/rta/ae/home/rta-services/service-details?serviceId=209
+- The private trial UI shows these links as external actions, built as safe DOM anchors and restricted to known HTTPS domains.
+- **This is NOT a live route lookup.** The Worker does not fetch Google Maps directions or RTA schedules, cannot compare actual journey durations, and must not claim it has. The external planner computes current routes only when the user opens it.
+- Regression test added: `tests/journey-sources.test.mjs`. Deployment and AI access/budget bindings verified; the owner has not yet tested the updated journey UI.
+- Next: complete a proper routed-journey integration through a licensed data provider or official API, with departure times, provenance, user consent, results validation and per-request cost controls.
