@@ -1,4 +1,5 @@
 import {journeyResources} from './orivia-journey-sources.mjs';
+import {tryJourneyReply} from './orivia-ai-journey-adapter.mjs';
 import {validateEvidence,inspectSource} from './orivia-source-policy.mjs';
 import {readApprovedPage} from './orivia-official-live.mjs';
 import {createCalendarReminder} from './orivia-calendar-reminder.mjs';
@@ -65,6 +66,9 @@ export default {async fetch(req,env,ctx){
  if(Number(req.headers.get('Content-Length')||0)>16000)return reply({error:'Too large'},413);
  let input;try{const raw=await req.text();if(raw.length>16000)return reply({error:'Too large'},413);input=JSON.parse(raw)}catch(_){return reply({error:'Invalid JSON'},400)}
  if(!check(input?.messages))return reply({error:'Invalid conversation'},400);
+ // Checked read-only journey path; no user data is stored, and unknown steps fail closed.
+ const journeyAnswer=tryJourneyReply(input.messages);
+ if(journeyAnswer)return reply(journeyAnswer);
  if(!env.AI?.run||!env.AI_QUOTA?.limit)return reply({error:'AI not configured'},503);
  try{const q=await env.AI_QUOTA.limit({key:'private-test-global'});if(!q.success)return reply({error:'Try later'},429)}catch(_){return reply({error:'Quota unavailable'},503)}
  if(!env.BUDGET_DB?.prepare)return reply({error:'Daily trial limit is not configured'},503);
