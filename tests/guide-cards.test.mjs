@@ -49,7 +49,7 @@ assert.equal(offer([u('show me my transport guide')], { paused: ['dubai.nol'] })
 assert.equal(kind([u('where was I?')], { following: ['dubai.nol'] }), 'refresher:dubai.nol');
 assert.match(offer([u('where was I?')], { following: ['dubai.nol', 'dubai.sim'] }).context, /Ask which one/);
 assert.match(offer([u('what do I do next?')], {}).context, /not following any guide/);
-for (const label of ['Pause journey', 'Resume journey', 'Mark completed', 'Mark this step done', 'Mark as not done', 'Open saved guide', 'Preview guide', 'Return to Chat'])
+for (const label of ['Pause journey', 'Resume journey', 'Mark completed', 'Where are you with this step?', 'Next step', 'Save to My Journeys', 'Open saved guide', 'Preview guide', 'Return to Chat'])
   assert.ok(js.includes(label) || fs.readFileSync('workers/trial-ui/page.html', 'utf8').includes(label), label);
 assert.match(js, /removes it and its progress from this device/, 'remove asks before losing progress');
 
@@ -92,5 +92,29 @@ const lib = (await r.json()).guides;
 assert.ok(lib.length >= 15 && lib.every(x => x.city === 'dubai' && x.category && x.checkedAt), 'library lists only real Dubai guides');
 assert.ok(!lib.some(x => x.id.startsWith('edinburgh')));
 r = await worker.fetch(new Request(HOST + '/v1/guides/dubai.nol'), env, {}); assert.equal(r.status, 401, 'guides stay behind founder-only access');
+
+/* Step statuses: Waiting only where the guide has something to wait for; reading ahead never marks anything */
+const nol = guideContent('dubai.nol'), eid = guideContent('dubai.eid.student');
+assert.ok(nol.steps.every(s => !s.statuses.includes('waiting')), 'nothing to wait for in the nol guide');
+assert.ok(eid.steps.find(s => s.id === 'medical').statuses.includes('waiting'));
+assert.ok(eid.steps.every(s => s.statuses.includes('unsure') && s.statuses.includes('done')));
+assert.doesNotMatch(js, /Mark this step done/, 'marking done is a status choice, not a Next button');
+const goFn = js.slice(js.indexOf('const go=n=>'), js.indexOf('\n', js.indexOf('const go=n=>')));
+assert.doesNotMatch(goFn, /stepStatus/, 'moving between steps never changes a status');
+
+/* One record for Chat and Journeys */
+const progress = { 'dubai.eid.student': { permit: 'done', arrive: 'done', medical: 'waiting' } };
+d = await post([u("I'm a university student and I need help with my residence visa")], { following: ['dubai.eid.student'], progress });
+assert.equal(d.journey.from, 'journeys'); assert.equal(d.journey.currentStep, 'medical');
+assert.match(prompt, /THEIR OWN PROGRESS/); assert.match(prompt, /Waiting: Your medical fitness test/); assert.match(prompt, /step 3 of 8/);
+assert.doesNotMatch(d.reply, /Are you in the UAE now/, 'no re-asking what Journeys already knows');
+d = await post([u('where was I?')], { following: ['dubai.eid.student'], progress });
+assert.equal(d.guideOffer.kind, 'refresher'); assert.match(prompt, /First step not done: Your medical fitness test/);
+d = await post([u("I'm a university student and I need help with my residence visa"), a('Let’s work out where you are, one quick question at a time. Are you in the UAE now? (yes / no / not sure)'), u('yes'),
+  a('Have you sent your stamped entry permit to your university’s visa office? (yes / no / not sure)'), u('yes'), a('Have you done your medical fitness test? (yes / no / not sure)'), u('no')]);
+assert.deepEqual([d.journey.currentStep, d.journey.done], ['medical', ['permit', 'arrive']], 'chat placement can be saved to Journeys (the person confirms)');
+assert.match(js, /Save to My Journeys/); assert.match(js, /placementCard\(d\.journey\)/);
+const bad = (await import('../workers/orivia-guide-offers.mjs')).readGuideState({ guides: { progress: { 'dubai.nol': { gate: 'hacked', '<x>': 'done', understand: 'done' }, '../x': { a: 'done' } } } }).progress;
+assert.deepEqual(bad, { 'dubai.nol': { understand: 'done' } }, 'only valid ids and statuses are accepted');
 
 console.log('Journey cards: reusable, decision-only, three choices, no nagging, refreshers, route-aware nol guide: passed');

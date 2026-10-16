@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1C2733"><title>Orivia private AI trial</title>
 <style>
-:root{--ink:#18222D;--muted:#56616C;--line:#D6DBD4;--ground:#E9ECE7;--surface:#FFFFFF;--surface2:#F3F5F1;--sign:#1C2733;--signInk:#F4F6F7;--amber:#F2B90F;--amberSoft:#FFF3C9;--ok:#1D7F55;--warn:#A8480A;--focus:#2F6FEB;--navH:64px}
-@media (prefers-color-scheme:dark){:root{--ink:#E6EAEE;--muted:#9AA5B0;--line:#29333E;--ground:#0B1015;--surface:#141B23;--surface2:#1A232D;--sign:#080C10;--amberSoft:#3A3110;--ok:#46C08A;--warn:#F2914A;--focus:#7AA5FF;color-scheme:dark}}
+:root{--okSoft:#DDF0E6;--wait:#2C4A86;--waitSoft:#E3E8F3;--focusSoft:#E4ECFD;--ink:#18222D;--muted:#56616C;--line:#D6DBD4;--ground:#E9ECE7;--surface:#FFFFFF;--surface2:#F3F5F1;--sign:#1C2733;--signInk:#F4F6F7;--amber:#F2B90F;--amberSoft:#FFF3C9;--ok:#1D7F55;--warn:#A8480A;--focus:#2F6FEB;--navH:64px}
+@media (prefers-color-scheme:dark){:root{--okSoft:#15342A;--wait:#9DB8F2;--waitSoft:#1D2A44;--focusSoft:#18284A;--ink:#E6EAEE;--muted:#9AA5B0;--line:#29333E;--ground:#0B1015;--surface:#141B23;--surface2:#1A232D;--sign:#080C10;--amberSoft:#3A3110;--ok:#46C08A;--warn:#F2914A;--focus:#7AA5FF;color-scheme:dark}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{height:100%}
@@ -83,10 +83,9 @@ form.stack{display:flex;flex-direction:column;gap:10px}
 .jcard h3{font-size:17px}
 .jtop{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:24px}
 .state{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
-.state.active{background:#DDF0E6;color:#1D7F55;border-color:transparent}
+.state.active{background:var(--okSoft);color:var(--ok);border-color:transparent}
 .state.paused{background:var(--amberSoft);color:#7A5B00;border-color:transparent}
-.state.done{background:#E3E8F3;color:#2C4A86;border-color:transparent}
-@media (prefers-color-scheme:dark){.state.active{background:#15342A;color:#46C08A}.state.paused{color:var(--amber)}.state.done{background:#1D2A44;color:#9DB8F2}}
+@media (prefers-color-scheme:dark){.state.paused{color:var(--amber)}}
 .more{border:0;background:none;color:var(--ink);font-size:22px;line-height:1;min-width:44px;min-height:40px;border-radius:10px}
 .menu{border-top:1px solid var(--line);padding-top:8px}
 .search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);padding:0 12px}
@@ -105,6 +104,34 @@ form.stack{display:flex;flex-direction:column;gap:10px}
 .linkish{border:0;background:none;color:var(--ink);text-align:start;padding:6px 0;font-size:15px;min-height:36px}
 .linkish.here{font-weight:800}
 .sources{margin:0;padding-inline-start:20px}
+/* Steps in clear sections, and the step status picker */
+.step{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:14px;display:flex;flex-direction:column;gap:10px;flex:none}
+.step h3{font-size:19px}
+.blk{border-radius:12px;padding:10px 12px;background:var(--surface2);display:flex;flex-direction:column;gap:6px}
+.blk h4{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0}
+.blk ol,.blk ul{margin:0;padding-inline-start:22px;display:flex;flex-direction:column;gap:4px}
+.blk.b-tip{background:var(--amberSoft)}
+.blk.b-tip h4{color:var(--ink)}
+.blk.b-phrase{background:none;padding:0}
+.checks{list-style:none;padding-inline-start:0!important}
+.checks li::before{content:"☐ ";color:var(--muted)}
+.fact{font-weight:600}
+.more-text summary{color:var(--focus);font-weight:700;cursor:pointer}
+.sstate,.mark{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.mark{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0;margin-inline-end:8px}
+.sstate.done,.mark.done{background:var(--okSoft);color:var(--ok);border-color:transparent}
+.sstate.waiting,.mark.waiting,.state.waiting{background:var(--waitSoft);color:var(--wait);border-color:transparent}
+.sstate.unsure,.mark.unsure{background:var(--amberSoft);color:var(--ink);border-color:transparent}
+.sstate.in_progress,.mark.in_progress{background:var(--focusSoft);color:var(--focus);border-color:transparent}
+.statusbox{border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:8px;flex:none}
+.statusbox h4{margin:0;font-size:15px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg-btn{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:999px;padding:8px 13px;font-weight:600;font-size:14px;min-height:40px}
+.seg-btn.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.hint{font-size:14px;color:var(--muted)}
+/* Room for the raised Help button and the phone's home bar, so nothing hides under the navigation */
+.view>.pad{padding-bottom:calc(44px + env(safe-area-inset-bottom,0px))}
+.chat-scroll{padding-bottom:calc(36px + env(safe-area-inset-bottom,0px))}
 /* Journey card and guide view */
 .jcard.suggest{border-inline-start:5px solid var(--amber);max-width:94%;align-self:flex-start;margin:4px 16px 0}
 .guide-card{border:1px solid var(--line);border-inline-start:5px solid var(--amber);border-radius:14px;padding:14px 14px 12px;background:var(--surface);display:flex;flex-direction:column;gap:8px;max-width:94%;align-self:flex-start;margin:4px 16px 0}

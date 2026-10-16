@@ -53,6 +53,16 @@ export const GUIDES={
 const ID=/^[a-z]+(?:\.[a-z]+){1,3}$/;
 const WHERE_WAS_I=/\b(where was i|where am i up to|what do i do next|what'?s my next step|my journeys?|my guides?|continue my (?:guide|journey))\b/i;
 const txt=v=>typeof v==='string'?v:'';
+export const STEP_STATUSES=['not_started','in_progress','waiting','done','unsure'];
+/* The person's own ticks, in words the AI can use. Never inferred, never changed here. */
+export function progressSummary(id,steps){
+ const d=journey(id);if(!d||!steps)return '';
+ const j=d.journey,name=sid=>j.steps.find(x=>x.id===sid)?.title;
+ const of=st=>j.steps.filter(x=>steps[x.id]===st).map(x=>x.title);
+ const next=j.steps.find(x=>steps[x.id]!=='done');
+ const parts=[['Done',of('done')],['In progress',of('in_progress')],['Waiting',of('waiting')],['Not sure',of('unsure')]].filter(([,v])=>v.length).map(([k,v])=>k+': '+v.join('; '));
+ return 'THEIR OWN PROGRESS in “'+j.title+'” (ticked by them in Journeys, the same record the Journeys tab shows): '+(parts.join('. ')||'nothing ticked yet')+'.'+(next?' First step not done: '+next.title+'.':' Every step is ticked.')+' Use this instead of re-asking. Never change it yourself: if they say they finished something, offer to mark it and tell them they can tap the step’s status in Journeys.';
+}
 /* A problem's help comes as a short answer, calm words plus steps, or a choice of situations */
 function problemHelp(p){
  const steps=[...(p.guide?.steps||[]).map(g=>({title:txt(g.title),body:txt(g.body),list:(g.list||[]).filter(x=>typeof x==='string'),tip:txt(g.tip)})),
@@ -62,7 +72,13 @@ function problemHelp(p){
 export function readGuideState(prefs){
  const g=prefs&&typeof prefs==='object'&&prefs.guides&&typeof prefs.guides==='object'?prefs.guides:{};
  const ids=x=>Array.isArray(x)?x.filter(v=>typeof v==='string'&&ID.test(v)).slice(0,30):[];
- return {following:ids(g.following),saved:ids(g.saved),paused:ids(g.paused),done:ids(g.done),offered:ids(g.offered)};
+ const progress={};
+ if(g.progress&&typeof g.progress==='object')for(const [jid,steps] of Object.entries(g.progress).slice(0,10)){
+  if(!ID.test(jid)||!steps||typeof steps!=='object')continue;
+  const clean={};for(const [sid,st] of Object.entries(steps).slice(0,30))if(/^[a-z0-9_-]{1,30}$/.test(sid)&&STEP_STATUSES.includes(st))clean[sid]=st;
+  if(Object.keys(clean).length)progress[jid]=clean;
+ }
+ return {following:ids(g.following),saved:ids(g.saved),paused:ids(g.paused),done:ids(g.done),offered:ids(g.offered),progress};
 }
 function journey(id){const r=callJourneyApi('/api/v1/journeys/'+id);return r.status===200?r.data:null}
 
@@ -75,7 +91,7 @@ export function guideOffer(messages,{trip,profile,prefs}={}){
  let pick=null,context='';
  if(WHERE_WAS_I.test(latest)){
   const mine=[...state.following,...state.paused].filter((x,i,a)=>a.indexOf(x)===i);
-  if(mine.length===1)pick={id:mine[0],kind:'refresher'};
+  if(mine.length===1)pick={id:mine[0],kind:'refresher',progress:true};
   else if(mine.length>1)return {offer:null,context:'JOURNEYS: The person is following more than one guide ('+mine.map(id=>journey(id)?.journey?.title).filter(Boolean).join('; ')+'). Ask which one they mean before going on. Do not guess their progress.'};
   else return {offer:null,context:'JOURNEYS: The person is not following any guide yet. Say so kindly and ask what they would like help with; they can also browse the Journeys tab.'};
  }
@@ -83,7 +99,7 @@ export function guideOffer(messages,{trip,profile,prefs}={}){
   if(pick)break;
   const problem=g.problems.find(([,re])=>re.test(latest));
   if(problem){pick={id,kind:'problem',problemId:problem[0]};break}
-  if(g.refresher.test(latest)){pick={id,kind:'refresher'};break}
+  if(g.refresher.test(latest)){pick={id,kind:'refresher',progress:true};break}
   /* A decision anywhere in the recent conversation counts, so the card can appear once the route is known */
   if(users.slice(-6).some(u=>g.decision.test(u))){
    const fit=g.applies({trip,profile,thread});
@@ -101,6 +117,7 @@ export function guideOffer(messages,{trip,profile,prefs}={}){
   ...(p?{problem:(({id,question,answer})=>({id,question,answer}))(problemHelp(p))}:{})};
  const what={offer:'offering it, with Follow guide, Save for later and Not now',refresher:'bringing the guide back for them',problem:'showing the checked answer for “'+(p?.question||'')+'” from that guide'}[pick.kind];
  context='GUIDE CARD: Under your reply, Orivia shows a card for the checked guide “'+j.title+'”, '+what+'. Mention it in one short, natural sentence (for example “I’ve put a step-by-step guide below if you’d like help getting set up”). Do not list its steps, prices or rules yourself.';
+ if(pick.progress&&state.progress[j.id])context+='\n'+progressSummary(j.id,state.progress[j.id]);
  return {offer,context};
 }
 
@@ -115,7 +132,9 @@ export function guideContent(id){
   steps:j.steps.map(s=>({id:s.id,title:s.title,info:list(s.info),doThis:list(s.doThis),
    bring:(s.bring||[]).map(b=>b&&b.item).filter(x=>typeof x==='string'),tips:list(s.tips),
    cost:typeof s.cost==='string'?s.cost:'',time:typeof s.time==='string'?s.time:'',waitingFor:typeof s.waitingFor==='string'?s.waitingFor:'',
-   staffQuestion:typeof s.staffQuestion==='string'?s.staffQuestion:''})),
+   staffQuestion:typeof s.staffQuestion==='string'?s.staffQuestion:'',expect:txt(s.expect),
+   statuses:STEP_STATUSES.filter(x=>x!=='waiting'||s.waitingFor||s.appointment),
+   confirm:txt((j.checkups||[]).find(c=>c.step===s.id&&c.confirm)?.confirm)})),
   problems:(j.problems||[]).map(problemHelp).filter(p=>p.question&&(p.answer||p.steps.length)),
   fullGuideUrl:'https://aurelithgroup.github.io/orivia/?j='+encodeURIComponent(j.id)};
 }

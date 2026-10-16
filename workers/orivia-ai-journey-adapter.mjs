@@ -24,7 +24,7 @@ function response(reply,extra={}){
 const list=(xs,max=6)=>(Array.isArray(xs)?xs:[]).map(cleanse).filter(Boolean).slice(0,max);
 /* Facts for the current step, handed to the AI to explain in its own words.
    The AI phrases; the journey decides the facts. Nothing here is stored. */
-function stepContext(stepId){
+function stepContext(stepId,extra={}){
  const detail=fetchData('/api/v1/journeys/'+ID+'/steps/'+stepId);
  if(!detail?.step)return {reply:'I couldn’t load the checked details for that step just now. Your university visa office can tell you what comes next.',verifiedSources:[],liveSources:[],actions:[],liveInformation:false,liveJourneyData:false};
  const st=detail.step, source=st.source||{};
@@ -35,6 +35,7 @@ function stepContext(stepId){
  const templates=(detail.problems||[]).filter(p=>p.contact?.say).slice(0,4).map(p=>'- If "'+cleanse(p.question)+'": '+cleanse(p.answer)+' Message to send: "'+cleanse(p.contact.say)+'"').join('\n');
  const lines=[
   'CHECKED ORIVIA JOURNEY FACTS (the only source for process steps, documents, timings and contacts in your reply):',
+  extra.progressLine||'',
   'Journey: '+cleanse(detail.journey?.title)+'. The person is at step '+detail.position.index+' of '+detail.position.of+': '+cleanse(st.title)+'.',
   st.now?'Right now: '+cleanse(st.now):'',
   list(st.doThis).length?'What happens: '+list(st.doThis).join(' '):'',
@@ -47,9 +48,10 @@ function stepContext(stepId){
   'Guide reviewed '+(source.checkedAt||'unknown')+(sourceOk?'; general official reference: '+inspected.url+' (journey-level, not proof of university-specific details).':'.')+(detail.fresh?'':' This guide is due for review: say so and suggest confirming with the visa office.'),
   'HOW TO REPLY: Answer the person’s latest message directly, warmly, in 2-5 short sentences. If the previous reply offered both a message draft and a reminder and the user says "yes please", ask which one they want instead of repeating the step. If they say "what?" or sound confused, rephrase the last explanation in simpler words and ask what they want clarified. Do not repeat the same step or offer verbatim in consecutive answers. If they change topic, follow them. The first time, tell them where they are and the one next thing to do. Mention the guide and its review date once, briefly, not in every message. If they accept help drafting a message, write it from the matching template. If they want a reminder, tell them to type "remind me to …" and Orivia will set it up. Offer at most one next action. Never ask for passport, visa or ID numbers.'
  ].filter(Boolean).join('\n');
- return {journeyContext:lines,verifiedSources:evidence?[evidence]:[],journey:{id:ID,currentStep:stepId,requiresConfirmation:true}};
+ return {journeyContext:lines,verifiedSources:evidence?[evidence]:[],journey:{id:ID,currentStep:stepId,done:Array.isArray(extra.done)?extra.done:[],from:extra.from||'checkups',requiresConfirmation:true}};
 }
-export function tryJourneyReply(messages){
+/* opts.progress: the person's own step statuses for this journey from Journeys (ids and statuses only) */
+export function tryJourneyReply(messages,opts={}){
  if(!Array.isArray(messages)||!messages.length)return null;
  const last=cleanse(messages.at(-1)?.content);
  const history=messages.slice(0,-1);
@@ -71,6 +73,14 @@ export function tryJourneyReply(messages){
  const j=d.journey, checkups=get_checkups(j);
  if(!checkups.ok)return response('I cannot load the journey check-up questions right now.');
  const questions=checkups.questions;
+ /* Chat and Journeys share one record: if they've ticked steps in Journeys, start from there instead of re-asking */
+ const mine=opts.progress&&typeof opts.progress==='object'?opts.progress:null;
+ const askedBefore=history.some(m=>m.role==='assistant'&&questions.some(q=>m.content.includes(q.question)));
+ if(mine&&Object.keys(mine).length&&!askedBefore){
+  const next=j.steps.find(st=>mine[st.id]!=='done');
+  if(!next)return response('You’ve ticked every step of this guide in Journeys. If anything changes, your university visa office can confirm where things stand.',{journey:{id:ID,from:'journeys',complete:true}});
+  return stepContext(next.id,{from:'journeys',done:j.steps.filter(st=>mine[st.id]==='done').map(st=>st.id),progressLine:opts.progressLine||''});
+ }
  const answers={};
  for(let i=0;i<history.length-1;i++){
   if(history[i].role!=='assistant'||history[i+1].role!=='user')continue;
@@ -103,13 +113,13 @@ export function tryJourneyReply(messages){
   return response((first?'Let’s work out where you are, one quick question at a time. ':'')+cleanse(q.question)+' (yes / no'+(q.allowsUnsure?' / not sure':'')+')',{journey:{id:ID,status:'needs_answer',questionId:q.id}});
  }
  if(placement.status==='not_sure'){
-  return response('That is okay—we will not guess which steps are complete. '+(cleanse(placement.confirmHow)||'Your university visa office can confirm the status.')+' Would you like me to help draft a message?',{journey:{id:ID,status:'not_sure'}});
+  return response('That is okay—we will not guess which steps are complete. '+(cleanse(placement.confirmHow)||'Your university visa office can confirm the status.')+' Would you like me to help draft a message?',{journey:{id:ID,status:'not_sure',unsureStep:placement.currentStep||null,done:Array.isArray(placement.done)?placement.done:[]}});
  }
  if(placement.complete)return response('It looks like you have reached the end of these check-up questions. Please confirm your final status with the university visa office before treating the process as complete.');
  if(placement.stepId){
   const s=get_step(j,placement.stepId);
   if(!s.ok)return response('I could not validate that step. Let’s verify it with the university visa office.');
-  return stepContext(placement.stepId);
+  return stepContext(placement.stepId,{done:placement.done,from:'checkups'});
  }
  return response('I cannot determine the correct step yet. Could you tell me what your university has already confirmed?');
 }
