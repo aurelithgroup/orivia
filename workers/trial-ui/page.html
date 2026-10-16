@@ -1,7 +1,8 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1C2733"><title>Orivia private AI trial</title>
 <style>
-:root{--okSoft:#DDF0E6;--wait:#2C4A86;--waitSoft:#E3E8F3;--focusSoft:#E4ECFD;--ink:#18222D;--muted:#56616C;--line:#D6DBD4;--ground:#E9ECE7;--surface:#FFFFFF;--surface2:#F3F5F1;--sign:#1C2733;--signInk:#F4F6F7;--amber:#F2B90F;--amberSoft:#FFF3C9;--ok:#1D7F55;--warn:#A8480A;--focus:#2F6FEB;--navH:64px}
-@media (prefers-color-scheme:dark){:root{--okSoft:#15342A;--wait:#9DB8F2;--waitSoft:#1D2A44;--focusSoft:#18284A;--ink:#E6EAEE;--muted:#9AA5B0;--line:#29333E;--ground:#0B1015;--surface:#141B23;--surface2:#1A232D;--sign:#080C10;--amberSoft:#3A3110;--ok:#46C08A;--warn:#F2914A;--focus:#7AA5FF;color-scheme:dark}}
+:root{color-scheme:light;--okSoft:#DDF0E6;--wait:#2C4A86;--waitSoft:#E3E8F3;--focusSoft:#E4ECFD;--ink:#18222D;--muted:#56616C;--line:#D6DBD4;--ground:#E9ECE7;--surface:#FFFFFF;--surface2:#F3F5F1;--sign:#1C2733;--signInk:#F4F6F7;--amber:#F2B90F;--amberSoft:#FFF3C9;--ok:#1D7F55;--warn:#A8480A;--focus:#2F6FEB;--navH:64px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--okSoft:#15342A;--wait:#9DB8F2;--waitSoft:#1D2A44;--focusSoft:#18284A;--ink:#E6EAEE;--muted:#9AA5B0;--line:#29333E;--ground:#0B1015;--surface:#141B23;--surface2:#1A232D;--sign:#080C10;--amberSoft:#3A3110;--ok:#46C08A;--warn:#F2914A;--focus:#7AA5FF;color-scheme:dark}}
+:root[data-theme="dark"]{--okSoft:#15342A;--wait:#9DB8F2;--waitSoft:#1D2A44;--focusSoft:#18284A;--ink:#E6EAEE;--muted:#9AA5B0;--line:#29333E;--ground:#0B1015;--surface:#141B23;--surface2:#1A232D;--sign:#080C10;--amberSoft:#3A3110;--ok:#46C08A;--warn:#F2914A;--focus:#7AA5FF;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{height:100%}
@@ -67,7 +68,8 @@ form.stack{display:flex;flex-direction:column;gap:10px}
 .link-card strong{display:block}
 .link-card small{display:block}
 .pill{font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;background:#DDF0E6;color:#1D7F55;white-space:nowrap}
-@media (prefers-color-scheme:dark){.pill{background:#15342A;color:#46C08A}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pill{background:#15342A;color:#46C08A}}
+:root[data-theme="dark"] .pill{background:#15342A;color:#46C08A}
 .ask{border:0;background:none;color:var(--focus);font-weight:700;font-size:13px;padding:4px 0;text-align:start}
 .soon{border:1px dashed var(--line);border-radius:14px;padding:13px 14px;color:var(--muted);font-size:14px}
 .check{display:flex;gap:10px;align-items:flex-start;font-size:14px}
@@ -85,7 +87,8 @@ form.stack{display:flex;flex-direction:column;gap:10px}
 .state{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
 .state.active{background:var(--okSoft);color:var(--ok);border-color:transparent}
 .state.paused{background:var(--amberSoft);color:#7A5B00;border-color:transparent}
-@media (prefers-color-scheme:dark){.state.paused{color:var(--amber)}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .state.paused{color:var(--amber)}}
+:root[data-theme="dark"] .state.paused{color:var(--amber)}
 .more{border:0;background:none;color:var(--ink);font-size:22px;line-height:1;min-width:44px;min-height:40px;border-radius:10px}
 .menu{border-top:1px solid var(--line);padding-top:8px}
 .search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);padding:0 12px}
@@ -148,6 +151,52 @@ form.stack{display:flex;flex-direction:column;gap:10px}
 #guide-body summary{font-weight:700;cursor:pointer}
 #guide-body details p{margin-top:6px}
 .say{border-inline-start:3px solid var(--amber);padding:6px 10px;background:var(--amberSoft);border-radius:8px}
+/* Calendar */
+.icon-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;min-width:40px;min-height:40px;font-size:20px;line-height:1}
+.week{border:1px solid var(--line);border-radius:16px;padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:8px;flex:none}
+.weekhead{display:flex;justify-content:space-between;align-items:center}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.day{border:0;background:none;color:var(--ink);border-radius:12px;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:58px}
+.day small{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}
+.day b{font-size:17px;width:32px;height:32px;display:grid;place-items:center;border-radius:50%}
+.day.today b{box-shadow:inset 0 0 0 2px var(--amber)}
+.day.sel{background:var(--ink);color:var(--surface)}
+.day.sel small{color:var(--surface)}
+.day i{width:6px;height:6px;border-radius:50%;background:transparent}
+.day.has i{background:var(--amber)}
+.agenda{display:flex;flex-direction:column;gap:14px}
+.agroup{display:flex;flex-direction:column;gap:8px}
+.agroup h3{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.ev{display:grid;grid-template-columns:62px 1fr;gap:12px;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--surface);flex:none}
+.ev .t{border-inline-end:3px solid var(--amber);padding-inline-end:10px;display:flex;flex-direction:column}
+.ev .t b{font-size:16px}
+.ev .t small{font-size:12px;color:var(--muted)}
+.ev .b{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ev .b strong{overflow-wrap:anywhere}
+.ev .acts{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.ev .acts a{color:var(--focus);font-size:14px;font-weight:600}
+.ev .acts button{border:0;background:none;color:var(--muted);font-size:14px;font-weight:600;padding:4px 0;min-height:32px}
+.ev.past{opacity:.7}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* Header stays on one line on phones: each screen has its own heading */
+.chip{white-space:nowrap}
+@media (max-width:440px){header.top .top-title{display:none}header.top .gear{margin-inline-start:auto}}
+#cal-add{white-space:nowrap;flex:none}
+.toggle span{flex:1 1 200px;min-width:0}
+/* Settings */
+.gear{margin-inline-start:8px;border:0;background:none;color:var(--signInk);width:40px;height:40px;border-radius:10px;display:grid;place-items:center}
+.gear svg{width:22px;height:22px}
+.top-title:empty+.gear{margin-inline-start:auto}
+.set-group{border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:12px;flex:none}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.set-row.col{flex-direction:column;align-items:flex-start}
+.set-row span{font-weight:700;display:flex;flex-direction:column}
+.set-row small{font-weight:400}
+.toggle input{width:48px;height:28px;appearance:none;-webkit-appearance:none;border-radius:999px;background:var(--line);position:relative;flex:none;padding:0;border:0;cursor:pointer}
+.toggle input::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:22px;height:22px;border-radius:50%;background:var(--surface);transition:inset-inline-start .15s}
+.toggle input:checked{background:var(--ok)}
+.toggle input:checked::after{inset-inline-start:23px}
+:root.large .app{zoom:1.12}
 /* Bottom navigation with Help in the middle */
 nav.bottom{display:grid;grid-template-columns:repeat(5,1fr);align-items:end;border-top:1px solid var(--line);background:var(--surface);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
 nav.bottom button{border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:600;padding:4px 2px;min-height:48px;border-radius:12px}
@@ -164,7 +213,8 @@ nav.bottom .help-tab{color:var(--ink)}
 .em{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .em a{display:flex;flex-direction:column;align-items:center;padding:10px 4px;border-radius:12px;background:#FBE9DC;color:#7A3306;text-decoration:none;font-size:13px;font-weight:600}
 .em a b{font-size:22px}
-@media (prefers-color-scheme:dark){.em a{background:#3A2517;color:#F2914A}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .em a{background:#3A2517;color:#F2914A}}
+:root[data-theme="dark"] .em a{background:#3A2517;color:#F2914A}
 .staff{position:fixed;inset:0;z-index:30;background:var(--sign);color:var(--signInk);padding:calc(70px + env(safe-area-inset-top,0px)) 22px 28px;display:flex;flex-direction:column;justify-content:center;gap:20px;overflow:auto}
 .staff .ar{font-size:30px;line-height:1.5;color:var(--amber);font-weight:700;font-family:Tahoma,"Noto Naskh Arabic",sans-serif}
 .staff .en{font-size:26px;line-height:1.35;font-weight:700}
@@ -173,7 +223,7 @@ nav.bottom .help-tab{color:var(--ink)}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
 </style></head>
 <body><div class="app">
-<header class="top"><span class="brand">Oriv<b>i</b>a</span><span class="chip">Private AI trial</span><span class="top-title" id="view-title"></span></header>
+<header class="top"><span class="brand">Oriv<b>i</b>a</span><span class="chip">Private AI trial</span><span class="top-title" id="view-title"></span><button type="button" id="open-settings" class="gear" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>
 <main>
 <section id="intro" class="pad">
  <h1>Hi, I’m Orivia.</h1>
@@ -201,15 +251,13 @@ nav.bottom .help-tab{color:var(--ink)}
   </div>
  </section>
  <section id="calendar-panel" class="view" hidden><div class="pad section" style="overflow:auto">
-  <h2>My calendar</h2>
-  <p class="notice">Saved in this browser only. For phone alerts, open the event in Google Calendar, choose a notification and press Save.</p>
-  <div id="events"></div>
-  <section id="reminder" class="card"><h3>Create a reminder</h3>
-   <p class="notice">Or just ask in Chat, like “remind me to call the bank on Sunday”.</p>
-   <form id="reminder-form" class="stack"><label class="field" for="reminder-title">What should I remind you about?<input id="reminder-title" required maxlength="100" placeholder="Contact university admissions"></label>
-   <label class="field" for="reminder-when">Date and time<input id="reminder-when" type="datetime-local" required></label>
-   <button class="btn" type="submit">Save in Orivia calendar</button></form>
-   <p id="reminder-status" role="status" class="notice"></p></section>
+  <div class="jhead"><div><h2>Calendar</h2><p class="notice">Your reminders and important dates. Saved on this device.</p></div><button id="cal-add" type="button" class="btn small">+ Add</button></div>
+  <section class="week" aria-label="Week">
+   <div class="weekhead"><button id="wk-prev" type="button" class="icon-btn" aria-label="Previous week">‹</button><strong id="wk-label"></strong><button id="wk-next" type="button" class="icon-btn" aria-label="Next week">›</button></div>
+   <div class="days" id="wk-days"></div>
+  </section>
+  <div id="events" class="agenda"></div>
+  <p class="tiny">Phone alerts: open an event in Google Calendar, choose a notification and press Save.</p>
  </div></section>
  <section id="journeys" class="view" hidden><div class="pad section" style="overflow:auto">
   <div class="jhead"><div><h2>Journeys</h2><p class="notice">Everything you’re working through, in one place.</p></div><button id="back-chat" type="button" class="chip-btn" aria-label="Return to Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Chat</button></div>
@@ -239,12 +287,32 @@ nav.bottom .help-tab{color:var(--ink)}
   <section class="card"><h3>Coming up</h3><div id="upcoming" class="list"></div></section>
   <section class="card"><h3>What I’m working on</h3><div id="life-journeys" class="list"></div></section>
   <p class="soon">Coming soon: saved documents, plans and ongoing responsibilities, with your permission.</p>
-  <section class="card"><h3>Your data</h3>
-   <p class="notice">Your conversation is kept in this browser tab only. Your calendar, journeys and About me stay in this browser.</p>
+  <section class="card"><h3>Your data and settings</h3><p class="notice">Clear your conversation, delete saved information, change the theme or how Orivia talks to you.</p><button type="button" class="btn quiet" id="life-settings">Open Settings</button></section>
+  <p class="notice">Only the approved tester may access this trial. Official pages may be checked live; transport routes still need an external journey planner.</p>
+ </div></section>
+ <section id="settings-view" class="view" hidden><div class="pad section" style="overflow:auto">
+  <div class="jhead"><button type="button" class="ask" id="settings-back">← Back</button></div>
+  <h2>Settings</h2>
+  <section class="set-group"><h3>Appearance</h3>
+   <div class="set-row"><span>Theme</span><div class="seg" id="set-theme" role="radiogroup" aria-label="Theme"></div></div>
+   <div class="set-row"><span>Text size</span><div class="seg" id="set-size" role="radiogroup" aria-label="Text size"></div></div>
+  </section>
+  <section class="set-group"><h3>Orivia</h3>
+   <div class="set-row col"><span>How Orivia talks to you</span><div class="seg" id="set-tone" role="radiogroup" aria-label="How Orivia talks to you"></div><p class="tiny" id="tone-note"></p></div>
+   <label class="set-row toggle"><span>Suggest guides in chat<small class="tiny">When a step-by-step guide could help with something you’ve decided</small></span><input type="checkbox" id="set-suggest" role="switch"></label>
+   <div class="set-row"><span>About me in chats<small class="tiny" id="aboutme-state"></small></span><button type="button" class="btn quiet small" id="set-aboutme">Edit</button></div>
+  </section>
+  <section class="set-group"><h3>Privacy &amp; data</h3>
+   <p class="tiny">Your conversation is kept in this browser tab only. Your calendar, journeys, About me and settings stay in this browser. Messages are sent to Cloudflare Workers AI to get a reply. Orivia never needs passport, visa or ID numbers.</p>
    <button id="clear" type="button" class="btn quiet">Clear conversation</button>
    <button id="forget" type="button" class="btn quiet">Delete About me, calendar and journeys</button>
   </section>
-  <p class="notice">Only the approved tester may access this trial. Official pages may be checked live; transport routes still need an external journey planner.</p>
+  <section class="set-group"><h3>Help &amp; safety</h3>
+   <p class="tiny">In an emergency in the UAE, call:</p>
+   <div class="em"><a href="tel:999"><b>999</b>Police</a><a href="tel:998"><b>998</b>Ambulance</a><a href="tel:997"><b>997</b>Fire</a></div>
+   <p class="tiny"><strong>What Orivia can’t do yet:</strong> see live routes, journey times or fares; confirm immigration or visa decisions; keep your data across devices.</p>
+   <p class="tiny">Private AI trial · only approved testers can sign in.</p>
+  </section>
  </div></section>
  <section id="guide-view" class="view" hidden><div class="pad section" style="overflow:auto" id="guide-body"></div></section>
 </section>
@@ -256,6 +324,17 @@ nav.bottom .help-tab{color:var(--ink)}
  <button id="tab-journeys" type="button" data-tab="journeys"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg><span>Journeys</span></button>
  <button id="tab-mylife" type="button" data-tab="mylife"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>My Life</span></button>
 </nav>
+<div id="add-sheet" class="scrim" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="add-title"><span class="grab"></span>
+ <h2 id="add-title">New reminder</h2>
+ <form id="reminder-form" class="stack">
+  <label class="field" for="reminder-title">What should I remind you about?<input id="reminder-title" required maxlength="100" placeholder="e.g. Book my medical test"></label>
+  <div class="field" role="group" aria-labelledby="when-label"><span id="when-label">When?</span><div class="seg" id="when-quick"></div></div>
+  <div class="two"><label class="field" for="reminder-date">Date<input id="reminder-date" type="date" required></label><label class="field" for="reminder-time">Time<input id="reminder-time" type="time" value="09:00" required></label></div>
+  <button class="btn" type="submit">Save in Orivia calendar</button>
+  <p id="reminder-status" role="status" class="notice"></p>
+  <button type="button" class="btn text" id="add-cancel">Cancel</button>
+ </form>
+</div></div>
 <div id="help-sheet" class="scrim" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="help-title"><span class="grab"></span>
  <h2 id="help-title">Need help?</h2>
  <p class="notice">In an emergency in the UAE, call:</p>

@@ -3,9 +3,9 @@
 const key='orivia-ai-private-turns',ck='orivia-ai-private-consent',eventKey='orivia-private-events-v1',profileKey='orivia-private-profile-v1';
 let turns=[],busy=false,events=[];
 const $=id=>document.getElementById(id);
-const TITLES={chat:'',calendar:'My calendar',journeys:'Journeys',mylife:'My Life',guide:'Journeys'};
+const TITLES={chat:'',calendar:'Calendar',journeys:'Journeys',mylife:'My Life',guide:'Journeys',settings:'Settings'};
 function show(){
- $('intro').hidden=true;$('workspace').hidden=false;$('nav').hidden=false;
+ $('intro').hidden=true;$('workspace').hidden=false;$('nav').hidden=false;$('open-settings').hidden=false;
  try{const d=JSON.parse(sessionStorage.getItem(key)||'[]');turns=Array.isArray(d)?d.slice(-12).filter(x=>x&&['user','assistant'].includes(x.role)&&typeof x.content==='string'):[]}catch(_){turns=[]}
  draw();tab('chat');
 }
@@ -26,21 +26,69 @@ function googleEvent(e){
  return 'https://calendar.google.com/calendar/render?'+q.toString();
 }
 const when=e=>new Date(e.at).toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+/* Calendar: a week strip (dots on days with something) and an agenda grouped by when */
+let weekOffset=0,selectedDay=null;
+const dayKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const startOfDay=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x};
+function removeEvent(id){events=events.filter(x=>x.id!==id);storeEvents();renderEvents();renderUpcoming()}
+function eventRow(e,past){
+ const d=new Date(e.at),row=el('article','ev'+(past?' past':''));
+ const t=el('div','t');const time=d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});const m=time.match(/^(.*?)\s*([AaPp]\.?[Mm]\.?)$/);
+ t.append(el('b','',m?m[1]:time),el('small','',m?m[2]:d.toLocaleDateString(undefined,{weekday:'short'})));
+ const b=el('div','b');b.append(el('strong','',e.title),el('span','tiny',d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})+' · saved in Orivia'));
+ const acts=el('div','acts');const a=el('a','','Google Calendar ↗');a.href=googleEvent(e);a.setAttribute('aria-label','Add '+e.title+' to Google Calendar');a.target='_blank';a.rel='noopener noreferrer';
+ const rm=button('Remove','',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent='Tap again to remove';return}removeEvent(e.id)});
+ acts.append(a,rm);b.append(acts);row.append(t,b);return row;
+}
 function renderEvents(){
  loadEvents();
- const root=$('events');root.replaceChildren();
- const sorted=events.slice().sort((a,b)=>a.at.localeCompare(b.at));
- if(!sorted.length){const p=document.createElement('p');p.className='notice';p.textContent='Your calendar is empty. Ask Orivia in Chat to remind you about something, or add a reminder below.';root.append(p);return}
- for(const e of sorted){
-  const card=document.createElement('div');card.className='event';
-  const title=document.createElement('strong');title.textContent=e.title;card.append(title);
-  const date=document.createElement('p');date.className='tiny';date.textContent=when(e)+' • Orivia calendar only';card.append(date);
-  const row=document.createElement('div');row.style.cssText='display:flex;gap:12px;align-items:center;flex-wrap:wrap';
-  const anchor=document.createElement('a');anchor.href=googleEvent(e);anchor.target='_blank';anchor.rel='noopener noreferrer';anchor.textContent='Add to Google Calendar ↗';row.append(anchor);
-  const remove=document.createElement('button');remove.type='button';remove.textContent='Remove';remove.onclick=()=>{events=events.filter(x=>x.id!==e.id);storeEvents();renderEvents();renderUpcoming()};row.append(remove);
-  card.append(row);root.append(card);
+ const today=startOfDay(new Date());
+ const monday=new Date(today);monday.setDate(today.getDate()-((today.getDay()+6)%7)+weekOffset*7);
+ const days=$('wk-days');days.replaceChildren();
+ const has=new Set(events.map(e=>dayKey(new Date(e.at))));
+ for(let k=0;k<7;k++){
+  const d=new Date(monday);d.setDate(monday.getDate()+k);const key=dayKey(d);
+  const b=button('','day'+(key===dayKey(today)?' today':'')+(selectedDay===key?' sel':'')+(has.has(key)?' has':''),()=>{selectedDay=selectedDay===key?null:key;renderEvents()});
+  b.append(el('small','',d.toLocaleDateString(undefined,{weekday:'short'}).slice(0,3)),el('b','',String(d.getDate())),el('i'));
+  b.setAttribute('aria-pressed',String(selectedDay===key));b.setAttribute('aria-label',d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'})+(has.has(key)?', has reminders':''));
+  days.append(b);
  }
+ const sun=new Date(monday);sun.setDate(monday.getDate()+6);
+ $('wk-label').textContent=weekOffset===0?'This week':monday.toLocaleDateString(undefined,{day:'numeric',month:'short'})+' – '+sun.toLocaleDateString(undefined,{day:'numeric',month:'short'});
+ const root=$('events');root.replaceChildren();
+ const sorted=events.slice().sort((a,b)=>a.at.localeCompare(b.at)),now=Date.now();
+ if(selectedDay){
+  const list=sorted.filter(e=>dayKey(new Date(e.at))===selectedDay);
+  const g=el('section','agroup');g.append(el('h3','',new Date(selectedDay+'T12:00').toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'})));
+  if(!list.length)g.append(el('p','empty','Nothing on this day.'));
+  for(const e of list)g.append(eventRow(e,new Date(e.at).getTime()<now));
+  g.append(button('+ Add a reminder for this day','ask',()=>openAdd(selectedDay)),button('Show everything coming up','ask',()=>{selectedDay=null;renderEvents()}));
+  root.append(g);return;
+ }
+ const upcoming=sorted.filter(e=>new Date(e.at).getTime()>=now),past=sorted.filter(e=>new Date(e.at).getTime()<now);
+ if(!upcoming.length){const p=el('div','empty');p.append(el('p','','Nothing coming up. Add a reminder, or just tell Orivia in Chat: “remind me to call the bank on Sunday”.'));root.append(p)}
+ const tomorrow=new Date(today);tomorrow.setDate(today.getDate()+1);const weekEnd=new Date(today);weekEnd.setDate(today.getDate()+7);
+ const groups=[['Today',e=>dayKey(new Date(e.at))===dayKey(today)],['Tomorrow',e=>dayKey(new Date(e.at))===dayKey(tomorrow)],['This week',e=>new Date(e.at)<weekEnd],['Later',()=>true]];
+ const left=upcoming.slice();
+ for(const [name,test] of groups){const list=left.filter(test);if(!list.length)continue;for(const e of list)left.splice(left.indexOf(e),1);const g=el('section','agroup');g.append(el('h3','',name));for(const e of list)g.append(eventRow(e,false));root.append(g)}
+ if(past.length){const det=el('details','agroup');det.append(el('summary','tiny','Past ('+past.length+')'));for(const e of past.slice(-10).reverse())det.append(eventRow(e,true));root.append(det)}
 }
+/* Add a reminder: a short sheet with quick picks */
+function openAdd(day){
+ const f=$('reminder-form');f.reset();$('reminder-status').textContent='';$('reminder-time').value='09:00';
+ const today=startOfDay(new Date());$('reminder-date').min=dayKey(today);
+ $('reminder-date').value=day||dayKey(new Date(Date.now()+86400000));
+ const picks=[['Tomorrow',1],['In 3 days',3],['Next week',7]],q=$('when-quick');q.replaceChildren();
+ for(const [label,n] of picks){const d=new Date(today);d.setDate(today.getDate()+n);q.append(button(label,'seg-btn'+($('reminder-date').value===dayKey(d)?' on':''),()=>{$('reminder-date').value=dayKey(d);for(const x of q.children)x.classList.toggle('on',x.textContent===label)}))}
+ $('add-sheet').hidden=false;$('reminder-title').focus();
+}
+function closeAdd(){$('add-sheet').hidden=true;$('cal-add').focus()}
+$('cal-add').onclick=()=>openAdd(selectedDay);
+$('add-cancel').onclick=closeAdd;
+$('add-sheet').addEventListener('click',e=>{if(e.target.id==='add-sheet')closeAdd()});
+$('reminder-date').addEventListener('input',()=>{for(const x of $('when-quick').children)x.classList.remove('on')});
+$('wk-prev').onclick=()=>{weekOffset--;selectedDay=null;renderEvents()};
+$('wk-next').onclick=()=>{weekOffset++;selectedDay=null;renderEvents()};
 function renderUpcoming(){
  loadEvents();const root=$('upcoming');root.replaceChildren();
  const next=events.filter(e=>new Date(e.at).getTime()>Date.now()).sort((a,b)=>a.at.localeCompare(b.at)).slice(0,3);
@@ -50,17 +98,20 @@ function renderUpcoming(){
 }
 /* Switching sections: the bottom bar, and Orivia herself (window.oriviaGo) */
 function tab(which){
- const views={chat:'chat',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view'};
+ const views={chat:'chat',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view',settings:'settings-view'};
  if(!views[which])return;
- const navKey=which==='guide'?'journeys':which; // a guide opens inside Journeys
+ if(which!=='settings')lastTab=which;
+ const navKey=which==='guide'?'journeys':which; // a guide opens inside Journeys; Settings has no tab of its own
  for(const [k,id] of Object.entries(views)){$(id).hidden=k!==which;const b=$('tab-'+k);if(b){b.classList.toggle('active',k===navKey);b.setAttribute('aria-current',k===navKey?'page':'false')}}
  $('view-title').textContent=TITLES[which];
  if(which==='calendar')renderEvents();
+ if(which==='settings')renderSettings();
  if(which==='journeys')renderJourneys();
  if(which==='mylife'){renderUpcoming();loadProfile();renderJourneys()}
  if(which==='chat'){const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight}
 }
 window.oriviaGo=tab;
+let lastTab='chat';
 for(const b of document.querySelectorAll('nav.bottom [data-tab]'))b.onclick=()=>tab(b.dataset.tab);
 loadEvents();
 /* Ask Orivia from anywhere: fills the message box in Chat */
@@ -91,9 +142,43 @@ $('help-wrong').onclick=()=>{closeHelp();ask('Something went wrong: ',false)};
 $('help-journeys').onclick=()=>{closeHelp();tab('journeys')};
 $('help-staff').onclick=()=>{$('help-sheet').hidden=true;$('staff-card').hidden=false;$('staff-close').focus()};
 $('staff-close').onclick=()=>{$('staff-card').hidden=true;$('tab-help').focus()};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('staff-card').hidden)$('staff-close').click();else if(!$('help-sheet').hidden)closeHelp()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('staff-card').hidden)$('staff-close').click();else if(!$('add-sheet').hidden)closeAdd();else if(!$('help-sheet').hidden)closeHelp()}});
 /* Links Orivia attaches to a reply */
 function resources(items){let holder=$('journey-actions');if(!holder){holder=document.createElement('div');holder.id='journey-actions';holder.style.cssText='display:grid;gap:8px;font-size:13px';$('history').after(holder)}holder.replaceChildren();if(!Array.isArray(items))return;for(const x of items.slice(0,4)){try{const url=new URL(x.url);if(url.protocol!=='https:'||!['www.google.com','rta.ae','www.rta.ae','www.uowdubai.ac.ae','www.hw.ac.uk','hw.ac.uk'].includes(url.hostname))continue;const link=document.createElement('a');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.textContent=String(x.title||'Open source');link.style.cssText='display:block;padding:10px;border:1px solid var(--line);border-radius:12px;color:var(--focus)';holder.append(link)}catch(_){}}}
+/* ===== Settings: saved in this browser ===== */
+const settingsKey='orivia-private-settings-v1';
+const SET_DEFAULT={theme:'system',size:'standard',tone:'friendly',suggest:true};
+function readSettings(){try{const d=JSON.parse(localStorage.getItem(settingsKey)||'{}');return {...SET_DEFAULT,...(d&&typeof d==='object'?d:{})}}catch(_){return {...SET_DEFAULT}}}
+function writeSettings(patch){const n={...readSettings(),...patch};try{localStorage.setItem(settingsKey,JSON.stringify(n))}catch(_){}applySettings();renderSettings()}
+function applySettings(){
+ const s=readSettings(),root=document.documentElement;
+ if(s.theme==='light'||s.theme==='dark')root.dataset.theme=s.theme;else delete root.dataset.theme;
+ root.classList.toggle('large',s.size==='large');
+ const dark=s.theme==='dark'||(s.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);
+ document.querySelector('meta[name=theme-color]')?.setAttribute('content',dark?'#080C10':'#1C2733');
+}
+const TONE_NOTE={friendly:'Warm and conversational, like a helpful friend.',simple:'Short sentences and everyday words. Good if English isn’t your first language.',brief:'Straight to the point: the answer and the next step.'};
+function seg(rootId,options,current,onPick){
+ const root=$(rootId);root.replaceChildren();
+ for(const [value,label] of options){const b=button(label,'seg-btn'+(current===value?' on':''),()=>onPick(value));b.setAttribute('role','radio');b.setAttribute('aria-checked',String(current===value));root.append(b)}
+}
+function renderSettings(){
+ const s=readSettings();
+ seg('set-theme',[['system','System'],['light','Light'],['dark','Dark']],s.theme,v=>writeSettings({theme:v}));
+ seg('set-size',[['standard','Standard'],['large','Larger']],s.size,v=>writeSettings({size:v}));
+ seg('set-tone',[['friendly','Friendly'],['simple','Simple words'],['brief','Short answers']],s.tone,v=>writeSettings({tone:v}));
+ $('tone-note').textContent=TONE_NOTE[s.tone]||'';
+ $('set-suggest').checked=s.suggest!==false;
+ const p=readProfile();$('aboutme-state').textContent=p&&p.use?'On: Orivia uses what you saved in My Life':'Off: Orivia doesn’t use My Life details';
+}
+$('set-suggest').addEventListener('change',e=>writeSettings({suggest:e.target.checked}));
+$('set-aboutme').onclick=()=>tab('mylife');
+$('open-settings').onclick=()=>tab('settings');
+$('settings-back').onclick=()=>tab(lastTab||'chat');
+$('life-settings').onclick=()=>tab('settings');
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',applySettings);
+applySettings();
+
 /* ===== Journeys: guided life processes =====
    One card component for Chat suggestions, My Journeys and Explore Journeys.
    Journey states: active, paused, saved (bookmarked), done (the user confirmed it). "Not now" saves nothing.
@@ -205,7 +290,7 @@ function placeCard(card){card.id='guide-offer';($('journey-actions')||$('history
 function guideCard(o){
  $('guide-offer')?.remove();
  if(!o||typeof o.id!=='string'||!JID.test(o.id)||typeof o.title!=='string')return;
- if(o.kind==='offer'&&(readJourneys()[o.id]||offered().includes(o.id)))return; // never nag
+ if(o.kind==='offer'&&(readSettings().suggest===false||readJourneys()[o.id]||offered().includes(o.id)))return; // never nag; respects Settings
  markOffered(o.id);
  placeCard(journeyCard(o,'suggest',{kind:o.kind,problem:o.kind==='problem'?o.problem:null}));
 }
@@ -358,15 +443,13 @@ renderJourneys();
 $('reminder-form').addEventListener('submit',event=>{
  event.preventDefault();
  const title=$('reminder-title').value.trim().slice(0,100);
- const local=$('reminder-when').value;
- const at=new Date(local);
- if(!title||!local||!Number.isFinite(at.getTime())||at.getTime()<Date.now()+60000||at.getTime()>Date.now()+366*86400000){
-  $('reminder-status').textContent='Please choose a valid future date and time within one year.';return
+ const at=new Date($('reminder-date').value+'T'+($('reminder-time').value||'09:00'));
+ if(!title||!Number.isFinite(at.getTime())||at.getTime()<Date.now()+60000||at.getTime()>Date.now()+366*86400000){
+  $('reminder-status').textContent='Please choose a time in the future, within the next year.';return
  }
  const saved={id:'evt-'+Date.now()+'-'+Math.random().toString(36).slice(2),title,at:at.toISOString()};
- events.push(saved);storeEvents();$('reminder-form').reset();
- $('reminder-status').textContent='Saved on this device. Open Google Calendar, choose an alert, and save the event for phone notifications.';
- renderEvents();
+ events.push(saved);storeEvents();
+ selectedDay=null;weekOffset=0;closeAdd();renderEvents();renderUpcoming();
 });
 /* Message box grows with the text; Enter sends, Shift+Enter adds a line */
 function grow(){const m=$('msg');m.style.height='auto';m.style.height=Math.min(m.scrollHeight,140)+'px'}
@@ -382,7 +465,7 @@ $('form').onsubmit=async e=>{
  $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});turns=turns.slice(-12);save();draw();
  busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';
  try{
-  const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:turns,preferences:{language:'en',style:'friendly',profile:profileForAI(),guides:guidesForAI()}})});
+  const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:turns,preferences:{language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI()}})});
   const d=await r.json().catch(()=>({}));
   if(!r.ok){$('status').textContent=r.status===429?'Trial limit reached. Try again later.':'Private AI is temporarily unavailable. Please try again.';return}
   if(typeof d.reply!=='string'||!d.reply.trim())throw Error('empty');

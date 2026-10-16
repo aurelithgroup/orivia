@@ -105,6 +105,7 @@ export function guideOffer(messages,{trip,profile,prefs}={}){
    const fit=g.applies({trip,profile,thread});
    if(!fit.ok){if(fit.note)context=fit.note;continue}
    if(['following','saved','paused','done','offered'].some(k=>state[k].includes(id)))continue; // never nag
+   if(prefs?.suggestGuides===false)continue; // turned off in Settings; asking for a guide still works
    pick={id,kind:'offer'};break;
   }
  }

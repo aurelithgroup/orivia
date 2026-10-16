@@ -46,6 +46,8 @@ jobs:
         run: node tests/transport-actions.test.mjs
       - name: Journey cards (decision-only, three choices, route-aware nol guide)
         run: node tests/guide-cards.test.mjs
+      - name: Settings and Calendar
+        run: node tests/settings-calendar.test.mjs
       - name: AI Worker contract and safety tests
         run: node tests/ai-preview.test.mjs
       - name: Read-only journey tool regression tests
