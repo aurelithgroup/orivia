@@ -98,4 +98,13 @@ assert.equal(planTrip([...trip, u('what?')]).confused, true);
 assert.equal(planTrip([...trip, u('actually I live in Muwaileh')]).origin, 'Muwaileh');
 assert.equal(planTrip([...trip, u('can you help me open a bank account?')]).active, false);
 
+/* 7. A short check-up answer MUST NOT revive an older transport topic.
+   Regression: "Have you done your medical fitness test?" -> "no" previously returned Maps advice. */
+const oldTrip=[u('I need help getting to university.'),a('Where are you leaving from?'),u('Sharjah')];
+for(const answer of ['yes','no','not sure']){
+ const visaAnswer=[...oldTrip,a('Have you done your medical fitness test? (yes / no / not sure)'),u(answer)];
+ assert.equal(planTrip(visaAnswer).active,false,'visa check-up answer '+answer+' must not trigger transport');
+}
+assert.equal(planTrip([...oldTrip,a('What matters most for this trip: time, cost or reliability?'),u('time')]).active,true,'genuine transport answer remains transport');
+
 console.log('Transport actions: commute links, broad origin, "time" follow-up, visa→transport, no stray reminders, no made-up numbers: passed');
