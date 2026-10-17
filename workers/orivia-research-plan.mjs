@@ -2,7 +2,7 @@
  * Unrecognised questions remain on the existing chat path; uncertain research
  * requests clarify instead of using a community source for a consequential fact.
  */
-const clean=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'");
+const clean=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/\b(curriculum|curricula)(schools?)\b/g,'$1 $2');
 const UAE=/\b(uae|united arab emirates|dubai|sharjah|abu dhabi|ajman|fujairah|umm al quwain|ras al khaimah)\b/i;
 const UK=/\b(uk|united kingdom|britain|england|scotland|wales|northern ireland|edinburgh|london|manchester|birmingham|glasgow)\b/i;
 const EMIRATES=['Dubai','Sharjah','Abu Dhabi','Ajman','Fujairah','Umm Al Quwain','Ras Al Khaimah'];
@@ -36,7 +36,7 @@ export function planResearch(messages,profile){
  const previous=clean(assistants.at(-1)?.content);
  // An assistant's offer identifies the pending TASK, never factual evidence or
  // a confirmed location. Short replies must not lose a lookup already offered.
- const continuing=latest.length<180&&(/^(?:yes|yeah|yep|sure|please|ok|okay|bruh|um+|uh+|i think so|not sure|i'm not sure|british|american|indian|english)\b/.test(latest)||/\b(?:do it for me|you'?d do|you would do|find them|look (?:it|them) up|best option for them|what about them)\b/.test(latest));
+ const continuing=latest.length<180&&(/^(?:yes|yeah|yep|sure|please|ok|okay|bruh|um+|uh+|i think so|not sure|i'm not sure|all|both|more|year|grade|british|american|indian|english)\b/.test(latest)||/\b(?:do it for me|you'?d do|you would do|find them|look (?:it|them) up|best option for them|what about them|what (?:do i do|happens) (?:now|next)|what next)\b/.test(latest));
  let topics=detect(latest),inherited=false;
  if(!topics.length&&continuing){topics=detect(previous);inherited=topics.length>0;}
  if(!topics.length&&(continuing||/\b(then|after|that|those|card|it|they|actually|meant|instead)\b/.test(latest)||place(latest).country)){
@@ -45,16 +45,29 @@ export function planResearch(messages,profile){
  if(!topics.length)return {needed:false};
  const curriculumNames=[['british',/\bbritish\b/],['american',/\bamerican\b/],['indian',/\bindian\b/],['ib',/\bib\b|international baccalaureate/]];
  let curriculum='';for(const turn of users){const named=curriculumNames.find(([,re])=>re.test(clean(turn)));if(named)curriculum=named[0];}
- const explicitSchoolTask=/\b(find(?:ing)?|list|look (?:it |them )?up|recommend|which schools?|options|curricul(?:um|a))\b/.test(latest)?'discovery':/\b(register|enrol|enroll|admission|documents?|requirements?)\b/.test(latest)?'admissions':null;
- const schoolIntent=explicitSchoolTask||(/\b(find(?:ing)?|list|look (?:it |them )?up|options|curricul(?:um|a))\b/.test(previous)?'discovery':'admissions');
+ // Track the requested action separately from its topic. An offer is a task cue, never evidence.
+ const schoolTask=t=>/\b(contact|phone|email|call|telephone)\b/.test(t)?'contacts':/\b(what (?:do i do|happens) (?:now|next)|what next|next steps?)\b/.test(t)?'next-steps':/\b(register|enrol|enroll|admissions?|apply|application|documents?|requirements?)\b/.test(t)?'admissions':/\b(find(?:ing)?|list|look (?:it |them )?up|recommend|which schools?|options|curricul(?:um|a))\b/.test(t)?'discovery':null;
+ if(!curriculum&&inherited){for(let i=assistants.length-1;i>=0;i--){const named=curriculumNames.find(([,re])=>re.test(clean(assistants[i].content)));if(named){curriculum=named[0];break;}}}
+ const explicitSchoolTask=schoolTask(latest);
+ const offeredTask=continuing?schoolTask(previous):null;
+ let schoolIntent=explicitSchoolTask||offeredTask;
+ if(!schoolIntent){for(let i=users.length-2;i>=0;i--){const task=schoolTask(clean(users[i]));if(task){schoolIntent=task;break;}}}
+ schoolIntent=schoolIntent||'admissions';
+ let year=null;
+ for(const turn of users){const m=clean(turn).match(/\b(?:year|grade)\s*(1[0-3]|[1-9])\b/);if(m)year=Number(m[1]);}
  let location={country:null,city:''};
  if(profile&&typeof profile==='object')location=place(profile.city||profile.movingTo||'');
  for(const turn of users){const next=place(turn);if(next.country)location={country:next.country,city:next.city||(next.country===location.country?location.city:'')};}
+ // Resolve the place named in the active school task after the original turn ages out.
+ // This is conversational scope only; all facts still require a newly fetched approved source.
+ if(inherited&&topics.includes('school')&&!users.some(t=>place(t).country)){
+  for(let i=assistants.length-1;i>=0;i--){if(!detect(clean(assistants[i].content)).includes('school'))continue;const scoped=place(assistants[i].content);if(scoped.country&&scoped.city){location=scoped;break;}}
+ }
  let organisation=organisations.find(([re])=>re.test(String(profile?.place||'')))?.[1]||null;
  for(const turn of users){const found=organisations.find(([re])=>re.test(turn));if(found)organisation=found[1];}
  const currentOrg=organisations.find(([re])=>re.test(latest));if(currentOrg)organisation=currentOrg[1];
  const parts=topics.flatMap(topic=>{
-  const base={topic,tier:topic==='community'?'community':topic==='institution'?'organisation':'official',...(organisation?{organisation}:{}),...(topic==='school'?{intent:schoolIntent,curriculum}: {})};
+  const base={topic,tier:topic==='community'?'community':topic==='institution'?'organisation':'official',...(organisation?{organisation}:{}),...(topic==='school'?{intent:schoolIntent,curriculum,...(year?{year}:{})}: {})};
   return topic==='bank'&&['Emirates NBD','ADCB','First Abu Dhabi Bank'].includes(organisation)?[base,{topic,tier:'organisation',organisation}]:[base];
  });
  let clarification=null;

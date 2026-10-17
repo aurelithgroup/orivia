@@ -58,6 +58,8 @@ jobs:
         run: node tests/beta-start.test.mjs
       - name: Source-controlled research and founder acceptance scenarios
         run: node --experimental-sqlite tests/research.test.mjs
+      - name: Research follows the current task
+        run: node tests/research-follow-through.test.mjs
       - name: Sharjah school discovery from official SPEA profiles
         run: node tests/research-schools.test.mjs
       - name: Public beta mode (human check, per-person and daily limits)

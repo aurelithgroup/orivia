@@ -1,6 +1,7 @@
 /* Opt-in research pipeline. No credentials or result caches in browser/storage.
  * Search discovers URLs; only separately fetched, scoped pages reach the model.
  */
+import {offersYear,schoolContacts,schoolActionText} from './orivia-school-actions.mjs';
 import {researchSource,sourceHosts} from './orivia-research-policy.mjs';
 const MODEL='@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const cap=(v,fallback,max)=>Math.max(1,Math.min(max,Math.floor(Number(v)||fallback)));
@@ -72,7 +73,7 @@ export function readSchoolProfile(raw,text){
   if(!text.includes(quote))return null;
   const gradeRaw=plain(raw.match(/<span[^>]*>\s*(Grade:\s*[^<]+)<\/span>/i)?.[1]);
   const evidence=factEvidence(text,[['curriculum','Curriculum',quote],['area','Area','School Location '+area],['grades','Year groups',gradeRaw]]);
-  return {name,curriculum,area,grades,evaluation:'',phone:'',quote,evidence};
+  return {name,curriculum,area,grades,evaluation:'',...schoolContacts(text),quote,evidence};
  }
 
  const start=text.search(/(?:^|\s)Curriculum\s/);if(start<0)return null;
@@ -129,6 +130,7 @@ async function discoverSchools(plan,part,query,env,fetcher,reserve,trace){
   const source=researchSource(c.url,part,location);if(!source)return {url:c.url,reason:'source-not-approved'};
   const got=await fetchApproved(source,fetcher);if(!got.ok)return {url:c.url,...got};
   const p=readSchoolProfile(got.raw,got.text);if(!p)return {url:c.url,reason:'profile-unreadable',http:got.http,bytes:got.raw.length};
+  if(!offersYear(p.grades,part.year))return {url:c.url,reason:'year-not-listed',http:got.http};
   if(want&&!want.test(p.curriculum))return {url:c.url,reason:'other-curriculum',http:got.http};
   return {url:source.url,ok:true,profile:p,http:got.http};
  }));
@@ -138,6 +140,12 @@ async function discoverSchools(plan,part,query,env,fetcher,reserve,trace){
 function schoolsAnswer(plan,part,schools){
  const now=new Date().toISOString();
  const sources=schools.map((s,i)=>({id:'S'+(i+1),url:s.url,title:s.profile.name+' (SPEA school profile)',category:'official',topic:'school',checkedAt:now,profile:s.profile}));
+ if(['contacts','next-steps'].includes(part.intent)){
+  const action=schoolActionText(part,sources);
+  const reply=action.reply+'\n\n'+sources.map((s,i)=>'['+(i+1)+'] '+s.title+': '+s.url).join('\n');
+  const result=base(plan,action.claims.length?'evidence-found':'partial',reply,sources);
+  result.research.claims=action.claims;result.research.unresolved=action.claims.length?[]:['school-contact'];return result;
+ }
  const label=CURRICULUM_NAME[part.curriculum]||'';
  const claims=sources.map(s=>{const p=s.profile,ev=p.evidence||{};const g=ev.grades?gradeSpan(p.grades):'';
   let text=p.name+': '+p.curriculum+' curriculum';
@@ -147,7 +155,7 @@ function schoolsAnswer(plan,part,schools){
   const quotes=['curriculum','area','grades','evaluation'].filter(f=>ev[f]&&(f!=='grades'||g)&&(f!=='evaluation'||p.evaluation)).map(f=>({fact:f,label:ev[f].label,quote:ev[f].quote}));
   if(!quotes.length)quotes.push({fact:'curriculum',label:'Curriculum',quote:p.quote});
   return {text,sourceId:s.id,quote:quotes.map(q=>q.quote).join(' … ').slice(0,500),quotes};});
- const intro=(sources.length===1?'This '+(label?label+'-curriculum ':'')+'school is':'These '+sources.length+' '+(label?label+'-curriculum ':'')+'schools are')+' listed by the Sharjah Private Education Authority (SPEA), which regulates private schools in Sharjah:';
+ const intro=(sources.length===1?'This '+(label?label+'-curriculum ':'')+'school is':'These '+sources.length+' '+(label?label+'-curriculum ':'')+'schools are')+(part.year?' (listing Year '+part.year+')':'')+' listed by the Sharjah Private Education Authority (SPEA), which regulates private schools in Sharjah:';
  const outro='These are the SPEA school pages I could open for your question, not SPEA’s full list, so there are likely more. Fees, seats and admissions change, so check those with each school.';
  const reply=intro+'\n\n'+claims.map((c,i)=>c.text+' ['+(i+1)+']').join('\n\n')+'\n\n'+outro+'\n\n'+sources.map((s,i)=>'['+(i+1)+'] '+s.title+': '+s.url).join('\n');
  const result=base(plan,'evidence-found',reply,sources);
@@ -229,7 +237,7 @@ export async function answerResearch(plan,env,{fetcher=fetch,reserve=reserveSear
  if(!env.BRAVE_SEARCH_API_KEY)return traced(unavailable(plan,'not-configured'),[{stage:'config',outcome:'no-search-key'}]);
  const trace=[];
  const first=plan.queries[0];
- if(first&&first.part.topic==='school'&&first.part.intent==='discovery'&&plan.location.country==='uae'&&plan.location.city==='Sharjah'&&plan.queries.length===1){
+ if(first&&first.part.topic==='school'&&['discovery','contacts','next-steps'].includes(first.part.intent)&&plan.location.country==='uae'&&plan.location.city==='Sharjah'&&plan.queries.length===1){
   const d=await discoverSchools(plan,first.part,first.query,env,fetcher,reserve,trace);
   if(d.schools.length){const out=schoolsAnswer(plan,first.part,d.schools);trace.push({stage:'answer',outcome:'structured-profiles',schools:d.schools.length});return traced(out,trace);}
   trace.push({stage:'answer',outcome:'no-readable-profiles'});
