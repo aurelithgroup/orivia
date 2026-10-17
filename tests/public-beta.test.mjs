@@ -20,6 +20,8 @@ assert.equal((await call('/', {}, { ...env, SESSION_SECRET: 'short' })).status, 
 /* No tester sign-in needed for the app and guides */
 assert.equal((await call('/')).status, 200);
 assert.match((await call('/')).headers.get('content-security-policy'), /challenges\.cloudflare\.com/);
+const page = await (await call('/')).text();
+assert.match(page, /<span class="chip"[^>]*>Beta</); assert.doesNotMatch(page, />Private AI trial</, 'beta wording arrives with the page');
 assert.deepEqual(await (await call('/v1/config')).json(), { mode: 'public', turnstileSiteKey: 'site-key' });
 assert.equal((await call('/v1/guides')).status, 200);
 /* Chat needs the human check */

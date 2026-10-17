@@ -91,9 +91,11 @@ async function personAllowance(req,env){
  if(Math.random()<0.02)await env.BUDGET_DB.prepare('DELETE FROM beta_usage WHERE day < ?').bind(day).run(); // keep only today
  return !!row;
 }
+/* In the beta, send the beta wording from the start (no flash of "Private AI trial", works without scripts) */
+const betaWording=(html,on)=>on?html.replace(/(<[^>]*\sdata-public="([^"]*)"[^>]*>)[^<]*/g,(_,tag,text)=>tag+text):html;
 const PAGE_CSP_PUBLIC="default-src 'none'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; style-src 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
 
-export default {async fetch(req,env,ctx){
+async function handle(req,env,ctx){
  const url=new URL(req.url);
  const PUBLIC=isPublic(env);
  if(url.hostname!==hostFor(env))return reply({error:'Not found'},404);
@@ -182,4 +184,10 @@ export default {async fetch(req,env,ctx){
    const text=String(out?.response||'').trim();if(!text)return reply({error:'No answer'},502);
    return reply({reply:safety(text,input.messages,trip,action).slice(0,1200),verifiedSources:[...evidence,...(journeyAnswer?.verifiedSources||[])],journey:journeyAnswer?.journey,liveSources:liveEvidence.map(({title,url,checkedAt,category})=>({title,url,checkedAt,category})),actions:resources.actions,liveInformation:liveEvidence.length>0,liveJourneyData:false,...card,...(trip.active?{transport:{origin:trip.origin||null,destination:trip.dest?.name||null,priority:trip.pref||null}}:{})})
  }catch(_){return reply({error:'AI currently unavailable'},503)}
+}
+export default {async fetch(req,env,ctx){
+ const res=await handle(req,env,ctx);
+ if(isPublic(env)&&req.method==='GET'&&new URL(req.url).pathname==='/'&&res.status===200&&String(res.headers.get('Content-Type')).startsWith('text/html'))
+  return new Response(betaWording(await res.text(),true),{status:200,headers:res.headers});
+ return res;
 }};
