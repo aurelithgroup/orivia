@@ -49,3 +49,16 @@ const hostile=schoolTaskContext({city:'Sharjah',shown:['https://evil.test/x'],cu
 assert.deepEqual(hostile.shown,[]);assert.deepEqual(hostile.cursor.pending,[]);assert.equal(hostile.cursor.searchOffset,10);
 const bank=planResearch([{role:'user',content:'I need a bank account'}],{city:'Dubai, UAE'},state);assert.equal(bank.location.city,'Dubai');
 console.log('School task integration: expand without repeats, named lookup with contradictory evidence, named contacts, state bounds and topic change passed');
+
+// Exact follow-ups from the failed live session must not replay discovery.
+for(const text of ['i want all of them','can you just list me every single school with a british curriculum in sharjah','list all British curriculum schools in Sharjah']){
+ const p=planResearch([{role:'user',content:text}],{},state);
+ assert.equal(p.parts[0].intent,'expand',text);
+ assert.equal(p.parts[0].year,6);
+}
+for(const text of ['SHARJAH INTERNATIONAL PRIVATE SCHOOL','Sharjah International Private School']){
+ const p=planResearch([{role:'user',content:text}],{},state);
+ assert.equal(p.parts[0].intent,'lookup',text);
+ assert.equal(p.parts[0].targetName,'sharjah international private school');
+}
+assert.equal(planResearch([{role:'user',content:'Find British curriculum schools in Sharjah'}],{}).parts[0].intent,'discovery');

@@ -11,13 +11,18 @@ export function schoolTaskContext(value){
 export function schoolOperation(text){
  const t=String(text||'').toLowerCase();
  if(/\b(compare|comparison|difference between|which (?:one|school) is better)\b/.test(t))return 'compare';
+ if(/\b(?:i (?:want|need)(?: to see)? all (?:of )?(?:them|those|these)|(?:all|every(?: single)?) (?:the )?(?:[a-z-]+ ){0,3}schools?\b)/.test(t))return 'expand';
  if(/\b(?:only (?:two|2|those|these)|(?:any |find |show |see |look for )?(?:more|other|additional) (?:schools|options|ones)|are (?:those|these|they) (?:all|the only)|is that (?:all|it))\b/.test(t))return 'expand';
  return '';
 }
 export function namedSchool(text){
  const s=String(text||'').replace(/[’‘]/g,"'");
  const m=s.match(/\b(?:heard (?:of|about)|what about|check(?: out)?|look up|tell me about)\s+(.{3,100}?\bschool(?:s)?\b)/i)||s.match(/\b(?:does|is)\s+(.{3,100}?\bschool\b)/i);
- if(!m)return '';
- const name=m[1].replace(/[^\p{L}\p{N}&.' -]/gu,' ').replace(/\s+/g,' ').trim().slice(0,80);
+ // A bare school name is a lookup, including an emphatic repeat after no match.
+ // Commands and curriculum-only requests must remain discovery/expansion.
+ const bare=s.trim().replace(/[.!?]+$/,'');
+ const exact=!m&&/^[\p{L}\p{N}&.' -]{3,100}\bschool$/iu.test(bare)&&! /\b(find|list|show|every|all|curriculum|curricula|which|more|other|any|a|the)\b/i.test(bare);
+ if(!m&&!exact)return '';
+ const name=(m?m[1]:bare).replace(/[^\p{L}\p{N}&.' -]/gu,' ').replace(/\s+/g,' ').trim().slice(0,80);
  return /^(?:a |the |any |more |other |british curriculum )?schools?$/i.test(name)?'':name;
 }
