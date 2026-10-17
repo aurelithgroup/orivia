@@ -11,6 +11,9 @@ function show(){
  draw();tab('chat');
 }
 function save(){sessionStorage.setItem(key,JSON.stringify(turns.slice(-12)))}
+// Keep the full answer and source cards on screen, but respect the chat API's
+// per-message limit and never send browser-only evidence metadata back.
+function chatMessages(turns){return turns.map(({role,content})=>({role,content:content.slice(0,1200)}))}
 function draw(){
  const el=$('history');el.replaceChildren();
  for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant');const b=document.createElement('b');b.textContent=t.role==='user'?'You':'Orivia';const txt=document.createElement('span');
@@ -789,7 +792,7 @@ $('form').onsubmit=async e=>{
  $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});turns=turns.slice(-12);save();draw();
  busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';
  try{
-  const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:turns.map(({role,content})=>({role,content})),preferences:{language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI()}})});
+  const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMessages(turns),preferences:{language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI()}})});
   const d=await r.json().catch(()=>({}));
   if(!r.ok){
    const why=d&&d.error;

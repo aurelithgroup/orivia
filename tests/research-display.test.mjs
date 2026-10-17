@@ -34,7 +34,11 @@ const notes = js.slice(js.indexOf('const RESEARCH_NOTE='), js.indexOf('};', js.i
 for (const st of ['not-configured', 'search-limit', 'search-unavailable', 'answer-unavailable', 'no-evidence', 'insufficient-evidence', 'unsupported', 'community-permissions-pending', 'partial'])
   assert.ok(notes.includes("'" + st + "'"), st);
 /* Source details stay in the browser tab and are never sent back to the AI */
-assert.match(js, /messages:turns\.map\(\(\{role,content\}\)=>\(\{role,content\}\)\)/);
+assert.match(js, /messages:chatMessages\(turns\)/);
+const chatMessages=new Function(grab('chatMessages')+';return chatMessages')();
+const longReply={role:'assistant',content:'a'.repeat(2000),meta:{sources:[{url:'https://www.gov.uk/fixture'}]}};
+assert.deepEqual(chatMessages([longReply]),[{role:'assistant',content:'a'.repeat(1200)}], 'a long researched reply must not break the next chat request or send evidence metadata');
+assert.equal(longReply.content.length,2000,'the displayed reply stays intact');
 /* Guides are not presented as fresh research */
 assert.doesNotMatch(js.slice(js.indexOf('async function openGuide'), js.indexOf('async function openGuide') + 6000), /Opened by Orivia|Source-backed/);
 const spoken = new Function('return ' + js.slice(js.indexOf('const spokenText=') + 17, js.indexOf('; // no reference lists')))();
