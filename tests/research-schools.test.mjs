@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {planResearch} from '../workers/orivia-research-plan.mjs';
-import {answerResearch,readSchoolProfile,validateResearchAnswer} from '../workers/orivia-research.mjs';
+import {answerResearch,readSchoolProfile,validateResearchAnswer,searchApproved,braveCountry,BRAVE_COUNTRIES} from '../workers/orivia-research.mjs';
 const tpl=readFileSync(new URL('./fixtures/spea-profile.html',import.meta.url),'utf8');
 const page=(id,name,curr)=>tpl.replaceAll('{{NAME}}',name).replaceAll('{{ID}}',String(id)).replaceAll('{{CURR}}',curr);
 const plain=s=>s.replace(/<(script|style|nav|header|footer)\b[^>]*>[\s\S]*?<\/\1>/gi,' ').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
@@ -44,3 +44,27 @@ const src=[{id:'S1',excerpt:'Applicants must book a medical fitness test at an a
 assert.ok(validateResearchAnswer('```json\n{"claims":[{"text":"Book a medical fitness test first.","sourceId":"S1","quote":"must book a medical  fitness test at an approved centre"}]}\n```',src));
 assert.equal(validateResearchAnswer('{"claims":[{"text":"Book a test first.","sourceId":"S1","quote":"must book a blood test at any clinic you like"}]}',src),null);
 console.log('research-schools: ok');
+/* Brave parameter validation (HTTP 422 on live): AE isn't a Brave country. Fake Brave applies its documented rules. */
+const braveRules=u=>{const q=u.searchParams,errs=[];
+ if(!BRAVE_COUNTRIES.has(q.get('country')))errs.push({type:'enum',loc:['query','country'],msg:'Input should be ...',input:q.get('country')});
+ const c=Number(q.get('count'));if(!(c>=1&&c<=20))errs.push({type:'less_than_equal',loc:['query','count'],input:q.get('count')});
+ const text=q.get('q')||'';if(text.length>400||text.split(/\s+/).length>50)errs.push({type:'string_too_long',loc:['query','q'],input:text});
+ if(!['off','moderate','strict'].includes(q.get('safesearch')))errs.push({type:'enum',loc:['query','safesearch']});
+ return errs;};
+const brave=(results=[])=>async u=>{const url=new URL(String(u));const errs=braveRules(url);
+ if(errs.length)return new Response(JSON.stringify({type:'ErrorResponse',error:{id:'x',status:422,code:'VALIDATION',detail:'Unable to validate request parameter(s)',meta:{errors:errs}}}),{status:422,headers:{'content-type':'application/json'}});
+ return new Response(JSON.stringify({web:{results}}),{headers:{'content-type':'application/json'}});};
+assert.equal(braveCountry('uae'),'ALL');assert.equal(braveCountry('uk'),'GB');assert.ok(!BRAVE_COUNTRIES.has('AE'));
+for(const [msg,prof] of [['Find British curriculum schools in Sharjah',{}],['schools in Edinburgh for my kids, documents needed',{}],['how do I open a bank account in Dubai',{}],['residence visa medical test in Abu Dhabi for my visa',{}],['biometrics appointment UK next steps',{}]]){
+ const pl=planResearch([{role:'user',content:msg}],prof);if(!pl.needed||pl.clarification)continue;
+ for(const {part,query} of pl.queries){const r=await searchApproved({query,part,location:pl.location,env:{BRAVE_SEARCH_API_KEY:'k'},fetcher:brave(),reserve:async()=>true,count:12,keep:10});
+  assert.equal(r.status,'searched',msg+' passes Brave validation');}
+}
+// A rejection is summarised by parameter and type only: no values, query or key.
+{const realBraveCountry=braveCountry;const fetcher=async u=>{const url=new URL(String(u));url.searchParams.set('country','AE');return brave()(url.href)};
+ const r=await answerResearch(plan,{BRAVE_SEARCH_API_KEY:'secret-key'},{fetcher,reserve:async()=>true});
+ const s=r.research.trace.find(x=>x.stage==='search');
+ assert.equal(s.http,422);assert.equal(s.providerCode,'VALIDATION');assert.deepEqual(s.rejected,['query.country:enum']);
+ const all=JSON.stringify(r.research.trace);assert.ok(!all.includes('AE')&&!all.includes('secret-key')&&!/sharjah|british/i.test(all),'no values, key or query in the trace');void realBraveCountry;}
+console.log('research-schools: Brave parameters valid for UAE and UK; 422 reported safely');
+

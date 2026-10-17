@@ -80,7 +80,7 @@ function gradeSpan(g){
 async function discoverSchools(plan,part,query,env,fetcher,reserve,trace){
  const location=plan.location;
  const found=await searchApproved({query,part,location,env,fetcher,reserve,count:12,keep:10});
- trace.push({stage:'search',status:found.status,http:found.http??null,results:found.results??0,approved:found.candidates.length});
+ trace.push({stage:'search',status:found.status,http:found.http??null,results:found.results??0,approved:found.candidates.length,...(found.providerCode?{providerCode:found.providerCode}:{}),...(found.rejected?{rejected:found.rejected}:{})});
  if(found.status!=='searched')return {status:found.status,schools:[]};
  const profiles=found.candidates.filter(c=>{const u=new URL(c.url);return /(^|\.)spea\.shj\.ae$/.test(u.hostname)&&SPEA_PROFILE.test(u.pathname)}).slice(0,6);
  trace.push({stage:'filter',profilePages:profiles.length,otherApproved:found.candidates.length-profiles.length});
@@ -120,16 +120,28 @@ export async function reserveSearch(env,now=new Date()){
   return true;
  }catch{return false;}
 }
+// Brave accepts only its own list of country codes; AE is not on it and returns HTTP 422.
+// UAE searches use ALL: the site: filters already restrict results to approved UAE hosts.
+export const BRAVE_COUNTRIES=new Set(['ALL','AR','AU','AT','BE','BR','CA','CL','DK','FI','FR','DE','HK','IN','ID','IT','JP','KR','MY','MX','NL','NZ','NO','CN','PL','PT','PH','RU','SA','ZA','ES','SE','CH','TW','TR','GB','US']);
+export function braveCountry(country){const c=country==='uk'?'GB':'ALL';return BRAVE_COUNTRIES.has(c)?c:'ALL';}
+// Safe summary of a provider rejection: which parameter and error type only. Never values, the query or the key.
+async function rejectedFields(r){
+ try{const d=JSON.parse(await readBounded(r,20000));const errs=d?.error?.meta?.errors;
+  const fields=Array.isArray(errs)?errs.slice(0,5).map(e=>[Array.isArray(e?.loc)?e.loc.filter(x=>typeof x==='string'&&/^[a-z_]{1,30}$/i.test(x)).join('.'):'',typeof e?.type==='string'&&/^[a-z_.]{1,40}$/i.test(e.type)?e.type:''].filter(Boolean).join(':')).filter(Boolean):[];
+  const code=typeof d?.error?.code==='string'&&/^[A-Z_]{1,40}$/.test(d.error.code)?d.error.code:'';
+  return {code,fields};
+ }catch{return {code:'',fields:[]};}
+}
 export async function searchApproved({query,part,location,env,fetcher=fetch,reserve=reserveSearch,count=6,keep=3}){
  const hosts=sourceHosts(part,location);if(!hosts.length)return {status:'unsupported',candidates:[]};
  if(!env.BRAVE_SEARCH_API_KEY)return {status:'not-configured',candidates:[]};
  if(!(await reserve(env)))return {status:'search-limit',candidates:[]};
  const url=new URL('https://api.search.brave.com/res/v1/web/search');
  // query is generated from fixed topic terms and approved coarse context, never a raw conversation.
- url.search=new URLSearchParams({q:query+' ('+hosts.map(h=>'site:'+h).join(' OR ')+')',count:String(count),safesearch:'strict',country:location.country==='uae'?'AE':'GB',search_lang:'en',spellcheck:'false'}).toString();
+ url.search=new URLSearchParams({q:query+' ('+hosts.map(h=>'site:'+h).join(' OR ')+')',count:String(count),safesearch:'strict',country:braveCountry(location.country),search_lang:'en',spellcheck:'false'}).toString();
  try{
   const r=await fetcher(url.href,{redirect:'manual',signal:AbortSignal.timeout(6500),headers:{Accept:'application/json','X-Subscription-Token':env.BRAVE_SEARCH_API_KEY}});
-  if(!r.ok){await r.body?.cancel?.();return {status:'search-unavailable',http:r.status,candidates:[]};}
+  if(!r.ok){const why=r.status===422||r.status===400?await rejectedFields(r):(await r.body?.cancel?.(),{code:'',fields:[]});return {status:'search-unavailable',http:r.status,...(why.code?{providerCode:why.code}:{}),...(why.fields.length?{rejected:why.fields}:{}),candidates:[]};}
   const d=JSON.parse(await readBounded(r,150000));
   const seen=new Set();const candidates=[];const results=Array.isArray(d?.web?.results)?d.web.results:[];
   for(const item of results){
@@ -181,7 +193,7 @@ export async function answerResearch(plan,env,{fetcher=fetch,reserve=reserveSear
  for(const {part,query} of plan.queries.slice(0,2)){
   if(part.tier==='community'){unresolved.push('community-permissions-pending');continue;}
   const found=await searchApproved({query,part,location:plan.location,env,fetcher,reserve});lastStatus=found.status;
-  trace.push({stage:'search',topic:part.topic,status:found.status,http:found.http??null,results:found.results??0,approved:found.candidates.length});
+  trace.push({stage:'search',topic:part.topic,status:found.status,http:found.http??null,results:found.results??0,approved:found.candidates.length,...(found.providerCode?{providerCode:found.providerCode}:{}),...(found.rejected?{rejected:found.rejected}:{})});
   // One page per part initially. Try a second candidate only if the first cannot be read.
   let got=false;
   for(const candidate of found.candidates.slice(0,2)){
