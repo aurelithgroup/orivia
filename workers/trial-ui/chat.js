@@ -533,24 +533,30 @@ $('msg').addEventListener('input',grow);
 $('msg').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('form').requestSubmit()}});
 function chip(label,fn){const holder=$('journey-actions')||(resources([]),$('journey-actions'));const b=document.createElement('button');b.type='button';b.className='action-chip';b.textContent=label;b.onclick=fn;holder.append(b)}
 /* Public beta: same app, plus a one-time "I'm human" check (Cloudflare Turnstile) before the first message */
-let mode='private',humanOk=true;
+let mode='private',humanOk=true,humanState='idle',startRequested=false,humanAttempt=0;
+function enterApp(){
+ if(!$('consent').checked||!humanOk)return;
+ startRequested=false;$('consent').checked=false;sessionStorage.setItem(ck,'yes');show();
+}
 /* On failure, say why and let the person retry: never loop the check by itself */
 function humanFailed(msg){
+ humanOk=false;humanState='failed';startRequested=false;
  const n=$('human-note');n.replaceChildren(document.createTextNode(msg+' '));
  const b=document.createElement('button');b.type='button';b.className='ask';b.textContent='Try again';
- b.onclick=()=>{n.textContent='Checking again…';try{window.turnstile.reset('#human-check')}catch(_){}};n.append(b);
+ b.onclick=()=>{humanState='checking';n.textContent='Checking again…';try{window.turnstile.reset('#human-check')}catch(_){humanFailed('Couldn’t restart the check. Please reload Orivia.')}};n.append(b);
 }
 function loadTurnstile(siteKey){
- humanOk=false;$('human-check').hidden=false;$('human-note').hidden=false;
+ humanOk=false;humanState='checking';window.__siteKey=siteKey;$('human-check').hidden=false;$('human-note').hidden=false;
  const go=()=>window.turnstile.render('#human-check',{sitekey:siteKey,'error-callback':code=>{humanFailed('The check couldn’t load (code: '+String(code).slice(0,12)+').');return true},callback:async token=>{
-  try{const r=await fetch('/v1/human',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});humanOk=r.ok;
-   if(r.ok){$('human-note').textContent='Thanks, you’re all set.';return}
+  const attempt=++humanAttempt;humanOk=false;humanState='verifying';$('human-note').textContent='Confirming your check with Orivia…';
+  try{const r=await fetch('/v1/human',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({token}),signal:AbortSignal.timeout(15000)});if(attempt!==humanAttempt)return;humanOk=r.ok;
+   if(r.ok){humanState='verified';$('human-note').textContent='Thanks, you’re all set.';if(startRequested)enterApp();return}
    const d=await r.json().catch(()=>({}));const code=Array.isArray(d.codes)&&d.codes.length?' (code: '+d.codes.join(', ')+')':(r.status===403&&d.error==='Origin not allowed'?' (code: origin)':' (code: '+r.status+')');
    humanFailed('That check didn’t work'+code+'.');
-  }catch(_){humanFailed('Couldn’t reach Orivia.')}
+  }catch(_){if(attempt===humanAttempt)humanFailed('Couldn’t confirm the check with Orivia. Please try again.')}
  }});
  if(window.turnstile)return go();
- const sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;sc.onload=go;document.head.append(sc);
+ const sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;sc.onload=go;sc.onerror=()=>humanFailed('The human check couldn’t load. Please try reloading Orivia.');document.head.append(sc);
 }
 async function loadMode(){
  try{const r=await fetch('/v1/config',{credentials:'same-origin',cache:'no-store'});const d=await r.json();
@@ -561,8 +567,11 @@ loadMode();
 if(sessionStorage.getItem(ck)==='yes')show();
 $('start').onclick=()=>{
  if(!$('consent').checked)return;
- if(!humanOk){$('human-note').textContent='Please complete the quick check above first.';return}
- $('consent').checked=false;sessionStorage.setItem(ck,'yes');show()};
+ if(!humanOk){
+  if(humanState==='failed')return; // keep the actual error and Try again button
+  startRequested=true;$('human-note').textContent=humanState==='verifying'?'Confirming your check with Orivia… We’ll open it when this finishes.':'Please complete the quick check above. We’ll open Orivia when it’s confirmed.';return
+ }
+ enterApp()};
 $('clear').onclick=()=>{if(busy)return;turns=[];sessionStorage.removeItem(key);draw();resources([]);$('guide-offer')?.remove();$('inline-calendar')?.remove();tab('chat')};
 $('form').onsubmit=async e=>{
  e.preventDefault();if(busy||sessionStorage.getItem(ck)!=='yes')return;

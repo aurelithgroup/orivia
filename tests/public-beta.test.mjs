@@ -7,7 +7,7 @@ const sq = new DatabaseSync(':memory:');
 const stmt = (sql, args = []) => ({ bind: (...a) => stmt(sql, a), first: async () => sq.prepare(sql).get(...args) ?? null, run: async () => sq.prepare(sql).run(...args) });
 let turnstileOk = true, verified = 0;
 let lastSecret = '';
-globalThis.fetch = async (url, init) => { if (String(url).includes('turnstile')) { verified++; lastSecret = new URLSearchParams(init.body).get('secret'); return { json: async () => turnstileOk ? { success: true, hostname: HOST } : { success: false, 'error-codes': ['invalid-input-secret'] } }; } throw new Error('no network'); };
+globalThis.fetch = async (url, init) => { if (String(url).includes('turnstile')) { verified++; lastSecret = new URLSearchParams(init.body).get('secret'); assert.equal(init.headers['Content-Type'], 'application/x-www-form-urlencoded'); return { ok: true, json: async () => turnstileOk ? { success: true, hostname: HOST } : { success: false, 'error-codes': ['invalid-input-secret'] } }; } throw new Error('no network'); };
 const HOST = 'orivia-beta.example.workers.dev';
 const env = { PUBLIC_BETA: '1', PUBLIC_HOST: HOST, TURNSTILE_SITE_KEY: 'site-key', TURNSTILE_SECRET: 'secret', SESSION_SECRET: 'x'.repeat(40), PERSON_DAILY_CAP: '2', DAILY_CAP: '100',
   AI: { run: async () => ({ response: 'Hello!' }) }, AI_QUOTA: { limit: async () => ({ success: true }) }, BUDGET_DB: { prepare: sql => stmt(sql) } };
