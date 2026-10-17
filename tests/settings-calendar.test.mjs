@@ -38,7 +38,7 @@ assert.match(js, /const SET_DEFAULT=\{[^}]*suggest:true/);
 assert.match(js, /p\.use===false\)return undefined/, 'About me is shared unless explicitly switched off');
 assert.match(html, /id="set-aboutme-use"/);
 /* My Life: tap-to-pick, saves on tap, no long form; chat offers to remember, never saves on its own */
-for (const id of ['pick-here', 'pick-dest', 'loc-from', 'pick-who', 'p-place', 'inst-confirm', 'about-summary', 'life-journeys', 'upcoming']) assert.match(html, new RegExp('id="' + id + '"'), id);
+for (const id of ['pick-here', 'pick-dest', 'origin-country', 'origin-town', 'pick-who', 'p-place', 'inst-confirm', 'about-summary', 'life-journeys', 'upcoming']) assert.match(html, new RegExp('id="' + id + '"'), id);
 assert.doesNotMatch(html, /id="profile-form"/, 'no long About me form');
 assert.match(js, /function rememberCard/); assert.match(js, /Remember this for next time\?/);
 const rc = js.slice(js.indexOf('function rememberCard'), js.indexOf("$('about-edit').onclick"));

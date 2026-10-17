@@ -5,15 +5,101 @@ let turns=[],busy=false,events=[];
 const $=id=>document.getElementById(id);
 const TITLES={chat:'',calendar:'Calendar',journeys:'Journeys',mylife:'My Life',guide:'Journeys',settings:'Settings'};
 function show(){
- $('intro').hidden=true;$('workspace').hidden=false;$('nav').hidden=false;$('open-settings').hidden=false;
- try{const d=JSON.parse(sessionStorage.getItem(key)||'[]');turns=Array.isArray(d)?d.slice(-12).filter(x=>x&&['user','assistant'].includes(x.role)&&typeof x.content==='string'):[]}catch(_){turns=[]}
+ $('intro').hidden=true;$('workspace').hidden=false;$('nav').hidden=false;$('open-settings').hidden=false;$('open-chats').hidden=false;
+ loadChats();const c=activeChat();turns=c?c.turns.slice():[];
 
  draw();tab('chat');
 }
-function save(){sessionStorage.setItem(key,JSON.stringify(turns.slice(-12)))}
+/* ===== Chat history: saved on this device (localStorage), no account, no sync =====
+   store = {chats:[{id,title,titled,created,updated,pinned,archived,turns}], active}
+   Only the active chat is shown and only its latest messages go to the AI. */
+const chatsKey='orivia-private-chats-v1',MAX_CHATS=60,MAX_TURNS=200;
+let store={chats:[],active:null};
+const validTurn=x=>x&&['user','assistant'].includes(x.role)&&typeof x.content==='string'&&x.content.trim();
+const newId=()=>'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function autoTitle(ts){const u=(ts.find(t=>t.role==='user')||{}).content||'New chat';const t=u.replace(/\s+/g,' ').trim();return t.length>48?t.slice(0,46).replace(/\s\S*$/,'')+'…':t}
+function normChat(c){
+ if(!c||typeof c!=='object'||typeof c.id!=='string')return null;
+ const ts=Array.isArray(c.turns)?c.turns.filter(validTurn).slice(-MAX_TURNS).map(t=>({role:t.role,content:String(t.content).slice(0,2000),...(t.meta&&typeof t.meta==='object'?{meta:t.meta}:{})})):[];
+ return {id:c.id.slice(0,24),title:String(c.title||autoTitle(ts)).slice(0,80),titled:!!c.titled,created:Number(c.created)||Date.now(),updated:Number(c.updated)||Date.now(),pinned:!!c.pinned,archived:!!c.archived,turns:ts};
+}
+function persist(){
+ store.chats=store.chats.filter(c=>c.turns.length||c.id===store.active);
+ for(let tries=0;tries<4;tries++){
+  try{localStorage.setItem(chatsKey,JSON.stringify(store));return true}
+  catch(_){ // out of space: drop the oldest chats that aren't pinned or open, then try again
+   const old=store.chats.filter(c=>!c.pinned&&c.id!==store.active).sort((a,b)=>a.updated-b.updated);
+   if(!old.length)break;store.chats=store.chats.filter(c=>c!==old[0]);
+  }
+ }
+ $('status').textContent='This device is out of space for chat history. Delete some chats in the Chats menu.';return false;
+}
+function loadChats(){
+ try{const d=JSON.parse(localStorage.getItem(chatsKey)||'null');if(d&&Array.isArray(d.chats))store={chats:d.chats.map(normChat).filter(Boolean).slice(0,MAX_CHATS),active:typeof d.active==='string'?d.active:null}}catch(_){store={chats:[],active:null}}
+ // Migration: the conversation that used to live only in this tab becomes a saved chat (nothing is lost)
+ try{const old=JSON.parse(sessionStorage.getItem(key)||'null');
+  if(Array.isArray(old)&&old.some(validTurn)){const ts=old.filter(validTurn);const c=normChat({id:newId(),turns:ts,created:Date.now(),updated:Date.now()});store.chats.unshift(c);store.active=c.id;persist()}
+  sessionStorage.removeItem(key);
+ }catch(_){}
+ if(store.active&&!store.chats.some(c=>c.id===store.active))store.active=null;
+}
+function activeChat(){return store.chats.find(c=>c.id===store.active)||null}
+function save(){
+ let c=activeChat();
+ if(!c){if(!turns.length)return;c=normChat({id:newId(),turns:[],created:Date.now()});store.chats.unshift(c);store.active=c.id}
+ c.turns=turns.slice(-MAX_TURNS);c.updated=Date.now();if(!c.titled)c.title=autoTitle(c.turns);
+ if(store.chats.length>MAX_CHATS){const drop=store.chats.filter(x=>!x.pinned&&x.id!==c.id).sort((a,b)=>a.updated-b.updated)[0];if(drop)store.chats=store.chats.filter(x=>x!==drop)}
+ persist();renderChats();
+}
+function clearChatCards(){resources([]);for(const id of ['guide-offer','remember-card','inline-calendar'])$(id)?.remove();$('status').textContent=''}
+function openChat(id){stopSpeaking();stopDictation(false);store.active=id;persist();const c=activeChat();turns=c?c.turns.slice():[];clearChatCards();draw();closeChats();tab('chat')}
+function newChat(){stopSpeaking();stopDictation(false);store.active=null;persist();turns=[];clearChatCards();draw();closeChats();tab('chat');$('msg').focus()}
+function whenShort(t){const d=new Date(t),now=new Date();const same=d.toDateString()===now.toDateString();const y=new Date(now);y.setDate(now.getDate()-1);
+ return same?d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):d.toDateString()===y.toDateString()?'Yesterday':d.toLocaleDateString(undefined,{day:'numeric',month:'short'})}
+function chatRow(c){
+ const row=el('div','chat-row'+(c.id===store.active?' active':''));
+ const line=el('div','chat-line');
+ const open=button('','chat-open',()=>openChat(c.id));open.append(el('strong','',c.title||'New chat'),el('small','',(c.pinned?'Pinned · ':'')+whenShort(c.updated)+' · '+c.turns.length+(c.turns.length===1?' message':' messages')));
+ if(c.id===store.active)open.setAttribute('aria-current','true');
+ const more=button('⋯','more',()=>{menu.hidden=!menu.hidden;more.setAttribute('aria-expanded',String(!menu.hidden))});more.setAttribute('aria-label','Options for '+(c.title||'chat'));more.setAttribute('aria-expanded','false');
+ line.append(open,more);row.append(line);
+ const menu=el('div','row menu');menu.hidden=true;
+ menu.append(button('Rename','btn quiet small',()=>{
+  const f=document.createElement('form');f.className='chat-rename';const inp=document.createElement('input');inp.value=c.title;inp.maxLength=80;inp.setAttribute('aria-label','Chat name');
+  const ok=el('button','btn small','Save');ok.type='submit';f.append(inp,ok,button('Cancel','btn text small',()=>renderChats()));
+  f.onsubmit=e=>{e.preventDefault();const v=inp.value.replace(/\s+/g,' ').trim();if(v){c.title=v.slice(0,80);c.titled=true;persist()}renderChats()};
+  row.replaceChildren(f);inp.focus();inp.select();
+ }));
+ menu.append(button(c.pinned?'Unpin':'Pin','btn quiet small',()=>{c.pinned=!c.pinned;persist();renderChats()}));
+ menu.append(button(c.archived?'Unarchive':'Archive','btn quiet small',()=>{c.archived=!c.archived;if(c.archived&&c.id===store.active){store.active=null;turns=[];clearChatCards();draw()}persist();renderChats()}));
+ const del=button('Delete','btn text small',()=>{
+  if(del.dataset.sure!=='1'){del.dataset.sure='1';del.textContent='Tap again to delete this chat for good';return}
+  store.chats=store.chats.filter(x=>x!==c);if(c.id===store.active){store.active=null;turns=[];clearChatCards();draw()}persist();renderChats();
+ });
+ menu.append(del);row.append(menu);return row;
+}
+function renderChats(){
+ const list=$('chats-list'),arch=$('archived-list');if(!list)return;
+ const by=(a,b)=>b.updated-a.updated;
+ const live=store.chats.filter(c=>!c.archived&&c.turns.length),pinned=live.filter(c=>c.pinned).sort(by),recent=live.filter(c=>!c.pinned).sort(by),archived=store.chats.filter(c=>c.archived&&c.turns.length).sort(by);
+ list.replaceChildren();
+ if(pinned.length){list.append(el('p','chat-group','Pinned'));for(const c of pinned)list.append(chatRow(c))}
+ if(recent.length){list.append(el('p','chat-group','Recent'));for(const c of recent)list.append(chatRow(c))}
+ if(!live.length)list.append(el('p','notice','No saved chats yet. Start one and it will appear here.'));
+ arch.replaceChildren();for(const c of archived)arch.append(chatRow(c));
+ if(!archived.length)arch.append(el('p','tiny','Archived chats are kept here until you delete them.'));
+ $('archived-count').textContent=String(archived.length);
+}
+let chatsReturnFocus=null;
+function openChats(){chatsReturnFocus=document.activeElement;renderChats();$('chats-drawer').hidden=false;$('new-chat').focus()}
+function closeChats(){if($('chats-drawer').hidden)return;$('chats-drawer').hidden=true;(chatsReturnFocus||$('open-chats')).focus?.()}
+$('open-chats').onclick=openChats;$('close-chats').onclick=closeChats;$('new-chat').onclick=newChat;
+$('chats-drawer').addEventListener('click',e=>{if(e.target.id==='chats-drawer')closeChats()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('chats-drawer').hidden)closeChats()});
+
 // Keep the full answer and source cards on screen, but respect the chat API's
 // per-message limit and never send browser-only evidence metadata back.
-function chatMessages(turns){return turns.map(({role,content})=>({role,content:content.slice(0,1200)}))}
+function chatMessages(turns){return turns.slice(-12).map(({role,content})=>({role,content:content.slice(0,1200)}))} // only the active chat, latest 12 messages
 function draw(){
  const el=$('history');el.replaceChildren();
  for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant');const b=document.createElement('b');b.textContent=t.role==='user'?'You':'Orivia';const txt=document.createElement('span');
@@ -161,6 +247,17 @@ const WHO=[['study','Study'],['work','Work'],['join or bring my family','Family'
 const EMIRATES_ALL=['Abu Dhabi','Dubai','Sharjah','Ajman','Umm Al Quwain','Ras Al Khaimah','Fujairah'];
 const UK_NATIONS=['England','Scotland','Wales','Northern Ireland'];
 let aboutEditing=false,aboutSkipped=false;
+/* Countries for "Where did you move from?": ISO codes, named by the browser in the person's language */
+const COUNTRY_CODES='AF AL DZ AD AO AG AR AM AU AT AZ BS BH BD BB BY BE BZ BJ BT BO BA BW BR BN BG BF BI CV KH CM CA CF TD CL CN CO KM CG CD CR CI HR CU CY CZ DK DJ DM DO EC EG SV GQ ER EE SZ ET FJ FI FR GA GM GE DE GH GR GD GT GN GW GY HT HN HK HU IS IN ID IR IQ IE IL IT JM JP JO KZ KE KI KW KG LA LV LB LS LR LY LI LT LU MO MG MW MY MV ML MT MH MR MU MX FM MD MC MN ME MA MZ MM NA NR NP NL NZ NI NE NG KP MK NO OM PK PW PS PA PG PY PE PH PL PT QA RO RU RW KN LC VC WS SM ST SA SN RS SC SL SG SK SI SB SO ZA KR SS ES LK SD SR SE CH SY TW TJ TZ TH TL TG TO TT TN TR TM TV UG UA AE GB US UY UZ VU VA VE VN YE ZM ZW'.split(' ');
+const regionNames=(()=>{for(const l of [String(navigator.language||'').replace(/[@_].*$/,''),'en']){try{if(l)return new Intl.DisplayNames([l],{type:'region'})}catch(_){}}return null})(); // tolerate odd language codes like en-US@posix
+function countryName(code){try{return (regionNames&&regionNames.of(code))||code}catch(_){return code}}
+let countryOptions=null;
+function fillCountries(sel,current){
+ if(!countryOptions)countryOptions=COUNTRY_CODES.map(c=>[c,countryName(c)]).sort((a,b)=>a[1].localeCompare(b[1]));
+ if(sel.options.length!==countryOptions.length+1){sel.replaceChildren(new Option('Choose (optional)',''));for(const [c,n] of countryOptions)sel.append(new Option(n,c))}
+ sel.value=COUNTRY_CODES.includes(current)?current:'';
+}
+const originText=p=>[clip(p.originTown),p.originCountry?countryName(p.originCountry):''].filter(Boolean).join(', ');
 const clip=(v,n=60)=>typeof v==='string'?v.replace(/[\r\n<>{}]/g,' ').replace(/\s+/g,' ').trim().slice(0,n):'';
 /* One line describing a place, for people and for the AI */
 function placeText(country,region,town){
@@ -171,6 +268,10 @@ function placeText(country,region,town){
 }
 /* Older saves only had a 'city' word: turn it into the new shape once */
 function migrateProfile(p){
+ if(p&&p.from&&!p.originCountry&&!p.originTown){ // older "Where are you now?" box → the one origin field
+  const f=clip(p.from),code=COUNTRY_CODES.find(c=>countryName(c).toLowerCase()===f.toLowerCase()||c===f.toUpperCase());
+  p={...p,...(code?{originCountry:code}:{originTown:f})};delete p.from;
+ }
  if(!p||p.here||!p.city)return p;
  const c=String(p.city);
  if(EMIRATES_ALL.includes(c))return {...p,here:'uae',region:c};
@@ -180,7 +281,10 @@ function migrateProfile(p){
 }
 function saveProfile(patch){
  const p=migrateProfile(readProfile()||{}),n={...p,...patch};
- for(const k of ['region','town','from','destRegion','destTown','who'])if(typeof n[k]==='string')n[k]=clip(n[k]);
+ for(const k of ['region','town','originTown','destRegion','destTown','who'])if(typeof n[k]==='string')n[k]=clip(n[k]);
+ if(n.originCountry&&!COUNTRY_CODES.includes(n.originCountry))n.originCountry='';
+ delete n.from;
+ n.movedFrom=originText(n); // where they lived before: never nationality, citizenship or status
  if(typeof n.place==='string')n.place=clip(n.place,80);
  n.city=n.here==='uae'||n.here==='uk'?placeText(n.here,n.region,n.town):''; // used by trip planning and the AI
  n.movingTo=n.here==='away'&&(n.dest==='uae'||n.dest==='uk')?placeText(n.dest,n.destRegion,n.destTown):'';
@@ -207,8 +311,9 @@ function aboutSentence(p){
  if(p.here==='uae'||p.here==='uk')bits.push('You live in '+(placeText(p.here,p.region,p.town)||(p.here==='uae'?'the UAE':'the UK')));
  else if(p.here==='away'){
   const to=p.dest==='uae'||p.dest==='uk'?placeText(p.dest,p.destRegion,p.destTown)||(p.dest==='uae'?'the UAE':'the UK'):'';
-  bits.push((p.from?'You’re in '+clip(p.from)+' now':'You haven’t moved yet')+(to?' and moving to '+to:''));
+  bits.push((originText(p)?'You’re moving from '+originText(p):'You haven’t moved yet')+(to?(originText(p)?' to ':' and moving to ')+to:''));
  }else if(p.town)bits.push('You live in '+clip(p.town));
+ if(p.here!=='away'&&originText(p))bits.push((bits.length?'you moved from ':'You moved from ')+originText(p));
  const role={study:'here to study',work:'here to work','join or bring my family':'here with family','something else':''}[p.who]||'';
  if(role)bits.push((bits.length?'you’re ':'You’re ')+role+(p.place&&(p.who==='study'||p.who==='work')?' at '+p.place:''));
  else if(p.place)bits.push((bits.length?'at ':'At ')+p.place);
@@ -219,7 +324,10 @@ function loadProfile(){
  seg('pick-here',[['uae','UAE'],['uk','UK'],['away','Not there yet']],p.here||'',v=>saveProfile({here:p.here===v?'':v,...(p.here!==v?{region:'',town:''}:{})})); // a new country starts with a clean emirate/nation and town
  placeFields($('here-fields'),p.here,{region:'region',town:'town'},p);
  $('away-fields').hidden=p.here!=='away';
- if(document.activeElement!==$('loc-from'))$('loc-from').value=p.from||'';
+ fillCountries($('origin-country'),p.originCountry);
+ if(document.activeElement!==$('origin-town'))$('origin-town').value=p.originTown||'';
+ $('origin-q').firstChild.textContent=p.here==='away'?'Where are you moving from? ':'Where did you move from? ';
+ $('origin-clear').hidden=!(p.originCountry||p.originTown);
  seg('pick-dest',[['uae','UAE'],['uk','UK'],['unsure','Not sure yet']],p.dest||'',v=>saveProfile({dest:p.dest===v?'':v,...(p.dest!==v?{destRegion:'',destTown:''}:{})}));
  placeFields($('dest-fields'),p.here==='away'?p.dest:'',{region:'destRegion',town:'destTown'},p);
  seg('pick-who',WHO,p.who||'',v=>saveProfile({who:p.who===v?'':v}));
@@ -238,7 +346,9 @@ function loadProfile(){
  $('about-done').hidden=!(open&&filled);
  $('about-use').textContent=aboutMeOn()?'Orivia uses this so you don’t have to repeat yourself. You can switch that off in Settings.':'Orivia isn’t using this right now. You can switch it on in Settings.';
 }
-$('loc-from').addEventListener('change',e=>saveProfile({from:e.target.value}));
+$('origin-country').addEventListener('change',e=>saveProfile({originCountry:e.target.value}));
+$('origin-town').addEventListener('change',e=>saveProfile({originTown:e.target.value}));
+$('origin-clear').onclick=()=>saveProfile({originCountry:'',originTown:''});
 /* Chat fills My Life: when you've said where you live or study, offer to remember it. Nothing is saved until you tap. */
 const EMIRATES=EMIRATES_ALL,noKey='orivia-private-remember-no';
 function rememberCard(t){
@@ -264,14 +374,15 @@ $('about-edit').onclick=()=>{aboutEditing=true;aboutSkipped=false;loadProfile()}
 $('about-done').onclick=()=>{aboutEditing=false;aboutSkipped=true;loadProfile()}; // Done closes it even if some questions are skipped
 $('place-form').addEventListener('submit',e=>{e.preventDefault();saveProfile({place:$('p-place').value.trim()})});
 $('p-place').addEventListener('change',e=>saveProfile({place:e.target.value.trim()}));
-function profileForAI(){const p=readProfile();if(!p||p.use===false)return undefined;const out={};for(const k of ['city','movingTo','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
-$('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.sure='';b.textContent='Clear saved data'},4000);return}try{localStorage.removeItem(profileKey);localStorage.removeItem(eventKey);localStorage.removeItem(journeysKey)}catch(_){}events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent='Cleared'};
+function profileForAI(){const p=readProfile();if(!p||p.use===false)return undefined;const out={};for(const k of ['city','movingTo','movedFrom','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
+$('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.sure='';b.textContent='Clear saved data'},4000);return}try{localStorage.removeItem(profileKey);localStorage.removeItem(eventKey);localStorage.removeItem(journeysKey);localStorage.removeItem(chatsKey)}catch(_){}store={chats:[],active:null};turns=[];clearChatCards();draw();renderChats();events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent='Cleared'};
 /* End session: back to the welcome screen. Clears this conversation and the human check; keeps journeys, calendar and My Life. */
 $('end-session').onclick=async()=>{
  const b=$('end-session');
  if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to end this session';setTimeout(()=>{b.dataset.sure='';b.textContent='End session'},4000);return}
  stopSpeaking();stopDictation(false);
  try{await fetch('/v1/end',{method:'POST',credentials:'same-origin'})}catch(_){}
+ store.active=null;persist(); // saved chats stay; the welcome screen opens to a new chat
  try{for(const k of [key,ck,'orivia-private-offered','orivia-private-remember-no'])sessionStorage.removeItem(k)}catch(_){}
  location.reload();
 };
@@ -784,15 +895,19 @@ $('start').onclick=()=>{
   startRequested=true;$('human-note').textContent=humanState==='verifying'?'Confirming your check with Orivia… We’ll open it when this finishes.':'Please complete the quick check above. We’ll open Orivia when it’s confirmed.';return
  }
  enterApp()};
-$('clear').onclick=()=>{if(busy)return;turns=[];sessionStorage.removeItem(key);draw();resources([]);$('guide-offer')?.remove();$('inline-calendar')?.remove();tab('chat')};
+$('clear').onclick=()=>{
+ if(busy)return;const b=$('clear');
+ if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete this chat';setTimeout(()=>{b.dataset.sure='';b.textContent='Delete this chat'},4000);return}
+ store.chats=store.chats.filter(c=>c.id!==store.active);store.active=null;persist();turns=[];clearChatCards();draw();renderChats();b.dataset.sure='';b.textContent='Delete this chat';tab('chat')};
 $('form').onsubmit=async e=>{
  e.preventDefault();if(busy||sessionStorage.getItem(ck)!=='yes')return;
  stopDictation(true);stopSpeaking();
  const text=$('msg').value.trim();if(!text)return;
- $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});turns=turns.slice(-12);save();draw();
+ $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});turns=turns.slice(-MAX_TURNS);save();draw();
+ const chatId=store.active,sentTurns=turns.slice();
  busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';
  try{
-  const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMessages(turns),preferences:{language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI()}})});
+  const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI()}})});
   const d=await r.json().catch(()=>({}));
   if(!r.ok){
    const why=d&&d.error;
@@ -800,7 +915,12 @@ $('form').onsubmit=async e=>{
    $('status').textContent=why==='person_limit'?'You’ve reached today’s message limit for the beta. Your guides, calendar and journeys still work, and messages come back tomorrow.':why==='daily_limit'?'Orivia’s beta is very busy today. Please try again tomorrow; your guides, calendar and journeys still work.':r.status===429?'Too many messages at once. Please wait a moment and try again.':'Orivia is temporarily unavailable. Please try again.';return}
   if(typeof d.reply!=='string'||!d.reply.trim())throw Error('empty');
   const meta={};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
-  turns.push({role:'assistant',content:d.reply.slice(0,2000),...(Object.keys(meta).length?{meta}:{})});turns=turns.slice(-12);save();draw();
+  const answer={role:'assistant',content:d.reply.slice(0,2000),...(Object.keys(meta).length?{meta}:{})};
+  if(store.active!==chatId){ // they switched chats while Orivia was replying: file the answer in its own chat
+   const c=store.chats.find(x=>x.id===chatId);if(c){c.turns=[...c.turns,answer].slice(-MAX_TURNS);c.updated=Date.now();persist();renderChats()}
+   $('status').textContent='Orivia replied in “'+(c?c.title:'another chat')+'”.';return;
+  }
+  turns.push(answer);turns=turns.slice(-MAX_TURNS);save();draw();
   $('guide-offer')?.remove();
   resources(d.actions||[]); // sources now show under the reply itself
   guideCard(d.guideOffer);

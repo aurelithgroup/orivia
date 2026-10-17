@@ -34,7 +34,7 @@ const notes = js.slice(js.indexOf('const RESEARCH_NOTE='), js.indexOf('};', js.i
 for (const st of ['not-configured', 'search-limit', 'search-unavailable', 'answer-unavailable', 'no-evidence', 'insufficient-evidence', 'unsupported', 'community-permissions-pending', 'partial'])
   assert.ok(notes.includes("'" + st + "'"), st);
 /* Source details stay in the browser tab and are never sent back to the AI */
-assert.match(js, /messages:chatMessages\(turns\)/);
+assert.match(js, /messages:chatMessages\((?:turns|sentTurns)\)/);
 const chatMessages=new Function(grab('chatMessages')+';return chatMessages')();
 const longReply={role:'assistant',content:'a'.repeat(2000),meta:{sources:[{url:'https://www.gov.uk/fixture'}]}};
 assert.deepEqual(chatMessages([longReply]),[{role:'assistant',content:'a'.repeat(1200)}], 'a long researched reply must not break the next chat request or send evidence metadata');

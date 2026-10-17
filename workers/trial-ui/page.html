@@ -232,6 +232,24 @@ a.src strong{font-size:14px;overflow-wrap:anywhere}
 .claim{display:flex;flex-direction:column;gap:4px;margin-top:8px}
 .claim blockquote{margin:0;padding:6px 10px;border-inline-start:3px solid var(--ok);background:var(--surface);border-radius:6px;font-size:14px}
 .unresolved ul{margin:4px 0 0;padding-inline-start:20px;font-size:14px}
+/* Chat history drawer */
+.menu-btn{margin-inline-start:0;margin-inline-end:4px}
+.drawer-scrim{position:fixed;inset:0;background:rgba(10,15,20,.5);z-index:25;display:flex}
+.drawer{background:var(--surface);color:var(--ink);width:min(88vw,360px);height:100%;overflow:auto;padding:calc(14px + env(safe-area-inset-top,0px)) 14px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;box-shadow:4px 0 24px rgba(0,0,0,.25)}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:slidein .18s ease-out}@keyframes slidein{from{transform:translateX(-24px);opacity:.6}}}
+.drawer-head{display:flex;justify-content:space-between;align-items:center}
+.chats-list{display:flex;flex-direction:column;gap:4px}
+.chat-group{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:8px 0 2px}
+.chat-row{border-radius:12px;display:flex;flex-direction:column}
+.chat-row.active{background:var(--surface2);box-shadow:inset 3px 0 0 var(--amber)}
+.chat-line{display:flex;align-items:center}
+.chat-open{flex:1;min-width:0;border:0;background:none;color:var(--ink);text-align:start;padding:9px 10px;display:flex;flex-direction:column;gap:1px;border-radius:12px}
+.chat-open strong{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-open small{font-size:12px;color:var(--muted)}
+.chat-row .menu{padding:4px 10px 10px;border-top:0}
+.chat-rename{display:flex;gap:6px;padding:6px 10px 10px}
+.chat-rename input{flex:1;min-width:0}
+.archived summary{font-weight:700;cursor:pointer;padding:8px 2px}
 /* Settings */
 .gear{margin-inline-start:8px;border:0;background:none;color:var(--signInk);width:40px;height:40px;border-radius:10px;display:grid;place-items:center}
 .gear svg{width:22px;height:22px}
@@ -272,12 +290,12 @@ nav.bottom .help-tab{color:var(--ink)}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
 </style></head>
 <body><div class="app">
-<header class="top"><span class="brand">Oriv<b>i</b>a</span><span class="chip" data-public="Beta">Private AI trial</span><span class="top-title" id="view-title"></span><button type="button" id="open-settings" class="gear" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>
+<header class="top"><button type="button" id="open-chats" class="gear menu-btn" aria-label="Chats" aria-haspopup="dialog" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button><span class="brand">Oriv<b>i</b>a</span><span class="chip" data-public="Beta">Private AI trial</span><span class="top-title" id="view-title"></span><button type="button" id="open-settings" class="gear" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>
 <main>
 <section id="intro" class="pad">
  <h1>Hi, I’m Orivia.</h1>
  <p>Talk to me about real life here: settling in, getting around, plans and reminders. I’ll help you work out what comes next.</p>
- <div class="card"><p>I agree to send my messages and recent conversation to Cloudflare Workers AI. Messages are held in this browser tab, not stored in Orivia’s database. For web research, general search terms are sent to Brave Search, not your full conversation or ID numbers.</p>
+ <div class="card"><p>I agree to send my messages and recent conversation to Cloudflare Workers AI. Your chats are saved in this browser on this device so you can come back to them. They aren’t stored in Orivia’s database. For web research, general search terms are sent to Brave Search, not your full conversation or ID numbers.</p>
  <label><input type="checkbox" id="consent"> <span data-public="I agree to start using Orivia (beta)">I agree to start my private AI trial</span></label>
  <div id="human-check" hidden></div><p id="human-note" class="tiny" hidden>A quick check that you’re a person, so Orivia stays free for everyone.</p>
  <button id="start" class="btn" type="button" data-public="Start">Start trial</button></div>
@@ -335,10 +353,13 @@ nav.bottom .help-tab{color:var(--ink)}
     <div class="pick"><span class="pick-q" id="here-q">Where do you live?</span><div class="seg" id="pick-here" role="radiogroup" aria-labelledby="here-q"></div>
      <div id="here-fields" class="loc"></div>
      <div id="away-fields" class="loc" hidden>
-      <label class="field" for="loc-from">Where are you now? <small>Optional</small><input id="loc-from" maxlength="60" autocomplete="country-name" placeholder="Country or city"></label>
       <span class="pick-q" id="dest-q">Where are you moving to?</span><div class="seg" id="pick-dest" role="radiogroup" aria-labelledby="dest-q"></div>
       <div id="dest-fields" class="loc"></div>
      </div></div>
+    <div class="pick" id="origin-row"><span class="pick-q" id="origin-q">Where did you move from? <small class="tiny">Optional</small></span>
+     <div class="two"><label class="field" for="origin-country">Country<select id="origin-country"></select></label><label class="field" for="origin-town">City or town <small>Optional</small><input id="origin-town" maxlength="60" autocomplete="address-level2"></label></div>
+     <p class="tiny" id="origin-note">Only used to tailor tips. It doesn’t tell Orivia your nationality or visa status.</p>
+     <button type="button" class="ask" id="origin-clear" hidden>Clear this</button></div>
     <div class="pick"><span class="pick-q">What brings you here?</span><div class="seg" id="pick-who" role="radiogroup" aria-label="What brings you here?"></div></div>
     <div class="pick" id="pick-place-row"><label class="pick-q" id="pick-place-q" for="p-place">Your institution</label>
      <form id="place-form" class="row"><input id="p-place" maxlength="80" autocomplete="organization" placeholder="School, college, university or training centre"><button class="btn small" type="submit">Save</button></form>
@@ -371,12 +392,12 @@ nav.bottom .help-tab{color:var(--ink)}
    <button type="button" class="ask" id="set-aboutme">Edit About me in My Life</button>
   </section>
   <section class="set-group"><h3>Privacy &amp; data</h3>
-   <p class="tiny">Your conversation is kept in this browser tab only. Your calendar, journeys, About me and settings stay in this browser. Messages are sent to Cloudflare Workers AI to get a reply. Orivia never needs passport, visa or ID numbers.</p>
+   <p class="tiny">Your chats, calendar, journeys, About me and settings are saved in this browser on this device. They aren’t in an account and don’t sync, and anyone using this device can open them. Messages are sent to Cloudflare Workers AI to get a reply. Orivia never needs passport, visa or ID numbers.</p>
    <button id="end-session" type="button" class="btn quiet">End session</button>
-   <p class="tiny">Goes back to the welcome screen and clears this conversation. Your journeys, calendar and My Life stay saved on this device. This isn’t an account log-out: Orivia doesn’t have accounts yet, so anyone using this device can still see them. To remove them, use Clear saved data.</p>
-   <button id="clear" type="button" class="btn quiet">Clear conversation</button>
+   <p class="tiny">Goes back to the welcome screen. Your saved chats, journeys, calendar and My Life stay on this device. This isn’t an account log-out and doesn’t protect them: Orivia doesn’t have accounts yet, so anyone using this device can still open them. To remove them, use Clear saved data.</p>
+   <button id="clear" type="button" class="btn quiet">Delete this chat</button>
    <button id="forget" type="button" class="btn quiet">Clear saved data</button>
-   <p class="tiny">Deletes About me, your calendar and your journeys from this device. This can’t be undone.</p>
+   <p class="tiny">Deletes all saved chats, About me, your calendar and your journeys from this device. This can’t be undone.</p>
   </section>
   <section class="set-group"><h3>Help &amp; safety</h3>
    <p class="tiny">In an emergency in the UAE, call:</p>
@@ -395,6 +416,13 @@ nav.bottom .help-tab{color:var(--ink)}
  <button id="tab-journeys" type="button" data-tab="journeys"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg><span>Journeys</span></button>
  <button id="tab-mylife" type="button" data-tab="mylife"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>My Life</span></button>
 </nav>
+<div id="chats-drawer" class="drawer-scrim" hidden><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="chats-title">
+ <div class="drawer-head"><h2 id="chats-title">Chats</h2><button type="button" id="close-chats" class="icon-btn" aria-label="Close chats">×</button></div>
+ <button type="button" id="new-chat" class="btn">+ New chat</button>
+ <p class="tiny">Saved on this device only, not in an account, and they don’t sync. Anyone using this device can open them.</p>
+ <div id="chats-list" class="chats-list"></div>
+ <details id="archived-wrap" class="archived"><summary>Archived (<span id="archived-count">0</span>)</summary><div id="archived-list" class="chats-list"></div></details>
+</aside></div>
 <div id="add-sheet" class="scrim" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="add-title"><span class="grab"></span>
  <h2 id="add-title">New reminder</h2>
  <form id="reminder-form" class="stack">

@@ -52,6 +52,8 @@ jobs:
         run: node tests/settings-calendar.test.mjs
       - name: Research display (fixtures)
         run: node tests/research-display.test.mjs
+      - name: Chat history and origin
+        run: node tests/chat-history.test.mjs
       - name: Beta Start waits for server verification
         run: node tests/beta-start.test.mjs
       - name: Source-controlled research and founder acceptance scenarios
