@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {planResearch} from '../workers/orivia-research-plan.mjs';
-import {answerResearch,readSchoolProfile,validateResearchAnswer,searchApproved,braveCountry,BRAVE_COUNTRIES} from '../workers/orivia-research.mjs';
+import {answerResearch,readSchoolProfile,readSchoolDirectory,validateResearchAnswer,searchApproved,braveCountry,BRAVE_COUNTRIES} from '../workers/orivia-research.mjs';
 const tpl=readFileSync(new URL('./fixtures/spea-profile.html',import.meta.url),'utf8');
 const page=(id,name,curr)=>tpl.replaceAll('{{NAME}}',name).replaceAll('{{ID}}',String(id)).replaceAll('{{CURR}}',curr);
 const plain=s=>s.replace(/<(script|style|nav|header|footer)\b[^>]*>[\s\S]*?<\/\1>/gi,' ').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
@@ -68,3 +68,21 @@ for(const [msg,prof] of [['Find British curriculum schools in Sharjah',{}],['sch
  const all=JSON.stringify(r.research.trace);assert.ok(!all.includes('AE')&&!all.includes('secret-key')&&!/sharjah|british/i.test(all),'no values, key or query in the trace');void realBraveCountry;}
 console.log('research-schools: Brave parameters valid for UAE and UK; 422 reported safely');
 
+
+// Current-site regression: stale numeric search URL returns 404; links come from the fetched official directory.
+const currentDirectory=readFileSync(new URL('./fixtures/spea-current-directory.html',import.meta.url),'utf8');
+const currentProfile=readFileSync(new URL('./fixtures/spea-current-profile.html',import.meta.url),'utf8');
+assert.equal(readSchoolDirectory(currentDirectory).length,2);
+const currentCalls=[];
+const current=await answerResearch(plan,env,{reserve:async()=>true,fetcher:async u=>{
+ const url=String(u);currentCalls.push(url);
+ if(url.startsWith('https://api.search.brave.com/'))return new Response(JSON.stringify({web:{results:[{url:'https://spea.shj.ae/en/educational-institutions/schools/117'}]}}));
+ if(url==='https://spea.shj.ae/en/education-institutes/schools')return new Response(currentDirectory,{headers:{'content-type':'text/html'}});
+ if(url.endsWith('/wes-green-int-pvt-school-llc'))return new Response(currentProfile,{headers:{'content-type':'text/html'}});
+ return new Response('',{status:404});
+}});
+assert.equal(current.research.status,'evidence-found');
+assert.equal(current.liveSources.length,1);assert.match(current.reply,/Wes green.*British curriculum, Muwaileh, Sharjah/);
+assert.match(current.liveSources[0].url,/education-institutes\/schools\/wes-green/);
+assert.ok(currentCalls.includes('https://spea.shj.ae/en/education-institutes/schools'));
+console.log('Current SPEA HTML and stale-index recovery: passed');

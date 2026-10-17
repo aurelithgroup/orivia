@@ -48,9 +48,31 @@ export async function researchPage({url,part,location,fetcher=fetch}){
 /* Structured official profiles: SPEA publishes each Sharjah private school as a
  * label/value page (no sentences), so the sentence excerpter can't read it.
  * Values are copied verbatim from the page; nothing is paraphrased by a model. */
-export const SPEA_PROFILE=/^\/en\/educational-institutions\/schools\/\d{1,5}$/;
+export const SPEA_PROFILE=/^\/en\/(?:educational-institutions\/schools\/\d{1,5}|education-institutes\/schools\/[a-z0-9-]+)\/?$/;
+const SPEA_DIRECTORY='https://spea.shj.ae/en/education-institutes/schools';
+export function readSchoolDirectory(raw){
+ const rows=[];
+ for(const card of String(raw).matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/gi)){
+  const html=card[1],href=html.match(/href="(\/en\/education-institutes\/schools\/[a-z0-9-]+)"/i)?.[1];
+  const curriculum=plain(html).match(/Curriculum::\s*([a-z ]+?)(?= Learn More|$)/i)?.[1]?.trim();
+  if(href&&curriculum)rows.push({url:new URL(href,SPEA_DIRECTORY).href,curriculum});
+ }
+ return rows;
+}
 const PROFILE_LABELS=['Curriculum','Evaluation','International Accreditations','Class','Educational Fees','School ID','Established','Area','Phone Number','Share','Click to Share'];
 export function readSchoolProfile(raw,text){
+ // Current SPEA website: read explicit labels from the fetched HTML, not old indexed URLs.
+ const curriculum=plain(raw.match(/<span[^>]*>\s*Curriculum:\s*([^<]+)<\/span>/i)?.[1]);
+ if(curriculum){
+  const name=plain(raw.match(/<h[12][^>]*>([\s\S]*?)<\/h[12]>/i)?.[1]);
+  const area=text.match(/School Location\s*(.+?)(?=Phone Number|Email|Apply for a service|$)/i)?.[1]?.replace(/\s*\(Opens in a new tab\)/g,'').trim();
+  const grades=plain(raw.match(/<span[^>]*>\s*Grade:\s*([^<]+)<\/span>/i)?.[1]).replace(/\s*\|\s*/g,', ');
+  if(!name||!area||area.length>100)return null;
+  const quote='Curriculum: '+curriculum;
+  if(!text.includes(quote))return null;
+  return {name,curriculum,area,grades,evaluation:'',phone:'',quote};
+ }
+
  const start=text.search(/(?:^|\s)Curriculum\s/);if(start<0)return null;
  const at=start+(text[start]===' '?1:0);
  const rest=text.slice(at,at+1500);
@@ -82,9 +104,18 @@ async function discoverSchools(plan,part,query,env,fetcher,reserve,trace){
  const found=await searchApproved({query,part,location,env,fetcher,reserve,count:12,keep:10});
  trace.push({stage:'search',status:found.status,http:found.http??null,results:found.results??0,approved:found.candidates.length,...(found.providerCode?{providerCode:found.providerCode}:{}),...(found.rejected?{rejected:found.rejected}:{})});
  if(found.status!=='searched')return {status:found.status,schools:[]};
- const profiles=found.candidates.filter(c=>{const u=new URL(c.url);return /(^|\.)spea\.shj\.ae$/.test(u.hostname)&&SPEA_PROFILE.test(u.pathname)}).slice(0,6);
- trace.push({stage:'filter',profilePages:profiles.length,otherApproved:found.candidates.length-profiles.length});
+ let profiles=found.candidates.filter(c=>{const u=new URL(c.url);return /(^|\.)spea\.shj\.ae$/.test(u.hostname)&&SPEA_PROFILE.test(u.pathname)}).slice(0,6);
  const want=CURRICULUM_MATCH[part.curriculum];
+ // Search indexes can retain deleted numeric profiles. Discover current profile links from the official directory.
+ if(profiles.length<2){
+  const source=researchSource(SPEA_DIRECTORY,part,location);
+  const directory=source?await fetchApproved(source,fetcher):{ok:false,reason:'source-not-approved'};
+  trace.push({stage:'directory',outcome:directory.ok?'read':directory.reason,http:directory.http??null});
+  if(directory.ok){const current=readSchoolDirectory(directory.raw).filter(c=>!want||want.test(c.curriculum));
+   profiles=[...current,...profiles].filter((c,i,a)=>a.findIndex(x=>x.url===c.url)===i).slice(0,6);
+  }
+ }
+ trace.push({stage:'filter',profilePages:profiles.length,otherApproved:found.candidates.length});
  const pages=await Promise.all(profiles.map(async c=>{
   const source=researchSource(c.url,part,location);if(!source)return {url:c.url,reason:'source-not-approved'};
   const got=await fetchApproved(source,fetcher);if(!got.ok)return {url:c.url,...got};
