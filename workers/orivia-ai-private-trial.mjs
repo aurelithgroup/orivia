@@ -112,7 +112,7 @@ async function handle(req,env,ctx){
  if(PUBLIC&&(!env.TURNSTILE_SECRET||!env.TURNSTILE_SITE_KEY||!env.SESSION_SECRET||String(env.SESSION_SECRET).length<32))return reply({error:'Public beta is not configured yet'},503); // fail closed
  if(!PUBLIC&&!(await accessContext(req,env,ctx)))return reply({error:'Private sign-in required'},401);
  // What the page needs to know about this deployment (no secrets)
- if(url.pathname==='/v1/config'&&req.method==='GET')return reply({mode:PUBLIC?'public':'private',turnstileSiteKey:PUBLIC?env.TURNSTILE_SITE_KEY:null});
+ if(url.pathname==='/v1/config'&&req.method==='GET')return reply({mode:PUBLIC?'public':'private',turnstileSiteKey:PUBLIC?env.TURNSTILE_SITE_KEY:null,research:{enabled:env.RESEARCH_ENABLED==='1',searchKey:!!env.BRAVE_SEARCH_API_KEY}}); // booleans only, never the key
  // End session: forget the human check for this browser (saved journeys, calendar and My Life stay on the device)
  if(url.pathname==='/v1/end'&&req.method==='POST'){
   if(req.headers.get('Origin')!=='https://'+hostFor(env))return reply({error:'Origin not allowed'},403);

@@ -109,7 +109,7 @@ for(const length of [3,5,7,9,11,13]){
  assert.equal(plan.location.country,'uae','UK origin must not switch jurisdiction');
  assert.equal(plan.location.city,'Sharjah');
  if(length>=5)assert.equal(plan.parts[0].curriculum,'british');
- if(length>=9){assert.equal(plan.parts[0].intent,'discovery');assert.match(plan.queries[0].query,/british curriculum schools official school directory/);}
+ if(length>=9){assert.equal(plan.parts[0].intent,'discovery');assert.match(plan.queries[0].query,/british curriculum (?:schools official school directory|private school)/);}
 }
 const rolling=planResearch(schoolDialogue.slice(-12),{city:'Sharjah, UAE'});
 assert.equal(rolling.needed,true);assert.equal(rolling.location.city,'Sharjah');

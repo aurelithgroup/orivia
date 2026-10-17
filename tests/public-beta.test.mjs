@@ -23,7 +23,7 @@ assert.equal((await call('/')).status, 200);
 assert.match((await call('/')).headers.get('content-security-policy'), /challenges\.cloudflare\.com/);
 const page = await (await call('/')).text();
 assert.match(page, /<span class="chip"[^>]*>Beta</); assert.doesNotMatch(page, />Private AI trial</, 'beta wording arrives with the page');
-assert.deepEqual(await (await call('/v1/config')).json(), { mode: 'public', turnstileSiteKey: 'site-key' });
+assert.deepEqual(await (await call('/v1/config')).json(), { mode: 'public', turnstileSiteKey: 'site-key', research: { enabled: false, searchKey: false } });
 assert.equal((await call('/v1/guides')).status, 200);
 /* Chat needs the human check */
 let r = await chat(); assert.equal(r.status, 401); assert.equal((await r.json()).error, 'human_check');
