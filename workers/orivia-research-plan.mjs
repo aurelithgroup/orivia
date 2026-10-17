@@ -1,0 +1,65 @@
+/* Conservative first research planner. Not a universal intent classifier.
+ * Unrecognised questions remain on the existing chat path; uncertain research
+ * requests clarify instead of using a community source for a consequential fact.
+ */
+const clean=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'");
+const UAE=/\b(uae|united arab emirates|dubai|sharjah|abu dhabi|ajman|fujairah|umm al quwain|ras al khaimah)\b/i;
+const UK=/\b(uk|united kingdom|britain|england|scotland|wales|northern ireland|edinburgh|london|manchester|birmingham|glasgow)\b/i;
+const EMIRATES=['Dubai','Sharjah','Abu Dhabi','Ajman','Fujairah','Umm Al Quwain','Ras Al Khaimah'];
+const UK_PLACES=['Edinburgh','London','Manchester','Birmingham','Glasgow','Scotland','England','Wales','Northern Ireland'];
+function place(text){
+ const t=clean(text);let country=null;
+ // Prefer an explicit destination after a correction/move, not an origin in the same turn.
+ const corrected=t.split(/\b(?:actually|i meant|moving to|moved to|instead)\b/).at(-1);
+ const p=UAE.test(corrected)||UK.test(corrected)?corrected:t;
+ const a=UAE.exec(p),b=UK.exec(p);
+ if(a&&b)country=a.index>b.index?'uae':'uk';else country=a?'uae':b?'uk':null;
+ const city=(country==='uae'?EMIRATES:UK_PLACES).find(x=>p.includes(x.toLowerCase()))||'';
+ return {country,city};
+}
+const organisations=[[/heriot[ -]?watt/i,'Heriot-Watt'],[/wollongong|\buowd\b/i,'University of Wollongong Dubai'],[/emirates nbd|\benbd\b/i,'Emirates NBD'],[/\badcb\b/i,'ADCB'],[/first abu dhabi bank|\bfab\b/i,'First Abu Dhabi Bank']];
+const detect=t=>{
+ const topics=[];
+ if(/\b(bank|banking|account)\b/.test(t))topics.push('bank');
+ if(/\b(school|schooling)\b/.test(t)&&/\b(kids?|children|child|register|enrol|enroll|admission)\b/.test(t))topics.push('school');
+ if(/\bmedical\b|health (?:check|test)|blood test|x[ -]?ray/.test(t))topics.push('medical');
+ if(/fingerprints?|biometrics?/.test(t))topics.push('biometrics');
+ if(/\bvisa\b|residen|emirates id|entry permit/.test(t)&&!topics.length)topics.push('residency');
+ if(/\b(uni|university|college|institution)\b/.test(t)&&/documents?|sorting|process|admissions|status|application/.test(t))topics.push('institution');
+ if(/hang[ -]?out|meet people|what.*area.*like|local tips|caf[eé]s?|restaurants?/.test(t))topics.push('community');
+ return [...new Set(topics)];
+};
+export function planResearch(messages,profile){
+ const users=(Array.isArray(messages)?messages:[]).filter(m=>m.role==='user').map(m=>String(m.content||''));
+ const latest=clean(users.at(-1));if(!latest)return {needed:false};
+ let topics=detect(latest),inherited=false;
+ if(!topics.length&&(/\b(then|after|that|those|card|it|they|actually|meant|instead)\b/.test(latest)||place(latest).country)){
+  for(let i=users.length-2;i>=Math.max(0,users.length-5);i--){const old=detect(clean(users[i]));if(old.length){topics=old;inherited=true;break;}}
+ }
+ if(!topics.length)return {needed:false};
+ let location={country:null,city:''};
+ if(profile&&typeof profile==='object')location=place(profile.city||profile.movingTo||'');
+ for(const turn of users){const next=place(turn);if(next.country)location={country:next.country,city:next.city||(next.country===location.country?location.city:'')};}
+ let organisation=organisations.find(([re])=>re.test(String(profile?.place||'')))?.[1]||null;
+ for(const turn of users){const found=organisations.find(([re])=>re.test(turn));if(found)organisation=found[1];}
+ const currentOrg=organisations.find(([re])=>re.test(latest));if(currentOrg)organisation=currentOrg[1];
+ const parts=topics.flatMap(topic=>{
+  const base={topic,tier:topic==='community'?'community':topic==='institution'?'organisation':'official',...(organisation?{organisation}:{})};
+  return topic==='bank'&&['Emirates NBD','ADCB','First Abu Dhabi Bank'].includes(organisation)?[base,{topic,tier:'organisation',organisation}]:[base];
+ });
+ let clarification=null;
+ // Do not assume the university's "documents" means immigration documents.
+ if(topics.includes('institution')&&!/\bvisa\b|residen|emirates id|entry permit|admissions|enrol|enroll/.test(latest)&&!inherited)
+  clarification='Which documents do you mean—the ones for enrolment, your visa, or something else?';
+ else if(!location.country)clarification='Is this for the UAE or the UK?';
+ else if(topics.includes('school')&&location.country==='uae'&&!location.city)clarification='Which emirate will your children go to school in?';
+ else if(topics.includes('medical')&&!users.some(t=>/visa|residen|emirates id|entry permit/i.test(t)))
+  clarification='Is the medical test for your residence visa, or has someone asked for a different kind of test?';
+ else if(topics.includes('institution')&&!organisation&&!profile?.place)
+  clarification='Which institution is handling it?';
+ const queryTerms={school:'school enrolment children admission documents',bank:'bank account identity documents non resident eligibility',medical:'residence visa medical fitness examination official centres procedure',biometrics:'identity residence application biometrics next steps card issuance',residency:'student residence visa application status official',institution:'student visa application status contact office',community:'local places community recommendations'};
+ const queries=parts.slice(0,2).map(p=>({part:p,query:[location.country==='uae'?'United Arab Emirates':'United Kingdom',location.city,p.organisation||'',queryTerms[p.topic]].filter(Boolean).join(' ')}));
+ return {needed:true,location,parts,queries,clarification,mixed:parts.length>1,
+  privateStatus:topics.includes('institution'),
+  cautions:['Do not infer any completed step, appointment, approval or card delivery.','Never ask for ID numbers or send personal application details to search.',...(topics.includes('bank')?['Do not promise an account or an exemption from identity checks.']:[]),...(topics.includes('medical')?['Do not give a diagnosis or assume which tests apply.']:[])]};
+}

@@ -3,6 +3,8 @@ import {tryJourneyReply} from './orivia-ai-journey-adapter.mjs';
 import {entryGuidance} from './orivia-natural-entry.mjs';
 import {validateEvidence,inspectSource} from './orivia-source-policy.mjs';
 import {readApprovedPage} from './orivia-official-live.mjs';
+import {planResearch} from './orivia-research-plan.mjs';
+import {answerResearch,researchClarification} from './orivia-research.mjs';
 import {createCalendarReminder} from './orivia-calendar-reminder.mjs';
 import inlineCalendar from './orivia-inline-calendar.js';
 import {guideOffer,guideContent,guideCatalogue,readGuideState,progressSummary} from './orivia-guide-offers.mjs';
@@ -146,11 +148,15 @@ async function handle(req,env,ctx){
  if(Number(req.headers.get('Content-Length')||0)>16000)return reply({error:'Too large'},413);
  let input;try{const raw=await req.text();if(raw.length>16000)return reply({error:'Too large'},413);input=JSON.parse(raw)}catch(_){return reply({error:'Invalid JSON'},400)}
  if(!check(input?.messages))return reply({error:'Invalid conversation'},400);
+ // Rollout is explicit: attaching a search key alone must not turn on paid calls.
+ const research=env.RESEARCH_ENABLED==='1'?planResearch(input.messages,input.preferences?.profile):null;
+ if(research?.needed&&research.clarification)return reply(researchClarification(research));
  // Transport: work out where from, where to and what matters, ask only what's missing, then prepare Maps links.
  const trip=planTrip(input.messages,input.preferences?.profile);
+ if(research?.needed)trip.active=false;
  const action=nextAction(input.messages,trip);
  // Journey card: offered when a decision makes a checked guide genuinely useful (never on every mention)
- const guide=guideOffer(input.messages,{trip,profile:input.preferences?.profile,prefs:input.preferences});
+ const guide=research?.needed?{}:guideOffer(input.messages,{trip,profile:input.preferences?.profile,prefs:input.preferences});
  const card=guide.offer?{guideOffer:guide.offer}:{};
  // Asking about a guide or a problem ("the gate won't open") is not a route request: pause the trip questions
  if(guide.offer&&guide.offer.kind!=='offer'&&trip.active)trip.active=false;
@@ -162,7 +168,7 @@ async function handle(req,env,ctx){
  const tripContext=tripInfo?tripInfo.context:trip.active?'TRANSPORT: still needed before Orivia can prepare directions: '+(trip.dest?'':'which university, campus or place they are going to; ')+(trip.origin||trip.originUnknown?'':'where they are leaving from; ')+'Answer their latest message briefly, then ask only for what is still needed. Never estimate times, fares or routes.':'';
  // Checked read-only journey path; no user data is stored, and unknown steps fail closed. Skipped while the person is talking about getting somewhere.
  const shared=readGuideState(input.preferences).progress['dubai.eid.student'];
- const journeyAnswer=trip.active?null:tryJourneyReply(input.messages,{progress:shared,progressLine:shared?progressSummary('dubai.eid.student',shared):''});
+ const journeyAnswer=trip.active||research?.needed?null:tryJourneyReply(input.messages,{progress:shared,progressLine:shared?progressSummary('dubai.eid.student',shared):''});
  // Check-up questions are asked directly; once the step is known, the AI explains it from the checked facts.
  if(journeyAnswer?.reply)return reply({...journeyAnswer,...card});
  const journeyContext=journeyAnswer?.journeyContext||'';
@@ -176,6 +182,7 @@ async function handle(req,env,ctx){
   const used=await env.BUDGET_DB.prepare('INSERT INTO trial_usage (day,calls) VALUES (?,1) ON CONFLICT(day) DO UPDATE SET calls=calls+1 WHERE calls < ? RETURNING calls').bind(day,cap).first();
   if(!used)return reply({error:PUBLIC?'daily_limit':'Daily private AI trial limit reached'},429);
  }catch(_){return reply({error:'Daily trial limit unavailable'},503)}
+ if(research?.needed)return reply(await answerResearch(research,env));
  const latest=input.messages.filter(m=>m.role==='user').slice(-3).map(m=>m.content).join(' ');
  // Official university pages are still used as evidence; the links and trip facts come only from the transport planner.
  const found=trip.active?journeyResources(input.messages):{context:'',sources:[],actions:[]};
