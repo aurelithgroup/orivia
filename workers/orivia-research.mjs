@@ -1,6 +1,7 @@
 /* Opt-in research pipeline. No credentials or result caches in browser/storage.
  * Search discovers URLs; only separately fetched, scoped pages reach the model.
  */
+import {schoolCardContacts,schoolOrganisations} from './orivia-school-cards.mjs';
 import {offersYear,schoolContacts,schoolActionText} from './orivia-school-actions.mjs';
 import {researchSource,sourceHosts} from './orivia-research-policy.mjs';
 const MODEL='@cf/meta/llama-3.3-70b-instruct-fp8-fast';
@@ -73,7 +74,8 @@ export function readSchoolProfile(raw,text){
   if(!text.includes(quote))return null;
   const gradeRaw=plain(raw.match(/<span[^>]*>\s*(Grade:\s*[^<]+)<\/span>/i)?.[1]);
   const evidence=factEvidence(text,[['curriculum','Curriculum',quote],['area','Area','School Location '+area],['grades','Year groups',gradeRaw]]);
-  return {name,curriculum,area,grades,evaluation:'',...schoolContacts(text),quote,evidence};
+  const contacts=schoolContacts(text);
+  return {name,curriculum,area,grades,evaluation:'',...contacts,quote,evidence,cardContacts:schoolCardContacts(raw,text,{...contacts,area})};
  }
 
  const start=text.search(/(?:^|\s)Curriculum\s/);if(start<0)return null;
@@ -140,10 +142,13 @@ async function discoverSchools(plan,part,query,env,fetcher,reserve,trace){
 function schoolsAnswer(plan,part,schools){
  const now=new Date().toISOString();
  const sources=schools.map((s,i)=>({id:'S'+(i+1),url:s.url,title:s.profile.name+' (SPEA school profile)',category:'official',topic:'school',checkedAt:now,profile:s.profile}));
+ const organisations=schoolOrganisations(sources,part);
+ const cardMode=['contacts','next-steps'].includes(part.intent)?'choose':sources.length===1?'single':'list';
  if(['contacts','next-steps'].includes(part.intent)){
   const action=schoolActionText(part,sources);
   const reply=action.reply+'\n\n'+sources.map((s,i)=>'['+(i+1)+'] '+s.title+': '+s.url).join('\n');
   const result=base(plan,action.claims.length?'evidence-found':'partial',reply,sources);
+  result.organisations=organisations;result.cardMode=cardMode;
   result.research.claims=action.claims;result.research.unresolved=action.claims.length?[]:['school-contact'];return result;
  }
  const label=CURRICULUM_NAME[part.curriculum]||'';
@@ -155,10 +160,12 @@ function schoolsAnswer(plan,part,schools){
   const quotes=['curriculum','area','grades','evaluation'].filter(f=>ev[f]&&(f!=='grades'||g)&&(f!=='evaluation'||p.evaluation)).map(f=>({fact:f,label:ev[f].label,quote:ev[f].quote}));
   if(!quotes.length)quotes.push({fact:'curriculum',label:'Curriculum',quote:p.quote});
   return {text,sourceId:s.id,quote:quotes.map(q=>q.quote).join(' … ').slice(0,500),quotes};});
- const intro=(sources.length===1?'This '+(label?label+'-curriculum ':'')+'school is':'These '+sources.length+' '+(label?label+'-curriculum ':'')+'schools are')+(part.year?' (listing Year '+part.year+')':'')+' listed by the Sharjah Private Education Authority (SPEA), which regulates private schools in Sharjah:';
+ const intro=(sources.length===1?'This '+(label?label+'-curriculum ':'')+'school is':'These '+sources.length+' '+(label?label+'-curriculum ':'')+'schools are')+' listed by the Sharjah Private Education Authority (SPEA), which regulates private schools in Sharjah:';
+ const yearNote=part.year?' Their profiles explicitly list Year '+part.year+'.':'';
  const outro='These are the SPEA school pages I could open for your question, not SPEA’s full list, so there are likely more. Fees, seats and admissions change, so check those with each school.';
- const reply=intro+'\n\n'+claims.map((c,i)=>c.text+' ['+(i+1)+']').join('\n\n')+'\n\n'+outro+'\n\n'+sources.map((s,i)=>'['+(i+1)+'] '+s.title+': '+s.url).join('\n');
+ const reply=intro+yearNote+'\n\n'+claims.map((c,i)=>c.text+' ['+(i+1)+']').join('\n\n')+'\n\n'+outro+'\n\n'+sources.map((s,i)=>'['+(i+1)+'] '+s.title+': '+s.url).join('\n');
  const result=base(plan,'evidence-found',reply,sources);
+ result.organisations=organisations;result.cardMode=cardMode;
  result.research.claims=claims;result.research.unresolved=[];result.research.coverage='partial-list';
  return result;
 }

@@ -35,7 +35,7 @@ const run=async(part,year=6)=>answerResearch({...contacts,parts:[{...contacts.pa
  const url=String(u);
  if(url.startsWith('https://api.search.brave.com/'))return new Response(JSON.stringify({web:{results:[]}}));
  if(url.endsWith('/schools'))return new Response(directory,{headers:{'content-type':'text/html'}});
- if(url.endsWith('/wes-green-int-pvt-school-llc'))return new Response(raw+contactHTML,{headers:{'content-type':'text/html'}});
+ if(url.endsWith('/wes-green-int-pvt-school-llc'))return new Response(raw.slice(0,raw.indexOf('School Location'))+contactHTML,{headers:{'content-type':'text/html'}});
  return new Response('',{status:404});
 }});
 const c=await run('contacts');assert.equal(c.research.status,'evidence-found');assert.match(c.reply,/Phone: 065062999/);assert.match(c.reply,/Email: wesgreenintl-psch@spea.shj.ae/);assert.doesNotMatch(c.reply,/These .*schools are listed/);assert.doesNotMatch(c.reply,/info@spea/);
@@ -43,3 +43,15 @@ const n=await run('next-steps');assert.match(n.reply,/next step.*admissions/);as
 const missing=await run('discovery',9);assert.equal(missing.research.status,'evidence-found');
 const unavailable=await run('discovery',14);assert.equal(unavailable.research.status,'no-evidence');
 console.log('Research follow-through: typo, Year 6, all, next steps, accepted contacts, correction and explicit year matching passed');
+
+// Exact natural follow-ups from Bee's live test, including a deictic find request.
+const exact=[{role:'user',content:'Find British curriculum schools in Sharjah for Year 6.'},{role:'assistant',content:'These British curriculum schools in Sharjah list Year 6.'},{role:'user',content:'how can i contact them?'}];
+assert.equal(planResearch(exact,{}).parts[0].intent,'contacts');
+exact.push({role:'assistant',content:'You can contact the schools through their profiles or find their official websites.'},{role:'user',content:'can you find that for me'});
+assert.equal(planResearch(exact,{}).parts[0].intent,'contacts');
+assert.equal(c.cardMode,'choose');assert.equal(c.organisations[0].contacts.phone.value,'065062999');
+assert.equal(c.organisations[0].contacts.email.value,'wesgreenintl-psch@spea.shj.ae');
+assert.equal(c.organisations[0].facts.find(f=>f.key==='year').value,'Year 6 listed');
+assert.match(c.organisations[0].facts.find(f=>f.key==='year').quote,/6/);
+assert.equal(c.organisations[0].contacts.directions.url,'https://goo.gl/maps/5s3CsgSov2Q2');
+console.log('Real backend organisation cards and natural contact follow-ups: passed');

@@ -256,7 +256,7 @@ function orgCard(o,ui,{back,onDismiss}={}){
 // D (several) or A (one): rendered under the reply; shortlist and "Not now" are saved with the chat.
 function orgCards(t,srcs){
  const orgs=safeOrgs(t.meta&&t.meta.organisations,srcs);if(!orgs.length)return null;
- const wrap=el('div','org-wrap');const ui={sel:null,view:t.meta.cardMode==='choose'?'choose':'',pager:null};
+ const wrap=el('div','org-wrap');const choose=t.meta.cardMode==='choose';const ui={sel:choose?orgs[0].id:null,view:choose?'choose':'',pager:choose?orgs.map(o=>o.id):null};
  const saveMeta=()=>{try{save()}catch(_){}};
  const dismiss=()=>{t.meta.cardsHidden=true;saveMeta();paint()};
  const paint=()=>{

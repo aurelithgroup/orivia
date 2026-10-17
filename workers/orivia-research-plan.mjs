@@ -36,7 +36,7 @@ export function planResearch(messages,profile){
  const previous=clean(assistants.at(-1)?.content);
  // An assistant's offer identifies the pending TASK, never factual evidence or
  // a confirmed location. Short replies must not lose a lookup already offered.
- const continuing=latest.length<180&&(/^(?:yes|yeah|yep|sure|please|ok|okay|bruh|um+|uh+|i think so|not sure|i'm not sure|all|both|more|year|grade|british|american|indian|english)\b/.test(latest)||/\b(?:do it for me|you'?d do|you would do|find them|look (?:it|them) up|best option for them|what about them|what (?:do i do|happens) (?:now|next)|what next)\b/.test(latest));
+ const continuing=latest.length<180&&(/^(?:yes|yeah|yep|sure|please|ok|okay|bruh|um+|uh+|i think so|not sure|i'm not sure|all|both|more|year|grade|british|american|indian|english)\b/.test(latest)||/\b(?:do it for me|you'?d do|you would do|find them|look (?:it|them) up|best option for them|what about them|what (?:do i do|happens) (?:now|next)|what next|contact|phone|email|call|telephone|can you (?:find|get|look up) (?:that|it|them))\b/.test(latest));
  let topics=detect(latest),inherited=false;
  if(!topics.length&&continuing){topics=detect(previous);inherited=topics.length>0;}
  if(!topics.length&&(continuing||/\b(then|after|that|those|card|it|they|actually|meant|instead)\b/.test(latest)||place(latest).country)){
@@ -48,7 +48,7 @@ export function planResearch(messages,profile){
  // Track the requested action separately from its topic. An offer is a task cue, never evidence.
  const schoolTask=t=>/\b(contact|phone|email|call|telephone)\b/.test(t)?'contacts':/\b(what (?:do i do|happens) (?:now|next)|what next|next steps?)\b/.test(t)?'next-steps':/\b(register|enrol|enroll|admissions?|apply|application|documents?|requirements?)\b/.test(t)?'admissions':/\b(find(?:ing)?|list|look (?:it |them )?up|recommend|which schools?|options|curricul(?:um|a))\b/.test(t)?'discovery':null;
  if(!curriculum&&inherited){for(let i=assistants.length-1;i>=0;i--){const named=curriculumNames.find(([,re])=>re.test(clean(assistants[i].content)));if(named){curriculum=named[0];break;}}}
- const explicitSchoolTask=schoolTask(latest);
+ const explicitSchoolTask=/\b(?:find|get|look up) (?:that|it|them)(?: for me)?\b/.test(latest)?null:schoolTask(latest);
  const offeredTask=continuing?schoolTask(previous):null;
  let schoolIntent=explicitSchoolTask||offeredTask;
  if(!schoolIntent){for(let i=users.length-2;i>=0;i--){const task=schoolTask(clean(users[i]));if(task){schoolIntent=task;break;}}}
