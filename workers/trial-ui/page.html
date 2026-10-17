@@ -198,6 +198,19 @@ form.stack{display:flex;flex-direction:column;gap:10px}
 .now-item small{color:var(--muted);font-size:13px}
 button.link-card{font:inherit;width:100%;text-align:start;cursor:pointer}
 .remember{border:1px solid var(--line);border-inline-start:5px solid var(--ok);border-radius:14px;padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:8px;max-width:94%;align-self:flex-start;margin:4px 16px 0}
+/* Location fields, Listen and dictation */
+.loc{display:flex;flex-direction:column;gap:10px}
+.loc:empty{display:none}
+#place-form input{flex:1;min-width:0}
+.listen-btn{display:inline-flex;align-items:center;gap:6px;margin-top:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 11px;font-size:13px;font-weight:700;min-height:32px}
+.listen-btn[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+#mic{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--surface2);color:var(--ink);display:grid;place-items:center;flex:none}
+#mic svg{width:20px;height:20px}
+#mic[aria-pressed="true"]{background:#B3261E;color:#fff;border-color:#B3261E}
+.listening{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;margin-bottom:8px;border-radius:12px;background:var(--amberSoft);font-weight:700;font-size:14px}
+.listening .dot{width:12px;height:12px;border-radius:50%;background:#B3261E;flex:none}
+@media (prefers-reduced-motion:no-preference){.listening .dot{animation:pulse 1.2s ease-in-out infinite}@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}}
+#listening-text{flex:1;min-width:120px}
 /* Settings */
 .gear{margin-inline-start:8px;border:0;background:none;color:var(--signInk);width:40px;height:40px;border-radius:10px;display:grid;place-items:center}
 .gear svg{width:22px;height:22px}
@@ -262,7 +275,8 @@ nav.bottom .help-tab{color:var(--ink)}
    <div id="history" role="log" aria-live="polite"></div>
   </div>
   <div class="composer-wrap">
-   <form id="form"><label for="msg">Your message</label><textarea id="msg" rows="1" maxlength="900" required placeholder="Message Orivia…"></textarea><button id="send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
+   <div id="listening" class="listening" hidden role="status"><span class="dot" aria-hidden="true"></span><span id="listening-text">Listening… speak now</span><button type="button" class="btn small" id="dict-stop">Stop</button><button type="button" class="btn text small" id="dict-cancel">Cancel</button></div>
+   <form id="form"><label for="msg">Your message</label><textarea id="msg" rows="1" maxlength="900" required placeholder="Message Orivia…"></textarea><button id="mic" type="button" aria-label="Speak your message" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button id="send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
    <p id="status" role="status"></p>
   </div>
  </section>
@@ -297,10 +311,19 @@ nav.bottom .help-tab{color:var(--ink)}
    <p id="about-summary" class="about-summary"></p>
    <div id="about-pick" class="about-pick">
     <p class="tiny">Tap what fits, skip anything. It saves straight away.</p>
-    <div class="pick"><span class="pick-q">Where do you live?</span><div class="seg" id="pick-city" role="radiogroup" aria-label="Where do you live?"></div></div>
+    <div class="pick"><span class="pick-q" id="here-q">Where do you live?</span><div class="seg" id="pick-here" role="radiogroup" aria-labelledby="here-q"></div>
+     <div id="here-fields" class="loc"></div>
+     <div id="away-fields" class="loc" hidden>
+      <label class="field" for="loc-from">Where are you now? <small>Optional</small><input id="loc-from" maxlength="60" autocomplete="country-name" placeholder="Country or city"></label>
+      <span class="pick-q" id="dest-q">Where are you moving to?</span><div class="seg" id="pick-dest" role="radiogroup" aria-labelledby="dest-q"></div>
+      <div id="dest-fields" class="loc"></div>
+     </div></div>
     <div class="pick"><span class="pick-q">What brings you here?</span><div class="seg" id="pick-who" role="radiogroup" aria-label="What brings you here?"></div></div>
-    <div class="pick" id="pick-place-row"><span class="pick-q" id="pick-place-q">Your university</span><div class="seg" id="pick-place" role="radiogroup" aria-labelledby="pick-place-q"></div>
-     <form id="place-other" class="row" hidden><label class="sr" for="p-place">Name</label><input id="p-place" maxlength="60" placeholder="Type the name"><button class="btn small" type="submit">Save</button></form></div>
+    <div class="pick" id="pick-place-row"><label class="pick-q" id="pick-place-q" for="p-place">Your institution</label>
+     <form id="place-form" class="row"><input id="p-place" maxlength="80" autocomplete="organization" placeholder="School, college, university or training centre"><button class="btn small" type="submit">Save</button></form>
+     <p class="tiny" id="place-note">Type its name as you know it. Orivia hasn’t checked it yet.</p>
+     <div id="inst-confirm" hidden></div><!-- reserved: confirming a matched institution and campus (research connection comes later) -->
+    </div>
     <button type="button" class="btn quiet small" id="about-done" hidden>Done</button>
    </div>
    <p class="tiny" id="about-use"></p>
@@ -312,6 +335,7 @@ nav.bottom .help-tab{color:var(--ink)}
   <button type="button" class="link-card" id="life-settings"><span><strong>Settings and your data</strong><small class="tiny">Theme, how Orivia talks to you, clear or delete what’s saved</small></span>›</button>
   <p class="tiny">Saved only in this browser. Never enter passport, visa or ID numbers.</p>
  </div></section>
+ <datalist id="uk-towns"><option>London</option><option>Edinburgh</option><option>Glasgow</option><option>Manchester</option><option>Birmingham</option><option>Leeds</option><option>Liverpool</option><option>Bristol</option><option>Sheffield</option><option>Newcastle upon Tyne</option><option>Nottingham</option><option>Leicester</option><option>Coventry</option><option>Cardiff</option><option>Swansea</option><option>Belfast</option><option>Aberdeen</option><option>Dundee</option><option>Oxford</option><option>Cambridge</option></datalist>
  <section id="settings-view" class="view" hidden><div class="pad section" style="overflow:auto">
   <div class="jhead"><button type="button" class="ask" id="settings-back">← Back</button></div>
   <h2>Settings</h2>
@@ -327,8 +351,11 @@ nav.bottom .help-tab{color:var(--ink)}
   </section>
   <section class="set-group"><h3>Privacy &amp; data</h3>
    <p class="tiny">Your conversation is kept in this browser tab only. Your calendar, journeys, About me and settings stay in this browser. Messages are sent to Cloudflare Workers AI to get a reply. Orivia never needs passport, visa or ID numbers.</p>
+   <button id="end-session" type="button" class="btn quiet">End session</button>
+   <p class="tiny">Goes back to the welcome screen and clears this conversation. Your journeys, calendar and My Life stay saved on this device. This isn’t an account log-out: Orivia doesn’t have accounts yet, so anyone using this device can still see them. To remove them, use Clear saved data.</p>
    <button id="clear" type="button" class="btn quiet">Clear conversation</button>
-   <button id="forget" type="button" class="btn quiet">Delete About me, calendar and journeys</button>
+   <button id="forget" type="button" class="btn quiet">Clear saved data</button>
+   <p class="tiny">Deletes About me, your calendar and your journeys from this device. This can’t be undone.</p>
   </section>
   <section class="set-group"><h3>Help &amp; safety</h3>
    <p class="tiny">In an emergency in the UAE, call:</p>

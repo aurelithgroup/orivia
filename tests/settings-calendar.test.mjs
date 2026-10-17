@@ -38,11 +38,27 @@ assert.match(js, /const SET_DEFAULT=\{[^}]*suggest:true/);
 assert.match(js, /p\.use===false\)return undefined/, 'About me is shared unless explicitly switched off');
 assert.match(html, /id="set-aboutme-use"/);
 /* My Life: tap-to-pick, saves on tap, no long form; chat offers to remember, never saves on its own */
-for (const id of ['pick-city', 'pick-who', 'pick-place', 'about-summary', 'life-journeys', 'upcoming']) assert.match(html, new RegExp('id="' + id + '"'), id);
+for (const id of ['pick-here', 'pick-dest', 'loc-from', 'pick-who', 'p-place', 'inst-confirm', 'about-summary', 'life-journeys', 'upcoming']) assert.match(html, new RegExp('id="' + id + '"'), id);
 assert.doesNotMatch(html, /id="profile-form"/, 'no long About me form');
 assert.match(js, /function rememberCard/); assert.match(js, /Remember this for next time\?/);
 const rc = js.slice(js.indexOf('function rememberCard'), js.indexOf("$('about-edit').onclick"));
 assert.equal((rc.match(/saveProfile\(/g) || []).length, 1, 'saves only from the Remember button');
 const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
 assert.deepEqual(ids.filter((x, i) => ids.indexOf(x) !== i), [], 'every id on the page is unique (no leftover markup)');
+/* Location: UAE / UK / not there yet; current place and destination kept apart; typing allowed */
+assert.match(js, /\['uae','UAE'\],\['uk','UK'\],\['away','Not there yet'\]/);
+assert.match(js, /Umm Al Quwain/); assert.match(js, /Northern Ireland/); assert.match(html, /<datalist id="uk-towns">/);
+assert.match(js, /movingTo/); assert.match(js, /region:'',town:''/, 'changing country clears the old place'); assert.match(js, /Type it if it isn’t listed/);
+/* Institution: free text, never claimed as checked */
+assert.match(html, /Your institution/); assert.match(js, /Orivia hasn’t checked it yet/);
+assert.doesNotMatch(html + js, /Heriot-Watt University Dubai','University of Wollongong/, 'no fixed university list');
+/* End session is separate from clearing data, and says it isn't an account log-out */
+assert.match(html, /id="end-session"/); assert.match(html, /isn’t an account log-out/); assert.match(html, />Clear saved data</);
+const end = js.slice(js.indexOf("$('end-session').onclick"), js.indexOf('/* ===== Listen'));
+assert.doesNotMatch(end, /localStorage\.removeItem/, 'ending a session keeps journeys, calendar and My Life');
+/* Listen and dictation: stop controls, and dictation never sends by itself */
+assert.match(js, /■ Stop/); assert.match(html, /id="dict-stop"/); assert.match(html, /id="dict-cancel"/);
+const dict = js.slice(js.indexOf('/* ===== Dictation'), js.indexOf('/* Help: always'));
+assert.doesNotMatch(dict, /requestSubmit|\.submit\(/, 'dictated text is edited and sent by the person');
+assert.match(dict, /Nothing is sent until you press Send/);
 console.log('Settings and Calendar: tone, guide suggestions, theme override, safe reminders: passed');

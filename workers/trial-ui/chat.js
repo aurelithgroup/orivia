@@ -12,7 +12,9 @@ function show(){
 function save(){sessionStorage.setItem(key,JSON.stringify(turns.slice(-12)))}
 function draw(){
  const el=$('history');el.replaceChildren();
- for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant');const b=document.createElement('b');b.textContent=t.role==='user'?'You':'Orivia';const txt=document.createElement('span');txt.textContent=t.content;p.append(b,txt);el.append(p)}
+ for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant');const b=document.createElement('b');b.textContent=t.role==='user'?'You':'Orivia';const txt=document.createElement('span');txt.textContent=t.content;p.append(b,txt);
+  if(t.role==='assistant'&&'speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent='▶ Listen';lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label','Listen to this reply');lb.onclick=()=>listen(t.content,lb);p.append(document.createElement('br'),lb)}
+  el.append(p)}
  $('empty').hidden=turns.length>0;
  const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight;
 }
@@ -115,6 +117,7 @@ function tab(which){
  const views={chat:'chat',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view',settings:'settings-view'};
  if(!views[which])return;
  if(which!=='settings')lastTab=which;
+ if(which!=='chat'){try{stopSpeaking();stopDictation(true)}catch(_){}}
  const navKey=which==='guide'?'journeys':which; // a guide opens inside Journeys; Settings has no tab of its own
  for(const [k,id] of Object.entries(views)){$(id).hidden=k!==which;const b=$('tab-'+k);if(b){b.classList.toggle('active',k===navKey);b.setAttribute('aria-current',k===navKey?'page':'false')}}
  $('view-title').textContent=TITLES[which];
@@ -146,48 +149,97 @@ function readProfile(){try{const p=JSON.parse(localStorage.getItem(profileKey)||
 /* About me is used by default; only an explicit 'off' stops it */
 function aboutMeOn(){const p=readProfile();return !(p&&p.use===false)}
 function setAboutMe(on){const p=readProfile()||{};try{localStorage.setItem(profileKey,JSON.stringify({...p,use:on}))}catch(_){}}
-/* About you: tap-to-pick, saves on tap, no form */
-const CITY=[['Dubai','Dubai'],['Sharjah','Sharjah'],['Abu Dhabi','Abu Dhabi'],['Ajman','Ajman'],['Somewhere else in the UAE','Elsewhere in the UAE'],['Not in the UAE yet','Not here yet']];
+/* About you: tap to pick, saves as you go. Where you live now and where you're moving to are kept apart. */
 const WHO=[['study','Study'],['work','Work'],['join or bring my family','Family'],['something else','Something else']];
-const UNIS=['Heriot-Watt University Dubai','University of Wollongong in Dubai'];
+const EMIRATES_ALL=['Abu Dhabi','Dubai','Sharjah','Ajman','Umm Al Quwain','Ras Al Khaimah','Fujairah'];
+const UK_NATIONS=['England','Scotland','Wales','Northern Ireland'];
 let aboutEditing=false,aboutSkipped=false;
-function saveProfile(patch){const p=readProfile()||{};const n={...p,...patch};for(const k of ['city','who','place'])if(typeof n[k]==='string')n[k]=n[k].slice(0,60);try{localStorage.setItem(profileKey,JSON.stringify(n))}catch(_){}loadProfile()}
+const clip=(v,n=60)=>typeof v==='string'?v.replace(/[\r\n<>{}]/g,' ').replace(/\s+/g,' ').trim().slice(0,n):'';
+/* One line describing a place, for people and for the AI */
+function placeText(country,region,town){
+ const parts=[clip(town),clip(region)].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i);
+ if(country==='uae')return parts.concat('UAE').join(', ');
+ if(country==='uk')return parts.concat('UK').join(', ');
+ return parts.join(', ');
+}
+/* Older saves only had a 'city' word: turn it into the new shape once */
+function migrateProfile(p){
+ if(!p||p.here||!p.city)return p;
+ const c=String(p.city);
+ if(EMIRATES_ALL.includes(c))return {...p,here:'uae',region:c};
+ if(/Somewhere else in the UAE/i.test(c))return {...p,here:'uae'};
+ if(/Not in the UAE yet/i.test(c))return {...p,here:'away'};
+ return {...p,here:'',town:c};
+}
+function saveProfile(patch){
+ const p=migrateProfile(readProfile()||{}),n={...p,...patch};
+ for(const k of ['region','town','from','destRegion','destTown','who'])if(typeof n[k]==='string')n[k]=clip(n[k]);
+ if(typeof n.place==='string')n.place=clip(n.place,80);
+ n.city=n.here==='uae'||n.here==='uk'?placeText(n.here,n.region,n.town):''; // used by trip planning and the AI
+ n.movingTo=n.here==='away'&&(n.dest==='uae'||n.dest==='uk')?placeText(n.dest,n.destRegion,n.destTown):'';
+ try{localStorage.setItem(profileKey,JSON.stringify(n))}catch(_){}
+ loadProfile();
+}
+/* The emirate or UK nation + town fields for one place (where you live, or where you're moving to) */
+function placeFields(root,country,keys,p){
+ root.replaceChildren();if(country!=='uae'&&country!=='uk')return;
+ const id=keys.region+'-sel',tid=keys.town+'-in';
+ const lab=el('label','field');lab.htmlFor=id;lab.append(country==='uae'?'Emirate':'Nation');
+ const sel=document.createElement('select');sel.id=id;
+ const opts=country==='uae'?EMIRATES_ALL:UK_NATIONS;
+ sel.append(new Option('Choose',''));for(const o of opts)sel.append(new Option(o,o));
+ sel.value=opts.includes(p[keys.region])?p[keys.region]:'';sel.onchange=()=>saveProfile({[keys.region]:sel.value});lab.append(sel);
+ const tl=el('label','field');tl.htmlFor=tid;tl.append(country==='uae'?'Area':'City or town');tl.append(el('small','',country==='uae'?' Optional':' Type it if it isn’t listed'));
+ const tin=document.createElement('input');tin.id=tid;tin.maxLength=60;tin.value=p[keys.town]||'';tin.placeholder=country==='uae'?'e.g. Al Nahda, JLT, Muwaileh':'e.g. Edinburgh';
+ if(country==='uk')tin.setAttribute('list','uk-towns');
+ tin.onchange=()=>saveProfile({[keys.town]:tin.value});tl.append(tin);
+ root.append(lab,tl);
+}
 function aboutSentence(p){
  const bits=[];
- if(p.city)bits.push(/Not in the UAE/.test(p.city)?'You’re not in the UAE yet':/Somewhere else/.test(p.city)?'You live in the UAE':'You live in '+p.city);
+ if(p.here==='uae'||p.here==='uk')bits.push('You live in '+(placeText(p.here,p.region,p.town)||(p.here==='uae'?'the UAE':'the UK')));
+ else if(p.here==='away'){
+  const to=p.dest==='uae'||p.dest==='uk'?placeText(p.dest,p.destRegion,p.destTown)||(p.dest==='uae'?'the UAE':'the UK'):'';
+  bits.push((p.from?'You’re in '+clip(p.from)+' now':'You haven’t moved yet')+(to?' and moving to '+to:''));
+ }else if(p.town)bits.push('You live in '+clip(p.town));
  const role={study:'here to study',work:'here to work','join or bring my family':'here with family','something else':''}[p.who]||'';
  if(role)bits.push((bits.length?'you’re ':'You’re ')+role+(p.place&&(p.who==='study'||p.who==='work')?' at '+p.place:''));
  else if(p.place)bits.push((bits.length?'at ':'At ')+p.place);
  return bits.length?bits.join(', ')+'.':'';
 }
 function loadProfile(){
- const p=readProfile()||{},filled=!!(p.city||p.who||p.place);
- const pick=(id,opts,cur,field)=>seg(id,opts,cur,v=>saveProfile({[field]:cur===v?'':v}));
- pick('pick-city',CITY,p.city||'','city');
- pick('pick-who',WHO,p.who||'','who');
+ const p=migrateProfile(readProfile()||{}),filled=!!(p.here||p.who||p.place);
+ seg('pick-here',[['uae','UAE'],['uk','UK'],['away','Not there yet']],p.here||'',v=>saveProfile({here:p.here===v?'':v,...(p.here!==v?{region:'',town:''}:{})})); // a new country starts with a clean emirate/nation and town
+ placeFields($('here-fields'),p.here,{region:'region',town:'town'},p);
+ $('away-fields').hidden=p.here!=='away';
+ if(document.activeElement!==$('loc-from'))$('loc-from').value=p.from||'';
+ seg('pick-dest',[['uae','UAE'],['uk','UK'],['unsure','Not sure yet']],p.dest||'',v=>saveProfile({dest:p.dest===v?'':v,...(p.dest!==v?{destRegion:'',destTown:''}:{})}));
+ placeFields($('dest-fields'),p.here==='away'?p.dest:'',{region:'destRegion',town:'destTown'},p);
+ seg('pick-who',WHO,p.who||'',v=>saveProfile({who:p.who===v?'':v}));
  const showPlace=p.who==='study'||p.who==='work';
  $('pick-place-row').hidden=!showPlace;
- $('pick-place-q').textContent=p.who==='work'?'Where you work':'Your university';
- const placeOpts=(p.who==='study'?UNIS:[]).map(u=>[u,u.replace(' in Dubai','').replace(' Dubai','')]);
- if(p.place&&!UNIS.includes(p.place))placeOpts.push([p.place,p.place]);
- placeOpts.push(['__other','Other…']);
- seg('pick-place',placeOpts,p.place||'',v=>{if(v==='__other'){$('place-other').hidden=false;$('p-place').value='';$('p-place').focus();return}saveProfile({place:p.place===v?'':v})});
+ $('pick-place-q').textContent=p.who==='work'?'Where you work':'Your institution';
+ $('p-place').placeholder=p.who==='work'?'Company or organisation':'School, college, university or training centre';
+ if(document.activeElement!==$('p-place'))$('p-place').value=p.place||'';
+ $('place-note').textContent=p.place?'Saved as you typed it. Orivia hasn’t checked it yet.':'Type its name as you know it. Orivia hasn’t checked it yet.';
  $('about-summary').textContent=filled?aboutSentence(p):'';
- const complete=!!(p.city&&p.who&&(!showPlace||p.place)); // collapses once everything that applies is answered
+ const whereDone=p.here==='uae'?!!p.region:p.here==='uk'?!!(p.region||p.town):p.here==='away'?!!p.dest:false;
+ const complete=!!(whereDone&&p.who&&(!showPlace||p.place)); // collapses once everything that applies is answered
  const open=(!complete&&!aboutSkipped)||aboutEditing;
  $('about-pick').hidden=!open;
  $('about-edit').hidden=open;
  $('about-done').hidden=!(open&&filled);
  $('about-use').textContent=aboutMeOn()?'Orivia uses this so you don’t have to repeat yourself. You can switch that off in Settings.':'Orivia isn’t using this right now. You can switch it on in Settings.';
 }
+$('loc-from').addEventListener('change',e=>saveProfile({from:e.target.value}));
 /* Chat fills My Life: when you've said where you live or study, offer to remember it. Nothing is saved until you tap. */
-const EMIRATES=['Abu Dhabi','Dubai','Sharjah','Ajman'],noKey='orivia-private-remember-no';
+const EMIRATES=EMIRATES_ALL,noKey='orivia-private-remember-no';
 function rememberCard(t){
  $('remember-card')?.remove();
  if(!t||(!t.origin&&!t.destination)||$('guide-offer'))return;
  const p=readProfile()||{},patch={},lines=[];
  const city=EMIRATES.find(c=>new RegExp('\\b'+c+'\\b','i').test(String(t.origin||'')));
- if(city&&!p.city){patch.city=city;lines.push('You live in '+city)}
+ if(city&&!p.here&&!p.city){patch.here='uae';patch.region=city;lines.push('You live in '+city)}
  const dest=String(t.destination||'').slice(0,60);
  if(/universit|college|campus|institute/i.test(dest)&&!p.place){patch.place=dest;lines.push('You study at '+dest);if(!p.who)patch.who='study'}
  if(!lines.length)return;
@@ -203,9 +255,75 @@ function rememberCard(t){
 }
 $('about-edit').onclick=()=>{aboutEditing=true;aboutSkipped=false;loadProfile()};
 $('about-done').onclick=()=>{aboutEditing=false;aboutSkipped=true;loadProfile()}; // Done closes it even if some questions are skipped
-$('place-other').addEventListener('submit',e=>{e.preventDefault();const v=$('p-place').value.trim();if(v){saveProfile({place:v});$('place-other').hidden=true}});
-function profileForAI(){const p=readProfile();if(!p||p.use===false)return undefined;const out={};for(const k of ['city','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
-$('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.sure='';b.textContent='Delete About me, calendar and journeys'},4000);return}try{localStorage.removeItem(profileKey);localStorage.removeItem(eventKey);localStorage.removeItem(journeysKey)}catch(_){}events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent='Deleted'};
+$('place-form').addEventListener('submit',e=>{e.preventDefault();saveProfile({place:$('p-place').value.trim()})});
+$('p-place').addEventListener('change',e=>saveProfile({place:e.target.value.trim()}));
+function profileForAI(){const p=readProfile();if(!p||p.use===false)return undefined;const out={};for(const k of ['city','movingTo','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
+$('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.sure='';b.textContent='Clear saved data'},4000);return}try{localStorage.removeItem(profileKey);localStorage.removeItem(eventKey);localStorage.removeItem(journeysKey)}catch(_){}events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent='Cleared'};
+/* End session: back to the welcome screen. Clears this conversation and the human check; keeps journeys, calendar and My Life. */
+$('end-session').onclick=async()=>{
+ const b=$('end-session');
+ if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to end this session';setTimeout(()=>{b.dataset.sure='';b.textContent='End session'},4000);return}
+ stopSpeaking();stopDictation(false);
+ try{await fetch('/v1/end',{method:'POST',credentials:'same-origin'})}catch(_){}
+ try{for(const k of [key,ck,'orivia-private-offered','orivia-private-remember-no'])sessionStorage.removeItem(k)}catch(_){}
+ location.reload();
+};
+/* ===== Listen: Orivia's replies read aloud with the phone's own voices ===== */
+const canSpeak='speechSynthesis' in window;
+const VOICE_LOC={en:'en-GB',ar:'ar-AE',fr:'fr-FR',fil:'fil-PH',hi:'hi-IN',ur:'ur-PK',zh:'zh-CN',bn:'bn-IN',ml:'ml-IN',ru:'ru-RU'};
+const VOICE_BAD=/^(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|pipe organ|superstar|trinoids|whisper|wobble|zarvox|fred|junior|ralph|kathy|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley)\b/i;
+function textLang(t){ // the language of the reply, from its script
+ if(/[؀-ۿ]/.test(t))return /[ٹڈڑںھہے]/.test(t)?'ur':'ar';
+ if(/[ഀ-ൿ]/.test(t))return 'ml';if(/[ঀ-৿]/.test(t))return 'bn';if(/[ऀ-ॿ]/.test(t))return 'hi';
+ if(/[一-鿿]/.test(t))return 'zh';if(/[Ѐ-ӿ]/.test(t))return 'ru';return 'en';
+}
+function bestVoice(l){
+ const want=VOICE_LOC[l].toLowerCase(),pre=l==='zh'?['zh','cmn']:l==='fil'?['fil','tl']:[l];
+ const score=v=>{const vl=String(v.lang).toLowerCase().replace('_','-');let s=vl===want?30:0;if(/natural|neural|enhanced|premium|online/i.test(v.name))s+=40;if(/google/i.test(v.name))s+=25;if(/siri/i.test(v.name))s+=20;if(/compact|espeak|eloquence/i.test(v.name))s-=30;return s};
+ return speechSynthesis.getVoices().filter(v=>pre.some(x=>String(v.lang).toLowerCase().startsWith(x))&&!VOICE_BAD.test(v.name)).sort((a,b)=>score(b)-score(a))[0]||null;
+}
+function voicesReady(){return new Promise(res=>{const now=speechSynthesis.getVoices();if(now.length)return res();let done=false;const fin=()=>{if(!done){done=true;res()}};speechSynthesis.addEventListener('voiceschanged',fin,{once:true});setTimeout(fin,1200)})}
+let speakingBtn=null,speakRun=0;
+function stopSpeaking(){if(!canSpeak)return;speakRun++;speechSynthesis.cancel();if(speakingBtn){speakingBtn.setAttribute('aria-pressed','false');speakingBtn.textContent='▶ Listen';speakingBtn=null}}
+async function listen(text,btn){
+ if(speakingBtn===btn){stopSpeaking();return}
+ stopSpeaking();stopDictation(false);
+ const l=textLang(text);await voicesReady();const v=bestVoice(l);
+ if(!v&&l!=='en'){$('status').textContent='This phone has no voice for this language yet. You can add one in your phone’s text-to-speech settings.';return}
+ const run=++speakRun;speakingBtn=btn;btn.setAttribute('aria-pressed','true');btn.textContent='■ Stop';
+ const clean=text.replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu,'').replace(/\s+/g,' ').trim();
+ const parts=clean.split(/(?<=[.!?。！？।۔])\s+/).flatMap(x=>x.length>220?x.match(/.{1,200}(\s|$)/g):[x]).filter(Boolean);
+ parts.forEach((c,i)=>{const u=new SpeechSynthesisUtterance(c);u.lang=v?v.lang:VOICE_LOC[l];if(v)u.voice=v;u.rate=v&&/natural|neural|online|enhanced|premium/i.test(v.name)?1:.95;
+  if(i===parts.length-1)u.onend=()=>{if(run===speakRun)stopSpeaking()};u.onerror=e=>{if(run===speakRun&&e.error!=='interrupted'&&e.error!=='canceled')stopSpeaking()};speechSynthesis.speak(u)});
+}
+if(canSpeak)setInterval(()=>{try{if(speechSynthesis.speaking&&!speechSynthesis.paused){speechSynthesis.pause();speechSynthesis.resume()}}catch(_){}},10000); // keeps Chrome on Android from stopping long replies
+/* ===== Dictation: speak instead of typing, then check and edit before sending ===== */
+const Recog=window.SpeechRecognition||window.webkitSpeechRecognition;
+const micNoteKey='orivia-private-mic-note';
+let recog=null,dictBase='';
+function stopDictation(keep){
+ if(!recog)return;const r=recog;recog=null;
+ if(!keep)$('msg').value=dictBase;
+ try{keep?r.stop():r.abort()}catch(_){}
+ $('listening').hidden=true;$('mic').setAttribute('aria-pressed','false');grow();
+}
+function startDictation(){
+ let seen=false;try{seen=localStorage.getItem(micNoteKey)==='1'}catch(_){}
+ if(!seen){$('status').textContent='Your browser turns speech into text, often using Google’s or Apple’s speech service. Nothing is sent until you press Send. Tap the microphone again to start.';try{localStorage.setItem(micNoteKey,'1')}catch(_){}return}
+ stopSpeaking();
+ const r=new Recog();recog=r;dictBase=$('msg').value;
+ r.lang=document.documentElement.lang&&document.documentElement.lang!=='en'?document.documentElement.lang:(navigator.language||'en-GB');
+ r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
+ r.onresult=e=>{let t='';for(const x of e.results)t+=x[0].transcript;$('msg').value=(dictBase?dictBase.replace(/\s*$/,' '):'')+t.trim();grow()};
+ r.onerror=e=>{const m={'not-allowed':'Microphone access is off for this site. You can turn it on in your browser settings, or keep typing.','service-not-allowed':'Speech to text isn’t available in this browser. You can keep typing.','no-speech':'I didn’t catch anything. Tap the microphone and try again.','audio-capture':'No microphone was found. You can keep typing.','network':'The speech service couldn’t be reached. You can keep typing.'}[e.error];if(m)$('status').textContent=m};
+ r.onend=()=>{if(recog===r){recog=null;$('listening').hidden=true;$('mic').setAttribute('aria-pressed','false')}if($('msg').value.trim()!==dictBase.trim()){$('status').textContent='Check the text, edit anything, then press Send.';$('msg').focus()}};
+ try{r.start()}catch(_){recog=null;$('status').textContent='Speech to text couldn’t start. You can keep typing.';return}
+ $('listening').hidden=false;$('listening-text').textContent='Listening… speak now';$('mic').setAttribute('aria-pressed','true');$('status').textContent='';
+}
+if(Recog){$('mic').hidden=false;$('mic').onclick=()=>recog?stopDictation(true):startDictation()}
+$('dict-stop').onclick=()=>stopDictation(true);
+$('dict-cancel').onclick=()=>stopDictation(false);
+
 /* Help: always one tap away in the middle of the bar */
 function openHelp(){$('help-sheet').hidden=false;$('help-wrong').focus()}
 function closeHelp(){$('help-sheet').hidden=true;$('tab-help').focus()}
@@ -575,6 +693,7 @@ $('start').onclick=()=>{
 $('clear').onclick=()=>{if(busy)return;turns=[];sessionStorage.removeItem(key);draw();resources([]);$('guide-offer')?.remove();$('inline-calendar')?.remove();tab('chat')};
 $('form').onsubmit=async e=>{
  e.preventDefault();if(busy||sessionStorage.getItem(ck)!=='yes')return;
+ stopDictation(true);stopSpeaking();
  const text=$('msg').value.trim();if(!text)return;
  $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});turns=turns.slice(-12);save();draw();
  busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';

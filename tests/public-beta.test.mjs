@@ -51,6 +51,9 @@ upstreamStatus = 200; upstreamThrows = true;
 const offline = await call('/v1/human', { method: 'POST', headers: { origin: 'https://' + HOST, 'content-type': 'application/json' }, body: JSON.stringify({ token: 't' }) });
 assert.equal(offline.status, 403); assert.equal(offline.headers.get('set-cookie'), null);
 assert.deepEqual((await offline.json()).codes, ['siteverify-unreachable']); upstreamThrows = false;
+/* End session forgets the human check */
+r = await call('/v1/end', { method: 'POST', headers: { origin: 'https://' + HOST } });
+assert.equal(r.status, 200); assert.match(r.headers.get('set-cookie'), /orivia_human=; Max-Age=0/);
 /* Per-person daily limit (2 here), counted by a daily-salted hash, never the raw address */
 assert.equal((await chat(cookie)).status, 200);
 assert.equal((await chat(cookie)).status, 200);
