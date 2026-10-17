@@ -672,9 +672,15 @@ function safeSources(list){
  }
  return out;
 }
+function safeSchoolContext(v){
+ if(!v||v.city!=='Sharjah')return undefined;
+ const urls=a=>(Array.isArray(a)?a:[]).slice(0,24).filter(u=>typeof u==='string'&&u.length<200&&/^https:\/\/(?:www\.)?spea\.shj\.ae\/en\/(?:education-institutes|educational-institutions)\/schools\/[a-z0-9-]+\/?$/.test(u));
+ return {...(typeof v.targetName==='string'?{targetName:v.targetName.slice(0,80)}:{}),city:'Sharjah',curriculum:typeof v.curriculum==='string'?v.curriculum.slice(0,20):'',year:Number.isInteger(v.year)?v.year:null,shown:urls(v.shown),...(v.cursor?{cursor:{skipDirectory:v.cursor.skipDirectory===true,searchOffset:Math.max(0,Math.min(10,Number(v.cursor.searchOffset)||0)),pending:urls(v.cursor.pending).slice(0,20)}}:{})};
+}
+function currentResearchContext(ts){const last=ts.filter(t=>t.role==='assistant').at(-1);return safeSchoolContext(last?.meta?.research?.taskContext)}
 function safeResearch(r){
  const str=(v,n)=>typeof v==='string'?v.slice(0,n):'';
- return {status:str(r.status,40),applicability:str(r.applicability,30),
+ return {status:str(r.status,40),applicability:str(r.applicability,30),...(safeSchoolContext(r.taskContext)?{taskContext:safeSchoolContext(r.taskContext)}:{}),
   claims:Array.isArray(r.claims)?r.claims.slice(0,6).map(c=>({text:str(c&&c.text,300),sourceId:str(c&&c.sourceId,8),quote:str(c&&c.quote,520),
    quotes:Array.isArray(c&&c.quotes)?c.quotes.slice(0,6).map(q=>({label:str(q&&q.label,40),quote:str(q&&q.quote,320)})).filter(q=>q.quote):[]})).filter(c=>c.text&&(c.quote||c.quotes.length)):[],
   unresolved:Array.isArray(r.unresolved)?r.unresolved.slice(0,6).map(u=>str(u,40)).filter(Boolean):[]};
@@ -1119,7 +1125,7 @@ $('form').onsubmit=async e=>{
  const chatId=store.active,sentTurns=turns.slice();
  busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';
  try{
-  const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI()}})});
+  const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{researchContext:currentResearchContext(sentTurns),language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI()}})});
   const d=await r.json().catch(()=>({}));
   if(!r.ok){
    const why=d&&d.error;

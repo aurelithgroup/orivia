@@ -49,6 +49,13 @@ export function parseProfile(raw){
  const span=label=>{const v=inner(html.match(new RegExp('<span[^>]*>\\s*'+label+':\\s*([^<]{1,200})<\\/span>','i'))?.[1]);return v?{value:v,quote:label+': '+v}:null};
  const fields={};
  for(const [k,label] of [['curriculum','Curriculum'],['grades','Grade'],['gender','Gender']]){const f=span(label);if(f&&text.includes(f.quote))fields[k]=f}
+ // Older captured SPEA layout still has explicit label/value fields.
+ if(!fields.curriculum){
+  const labels=[['curriculum','Curriculum','Evaluation'],['evaluation','Evaluation','International Accreditations'],['grades','Class','Educational Fees'],['area','Area','Phone Number']];
+  for(const [key,label,next] of labels){const m=text.match(new RegExp('(?:^|\\s)'+label+'\\s+(.+?)(?=\\s+'+next+'\\s|$)'));
+   if(m&&m[1].length<=200)fields[key]={value:m[1].trim(),quote:label+' '+m[1].trim()};
+  }
+ }
  const anchors=[...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)].map(a=>({href:(a[1].match(/\bhref=["']([^"']+)["']/i)?.[1]||'').replace(/&amp;/g,'&'),label:inner(a[2]),full:plain(a[2])}));
  const loc=text.match(/School Location\s+(.{2,80}?)(?=\s+\(Opens in a new tab\)|\s+Phone Number|\s+Email|$)/)?.[1]?.trim();
  if(loc&&text.includes('School Location '+loc)){
@@ -63,7 +70,7 @@ export function parseProfile(raw){
  if(web){try{const u=new URL(web.href);if(!u.username&&!u.password&&!u.port&&text.includes(web.full))fields.website={url:u.href,quote:web.full}}catch(_){}}
  return {name,fields,readable:!!(name&&fields.curriculum)};
 }
-function isMapLink(href){try{const u=new URL(href);return u.protocol==='https:'&&((u.hostname==='goo.gl'&&u.pathname.startsWith('/maps/'))||u.hostname==='maps.app.goo.gl'||(['google.com','www.google.com','maps.google.com'].includes(u.hostname)&&u.pathname.startsWith('/maps')))}catch(_){return false}}
+function isMapLink(href){try{const u=new URL(href);return !u.username&&!u.password&&!u.port&&u.protocol==='https:'&&((u.hostname==='goo.gl'&&u.pathname.startsWith('/maps/'))||u.hostname==='maps.app.goo.gl'||(['google.com','www.google.com','maps.google.com'].includes(u.hostname)&&u.pathname.startsWith('/maps')))}catch(_){return false}}
 /** Does the profile's quoted grade list include this year? (Listed provision only, never seats.) */
 export function listsYear(grades,year){if(!year)return true;return String(grades||'').split(/[|,]/).map(x=>x.trim()).some(x=>x===String(year)||x.toLowerCase()==='year '+year)}
 const CURRICULA={british:/^british$|cambridge|english national/i,american:/^american$/i,indian:/^indian$|cbse|icse/i,ib:/\bib\b|baccalar?eate/i,australian:/^australian$/i,french:/^french$/i,german:/^german$/i,moe:/^(moe|ministry of education)/i,pakistani:/^pakistani$/i,filipino:/pilipinas|filipino/i,sabis:/^sabis$/i};
@@ -72,7 +79,7 @@ export function curriculumMatches(value,wanted){if(!wanted)return true;const re=
 /* ---------- Name matching: similar names return candidates, never a silent pick ---------- */
 const GENERIC=new Set(['pvt','private','school','schools','llc','l','c','co','the','shj','sharjah','int','intl','international','propritorship','proprietorship','branch','br','br3','br4','br5','and','of','in','a']);
 const EXPAND={eng:'english',hs:'high',sch:'school'};
-export function nameTokens(name){return String(name||'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').trim().split(' ').map(t=>EXPAND[t]||t).filter(t=>t&&!GENERIC.has(t)&&!/^br\d+$/.test(t))}
+export function nameTokens(name){const tokens=String(name||'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').trim().split(' ').map(t=>EXPAND[t]||t).filter(t=>t&&!GENERIC.has(t)&&!/^br\d+$/.test(t));if(!tokens.length&&/sharjah.*international/i.test(name))return ['sharjah','international'];return tokens}
 export function nameScore(query,name){
  const a=nameTokens(query),b=nameTokens(name);if(!a.length||!b.length)return 0;
  const ja=a.join(''),jb=b.join('');if(ja===jb)return 1; // "Wesgreen" = "Wes green"
@@ -108,7 +115,7 @@ export function speaDeps({env={},fetcher=fetch,reserve}={}){
     // One redirect only, and only from an old indexed profile to a current SPEA profile (same approved host, re-checked).
     const to=(()=>{try{return new URL(r.headers.get('location')||'',target).href}catch(_){return ''}})();await r.body?.cancel?.();
     const next=allowOldRedirect&&OLD_PROFILE.test(new URL(target).pathname)&&CURRENT_PROFILE.test(to?new URL(to).pathname:'')?speaPage(to):'';
-    if(!next)return {ok:false,reason:'source-redirected',http:r.status};
+    if(!next||new URL(next).hostname!==new URL(target).hostname)return {ok:false,reason:'source-redirected',http:r.status};
     r=await fetcher(next,{redirect:'manual',signal:AbortSignal.timeout(SPEA_LIMITS.timeoutMs),headers:{Accept:'text/html','User-Agent':'OriviaSourceReader/0.2'}});
     final=next;redirected=true;if(r.status>=300&&r.status<400){await r.body?.cancel?.();return {ok:false,reason:'source-redirected',http:r.status}}
    }
@@ -127,7 +134,13 @@ export function speaDeps({env={},fetcher=fetch,reserve}={}){
   u.search=new URLSearchParams({q:terms+' site:spea.shj.ae',count:String(SPEA_LIMITS.searchCount),offset:String(Math.min(offset,SPEA_LIMITS.maxSearchOffset)),safesearch:'strict',country:'ALL',search_lang:'en',spellcheck:'false'}).toString();
   try{
    const r=await fetcher(u.href,{redirect:'manual',signal:AbortSignal.timeout(SPEA_LIMITS.timeoutMs),headers:{Accept:'application/json','X-Subscription-Token':env.BRAVE_SEARCH_API_KEY}});
-   if(!r.ok){await r.body?.cancel?.();return {status:'search-unavailable',http:r.status,urls:[]}}
+   if(!r.ok){
+    let detail={};
+    if(r.status===422||r.status===400){try{const d=JSON.parse(await readBounded(r,20000));const code=d?.error?.code;
+     const rejected=(Array.isArray(d?.error?.meta?.errors)?d.error.meta.errors:[]).slice(0,5).map(e=>{const loc=(Array.isArray(e?.loc)?e.loc:[]).filter(x=>typeof x==='string'&&/^[a-z_]{1,30}$/i.test(x)).join('.');const type=typeof e?.type==='string'&&/^[a-z_.]{1,40}$/i.test(e.type)?e.type:'';return [loc,type].filter(Boolean).join(':')}).filter(Boolean);
+     detail={...(typeof code==='string'&&/^[A-Z_]{1,40}$/.test(code)?{providerCode:code}:{}),...(rejected.length?{rejected}:{})};
+    }catch{}}else await r.body?.cancel?.();return {status:'search-unavailable',http:r.status,urls:[],...detail};
+   }
    const d=JSON.parse(await readBounded(r,300000));const results=Array.isArray(d?.web?.results)?d.web.results:[];
    const urls=[...new Set(results.map(x=>speaPage(x?.url)).filter(Boolean))]; // titles and snippets are discarded
    return {status:'searched',http:r.status,results:results.length,urls,more:d?.query?.more_results_available===true};
@@ -168,11 +181,11 @@ export async function discoverSpeaSchools({curriculum='',year=null,exclude=[],li
  }
  // 2. More profile links through site-restricted search, only if the directory didn't give enough.
  let offset=cursor?.searchOffset||0,searchMore=false;
- if(queue.length<limit*2){
+ if(queue.length<limit*2&&!(cursor?.skipDirectory&&queue.length)){
   for(let i=0;i<SPEA_LIMITS.searchesPerCall&&offset<=SPEA_LIMITS.maxSearchOffset;i++){
    const term=curriculumTerm(curriculum);
    const s=await deps.search((term?term+' curriculum ':'')+'private school Sharjah',{offset});
-   coverage.searched.push({step:'search',offset,status:s.status,http:s.http??null,results:s.results??0,profileLinks:s.urls.length});
+   coverage.searched.push({step:'search',offset,status:s.status,http:s.http??null,results:s.results??0,profileLinks:s.urls.length,...(s.providerCode?{providerCode:s.providerCode}:{}),...(s.rejected?{rejected:s.rejected}:{})});
    if(s.status!=='searched'){coverage.failures.push({path:'search',reason:s.status,http:s.http??null});break}
    s.urls.forEach(push);searchMore=!!s.more;offset++;
   }
@@ -184,13 +197,13 @@ export async function discoverSpeaSchools({curriculum='',year=null,exclude=[],li
   if(shown.has(p.url)){coverage.skipped.alreadyShown++;continue}
   if(!curriculumMatches(p.fields.curriculum?.value,curriculum)){coverage.skipped.curriculum++;continue}
   if(year&&!(p.fields.grades&&listsYear(p.fields.grades.value,year))){coverage.skipped.year++;continue}
-  if(results.length<limit)results.push(p);
+  if(results.length<limit)results.push(p);else unopened.push(p.url);
  }
  coverage.matched=results.length;
  if(unopened.length)coverage.reasons.push('unopened-profile-links');
  if(searchMore)coverage.reasons.push('more-search-results');
  coverage.moreRemain=unopened.length||searchMore?true:coverage.reasons.length?'unknown':false;
- if(unopened.length||searchMore)coverage.nextCursor={skipDirectory:true,searchOffset:searchMore?offset:SPEA_LIMITS.maxSearchOffset+1,pending:unopened.slice(0,20)};
+ if(unopened.length||searchMore)coverage.nextCursor={skipDirectory:true,searchOffset:offset,pending:unopened.slice(0,20)};
  return {schools:results,coverage};
 }
 
@@ -205,7 +218,7 @@ export async function lookupSpeaSchool({name=''}={},deps){
  if(dir.ok){const d=parseDirectory(dir.raw);coverage.searched.push({step:'directory-page-1',outcome:'read',listed:d.cards.length,total:d.total});for(const c of d.cards)if(nameScore(clean,c.name)>=0.5)add(c.url,c.name,'directory')}
  else{coverage.searched.push({step:'directory-page-1',outcome:dir.reason,http:dir.http??null});coverage.failures.push({path:'/en/education-institutes/schools',reason:dir.reason,http:dir.http??null})}
  const s=await deps.search('"'+clean+'" school',{offset:0});
- coverage.searched.push({step:'search',status:s.status,http:s.http??null,results:s.results??0,profileLinks:s.urls.length});
+ coverage.searched.push({step:'search',status:s.status,http:s.http??null,results:s.results??0,profileLinks:s.urls.length,...(s.providerCode?{providerCode:s.providerCode}:{}),...(s.rejected?{rejected:s.rejected}:{})});
  if(s.status==='searched')s.urls.slice(0,SPEA_LIMITS.profilesPerCall).forEach(u=>add(u,'','search'));else coverage.failures.push({path:'search',reason:s.status,http:s.http??null});
  // Search titles are discarded, so a candidate's exact name comes only from opening its profile.
  const ordered=[...pool.filter(x=>x.from==='directory'),...pool.filter(x=>x.from==='search')];
@@ -216,6 +229,6 @@ export async function lookupSpeaSchool({name=''}={},deps){
  const c=classifyMatches(clean,[...schools.map(x=>({...x,from:'profile'})),...cardOnly]);
  const checked=dir.ok||s.status==='searched';
  // Not found is only claimed when the lookup actually ran; if nothing could be checked or opened, say so instead.
- if(c.status==='not-found'&&(!checked||(pool.some(x=>x.from==='search')&&!schools.length)))return {status:'unavailable',candidates:[],coverage};
+ if(c.status==='not-found'&&(!dir.ok||s.status!=='searched'||(pool.some(x=>x.from==='search')&&!schools.length)))return {status:'unavailable',candidates:[],coverage};
  return {status:c.status,candidates:c.candidates,coverage};
 }

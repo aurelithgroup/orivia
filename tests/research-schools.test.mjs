@@ -29,15 +29,15 @@ assert.match(out.reply,/Shj\. British Int \.Pvt\. School: British curriculum/);a
 assert.ok(!/Al Murooj/.test(out.reply),'other curricula filtered out');assert.match(out.reply,/not SPEA’s full list/);
 assert.equal(out.research.claims.length,2);
 const t=out.research.trace;assert.ok(Array.isArray(t));
-assert.deepEqual(t.find(x=>x.stage==='search'),{stage:'search',status:'searched',http:200,results:6,approved:4});
-assert.ok(t.some(x=>x.stage==='page'&&x.outcome==='other-curriculum'));assert.ok(t.some(x=>x.stage==='page'&&x.outcome==='source-redirected'&&x.http===302));
+assert.deepEqual(t.find(x=>x.stage==='search'),{stage:'search',step:'search',offset:0,status:'searched',http:200,results:6,profileLinks:4});
+assert.equal(out.research.coverage.skipped.curriculum,1);assert.ok(t.some(x=>x.stage==='page'&&x.reason==='source-redirected'&&x.http===302));
 assert.ok(!JSON.stringify(t).includes('test-key')&&!/find british/i.test(JSON.stringify(t)),'trace carries no key or user text');
 
 // Search provider failure is reported with a status code, and no school is guessed.
 const bad=await answerResearch(plan,env,{fetcher:async()=>new Response('no',{status:401}),reserve:async()=>true});
 assert.equal(bad.research.status,'search-unavailable');assert.equal(bad.research.trace[0].http,401);assert.match(bad.reply,/won’t guess which schools/);
 // Spending limit still applies before any call.
-const n=calls.length;const lim=await answerResearch(plan,env,{fetcher,reserve:async()=>false});assert.equal(lim.research.status,'search-limit');assert.equal(calls.length,n);
+const n=calls.length;const lim=await answerResearch(plan,env,{fetcher,reserve:async()=>false});assert.equal(lim.research.status,'search-limit');assert.ok(!calls.slice(n).some(u=>u.startsWith('https://api.search.brave.com/')),'budget blocks provider calls; official directory can still be read');
 
 // General path tolerates fenced JSON and curly/whitespace differences, but never an absent quote.
 const src=[{id:'S1',excerpt:'Applicants must book a medical fitness test at an approved centre before the visa is issued.'}];

@@ -1,7 +1,7 @@
 # SPEA school reader (`workers/orivia-spea-reader.mjs`)
 
 Owner: Cleo (source reading). Conversation planning, deciding "more options" vs "check this school", and answer wording stay with Ina.
-**Not wired into `orivia-research.mjs` yet.** Integration is Ina's call after review.
+Integrated into `orivia-research.mjs` for Sharjah school discovery, expansion, named lookup and contact follow-ups. Conversation scope is carried separately from evidence.
 
 ## What SPEA's current site does (checked 17 Oct 2026)
 
@@ -25,7 +25,7 @@ Owner: Cleo (source reading). Conversation planning, deciding "more options" vs 
 4. Keep only what each profile states, with verbatim quotes. Curriculum and year filters use the profile's own fields.
 
 **Redirects:** none are followed, except one from an old indexed profile URL to a current SPEA profile on the same approved host,
-which is re-checked against the source policy. The result is flagged `redirected: true`. Please confirm you're happy with this exception.
+which is re-checked against the source policy. The result is flagged `redirected: true`. The integration requires the redirect destination to remain on the exact same approved host.
 
 ## API
 

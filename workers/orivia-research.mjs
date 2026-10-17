@@ -1,3 +1,5 @@
+import {speaDeps,discoverSpeaSchools,lookupSpeaSchool,curriculumMatches,speaPage} from './orivia-spea-reader.mjs';
+import {schoolReaderProfiles} from './orivia-school-adapter.mjs';
 /* Opt-in research pipeline. No credentials or result caches in browser/storage.
  * Search discovers URLs; only separately fetched, scoped pages reach the model.
  */
@@ -111,34 +113,6 @@ function gradeSpan(g){
  const lo=fs[0]||(nums.length?'Year '+Math.min(...nums):''),hi=nums.length?'Year '+Math.max(...nums):fs.at(-1);
  return lo&&hi&&lo!==hi?lo+' to '+hi:lo||hi||'';
 }
-async function discoverSchools(plan,part,query,env,fetcher,reserve,trace){
- const location=plan.location;
- const found=await searchApproved({query,part,location,env,fetcher,reserve,count:12,keep:10});
- trace.push({stage:'search',status:found.status,http:found.http??null,results:found.results??0,approved:found.candidates.length,...(found.providerCode?{providerCode:found.providerCode}:{}),...(found.rejected?{rejected:found.rejected}:{})});
- if(found.status!=='searched')return {status:found.status,schools:[]};
- let profiles=found.candidates.filter(c=>{const u=new URL(c.url);return /(^|\.)spea\.shj\.ae$/.test(u.hostname)&&SPEA_PROFILE.test(u.pathname)}).slice(0,6);
- const want=CURRICULUM_MATCH[part.curriculum];
- // Search indexes can retain deleted numeric profiles. Discover current profile links from the official directory.
- { // Always read the current directory: several search hits may all be obsolete.
-  const source=researchSource(SPEA_DIRECTORY,part,location);
-  const directory=source?await fetchApproved(source,fetcher):{ok:false,reason:'source-not-approved'};
-  trace.push({stage:'directory',outcome:directory.ok?'read':directory.reason,http:directory.http??null});
-  if(directory.ok){const current=readSchoolDirectory(directory.raw).filter(c=>!want||want.test(c.curriculum));
-   profiles=[...current,...profiles].filter((c,i,a)=>a.findIndex(x=>x.url===c.url)===i).slice(0,6);
-  }
- }
- trace.push({stage:'filter',profilePages:profiles.length,otherApproved:found.candidates.length});
- const pages=await Promise.all(profiles.map(async c=>{
-  const source=researchSource(c.url,part,location);if(!source)return {url:c.url,reason:'source-not-approved'};
-  const got=await fetchApproved(source,fetcher);if(!got.ok)return {url:c.url,...got};
-  const p=readSchoolProfile(got.raw,got.text);if(!p)return {url:c.url,reason:'profile-unreadable',http:got.http,bytes:got.raw.length};
-  if(!offersYear(p.grades,part.year))return {url:c.url,reason:'year-not-listed',http:got.http};
-  if(want&&!want.test(p.curriculum))return {url:c.url,reason:'other-curriculum',http:got.http};
-  return {url:source.url,ok:true,profile:p,http:got.http};
- }));
- for(const p of pages)trace.push({stage:'page',path:new URL(p.url).pathname,outcome:p.ok?'read':p.reason,http:p.http??null,...(p.bytes?{bytes:p.bytes}:{})});
- return {status:'searched',schools:pages.filter(p=>p.ok)};
-}
 function schoolsAnswer(plan,part,schools){
  const now=new Date().toISOString();
  const sources=schools.map((s,i)=>({id:'S'+(i+1),url:s.url,title:s.profile.name+' (SPEA school profile)',category:'official',topic:'school',checkedAt:now,profile:s.profile}));
@@ -244,11 +218,46 @@ export async function answerResearch(plan,env,{fetcher=fetch,reserve=reserveSear
  if(!env.BRAVE_SEARCH_API_KEY)return traced(unavailable(plan,'not-configured'),[{stage:'config',outcome:'no-search-key'}]);
  const trace=[];
  const first=plan.queries[0];
- if(first&&first.part.topic==='school'&&['discovery','contacts','next-steps'].includes(first.part.intent)&&plan.location.country==='uae'&&plan.location.city==='Sharjah'&&plan.queries.length===1){
-  const d=await discoverSchools(plan,first.part,first.query,env,fetcher,reserve,trace);
-  if(d.schools.length){const out=schoolsAnswer(plan,first.part,d.schools);trace.push({stage:'answer',outcome:'structured-profiles',schools:d.schools.length});return traced(out,trace);}
-  trace.push({stage:'answer',outcome:'no-readable-profiles'});
-  return traced(unavailable(plan,d.status==='searched'?'no-evidence':d.status),trace);
+ if(first&&first.part.topic==='school'&&['discovery','expand','lookup','compare','contacts','next-steps'].includes(first.part.intent)&&plan.location.country==='uae'&&plan.location.city==='Sharjah'&&plan.queries.length===1){
+  const part=first.part,ctx=plan.schoolContext||{},deps=speaDeps({env,fetcher,reserve});
+  if(part.intent==='compare'){const out=base(plan,'needs-context','Which schools would you like to compare, and which details matter most—for example, curriculum, year groups or location?');out.research.taskContext=ctx;return out;}
+  const lookupName=part.targetName||(['contacts','next-steps'].includes(part.intent)?ctx.targetName:'');
+  let read,schools=[],coverage,status='searched',namedStatus='';
+  if(lookupName){
+   read=await lookupSpeaSchool({name:lookupName},deps);coverage=read.coverage;namedStatus=read.status;
+   schools=schoolReaderProfiles(read.candidates||[]);
+  }else{
+   read=await discoverSpeaSchools({curriculum:part.curriculum,year:part.year,exclude:part.intent==='expand'?ctx.shown||[]:[],cursor:part.intent==='expand'?ctx.cursor:null,limit:6},deps);
+   coverage=read.coverage;schools=schoolReaderProfiles(read.schools);
+  }
+  for(const entry of coverage.searched||[])trace.push({stage:entry.step,...entry});
+  for(const failure of coverage.failures||[])trace.push({stage:'page',...failure});
+  const shown=[...new Set([...(part.intent==='expand'?ctx.shown||[]:[]),...schools.map(s=>s.url)])].slice(-24);
+  const taskContext={...(lookupName?{targetName:lookupName}:{}),city:'Sharjah',curriculum:part.curriculum||'',year:part.year||null,shown,...(coverage.nextCursor?{cursor:coverage.nextCursor}:{})};
+  let out;
+  if(lookupName&&namedStatus==='candidates'){
+   const candidates=read.candidates||[];
+   const src=candidates.map((s,i)=>({id:'S'+(i+1),url:s.url,title:s.name+' (SPEA)',category:'official',topic:'school',checkedAt:new Date().toISOString()}));
+   out=base(plan,'needs-context','I found similar school names on SPEA. Which one do you mean?\n\n'+candidates.map((s,i)=>s.name+' ['+(i+1)+']').join('\n')+'\n\n'+src.map((s,i)=>'['+(i+1)+'] '+s.title+': '+s.url).join('\n'),src);
+  }else if(lookupName&&namedStatus!=='match'){
+   out=base(plan,namedStatus==='not-found'?'no-evidence':'answer-unavailable',namedStatus==='needs-name'?'What is the school’s full name? Several schools have similar names.':namedStatus==='not-found'?'I didn’t find a matching school in the SPEA directory page and search results I checked. That does not mean it doesn’t exist. Could you share its exact name?':'I couldn’t check that school reliably just now. I haven’t substituted a different school or guessed its curriculum.');
+  }else if(schools.length){
+   const answerPart=lookupName?{...part,curriculum:'',year:offersYear(schools[0].profile.grades,part.year)?part.year:null}:part;
+   out=schoolsAnswer(plan,answerPart,schools);
+   if(part.intent==='expand')out.reply='Those two were only the matches from the pages opened earlier, not a complete list. Here are '+schools.length+' additional matches I could confirm.\n\n'+out.reply;
+   if(part.intent==='lookup'){
+    const p=schools[0].profile,match=curriculumMatches(p.curriculum,part.curriculum);
+    out.reply=(match?'SPEA lists '+p.name+' with the '+p.curriculum+' curriculum.':'SPEA lists '+p.name+' with the '+p.curriculum+' curriculum, which does not match your earlier '+part.curriculum+'-curriculum filter.')+'\n\n'+out.reply;
+    out.cardMode='single';
+   }
+  }else{
+   status=(coverage.failures||[]).find(f=>['search-limit','search-unavailable','not-configured'].includes(f.reason))?.reason||'no-evidence';
+   out=part.intent==='expand'?base(plan,status,'Those two are not a confirmed complete list. I couldn’t confirm additional matching schools in this check, so I haven’t repeated them as new results.'):unavailable(plan,status);
+  }
+  out.research.taskContext=taskContext;
+  out.research.coverage={profilesOpened:coverage.profilesOpened||0,skipped:coverage.skipped||{},moreRemain:coverage.moreRemain??'unknown',reasons:coverage.reasons||[],failures:coverage.failures||[]};
+  trace.push({stage:'answer',outcome:part.intent,schools:schools.length});
+  return traced(out,trace);
  }
  const sources=[];let lastStatus='no-evidence';const unresolved=plan.parts.slice(2).map(p=>p.topic);
  for(const {part,query} of plan.queries.slice(0,2)){
