@@ -14,7 +14,7 @@ async function readBounded(response,max){
  return new TextDecoder().decode(bytes);
 }
 const plain=s=>String(s||'').replace(/<!--[\s\S]*?-->/g,' ').replace(/<(script|style|svg|nav|header|footer|form|noscript)\b[^>]*>[\s\S]*?<\/\1>/gi,' ').replace(/<[^>]*>/g,' ').replace(/&(?:nbsp|#160);/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\s+/g,' ').trim();
-const termsFor={school:['school','enrol','admission','child'],bank:['account','bank','identity','resident'],medical:['medical','fitness','residen','examination'],residency:['visa','residen','application','status'],biometrics:['biometric','fingerprint','identity','card'],institution:['student','visa','application','admission','contact']};
+const termsFor={school:['school','enrol','admission','child','curriculum','british','directory'],bank:['account','bank','identity','resident'],medical:['medical','fitness','residen','examination'],residency:['visa','residen','application','status'],biometrics:['biometric','fingerprint','identity','card'],institution:['student','visa','application','admission','contact']};
 export async function researchPage({url,part,location,fetcher=fetch}){
  const source=researchSource(url,part,location);if(!source)return {ok:false,reason:'source-not-approved'};
  try{

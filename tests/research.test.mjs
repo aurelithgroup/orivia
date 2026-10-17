@@ -86,3 +86,51 @@ const countBefore=calls.length;
 w=await worker.fetch(req(),{...workerEnv,AI_QUOTA:{limit:async()=>({success:false})}},ctx);assert.equal(w.status,429);assert.equal(calls.length,countBefore,'rate rejection happens before search');
 w=await worker.fetch(req(),workerEnv,ctx);assert.equal(w.status,200);assert.equal((await w.json()).research.status,'evidence-found');
 console.log('Research Worker integration: authenticated, opt-in and rate protected passed');
+/* Founder phone regression: acceptance and short corrections continue the
+   offered lookup, preserve Sharjah and do not reinterpret UK origin as destination. */
+const schoolDialogue=[
+ user('what do i need to register my kids for school in Sharjah'),
+ assistant('Which curriculum would you prefer for your kids?'),
+ user("i'm not sure. what would be the best option for them?"),
+ assistant('In Sharjah there are different schools. What is your preferred curriculum?'),
+ user('british since they came from the UK'),
+ assistant('A British curriculum might fit. Do you have the documents?'),
+ user('umm i think so'),
+ assistant('Would you like me to find a list of British schools in Sharjah?'),
+ user('yes please'),
+ assistant('You can visit the authority website. Would you like help finding British schools?'),
+ user('bruh'),
+ assistant('You want British schools in Sharjah, right? Want me to help you look them up?'),
+ user("i thought you'd do it for me")
+];
+for(const length of [3,5,7,9,11,13]){
+ const plan=planResearch(schoolDialogue.slice(0,length),{city:'Sharjah, UAE'});
+ assert.equal(plan.needed,true,'research needed at turn '+length);
+ assert.equal(plan.location.country,'uae','UK origin must not switch jurisdiction');
+ assert.equal(plan.location.city,'Sharjah');
+ if(length>=5)assert.equal(plan.parts[0].curriculum,'british');
+ if(length>=9){assert.equal(plan.parts[0].intent,'discovery');assert.match(plan.queries[0].query,/british curriculum schools official school directory/);}
+}
+const rolling=planResearch(schoolDialogue.slice(-12),{city:'Sharjah, UAE'});
+assert.equal(rolling.needed,true);assert.equal(rolling.location.city,'Sharjah');
+assert.equal(rolling.parts[0].intent,'discovery');
+const changed=planResearch([...schoolDialogue,user('Actually find British schools in Dubai instead')],{city:'Sharjah, UAE'});
+assert.equal(changed.location.city,'Dubai');
+assert.equal(researchSource('https://web.khda.gov.ae/en/schools',{topic:'school',tier:'official'},{country:'uae',city:'Sharjah'}),null);
+assert.ok(researchSource('https://spea.shj.ae/en/schools',{topic:'school',tier:'official'},{country:'uae',city:'Sharjah'}));
+assert.equal(planResearch([...schoolDialogue,user('Remind me to buy milk tomorrow')],{city:'Sharjah, UAE'}).needed,false,'an unrelated new task must not inherit school research');
+console.log('Founder school follow-ups: curriculum, acceptance, frustration, rolling history and geography passed');
+/* This real /v1/chat follow-up must enter research, not the old Llama-only
+   answer. The mock returns an unrelated URL, so the correct result is no
+   evidence, never an unsupported suggestion to Google it. */
+const followReq=new Request('https://'+host+'/v1/chat',{method:'POST',headers:{origin:'https://'+host,'content-type':'application/json'},body:JSON.stringify({messages:schoolDialogue.slice(-12),preferences:{profile:{city:'Sharjah, UAE'}}})});
+const followResponse=await worker.fetch(followReq,workerEnv,ctx);
+assert.equal(followResponse.status,200);
+const followData=await followResponse.json();assert.equal(followData.research.status,'no-evidence');
+assert.doesNotMatch(followData.reply,/search online|google|don't have direct access/i);
+let legacySystem='';
+const hello=new Request('https://'+host+'/v1/chat',{method:'POST',headers:{origin:'https://'+host,'content-type':'application/json'},body:JSON.stringify({messages:[user('hello')],preferences:{}})});
+await worker.fetch(hello,{...workerEnv,AI:{run:async(_m,o)=>{legacySystem=o.messages[0].content;return {response:'Hello!'};}}},ctx);
+assert.match(legacySystem,/bounded web research service/);
+assert.doesNotMatch(legacySystem,/You have NO unrestricted search engine/);
+console.log('Worker follow-up routing and enabled-search capability prompt passed');

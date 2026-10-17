@@ -8,7 +8,7 @@ const UK=/\b(uk|united kingdom|britain|england|scotland|wales|northern ireland|e
 const EMIRATES=['Dubai','Sharjah','Abu Dhabi','Ajman','Fujairah','Umm Al Quwain','Ras Al Khaimah'];
 const UK_PLACES=['Edinburgh','London','Manchester','Birmingham','Glasgow','Scotland','England','Wales','Northern Ireland'];
 function place(text){
- const t=clean(text);let country=null;
+ const t=clean(text).replace(/\b(?:came|come|coming|moved|moving|arrived|travelled|traveling)\s+from\s+(?:the\s+)?(?:uk|united kingdom|britain|uae|united arab emirates)\b/g,'');let country=null;
  // Prefer an explicit destination after a correction/move, not an origin in the same turn.
  const corrected=t.split(/\b(?:actually|i meant|moving to|moved to|instead)\b/).at(-1);
  const p=UAE.test(corrected)||UK.test(corrected)?corrected:t;
@@ -21,7 +21,7 @@ const organisations=[[/heriot[ -]?watt/i,'Heriot-Watt'],[/wollongong|\buowd\b/i,
 const detect=t=>{
  const topics=[];
  if(/\b(bank|banking|account)\b/.test(t))topics.push('bank');
- if(/\b(school|schooling)\b/.test(t)&&/\b(kids?|children|child|register|enrol|enroll|admission)\b/.test(t))topics.push('school');
+ if(/\b(schools?|schooling|curricul(?:um|a))\b/.test(t))topics.push('school');
  if(/\bmedical\b|health (?:check|test)|blood test|x[ -]?ray/.test(t))topics.push('medical');
  if(/fingerprints?|biometrics?/.test(t))topics.push('biometrics');
  if(/\bvisa\b|residen|emirates id|entry permit/.test(t)&&!topics.length)topics.push('residency');
@@ -32,11 +32,21 @@ const detect=t=>{
 export function planResearch(messages,profile){
  const users=(Array.isArray(messages)?messages:[]).filter(m=>m.role==='user').map(m=>String(m.content||''));
  const latest=clean(users.at(-1));if(!latest)return {needed:false};
+ const assistants=(Array.isArray(messages)?messages:[]).slice(0,-1).filter(m=>m.role==='assistant');
+ const previous=clean(assistants.at(-1)?.content);
+ // An assistant's offer identifies the pending TASK, never factual evidence or
+ // a confirmed location. Short replies must not lose a lookup already offered.
+ const continuing=latest.length<180&&(/^(?:yes|yeah|yep|sure|please|ok|okay|bruh|um+|uh+|i think so|not sure|i'm not sure|british|american|indian|english)\b/.test(latest)||/\b(?:do it for me|you'?d do|you would do|find them|look (?:it|them) up|best option for them|what about them)\b/.test(latest));
  let topics=detect(latest),inherited=false;
- if(!topics.length&&(/\b(then|after|that|those|card|it|they|actually|meant|instead)\b/.test(latest)||place(latest).country)){
+ if(!topics.length&&continuing){topics=detect(previous);inherited=topics.length>0;}
+ if(!topics.length&&(continuing||/\b(then|after|that|those|card|it|they|actually|meant|instead)\b/.test(latest)||place(latest).country)){
   for(let i=users.length-2;i>=Math.max(0,users.length-5);i--){const old=detect(clean(users[i]));if(old.length){topics=old;inherited=true;break;}}
  }
  if(!topics.length)return {needed:false};
+ const curriculumNames=[['british',/\bbritish\b/],['american',/\bamerican\b/],['indian',/\bindian\b/],['ib',/\bib\b|international baccalaureate/]];
+ let curriculum='';for(const turn of users){const named=curriculumNames.find(([,re])=>re.test(clean(turn)));if(named)curriculum=named[0];}
+ const explicitSchoolTask=/\b(find(?:ing)?|list|look (?:it |them )?up|recommend|which schools?|options|curricul(?:um|a))\b/.test(latest)?'discovery':/\b(register|enrol|enroll|admission|documents?|requirements?)\b/.test(latest)?'admissions':null;
+ const schoolIntent=explicitSchoolTask||(/\b(find(?:ing)?|list|look (?:it |them )?up|options|curricul(?:um|a))\b/.test(previous)?'discovery':'admissions');
  let location={country:null,city:''};
  if(profile&&typeof profile==='object')location=place(profile.city||profile.movingTo||'');
  for(const turn of users){const next=place(turn);if(next.country)location={country:next.country,city:next.city||(next.country===location.country?location.city:'')};}
@@ -44,7 +54,7 @@ export function planResearch(messages,profile){
  for(const turn of users){const found=organisations.find(([re])=>re.test(turn));if(found)organisation=found[1];}
  const currentOrg=organisations.find(([re])=>re.test(latest));if(currentOrg)organisation=currentOrg[1];
  const parts=topics.flatMap(topic=>{
-  const base={topic,tier:topic==='community'?'community':topic==='institution'?'organisation':'official',...(organisation?{organisation}:{})};
+  const base={topic,tier:topic==='community'?'community':topic==='institution'?'organisation':'official',...(organisation?{organisation}:{}),...(topic==='school'?{intent:schoolIntent,curriculum}: {})};
   return topic==='bank'&&['Emirates NBD','ADCB','First Abu Dhabi Bank'].includes(organisation)?[base,{topic,tier:'organisation',organisation}]:[base];
  });
  let clarification=null;
@@ -58,7 +68,7 @@ export function planResearch(messages,profile){
  else if(topics.includes('institution')&&!organisation&&!profile?.place)
   clarification='Which institution is handling it?';
  const queryTerms={school:'school enrolment children admission documents',bank:'bank account identity documents non resident eligibility',medical:'residence visa medical fitness examination official centres procedure',biometrics:'identity residence application biometrics next steps card issuance',residency:'student residence visa application status official',institution:'student visa application status contact office',community:'local places community recommendations'};
- const queries=parts.slice(0,2).map(p=>({part:p,query:[location.country==='uae'?'United Arab Emirates':'United Kingdom',location.city,p.organisation||'',queryTerms[p.topic]].filter(Boolean).join(' ')}));
+ const queries=parts.slice(0,2).map(p=>({part:p,query:[location.country==='uae'?'United Arab Emirates':'United Kingdom',location.city,p.organisation||'',p.topic==='school'&&p.intent==='discovery'?[p.curriculum,'curriculum schools official school directory'].filter(Boolean).join(' '):queryTerms[p.topic]].filter(Boolean).join(' ')}));
  return {needed:true,location,parts,queries,clarification,mixed:parts.length>1,
   privateStatus:topics.includes('institution'),
   cautions:['Do not infer any completed step, appointment, approval or card delivery.','Never ask for ID numbers or send personal application details to search.',...(topics.includes('bank')?['Do not promise an account or an exemption from identity checks.']:[]),...(topics.includes('medical')?['Do not give a diagnosis or assume which tests apply.']:[])]};

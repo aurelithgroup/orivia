@@ -21,6 +21,7 @@ export const RESEARCH_SOURCES=Object.freeze({
  'www.adek.gov.ae':authority('uae',['school']),
  'adek.gov.ae':authority('uae',['school']),
  'www.spea.shj.ae':authority('uae',['school']),
+ 'spea.shj.ae':authority('uae',['school']),
  'www.moe.gov.ae':authority('uae',['school']),
  'www.centralbank.ae':authority('uae',['bank']),
  'centralbank.ae':authority('uae',['bank']),
@@ -45,6 +46,11 @@ export function researchSource(url,part,location){
   const rule=RESEARCH_SOURCES[u.hostname];
   if(!rule||!rule.topics.includes(part.topic)||!location?.country)return null;
   if(rule.country!=='both'&&rule.country!==location.country)return null;
+  // Local education regulators are not interchangeable across emirates.
+  if(part.topic==='school'&&location.city){
+   const local={'www.khda.gov.ae':'Dubai','web.khda.gov.ae':'Dubai','khda.gov.ae':'Dubai','www.adek.gov.ae':'Abu Dhabi','adek.gov.ae':'Abu Dhabi','www.spea.shj.ae':'Sharjah','spea.shj.ae':'Sharjah'};
+   if(local[u.hostname]&&local[u.hostname]!==location.city)return null;
+  }
   if(part.tier==='official'&&rule.kind!=='official')return null;
   if(part.tier==='organisation'&&(rule.kind!=='organisation'||part.organisation!==rule.name))return null;
   if(part.tier==='community')return null; // third-party content permissions not reviewed yet
