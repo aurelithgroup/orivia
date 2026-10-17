@@ -81,7 +81,8 @@ async function verifyTurnstile(token,req,env){
  try{
   const secret=String(env.TURNSTILE_SECRET).trim().replace(/^["']|["']$/g,''); // tolerate stray spaces or quotes from pasting
   const body=new URLSearchParams({secret,response:token,remoteip:req.headers.get('CF-Connecting-IP')||''});
-  const r=await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString(),redirect:'error',signal:AbortSignal.timeout(10000)});
+  // Do not follow redirects with the secret. Inspect the response and fail closed.
+  const r=await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString(),redirect:'manual',signal:AbortSignal.timeout(10000)});
   if(!r.ok)return {ok:false,codes:['siteverify-http-'+r.status]};
   const d=await r.json().catch(()=>null);
   if(!d||typeof d.success!=='boolean')return {ok:false,codes:['siteverify-invalid-response']};
