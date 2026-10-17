@@ -86,3 +86,36 @@ assert.equal(current.liveSources.length,1);assert.match(current.reply,/Wes green
 assert.match(current.liveSources[0].url,/education-institutes\/schools\/wes-green/);
 assert.ok(currentCalls.includes('https://spea.shj.ae/en/education-institutes/schools'));
 console.log('Current SPEA HTML and stale-index recovery: passed');
+/* Each quote supports the full claim beside it: one verbatim quote per fact stated. */
+const pagePlain=h=>h.replace(/<!--[\s\S]*?-->/g,' ').replace(/<(script|style|svg|nav|header|footer|form|noscript)\b[^>]*>[\s\S]*?<\/\1>/gi,' ').replace(/<[^>]*>/g,' ').replace(/&(?:nbsp|#160);/g,' ').replace(/&amp;/g,'&').replace(/\s+/g,' ').trim();
+function checkClaim(c,pageText){
+ assert.ok(Array.isArray(c.quotes)&&c.quotes.length,'claim has per-fact quotes');
+ for(const q of c.quotes)assert.ok(pageText.includes(q.quote),'quote is verbatim on the page: '+q.quote);
+ const by=Object.fromEntries(c.quotes.map(q=>[q.fact,q.quote]));
+ assert.match(by.curriculum,/British/);assert.match(c.text,/British curriculum/);
+ const area=c.text.match(/curriculum, ([^,]+), Sharjah/)?.[1];
+ if(area){assert.ok(by.area&&by.area.includes(area),'area "'+area+'" is quoted');}else assert.equal(by.area,undefined);
+ const span=c.text.match(/Classes (\S+)(?: to Year (\d+))?/);
+ if(span){assert.ok(by.grades,'year groups are quoted');assert.ok(by.grades.includes(span[1].replace('Year ','')),'start of range quoted');if(span[2])assert.match(by.grades,new RegExp('\\b'+span[2]+'\\b'),'end of range quoted');}
+ else assert.equal(by.grades,undefined);
+ const rating=c.text.match(/SPEA rating: (\w+)/)?.[1];
+ if(rating)assert.ok(by.evaluation&&by.evaluation.includes(rating));else assert.equal(by.evaluation,undefined);
+ assert.equal(c.quote,c.quotes.map(q=>q.quote).join(' … '),'joined fallback carries every quote');
+}
+{const c=current.research.claims[0];
+ assert.match(c.text,/Wes green Int\. Pvt\. School\. LLC: British curriculum, Muwaileh, Sharjah\. Classes FS1 to Year 13\./);
+ assert.deepEqual(c.quotes.map(q=>q.label),['Curriculum','Area','Year groups']);
+ checkClaim(c,pagePlain(currentProfile));}
+{const c=out.research.claims.find(x=>/Al Mawahib/.test(x.text));
+ assert.deepEqual(c.quotes.map(q=>q.label),['Curriculum','Area','Year groups','SPEA rating']);
+ checkClaim(c,pagePlain(page(117,'Al Mawahib British Pvt. School','British')));}
+// A fact with no quote of its own is left out of the claim rather than shown unsupported.
+{const noGrades=currentProfile.replace(/<span>Grade:[^<]*<\/span>/,'');
+ const r=await answerResearch(plan,env,{reserve:async()=>true,fetcher:async u=>{const url=String(u);
+  if(url.startsWith('https://api.search.brave.com/'))return new Response(JSON.stringify({web:{results:[]}}));
+  if(url==='https://spea.shj.ae/en/education-institutes/schools')return new Response(currentDirectory,{headers:{'content-type':'text/html'}});
+  if(url.endsWith('/wes-green-int-pvt-school-llc'))return new Response(noGrades,{headers:{'content-type':'text/html'}});
+  return new Response('',{status:404});}});
+ const c=r.research.claims[0];assert.doesNotMatch(c.text,/Classes/);assert.ok(!c.quotes.some(q=>q.fact==='grades'));checkClaim(c,pagePlain(noGrades));}
+console.log('Per-fact quotes: every fact in a school claim has its own verbatim quote; unquoted facts are dropped: passed');
+

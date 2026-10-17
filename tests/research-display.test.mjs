@@ -43,4 +43,18 @@ assert.equal(longReply.content.length,2000,'the displayed reply stays intact');
 assert.doesNotMatch(js.slice(js.indexOf('async function openGuide'), js.indexOf('async function openGuide') + 6000), /Opened by Orivia|Source-backed/);
 const spoken = new Function('return ' + js.slice(js.indexOf('const spokenText=') + 17, js.indexOf('; // no reference lists')))();
 assert.equal(spoken(F['evidence-found'].reply).includes('https'), false); assert.equal(/\[\d\]/.test(spoken(F['evidence-found'].reply)), false, 'Listen skips citations and web addresses');
+/* Per-fact quotes: each fact in a school claim keeps its own labelled quote; older single-quote claims still show */
+{
+  const sl = safeResearch(F['school-list'].research);
+  assert.equal(sl.claims.length, 1);
+  assert.deepEqual(sl.claims[0].quotes.map(q => q.label), ['Curriculum', 'Area', 'Year groups']);
+  assert.deepEqual(sl.claims[0].quotes.map(q => q.quote), ['Curriculum: British', 'School Location Sharjah - Muwaileh', 'Grade: FS1 | FS2 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13']);
+  const junk = safeResearch({ claims: [{ text: 'A school', sourceId: 'S1', quote: '', quotes: [{ label: 'Area' }, 'x', null, { label: { a: 1 }, quote: 42 }, { label: 'Curriculum', quote: 'Curriculum: British' }] }] });
+  assert.deepEqual(junk.claims[0].quotes, [{ label: 'Curriculum', quote: 'Curriculum: British' }], 'only string quotes are kept');
+  assert.equal(safeResearch({ claims: [{ text: 'No evidence', sourceId: 'S1', quote: '', quotes: [] }] }).claims.length, 0, 'a claim with no quote at all is not shown');
+  assert.equal(safeResearch(F.partial.research).claims[0].quotes.length, 0, 'older single-quote claims still work');
+  const block = grab('researchBlock');
+  assert.match(block, /c\.quotes&&c\.quotes\.length>1/); assert.match(block, /'q-label',q\.label/);
+  assert.match(block, /Each part of this point is quoted from source/);
+}
 console.log('Research display (fixtures): labels, vetted sources only, linked citations, source-backed claims, gaps and failure states: passed');

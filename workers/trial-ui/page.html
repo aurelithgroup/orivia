@@ -233,6 +233,11 @@ a.src strong{font-size:14px;overflow-wrap:anywhere}
 .claim{display:flex;flex-direction:column;gap:4px;margin-top:8px}
 .claim blockquote{margin:0;padding:6px 10px;border-inline-start:3px solid var(--ok);background:var(--surface);border-radius:6px;font-size:14px}
 .unresolved ul{margin:4px 0 0;padding-inline-start:20px;font-size:14px}
+/* Research: one labelled quote per fact */
+.claim-quotes{list-style:none;margin:6px 0 4px;padding:0;display:flex;flex-direction:column;gap:6px}
+.claim-quotes li{display:flex;flex-direction:column;gap:2px}
+.claim-quotes .q-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.claim-quotes blockquote{margin:0}
 /* Chat history drawer */
 .storage-warn{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--amber);border-radius:12px;padding:10px 12px;margin:6px 0;color:var(--ink);font-size:14px}
 .storage-warn[hidden]{display:none}

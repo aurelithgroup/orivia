@@ -70,7 +70,9 @@ export function readSchoolProfile(raw,text){
   if(!name||!area||area.length>100)return null;
   const quote='Curriculum: '+curriculum;
   if(!text.includes(quote))return null;
-  return {name,curriculum,area,grades,evaluation:'',phone:'',quote};
+  const gradeRaw=plain(raw.match(/<span[^>]*>\s*(Grade:\s*[^<]+)<\/span>/i)?.[1]);
+  const evidence=factEvidence(text,[['curriculum','Curriculum',quote],['area','Area','School Location '+area],['grades','Year groups',gradeRaw]]);
+  return {name,curriculum,area,grades,evaluation:'',phone:'',quote,evidence};
  }
 
  const start=text.search(/(?:^|\s)Curriculum\s/);if(start<0)return null;
@@ -89,7 +91,14 @@ export function readSchoolProfile(raw,text){
  const heading=s=>plain(s||'').replace(/\s*[|\-–]\s*(?:SPEA|Sharjah Private Education Authority).*$/i,'').trim();
  if(!name)name=heading(raw.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1])||heading(raw.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]);
  if(!name||name.length<3||name.length>120||/^(?:SPEA|Sharjah Private Education Authority|Schools?)$/i.test(name))return null;
- return {name,curriculum:fields.Curriculum,evaluation:fields.Evaluation||'',grades:fields.Class||'',area:fields.Area,phone:fields['Phone Number']||'',quote:rest.slice(0,Math.min(end||300,500)).trim()};
+ const evidence=factEvidence(text,[['curriculum','Curriculum','Curriculum '+fields.Curriculum],['area','Area','Area '+fields.Area],['grades','Year groups',fields.Class?'Class '+fields.Class:''],['evaluation','SPEA rating',fields.Evaluation?'Evaluation '+fields.Evaluation:'']]);
+ return {name,curriculum:fields.Curriculum,evaluation:fields.Evaluation||'',grades:fields.Class||'',area:fields.Area,phone:fields['Phone Number']||'',quote:rest.slice(0,Math.min(end||300,500)).trim(),evidence};
+}
+// One quote per fact, kept only if it appears verbatim in the fetched page text. A fact without its own quote is left out of the claim.
+function factEvidence(text,items){
+ const out={};
+ for(const [fact,label,quote] of items){const q=String(quote||'').replace(/\s+/g,' ').trim();if(q.length>=6&&q.length<=300&&text.includes(q))out[fact]={label,quote:q};}
+ return out;
 }
 const CURRICULUM_MATCH={british:/british|\buk\b|english national|cambridge|edexcel/i,american:/american|\bus\b/i,indian:/indian|cbse|icse/i,ib:/\bib\b|baccalaureate/i};
 const CURRICULUM_NAME={british:'British',american:'American',indian:'Indian',ib:'IB'};
@@ -130,8 +139,14 @@ function schoolsAnswer(plan,part,schools){
  const now=new Date().toISOString();
  const sources=schools.map((s,i)=>({id:'S'+(i+1),url:s.url,title:s.profile.name+' (SPEA school profile)',category:'official',topic:'school',checkedAt:now,profile:s.profile}));
  const label=CURRICULUM_NAME[part.curriculum]||'';
- const claims=sources.map(s=>{const p=s.profile;const g=gradeSpan(p.grades);
-  return {text:p.name+': '+p.curriculum+' curriculum, '+p.area.replace(/^Sharjah\s*-\s*/i,'')+', Sharjah'+(g?'. Classes '+g:'')+(p.evaluation?'. SPEA rating: '+p.evaluation:'')+'.',sourceId:s.id,quote:p.quote};});
+ const claims=sources.map(s=>{const p=s.profile,ev=p.evidence||{};const g=ev.grades?gradeSpan(p.grades):'';
+  let text=p.name+': '+p.curriculum+' curriculum';
+  if(ev.area)text+=', '+p.area.replace(/^Sharjah\s*-\s*/i,'')+', Sharjah';
+  text+=(g?'. Classes '+g:'')+(ev.evaluation&&p.evaluation?'. SPEA rating: '+p.evaluation:'')+'.';
+  // quotes: one per fact in the claim, in the order the claim states them. quote: the same passages joined, for older displays.
+  const quotes=['curriculum','area','grades','evaluation'].filter(f=>ev[f]&&(f!=='grades'||g)&&(f!=='evaluation'||p.evaluation)).map(f=>({fact:f,label:ev[f].label,quote:ev[f].quote}));
+  if(!quotes.length)quotes.push({fact:'curriculum',label:'Curriculum',quote:p.quote});
+  return {text,sourceId:s.id,quote:quotes.map(q=>q.quote).join(' … ').slice(0,500),quotes};});
  const intro=(sources.length===1?'This '+(label?label+'-curriculum ':'')+'school is':'These '+sources.length+' '+(label?label+'-curriculum ':'')+'schools are')+' listed by the Sharjah Private Education Authority (SPEA), which regulates private schools in Sharjah:';
  const outro='These are the SPEA school pages I could open for your question, not SPEA’s full list, so there are likely more. Fees, seats and admissions change, so check those with each school.';
  const reply=intro+'\n\n'+claims.map((c,i)=>c.text+' ['+(i+1)+']').join('\n\n')+'\n\n'+outro+'\n\n'+sources.map((s,i)=>'['+(i+1)+'] '+s.title+': '+s.url).join('\n');

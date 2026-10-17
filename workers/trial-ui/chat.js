@@ -498,7 +498,8 @@ function safeSources(list){
 function safeResearch(r){
  const str=(v,n)=>typeof v==='string'?v.slice(0,n):'';
  return {status:str(r.status,40),applicability:str(r.applicability,30),
-  claims:Array.isArray(r.claims)?r.claims.slice(0,6).map(c=>({text:str(c&&c.text,300),sourceId:str(c&&c.sourceId,8),quote:str(c&&c.quote,520)})).filter(c=>c.text&&c.quote):[],
+  claims:Array.isArray(r.claims)?r.claims.slice(0,6).map(c=>({text:str(c&&c.text,300),sourceId:str(c&&c.sourceId,8),quote:str(c&&c.quote,520),
+   quotes:Array.isArray(c&&c.quotes)?c.quotes.slice(0,6).map(q=>({label:str(q&&q.label,40),quote:str(q&&q.quote,320)})).filter(q=>q.quote):[]})).filter(c=>c.text&&(c.quote||c.quotes.length)):[],
   unresolved:Array.isArray(r.unresolved)?r.unresolved.slice(0,6).map(u=>str(u,40)).filter(Boolean):[]};
 }
 /* The reply's numbered citations become links, but only to vetted sources; the plain reference list at the end is replaced by source cards */
@@ -553,7 +554,17 @@ function researchBlock(srcs,research){
  const claims=(r.claims||[]).filter(c=>srcs.some(s=>s.id&&s.id===c.sourceId));
  if(claims.length){
   const det=document.createElement('details');det.className='claims';det.append(el('summary','','Source-backed: see the quotes'));
-  for(const c of claims){const n=srcs.findIndex(s=>s.id===c.sourceId)+1;const d=el('div','claim');d.append(el('p','',c.text),el('blockquote','','“'+c.quote+'”'),el('p','tiny','Quote from source '+n+'. A quote supports the point but doesn’t guarantee it applies to your situation.'));det.append(d)}
+  for(const c of claims){
+   const n=srcs.findIndex(s=>s.id===c.sourceId)+1;const d=el('div','claim');d.append(el('p','',c.text));
+   if(c.quotes&&c.quotes.length>1){ // one quote per fact in the claim, each labelled
+    const ul=document.createElement('ul');ul.className='claim-quotes';
+    for(const q of c.quotes){const li=document.createElement('li');if(q.label)li.append(el('span','q-label',q.label));li.append(el('blockquote','','“'+q.quote+'”'));ul.append(li)}
+    d.append(ul,el('p','tiny','Each part of this point is quoted from source '+n+'. The quotes support it but don’t guarantee it applies to your situation.'));
+   }else{
+    d.append(el('blockquote','','“'+((c.quotes&&c.quotes[0]&&c.quotes[0].quote)||c.quote)+'”'),el('p','tiny','Quote from source '+n+'. A quote supports the point but doesn’t guarantee it applies to your situation.'));
+   }
+   det.append(d);
+  }
   box.append(det);
  }
  if((r.unresolved||[]).length){
