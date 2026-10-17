@@ -64,6 +64,8 @@ jobs:
         run: node tests/research-schools.test.mjs
       - name: Information cards (sourced facts and contacts only)
         run: node tests/information-cards.test.mjs
+      - name: SPEA reader (beyond page 1, name lookup, coverage and failures)
+        run: node tests/spea-reader.test.mjs
       - name: Public beta mode (human check, per-person and daily limits)
         run: node --experimental-sqlite tests/public-beta.test.mjs
       - name: AI Worker contract and safety tests
