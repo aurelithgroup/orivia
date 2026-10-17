@@ -86,7 +86,8 @@ const EXPAND={pvt:'private',int:'international',intl:'international',shj:'sharja
 const weight=t=>COMMON.has(t)?0.25:1;
 export function nameTokens(name){return String(name||'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').trim().split(' ').map(t=>EXPAND[t]||t).filter(t=>t&&!FILLER.has(t)&&!/^br\d+$/.test(t))}
 export function distinctiveTokens(name){return nameTokens(name).filter(t=>!COMMON.has(t))}
-const sameTok=(q,t)=>q===t||(q.length>4&&t.length>4&&(q.startsWith(t)||t.startsWith(q)));
+// Exact words only (plus plurals): prefixes would merge different schools ("Cedar" vs "Cedarwood").
+const sameTok=(q,t)=>q===t||q+'s'===t||t+'s'===q;
 const joinedSame=(da,db)=>da.length>0&&db.length>0&&da.join('')===db.join('');
 export function nameScore(query,name){
  const a=[...new Set(nameTokens(query))],b=[...new Set(nameTokens(name))];if(!a.length||!b.length)return 0;
@@ -97,7 +98,7 @@ export function nameScore(query,name){
  if(da.length&&!db.some(t=>da.some(q=>sameTok(q,t))))return 0; // no distinctive word in common
  return dice(a,b);
 }
-function dice(a,b){const sb=new Set(b);let hit=0;for(const t of a)if(sb.has(t)||[...sb].some(x=>x.length>4&&t.length>4&&(x.startsWith(t)||t.startsWith(x))))hit+=weight(t);
+function dice(a,b){const sb=new Set(b);let hit=0;for(const t of a)if([...sb].some(x=>sameTok(t,x)))hit+=weight(t);
  const wa=a.reduce((n,t)=>n+weight(t),0),wb=b.reduce((n,t)=>n+weight(t),0);return +(2*hit/(wa+wb)).toFixed(3)}
 /** Classify ranked candidates: one clear match, several similar, or none. */
 export function classifyMatches(query,items){
@@ -110,10 +111,13 @@ export function classifyMatches(query,items){
   if(full.length===1&&full[0].score>=0.85)return {status:'match',candidates:[full[0]]};
   return {status:'candidates',candidates:[...full,...ranked.filter(x=>!full.includes(x))].slice(0,SPEA_LIMITS.candidates)};
  }
- // Only common words typed (e.g. "Sharjah International Private School"): match only an essentially exact name.
- const [top,next]=ranked;
+ // Only common words typed (e.g. "Sharjah International Private School"): a similar name must contain every word typed,
+ // and a match must be essentially exact.
+ const qt=nameTokens(query);const similar=ranked.filter(x=>{const t=nameTokens(x.name);return qt.every(q=>t.some(w=>sameTok(q,w)))});
+ if(!similar.length)return {status:'not-found',candidates:[]};
+ const [top,next]=similar;
  if(top.score>=0.99&&(!next||next.score<0.8))return {status:'match',candidates:[top]};
- return {status:'candidates',candidates:ranked.slice(0,SPEA_LIMITS.candidates)};
+ return {status:'candidates',candidates:similar.slice(0,SPEA_LIMITS.candidates)};
 }
 
 /* ---------- Default dependencies: policy-checked, bounded, budgeted ---------- */

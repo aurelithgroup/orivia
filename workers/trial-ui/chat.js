@@ -677,10 +677,13 @@ function safeSchoolContext(v){
  const urls=a=>(Array.isArray(a)?a:[]).slice(0,24).filter(u=>typeof u==='string'&&u.length<200&&/^https:\/\/(?:www\.)?spea\.shj\.ae\/en\/(?:education-institutes|educational-institutions)\/schools\/[a-z0-9-]+\/?$/.test(u));
  return {...(typeof v.targetName==='string'?{targetName:v.targetName.slice(0,80)}:{}),city:'Sharjah',curriculum:typeof v.curriculum==='string'?v.curriculum.slice(0,20):'',year:Number.isInteger(v.year)?v.year:null,shown:urls(v.shown),...(v.cursor?{cursor:{skipDirectory:v.cursor.skipDirectory===true,searchOffset:Math.max(0,Math.min(10,Number(v.cursor.searchOffset)||0)),pending:urls(v.cursor.pending).slice(0,20)}}:{})};
 }
-function currentResearchContext(ts){const last=ts.filter(t=>t.role==='assistant').at(-1);return safeSchoolContext(last?.meta?.research?.taskContext)}
+// The research loop's task state: scope only (what was asked, shown and where to continue). The server re-validates all of it.
+function safeLoopTask(v){try{if(!v||typeof v!=='object'||Array.isArray(v))return undefined;const j=JSON.stringify(v);return j.length<8000?JSON.parse(j):undefined}catch(_){return undefined}}
+function safeTaskContext(v){const school=safeSchoolContext(v),task=safeLoopTask(v&&v.task);if(!school&&!task)return undefined;return {...(school||{}),...(task?{task}:{})}}
+function currentResearchContext(ts){const last=ts.filter(t=>t.role==='assistant').at(-1);return safeTaskContext(last?.meta?.research?.taskContext)}
 function safeResearch(r){
  const str=(v,n)=>typeof v==='string'?v.slice(0,n):'';
- return {status:str(r.status,40),applicability:str(r.applicability,30),...(safeSchoolContext(r.taskContext)?{taskContext:safeSchoolContext(r.taskContext)}:{}),
+ return {status:str(r.status,40),applicability:str(r.applicability,30),...(safeTaskContext(r.taskContext)?{taskContext:safeTaskContext(r.taskContext)}:{}),
   claims:Array.isArray(r.claims)?r.claims.slice(0,6).map(c=>({text:str(c&&c.text,300),sourceId:str(c&&c.sourceId,8),quote:str(c&&c.quote,520),
    quotes:Array.isArray(c&&c.quotes)?c.quotes.slice(0,6).map(q=>({label:str(q&&q.label,40),quote:str(q&&q.quote,320)})).filter(q=>q.quote):[]})).filter(c=>c.text&&(c.quote||c.quotes.length)):[],
   unresolved:Array.isArray(r.unresolved)?r.unresolved.slice(0,6).map(u=>str(u,40)).filter(Boolean):[]};

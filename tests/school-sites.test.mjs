@@ -16,7 +16,7 @@ assert.deepEqual(candidateSiteHosts(['https://ae.linkedin.com/in/x','https://www
 
 /* ---------- The live investigation case: identity must not be guessed or substituted ---------- */
 const SIPS='Sharjah International Private School';
-assert.equal(classifyMatches(SIPS,[{name:'Sharjah American International School'},{name:'Sharjah English School'}]).status,'candidates','near-misses are candidates, never a match');
+assert.notEqual(classifyMatches(SIPS,[{name:'Sharjah American International School'},{name:'Sharjah English School'}]).status,'match','near-misses are never a match');
 assert.ok(nameScore(SIPS,'Sharjah American International School')<0.85);
 assert.equal(classifyMatches(SIPS,[{name:'Shj. Int. Pvt. School - British Branch'},{name:'Shj. Int. Pvt. School - MoE Branch'}] /* hypothetical listings: third-party sites suggest two branches; not yet confirmed on SPEA */).status,'candidates','two branch listings: candidates');
 assert.equal(classifyMatches(SIPS,[{name:SIPS},{name:'Sharjah American International School'}]).status,'match','an exact listing matches');

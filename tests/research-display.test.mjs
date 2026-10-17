@@ -8,7 +8,7 @@ const js = fs.readFileSync('workers/trial-ui/chat.js', 'utf8');
 const F = JSON.parse(fs.readFileSync('tests/fixtures/research-replies.json', 'utf8'));
 const grab = name => { const a = js.indexOf('function ' + name + '('); assert.ok(a >= 0, name); let depth = 0, i = js.indexOf('{', a); for (; i < js.length; i++) { if (js[i] === '{') depth++; else if (js[i] === '}' && --depth === 0) break; } return js.slice(a, i + 1); };
 const kinds = js.slice(js.indexOf('const SOURCE_KIND='), js.indexOf(';', js.indexOf('const SOURCE_KIND=')) + 1);
-const { safeSources, safeResearch, citeSegments } = new Function(kinds + grab('safeSchoolContext') + grab('safeSources') + grab('safeResearch') + grab('citeSegments') + ';return {safeSources,safeResearch,citeSegments}')();
+const { safeSources, safeResearch, citeSegments } = new Function(kinds + grab('safeSchoolContext') + grab('safeLoopTask') + grab('safeTaskContext') + grab('safeSources') + grab('safeResearch') + grab('citeSegments') + ';return {safeSources,safeResearch,citeSegments}')();
 
 /* Labels */
 let s = safeSources(F['evidence-found'].liveSources);

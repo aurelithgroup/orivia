@@ -70,6 +70,10 @@ jobs:
         run: node tests/spea-reader.test.mjs
       - name: School websites anchored to SPEA (identity, domain proof, facts tied to source)
         run: node tests/school-sites.test.mjs
+      - name: Research loop (understand, research, coverage, answer the latest question)
+        run: node tests/research-loop.test.mjs
+      - name: Research loop through the Worker (opt-in, auth and quota first)
+        run: node --experimental-sqlite tests/research-loop-worker.test.mjs
       - name: Public beta mode (human check, per-person and daily limits)
         run: node --experimental-sqlite tests/public-beta.test.mjs
       - name: AI Worker contract and safety tests
