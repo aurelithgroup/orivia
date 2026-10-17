@@ -534,11 +534,20 @@ $('msg').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isCo
 function chip(label,fn){const holder=$('journey-actions')||(resources([]),$('journey-actions'));const b=document.createElement('button');b.type='button';b.className='action-chip';b.textContent=label;b.onclick=fn;holder.append(b)}
 /* Public beta: same app, plus a one-time "I'm human" check (Cloudflare Turnstile) before the first message */
 let mode='private',humanOk=true;
+/* On failure, say why and let the person retry: never loop the check by itself */
+function humanFailed(msg){
+ const n=$('human-note');n.replaceChildren(document.createTextNode(msg+' '));
+ const b=document.createElement('button');b.type='button';b.className='ask';b.textContent='Try again';
+ b.onclick=()=>{n.textContent='Checking again…';try{window.turnstile.reset('#human-check')}catch(_){}};n.append(b);
+}
 function loadTurnstile(siteKey){
  humanOk=false;$('human-check').hidden=false;$('human-note').hidden=false;
- const go=()=>window.turnstile.render('#human-check',{sitekey:siteKey,callback:async token=>{
+ const go=()=>window.turnstile.render('#human-check',{sitekey:siteKey,'error-callback':code=>{humanFailed('The check couldn’t load (code: '+String(code).slice(0,12)+').');return true},callback:async token=>{
   try{const r=await fetch('/v1/human',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});humanOk=r.ok;
-   $('human-note').textContent=r.ok?'Thanks, you’re all set.':'That check didn’t work. Please try again.';if(!r.ok)window.turnstile.reset('#human-check')}catch(_){$('human-note').textContent='Couldn’t reach Orivia. Please try again.'}
+   if(r.ok){$('human-note').textContent='Thanks, you’re all set.';return}
+   const d=await r.json().catch(()=>({}));const code=Array.isArray(d.codes)&&d.codes.length?' (code: '+d.codes.join(', ')+')':(r.status===403&&d.error==='Origin not allowed'?' (code: origin)':' (code: '+r.status+')');
+   humanFailed('That check didn’t work'+code+'.');
+  }catch(_){humanFailed('Couldn’t reach Orivia.')}
  }});
  if(window.turnstile)return go();
  const sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;sc.onload=go;document.head.append(sc);
