@@ -76,7 +76,7 @@ assert.equal(readSchoolDirectory(currentDirectory).length,2);
 const currentCalls=[];
 const current=await answerResearch(plan,env,{reserve:async()=>true,fetcher:async u=>{
  const url=String(u);currentCalls.push(url);
- if(url.startsWith('https://api.search.brave.com/'))return new Response(JSON.stringify({web:{results:[{url:'https://spea.shj.ae/en/educational-institutions/schools/117'}]}}));
+ if(url.startsWith('https://api.search.brave.com/'))return new Response(JSON.stringify({web:{results:[106,131,127,117,104,121].map(id=>({url:'https://spea.shj.ae/en/educational-institutions/schools/'+id}))}}));
  if(url==='https://spea.shj.ae/en/education-institutes/schools')return new Response(currentDirectory,{headers:{'content-type':'text/html'}});
  if(url.endsWith('/wes-green-int-pvt-school-llc'))return new Response(currentProfile,{headers:{'content-type':'text/html'}});
  return new Response('',{status:404});

@@ -107,7 +107,7 @@ async function discoverSchools(plan,part,query,env,fetcher,reserve,trace){
  let profiles=found.candidates.filter(c=>{const u=new URL(c.url);return /(^|\.)spea\.shj\.ae$/.test(u.hostname)&&SPEA_PROFILE.test(u.pathname)}).slice(0,6);
  const want=CURRICULUM_MATCH[part.curriculum];
  // Search indexes can retain deleted numeric profiles. Discover current profile links from the official directory.
- if(profiles.length<2){
+ { // Always read the current directory: several search hits may all be obsolete.
   const source=researchSource(SPEA_DIRECTORY,part,location);
   const directory=source?await fetchApproved(source,fetcher):{ok:false,reason:'source-not-approved'};
   trace.push({stage:'directory',outcome:directory.ok?'read':directory.reason,http:directory.http??null});
