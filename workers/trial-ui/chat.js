@@ -121,6 +121,178 @@ $('open-chats').onclick=openChats;$('storage-manage').onclick=openChats;$('close
 $('chats-drawer').addEventListener('click',e=>{if(e.target.id==='chats-drawer')closeChats()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('chats-drawer').hidden)closeChats()});
 
+/* ===== Information cards (organisations) =====
+   D: several results with a shortlist · A: one organisation · B: email draft / phone script · C: help choosing a next step.
+   Every fact and contact must name a vetted source (sourceId) and carry its supporting quote, or it isn't shown.
+   Contract proposed to Ina (reply.organisations); see docs/information-cards.md. */
+const MAPS_HOSTS=['goo.gl','maps.app.goo.gl','www.google.com','google.com','maps.google.com'];
+const ORG_KINDS={school:'School',organisation:'Organisation',bank:'Bank',clinic:'Clinic',office:'Office'};
+function sourcedItem(x,srcs){
+ if(!x||typeof x!=='object')return null;
+ const src=srcs.find(s=>s.id&&s.id===x.sourceId);if(!src)return null;
+ const quote=typeof x.quote==='string'?x.quote.replace(/\s+/g,' ').trim().slice(0,300):'';if(quote.length<4)return null;
+ return {src,quote};
+}
+function safePhone(v){const s=typeof v==='string'?v.trim():'';if(!/^\+?[0-9][0-9 ()-]{5,18}[0-9]$/.test(s))return '';return s}
+function safeEmail(v){const s=typeof v==='string'?v.trim():'';return /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,180}\.[A-Za-z]{2,24}$/.test(s)?s:''}
+function safeHttps(v,hosts){try{const u=new URL(String(v));if(u.protocol!=='https:'||u.username||u.password)return '';if(hosts&&!hosts.includes(u.hostname))return '';if(hosts&&u.hostname.endsWith('google.com')&&!u.pathname.startsWith('/maps'))return '';if(hosts&&u.hostname==='goo.gl'&&!u.pathname.startsWith('/maps/'))return '';return u.href}catch(_){return ''}}
+function safeOrgs(list,srcs){
+ if(!Array.isArray(list)||!srcs.length)return [];
+ const out=[];
+ for(const o of list.slice(0,8)){
+  if(!o||typeof o!=='object'||typeof o.name!=='string'||!o.name.trim())continue;
+  const home=srcs.find(s=>s.id&&s.id===o.sourceId);if(!home)continue; // an organisation must come from a vetted page
+  const facts=[];
+  for(const f of Array.isArray(o.facts)?o.facts.slice(0,6):[]){
+   const ok=sourcedItem(f,srcs);const label=typeof f?.label==='string'?f.label.slice(0,30):'',value=typeof f?.value==='string'?f.value.trim().slice(0,80):'';
+   if(ok&&label&&value)facts.push({key:typeof f.key==='string'?f.key.slice(0,20):'',label,value,...ok});
+  }
+  const c=o.contacts&&typeof o.contacts==='object'?o.contacts:{},contacts={};
+  const phone=sourcedItem(c.phone,srcs),pv=safePhone(c.phone?.value);if(phone&&pv)contacts.phone={value:pv,...phone};
+  const email=sourcedItem(c.email,srcs),ev=safeEmail(c.email?.value);if(email&&ev)contacts.email={value:ev,...email};
+  const web=sourcedItem(c.website,srcs),wv=safeHttps(c.website?.url);if(web&&wv)contacts.website={url:wv,...web};
+  // Directions only from a map link the source page itself gives: never a pin worked out from a name or area.
+  const dir=sourcedItem(c.directions,srcs),dv=safeHttps(c.directions?.url,MAPS_HOSTS);
+  if(dir&&dv)contacts.directions={url:dv,label:typeof c.directions.label==='string'?c.directions.label.slice(0,80):'',...dir};
+  out.push({id:(typeof o.id==='string'?o.id:o.sourceId+'-'+out.length).slice(0,40),name:o.name.trim().slice(0,120),kind:ORG_KINDS[o.kind]?o.kind:'organisation',src:home,facts,contacts,fixture:o.fixture===true});
+ }
+ return out;
+}
+function telHref(p){return 'tel:'+p.replace(/[^0-9+]/g,'')}
+// The draft says only what the person told Orivia in this chat: no assumed move, family, name or dates.
+function toldYear(){for(let i=turns.length-1;i>=0;i--){const t=turns[i];if(t.role!=='user')continue;const m=t.content.match(/\byear\s*(\d{1,2})\b/i);if(m&&+m[1]>=1&&+m[1]<=13)return 'Year '+(+m[1])}return ''}
+function emailDraft(o){
+ const year=o.kind==='school'?toldYear():'';
+ if(o.kind==='school')return {subject:'Admissions enquiry'+(year?': '+year:''),body:'Hello,\n\nI’d like to ask about admissions'+(year?' for '+year:'')+'.\n\nCould you tell me:\n- whether places are available\n- how to apply, and which documents you need\n- the current fees\n- whether I can arrange a visit\n\nThank you.'};
+ return {subject:'Enquiry',body:'Hello,\n\nI found your details on '+o.src.host+' and I’d like to ask a question.\n\nThank you.'};
+}
+function phoneScript(o){
+ const year=o.kind==='school'?toldYear():'';
+ if(o.kind==='school')return ['Hello, I’d like to ask about admissions'+(year?' for '+year:'')+'.','Do you have places available?','How do I apply, and which documents do you need?','What are the current fees, and can I arrange a visit?'];
+ return ['Hello, I found your details on '+o.src.host+' and I have a question.','Could you tell me who is the right person to speak to?'];
+}
+function mailHref(o){const d=emailDraft(o);return 'mailto:'+o.contacts.email.value+'?subject='+encodeURIComponent(d.subject)+'&body='+encodeURIComponent(d.body)}
+const ORG_ICON={
+ phone:'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z',
+ mail:'M3 5h18v14H3z M3 7l9 6 9-6', web:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M3 12h18 M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18',
+ go:'M3 11l18-8-8 18-2-8z', doc:'M6 3h9l4 4v14H6z M14 3v5h5', plus:'M12 5v14M5 12h14', check:'M5 12l5 5 9-10', back:'M15 6l-6 6 6 6', next:'M9 6l6 6-6 6', help:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14 M12 17h.01'
+};
+function orgIcon(name){const ns='http://www.w3.org/2000/svg',s=document.createElementNS(ns,'svg');s.setAttribute('viewBox','0 0 24 24');s.setAttribute('aria-hidden','true');s.setAttribute('class','ico');
+ for(const d of ORG_ICON[name].split(' M').map((x,i)=>i?'M'+x:x)){const p=document.createElementNS(ns,'path');p.setAttribute('d',d);s.append(p)}return s}
+function actLink(label,href,ic,cls){const a=el('a',cls||'org-act');a.href=href;if(/^https:/.test(href)){a.target='_blank';a.rel='noopener noreferrer'}a.append(orgIcon(ic),el('span','',label));return a}
+function actBtn(label,ic,fn,cls){const b=button('',cls||'org-act',fn);b.append(orgIcon(ic),el('span','',label));return b}
+function factLine(o){const pick=k=>o.facts.find(f=>f.key===k)?.value;return [pick('curriculum'),pick('grades'),pick('area'),pick('rating')].filter(Boolean).join(' · ')||o.facts.slice(0,3).map(f=>f.value).join(' · ')}
+function orgEvidence(o){
+ const d=document.createElement('details');d.className='org-evidence';d.append(el('summary','','Sources and evidence'));
+ const items=[...o.facts.map(f=>[f.label,f.value,f]),...['phone','email','website','directions'].filter(k=>o.contacts[k]).map(k=>[{phone:'Phone',email:'Email',website:'Website',directions:'Location'}[k],o.contacts[k].value||o.contacts[k].label||o.contacts[k].url,o.contacts[k]])];
+ const ul=el('ul','org-quotes');
+ for(const [label,value,x] of items){const li=el('li');li.append(el('span','q-label',label+': '+value),el('blockquote','','“'+x.quote+'”'));const a=el('a','src-mini',x.src.title+' · '+x.src.host+' ↗');a.href=x.src.url;a.target='_blank';a.rel='noopener noreferrer';li.append(a);ul.append(li)}
+ d.append(ul,el('p','tiny','Quotes are copied from the page Orivia opened. They support each detail but don’t guarantee it applies to you.'));
+ return d;
+}
+// B: help getting in touch. Only the channels the data supports appear as tabs.
+function reachOut(o,mode,onClose){
+ const box=el('div','org-reach');const tabs=el('div','org-tabs');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','How to get in touch');
+ const panel=el('div','org-panel');
+ const modes=[o.contacts.email&&['email','Write an email'],['phone',o.contacts.phone?'What to say on the phone':'What to ask']].filter(Boolean);
+ const show=m=>{
+  for(const b of tabs.children){const on=b.dataset.mode===m;b.setAttribute('aria-selected',String(on));b.classList.toggle('on',on)}
+  panel.replaceChildren();
+  if(m==='email'){const d=emailDraft(o);
+   panel.append(el('p','tiny','Orivia drafts it. You check it and send it from your own email app.'));
+   const pre=el('div','org-draft');pre.append(el('div','org-subject','Subject: '+d.subject),el('div','org-body',d.body));panel.append(pre);
+   const row=el('div','org-row');row.append(actLink('Open draft in my email app',mailHref(o),'mail','btn org-primary'),button('Copy','btn quiet small',async e=>{try{await navigator.clipboard.writeText('Subject: '+d.subject+'\n\n'+d.body);e.target.textContent='Copied'}catch(_){e.target.textContent='Couldn’t copy'}}));panel.append(row);
+  }else{
+   const ol=el('ol','org-script');for(const line of phoneScript(o))ol.append(el('li','','“'+line+'”'));panel.append(ol);
+   if(o.contacts.phone){const row=el('div','org-row');row.append(actLink('Call '+o.contacts.phone.value,telHref(o.contacts.phone.value),'phone','btn org-primary'));panel.append(row)}
+   else panel.append(el('p','tiny','I couldn’t confirm a phone number from the source, so there’s no call button.'));
+  }
+ };
+ for(const [m,label] of modes){const b=button(label,'org-tab',()=>show(m));b.dataset.mode=m;b.setAttribute('role','tab');tabs.append(b)}
+ box.append(tabs,panel,button('Close','btn text small',onClose));show(modes.some(x=>x[0]===mode)?mode:modes[0][0]);
+ return box;
+}
+// C: help deciding. Offers only actions the data supports.
+function chooseNext(o,open){
+ const box=el('div','org-choose');box.append(el('p','org-q','What would you like to do next?'),el('p','tiny','Pick one and I’ll help you through it.'));
+ const list=el('div','org-choices');
+ const choice=(title,sub,ic,node)=>{node.classList.add('org-choice');node.replaceChildren(el('span','org-choice-ic'),el('span','org-choice-t'));node.firstChild.append(orgIcon(ic));node.lastChild.append(el('strong','',title),el('span','',sub));node.append(orgIcon('next'));list.append(node)};
+ if(o.contacts.phone)choice('Call them','I’ll give you what to say first','phone',button('','',()=>open('phone')));
+ if(o.contacts.email)choice('Email them','I’ll draft it, you check and send','mail',button('','',()=>open('email')));
+ if(o.contacts.directions){const a=el('a');a.href=o.contacts.directions.url;a.target='_blank';a.rel='noopener noreferrer';choice('Take me there','Opens the map link from '+o.contacts.directions.src.host,'go',a)}
+ const d=el('a');d.href=(o.contacts.website||o.src).url;d.target='_blank';d.rel='noopener noreferrer';choice(o.contacts.website?'Visit their website':'See their details',o.contacts.website?o.contacts.website.src.host:'The page Orivia opened','web',d);
+ if(!o.contacts.phone&&!o.contacts.email)choice('Work out what to ask','A few questions to have ready','help',button('','',()=>open('phone')));
+ box.append(list);return box;
+}
+// A: one organisation.
+function orgCard(o,ui,{back,onDismiss}={}){
+ const card=el('article','org-card');
+ if(back)card.append(back);
+ const head=el('div','org-head');
+ const badge=el('span','org-badge '+(o.src.kind==='Official source'?'official':'org'));badge.append(el('span','',o.src.kind+' · '+o.src.host.replace(/^www\./,'')));head.append(badge);
+ if(o.fixture)head.append(el('span','org-fixture','Sample data'));
+ const h=el('h3','org-name',o.name);card.append(head,h);
+ if(o.facts.length){const chips=el('div','org-chips');for(const f of o.facts)chips.append(el('span','org-chip'+(f.key==='rating'?' good':''),f.key==='rating'?f.label+': '+f.value:f.value));card.append(chips)}
+ const acts=[];
+ if(o.contacts.phone)acts.push(actLink('Call',telHref(o.contacts.phone.value),'phone'));
+ if(o.contacts.email)acts.push(actLink('Email',mailHref(o),'mail'));
+ if(o.contacts.website)acts.push(actLink('Website',o.contacts.website.url,'web'));
+ else acts.push(actLink('Details',o.src.url,'doc'));
+ const grid=el('div','org-acts');grid.style.setProperty('--n',String(acts.length));grid.append(...acts);card.append(grid);
+ const slot=el('div','org-slot');card.append(slot);
+ const openReach=m=>{ui.view='reach';ui.mode=m;render()};
+ const render=()=>{slot.replaceChildren();
+  if(ui.view==='reach')slot.append(reachOut(o,ui.mode,()=>{ui.view='';render()}));
+  else if(ui.view==='choose')slot.append(chooseNext(o,openReach));
+  else{const r=el('div','org-links');r.append(button(o.contacts.phone||o.contacts.email?'Help me with what to say':'What should I ask?','btn text small',()=>openReach(o.contacts.email&&!o.contacts.phone?'email':'phone')),button('Not sure what to do next?','btn text small',()=>{ui.view='choose';render()}));slot.append(r)}
+ };
+ render();
+ const foot=el('div','org-foot');
+ if(o.contacts.directions){foot.append(actLink('Take me there',o.contacts.directions.url,'go','org-go'))}
+ foot.append(button('Not now','btn text',onDismiss||(()=>card.remove())));card.append(foot);
+ card.append(orgEvidence(o));
+ return card;
+}
+// D (several) or A (one): rendered under the reply; shortlist and "Not now" are saved with the chat.
+function orgCards(t,srcs){
+ const orgs=safeOrgs(t.meta&&t.meta.organisations,srcs);if(!orgs.length)return null;
+ const wrap=el('div','org-wrap');const ui={sel:null,view:t.meta.cardMode==='choose'?'choose':'',pager:null};
+ const saveMeta=()=>{try{save()}catch(_){}};
+ const dismiss=()=>{t.meta.cardsHidden=true;saveMeta();paint()};
+ const paint=()=>{
+  wrap.replaceChildren();
+  if(t.meta.cardsHidden){wrap.append(button(orgs.length>1?'Show the '+orgs.length+' results':'Show '+orgs[0].name,'btn quiet small',()=>{t.meta.cardsHidden=false;saveMeta();paint()}));return}
+  const shortlist=new Set((Array.isArray(t.meta.shortlist)?t.meta.shortlist:[]).filter(id=>orgs.some(o=>o.id===id)));
+  if(orgs.length===1||ui.sel){
+   const o=orgs.find(x=>x.id===ui.sel)||orgs[0];
+   let back=null;
+   if(orgs.length>1){back=el('div','org-back');back.append(actBtn(ui.pager?'Back to shortlist':'All '+orgs.length+' results','back',()=>{ui.sel=null;ui.view='';ui.pager=null;paint()},'btn text small'));
+    if(ui.pager&&ui.pager.length>1){const i=ui.pager.indexOf(o.id);back.append(el('span','tiny',(i+1)+' of '+ui.pager.length),actBtn('Next','next',()=>{ui.sel=ui.pager[(i+1)%ui.pager.length];paint()},'btn text small'))}}
+   wrap.append(orgCard(o,ui,{back,onDismiss:dismiss}));return;
+  }
+  wrap.append(el('p','org-hint','Tap + to shortlist the ones you like.'));
+  for(const o of orgs){
+   const row=el('article','org-mini');const top=el('div','org-mini-top');
+   const name=button('','org-mini-name',()=>{ui.sel=o.id;ui.view='';paint()});name.append(el('strong','',o.name),el('span','',factLine(o)));
+   const on=shortlist.has(o.id);
+   const pin=button('','org-pin'+(on?' on':''),()=>{on?shortlist.delete(o.id):shortlist.add(o.id);t.meta.shortlist=[...shortlist];saveMeta();paint()});
+   pin.append(orgIcon(on?'check':'plus'));pin.setAttribute('aria-pressed',String(on));pin.setAttribute('aria-label',(on?'Remove from shortlist: ':'Add to shortlist: ')+o.name);
+   if(o.fixture)name.append(el('span','org-fixture','Sample data'));
+   top.append(name,pin);row.append(top);
+   const acts=el('div','org-acts small');
+   if(o.contacts.phone)acts.append(actLink('Call',telHref(o.contacts.phone.value),'phone'));
+   acts.append(actBtn('Details','doc',()=>{ui.sel=o.id;ui.view='';paint()}));
+   if(o.contacts.directions)acts.append(actLink('Go',o.contacts.directions.url,'go'));
+   acts.style.setProperty('--n',String(acts.children.length));row.append(acts);wrap.append(row);
+  }
+  const bar=el('div','org-bar');
+  if(shortlist.size){bar.append(el('span','',shortlist.size+' shortlisted.'),button('Help me contact them','btn org-primary',()=>{ui.pager=orgs.filter(o=>shortlist.has(o.id)).map(o=>o.id);ui.sel=ui.pager[0];ui.view='choose';paint()}))}
+  else bar.append(el('span','tiny','Nothing shortlisted yet.'));
+  bar.append(button('Not now','btn text small',dismiss));wrap.append(bar);
+ };
+ paint();return wrap;
+}
+
 // Keep the full answer and source cards on screen, but respect the chat API's
 // per-message limit and never send browser-only evidence metadata back.
 function chatMessages(turns){return turns.slice(-12).map(({role,content})=>({role,content:content.slice(0,1200)}))} // only the active chat, latest 12 messages
@@ -129,7 +301,12 @@ function draw(){
  for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant');const b=document.createElement('b');b.textContent=t.role==='user'?'You':'Orivia';const txt=document.createElement('span');
   const srcs=t.role==='assistant'?safeSources(t.meta&&t.meta.sources):[];
   if(srcs.length)txt.append(...citedText(t.content,srcs));else txt.textContent=t.content;p.append(b,txt);
-  if(t.role==='assistant'&&(srcs.length||(t.meta&&t.meta.research)))p.append(researchBlock(srcs,t.meta.research));
+  const cards=t.role==='assistant'&&t.meta&&t.meta.organisations?orgCards(t,srcs):null;
+  if(cards){p.append(cards);p.classList.add('has-cards')}
+  if(t.role==='assistant'&&(srcs.length||(t.meta&&t.meta.research))){
+   const rb=researchBlock(srcs,t.meta.research);
+   if(cards){const d=document.createElement('details'),sm=document.createElement('summary');d.className='sources-fold';sm.textContent='All sources for this reply ('+srcs.length+')';d.append(sm,rb);p.append(d)}else p.append(rb);
+  }
   if(t.role==='assistant'&&'speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent='▶ Listen';lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label','Listen to this reply');lb.onclick=()=>listen(spokenText(t.content),lb);p.append(document.createElement('br'),lb)}
   el.append(p)}
  $('empty').hidden=turns.length>0;
@@ -950,6 +1127,7 @@ $('form').onsubmit=async e=>{
    $('status').textContent=why==='person_limit'?'You’ve reached today’s message limit for the beta. Your guides, calendar and journeys still work, and messages come back tomorrow.':why==='daily_limit'?'Orivia’s beta is very busy today. Please try again tomorrow; your guides, calendar and journeys still work.':r.status===429?'Too many messages at once. Please wait a moment and try again.':'Orivia is temporarily unavailable. Please try again.';return}
   if(typeof d.reply!=='string'||!d.reply.trim())throw Error('empty');
   const meta={};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
+  if(vetted.length&&Array.isArray(d.organisations)){const orgs=d.organisations.slice(0,8);if(safeOrgs(orgs,vetted).length){meta.organisations=JSON.parse(JSON.stringify(orgs));if(['list','single','choose'].includes(d.cardMode))meta.cardMode=d.cardMode}}
   const answer={role:'assistant',content:d.reply.slice(0,2000),...(Object.keys(meta).length?{meta}:{})};
   if(store.active!==chatId){ // they switched chats while Orivia was replying: file the answer in its own chat
    const c=store.chats.find(x=>x.id===chatId);if(c){c.turns=[...c.turns,answer];c.updated=Date.now();persist();renderChats()}
