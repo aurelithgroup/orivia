@@ -77,23 +77,42 @@ const CURRICULA={british:/^british$|cambridge|english national/i,american:/^amer
 export function curriculumMatches(value,wanted){if(!wanted)return true;const re=CURRICULA[String(wanted).toLowerCase()];return re?re.test(String(value||'').trim()):String(value||'').toLowerCase()===String(wanted).toLowerCase()}
 
 /* ---------- Name matching: similar names return candidates, never a silent pick ---------- */
-const GENERIC=new Set(['pvt','private','school','schools','llc','l','c','co','the','shj','sharjah','int','intl','international','propritorship','proprietorship','branch','br','br3','br4','br5','and','of','in','a']);
-const EXPAND={eng:'english',hs:'high',sch:'school'};
-export function nameTokens(name){const tokens=String(name||'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').trim().split(' ').map(t=>EXPAND[t]||t).filter(t=>t&&!GENERIC.has(t)&&!/^br\d+$/.test(t));if(!tokens.length&&/sharjah.*international/i.test(name))return ['sharjah','international'];return tokens}
+// Legal filler is dropped; common school words count for little; distinctive words count fully. So a name made only of
+// common words ("Sharjah International Private School") still matches exactly, but a near-miss with one extra distinctive
+// word ("Sharjah American International School") is a candidate, never a match.
+const FILLER=new Set(['llc','l','c','co','the','and','of','in','a','propritorship','proprietorship','fze','fzc']);
+const COMMON=new Set(['private','school','schools','sharjah','international','branch','academy','kindergarten','nursery','centre','center','education','educational','group']);
+const EXPAND={pvt:'private',int:'international',intl:'international',shj:'sharjah',eng:'english',hs:'high',sch:'school',acad:'academy'};
+const weight=t=>COMMON.has(t)?0.25:1;
+export function nameTokens(name){return String(name||'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').trim().split(' ').map(t=>EXPAND[t]||t).filter(t=>t&&!FILLER.has(t)&&!/^br\d+$/.test(t))}
+export function distinctiveTokens(name){return nameTokens(name).filter(t=>!COMMON.has(t))}
+const sameTok=(q,t)=>q===t||(q.length>4&&t.length>4&&(q.startsWith(t)||t.startsWith(q)));
+const joinedSame=(da,db)=>da.length>0&&db.length>0&&da.join('')===db.join('');
 export function nameScore(query,name){
- const a=nameTokens(query),b=nameTokens(name);if(!a.length||!b.length)return 0;
- const ja=a.join(''),jb=b.join('');if(ja===jb)return 1; // "Wesgreen" = "Wes green"
- if(ja.length>=6&&jb.startsWith(ja))return 0.9;
- const sb=new Set(b);let hit=0;for(const t of new Set(a))if(sb.has(t)||[...sb].some(x=>x.length>4&&t.length>4&&(x.startsWith(t)||t.startsWith(x))))hit++;
- return +(2*hit/(new Set(a).size+sb.size)).toFixed(3);
+ const a=[...new Set(nameTokens(query))],b=[...new Set(nameTokens(name))];if(!a.length||!b.length)return 0;
+ const da=a.filter(t=>!COMMON.has(t)),db=b.filter(t=>!COMMON.has(t));
+ if(joinedSame(da,db)){ // same distinctive words ("Wesgreen" = "Wes green"); common words the person typed must also be there
+  const ca=a.filter(t=>COMMON.has(t));return +(0.6+0.4*(ca.length?ca.filter(t=>b.includes(t)).length/ca.length:1)).toFixed(3);
+ }
+ if(da.length&&!db.some(t=>da.some(q=>sameTok(q,t))))return 0; // no distinctive word in common
+ return dice(a,b);
 }
+function dice(a,b){const sb=new Set(b);let hit=0;for(const t of a)if(sb.has(t)||[...sb].some(x=>x.length>4&&t.length>4&&(x.startsWith(t)||t.startsWith(x))))hit+=weight(t);
+ const wa=a.reduce((n,t)=>n+weight(t),0),wb=b.reduce((n,t)=>n+weight(t),0);return +(2*hit/(wa+wb)).toFixed(3)}
 /** Classify ranked candidates: one clear match, several similar, or none. */
 export function classifyMatches(query,items){
  const ranked=items.map(x=>({...x,score:nameScore(query,x.name)})).filter(x=>x.score>=0.5).sort((x,y)=>y.score-x.score);
  if(!ranked.length)return {status:'not-found',candidates:[]};
+ const dq=distinctiveTokens(query);
+ if(dq.length){
+  // A match needs exactly one listing containing every distinctive word typed. Branches sharing them come back as candidates.
+  const full=ranked.filter(x=>{const t=nameTokens(x.name),dt=t.filter(w=>!COMMON.has(w));return joinedSame(dq,dt)||dq.every(q=>t.some(w=>sameTok(q,w)))});
+  if(full.length===1&&full[0].score>=0.85)return {status:'match',candidates:[full[0]]};
+  return {status:'candidates',candidates:[...full,...ranked.filter(x=>!full.includes(x))].slice(0,SPEA_LIMITS.candidates)};
+ }
+ // Only common words typed (e.g. "Sharjah International Private School"): match only an essentially exact name.
  const [top,next]=ranked;
  if(top.score>=0.99&&(!next||next.score<0.8))return {status:'match',candidates:[top]};
- if(top.score>=0.85&&(!next||top.score-next.score>=0.3))return {status:'match',candidates:[top]};
  return {status:'candidates',candidates:ranked.slice(0,SPEA_LIMITS.candidates)};
 }
 
@@ -168,7 +187,7 @@ const curriculumTerm=c=>({british:'British',american:'American',indian:'Indian',
 
 /** Find more schools matching a curriculum (and optionally a listed year), skipping ones already shown. */
 export async function discoverSpeaSchools({curriculum='',year=null,exclude=[],limit=6,cursor=null}={},deps){
- const coverage={searched:[],directory:null,profilesOpened:0,matched:0,skipped:{curriculum:0,year:0,alreadyShown:0},failures:[],moreRemain:'unknown',reasons:[],nextCursor:null};
+ const coverage={exhaustive:false,seenTotal:0,searched:[],directory:null,profilesOpened:0,matched:0,skipped:{curriculum:0,year:0,alreadyShown:0},failures:[],moreRemain:'unknown',reasons:[],nextCursor:null};
  const shown=new Set(exclude.map(u=>speaPage(u)||u));const queue=[];const push=u=>{const n=speaPage(u);if(!n)return;if(shown.has(n)){coverage.skipped.alreadyShown++;return}if(!queue.includes(n))queue.push(n)};
  for(const u of Array.isArray(cursor?.pending)?cursor.pending.slice(0,20):[])push(u);
  // 1. Directory page 1 (what the server renders).
@@ -200,6 +219,8 @@ export async function discoverSpeaSchools({curriculum='',year=null,exclude=[],li
   if(results.length<limit)results.push(p);else unopened.push(p.url);
  }
  coverage.matched=results.length;
+ // A bounded search is never the full list: say how many distinct schools have been shown so far, out of SPEA's stated total.
+ coverage.seenTotal=new Set([...shown,...results.map(x=>x.url)]).size;
  if(unopened.length)coverage.reasons.push('unopened-profile-links');
  if(searchMore)coverage.reasons.push('more-search-results');
  coverage.moreRemain=unopened.length||searchMore?true:coverage.reasons.length?'unknown':false;
@@ -211,7 +232,7 @@ export async function discoverSpeaSchools({curriculum='',year=null,exclude=[],li
 export async function lookupSpeaSchool({name=''}={},deps){
  const coverage={searched:[],profilesOpened:0,failures:[],query:''};
  const clean=String(name).normalize('NFKC').replace(/[^\p{L}\p{N}&.' -]+/gu,' ').replace(/\s+/g,' ').trim().slice(0,SPEA_LIMITS.nameChars);
- if(nameTokens(clean).length===0)return {status:'needs-name',candidates:[],coverage};
+ if(!distinctiveTokens(clean).length&&nameTokens(clean).length<3)return {status:'needs-name',candidates:[],coverage}; // e.g. "the school"
  coverage.query=clean;
  const pool=[];const add=(u,n,from)=>{const url=speaPage(u);if(url&&!pool.some(x=>x.url===url))pool.push({url,name:n||'',from})};
  const dir=await deps.fetchPage(SPEA_DIRECTORY);

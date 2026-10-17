@@ -122,3 +122,12 @@ The directory's other ~126 schools aren't server-rendered, so a complete list is
   The last two are joined in `spea-profile-wesgreen-full.html`.
 - **Reconstructed from the rendered live page:** `spea-directory-page1.html` (real names, links, curricula and the 1-10 of 136 range; card markup from the verbatim capture) and `spea-profile-victoria-english.html`.
 - Profiles named `[Synthetic] …` in the tests are invented.
+
+## Name matching (updated)
+
+- Legal filler (LLC, Propritorship…) is dropped. Common school words (Private, School, Sharjah, International, Branch, Academy…) count a quarter. Distinctive words count fully.
+- A match needs exactly one listing containing every distinctive word typed. Branches sharing those words come back as `candidates`.
+- A name made only of common words (e.g. "Sharjah International Private School") matches only an essentially exact listing.
+  A near-miss with one extra distinctive word ("Sharjah American International School") is a candidate, never a match.
+- `discoverSpeaSchools` coverage now includes `exhaustive: false` and `seenTotal`.
+- Website reading for a matched school: see `docs/school-sites.md`.
