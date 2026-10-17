@@ -7,13 +7,17 @@ const TITLES={chat:'',calendar:'Calendar',journeys:'Journeys',mylife:'My Life',g
 function show(){
  $('intro').hidden=true;$('workspace').hidden=false;$('nav').hidden=false;$('open-settings').hidden=false;
  try{const d=JSON.parse(sessionStorage.getItem(key)||'[]');turns=Array.isArray(d)?d.slice(-12).filter(x=>x&&['user','assistant'].includes(x.role)&&typeof x.content==='string'):[]}catch(_){turns=[]}
+
  draw();tab('chat');
 }
 function save(){sessionStorage.setItem(key,JSON.stringify(turns.slice(-12)))}
 function draw(){
  const el=$('history');el.replaceChildren();
- for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant');const b=document.createElement('b');b.textContent=t.role==='user'?'You':'Orivia';const txt=document.createElement('span');txt.textContent=t.content;p.append(b,txt);
-  if(t.role==='assistant'&&'speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent='▶ Listen';lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label','Listen to this reply');lb.onclick=()=>listen(t.content,lb);p.append(document.createElement('br'),lb)}
+ for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant');const b=document.createElement('b');b.textContent=t.role==='user'?'You':'Orivia';const txt=document.createElement('span');
+  const srcs=t.role==='assistant'?safeSources(t.meta&&t.meta.sources):[];
+  if(srcs.length)txt.append(...citedText(t.content,srcs));else txt.textContent=t.content;p.append(b,txt);
+  if(t.role==='assistant'&&(srcs.length||(t.meta&&t.meta.research)))p.append(researchBlock(srcs,t.meta.research));
+  if(t.role==='assistant'&&'speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent='▶ Listen';lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label','Listen to this reply');lb.onclick=()=>listen(spokenText(t.content),lb);p.append(document.createElement('br'),lb)}
   el.append(p)}
  $('empty').hidden=turns.length>0;
  const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight;
@@ -269,6 +273,7 @@ $('end-session').onclick=async()=>{
  location.reload();
 };
 /* ===== Listen: Orivia's replies read aloud with the phone's own voices ===== */
+const spokenText=t=>String(t).replace(/^\[\d{1,2}\] .+?: https?:\/\/\S+\s*$/gm,'').replace(/\s?\[\d{1,2}\]/g,'').replace(/https?:\/\/\S+/g,'').replace(/\n{2,}/g,'\n').trim(); // no reference lists, markers or web addresses read aloud
 const canSpeak='speechSynthesis' in window;
 const VOICE_LOC={en:'en-GB',ar:'ar-AE',fr:'fr-FR',fil:'fil-PH',hi:'hi-IN',ur:'ur-PK',zh:'zh-CN',bn:'bn-IN',ml:'ml-IN',ru:'ru-RU'};
 const VOICE_BAD=/^(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|pipe organ|superstar|trinoids|whisper|wobble|zarvox|fred|junior|ralph|kathy|grandma|grandpa|eddy|flo|reed|rocko|sandy|shelley)\b/i;
@@ -336,6 +341,92 @@ $('staff-close').onclick=()=>{$('staff-card').hidden=true;$('tab-help').focus()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('staff-card').hidden)$('staff-close').click();else if(!$('add-sheet').hidden)closeAdd();else if(!$('help-sheet').hidden)closeHelp()}});
 /* Links Orivia attaches to a reply */
 function resources(items){let holder=$('journey-actions');if(!holder){holder=document.createElement('div');holder.id='journey-actions';holder.style.cssText='display:grid;gap:8px;font-size:13px';$('history').after(holder)}holder.replaceChildren();if(!Array.isArray(items))return;for(const x of items.slice(0,7)){try{const url=new URL(x.url);const deviceGeo=url.protocol==='geo:'&&x.handoff==='geo'&&url.href.startsWith('geo:0,0?q=');const approvedHttps=url.protocol==='https:'&&['www.google.com','maps.apple.com','rta.ae','www.rta.ae','www.uowdubai.ac.ae','www.hw.ac.uk','hw.ac.uk'].includes(url.hostname);if(!deviceGeo&&!approvedHttps)continue;const link=document.createElement('a');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.textContent=String(x.title||'Open source');link.style.cssText='display:block;padding:10px;border:1px solid var(--line);border-radius:12px;color:var(--focus)';holder.append(link)}catch(_){}}}
+/* ===== Research display =====
+   Shows only sources the server approved and opened (liveSources). Labels follow the agreed wording:
+   "Official source" / "Organisation source" (later "Community experiences"); "Opened" = retrieved, not
+   comprehensively verified; claims are "Source-backed" (an exact quote, not proof of interpretation). */
+const SOURCE_KIND={official:'Official source',government:'Official source',organisation:'Organisation source',institution:'Organisation source',operator:'Organisation source',business:'Organisation source',transport:'Organisation source'};
+function safeSources(list){
+ if(!Array.isArray(list))return [];
+ const out=[];
+ for(const x of list.slice(0,8)){
+  try{const u=new URL(String(x&&x.url));if(u.protocol!=='https:'||u.username||u.password)continue;
+   const kind=SOURCE_KIND[x.category];if(!kind)continue; // unknown or community categories are not shown yet
+   out.push({id:typeof x.id==='string'?x.id.slice(0,8):'',url:u.href,host:u.hostname.replace(/^www\./,''),title:String(x.title||u.hostname).slice(0,140),kind,category:String(x.category),checkedAt:typeof x.checkedAt==='string'?x.checkedAt:''});
+  }catch(_){}
+ }
+ return out;
+}
+function safeResearch(r){
+ const str=(v,n)=>typeof v==='string'?v.slice(0,n):'';
+ return {status:str(r.status,40),applicability:str(r.applicability,30),
+  claims:Array.isArray(r.claims)?r.claims.slice(0,6).map(c=>({text:str(c&&c.text,300),sourceId:str(c&&c.sourceId,8),quote:str(c&&c.quote,520)})).filter(c=>c.text&&c.quote):[],
+  unresolved:Array.isArray(r.unresolved)?r.unresolved.slice(0,6).map(u=>str(u,40)).filter(Boolean):[]};
+}
+/* The reply's numbered citations become links, but only to vetted sources; the plain reference list at the end is replaced by source cards */
+function citeSegments(text,srcs){
+ const refs=new Map(),REF=/^\[(\d{1,2})\] .+?: (https:\/\/\S+)\s*$/gm;
+ for(const m of String(text).matchAll(REF)){const u=m[2].replace(/[).,]+$/,'');const s=srcs.find(x=>x.url===m[2]||x.url===u);if(s)refs.set(m[1],s)}
+ if(!refs.size)srcs.forEach((s,i)=>refs.set(String(i+1),s));
+ const body=String(text).replace(REF,m=>refs.has(m.match(/^\[(\d{1,2})\]/)[1])?'':m).replace(/\n{3,}/g,'\n\n').trim();
+ const out=[];let last=0;
+ for(const m of body.matchAll(/\[(\d{1,2})\]/g)){
+  const s=refs.get(m[1]);if(!s)continue; // a number with no vetted source stays plain text
+  if(m.index>last)out.push({text:body.slice(last,m.index)});
+  out.push({n:m[1],src:s});last=m.index+m[0].length;
+ }
+ if(last<body.length)out.push({text:body.slice(last)});
+ return out;
+}
+function citedText(text,srcs){
+ return citeSegments(text,srcs).map(seg=>{
+  if(seg.text!=null)return document.createTextNode(seg.text);
+  const a=document.createElement('a');a.className='cite';a.href=seg.src.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='['+seg.n+']';a.setAttribute('aria-label','Source '+seg.n+': '+seg.src.title+' (opens '+seg.src.host+')');return a;
+ });
+}
+const RESEARCH_NOTE={
+ 'not-configured':'Live research isn’t switched on yet, so Orivia couldn’t check sources for this.',
+ 'search-limit':'Today’s source-checking limit has been reached. Please try again tomorrow.',
+ 'search-unavailable':'Sources couldn’t be checked just now. Please try again later.',
+ 'answer-unavailable':'Sources couldn’t be checked just now. Please try again later.',
+ 'no-evidence':'Orivia couldn’t find enough evidence from approved sources to answer this.',
+ 'insufficient-evidence':'Orivia couldn’t find enough evidence from approved sources to answer this.',
+ 'unsupported':'Orivia can’t research this kind of question yet.',
+ 'community-permissions-pending':'Community experiences aren’t available yet.',
+ 'partial':'Partly answered: some parts couldn’t be confirmed.'
+};
+const TOPIC_LABEL={school:'School enrolment',bank:'Bank requirements',medical:'Medical test',residency:'Residence visa',biometrics:'Biometrics and Emirates ID',institution:'Your institution’s requirements','community-permissions-pending':'What people recommend (community experiences aren’t available yet)'};
+function researchBlock(srcs,research){
+ const box=document.createElement('section');box.className='research';box.setAttribute('aria-label','Sources for this reply');
+ const r=research||{};
+ if(RESEARCH_NOTE[r.status]){const n=el('p','rnote '+(r.status==='partial'?'partial':'warn'),RESEARCH_NOTE[r.status]);box.append(n)}
+ if(srcs.length){
+  box.append(el('p','rhead','Sources'));
+  const ol=document.createElement('ol');ol.className='sources-list';
+  srcs.forEach((s,i)=>{
+   const li=document.createElement('li');const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.className='src';
+   const top=el('span','src-top');top.append(el('span','src-n',String(i+1)),el('span','src-kind '+(s.kind==='Official source'?'official':'org'),s.kind));
+   const when=s.checkedAt&&Number.isFinite(Date.parse(s.checkedAt))?new Date(s.checkedAt).toLocaleString(undefined,{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'';
+   a.append(top,el('strong','',s.title),el('span','src-meta',s.host+(when?' · Opened by Orivia '+when:'')+' ↗'));
+   li.append(a);ol.append(li);
+  });
+  box.append(ol,el('p','tiny','“Opened” means Orivia read this page for your question. It doesn’t mean every requirement has been verified.'));
+ }
+ const claims=(r.claims||[]).filter(c=>srcs.some(s=>s.id&&s.id===c.sourceId));
+ if(claims.length){
+  const det=document.createElement('details');det.className='claims';det.append(el('summary','','Source-backed: see the quotes'));
+  for(const c of claims){const n=srcs.findIndex(s=>s.id===c.sourceId)+1;const d=el('div','claim');d.append(el('p','',c.text),el('blockquote','','“'+c.quote+'”'),el('p','tiny','Quote from source '+n+'. A quote supports the point but doesn’t guarantee it applies to your situation.'));det.append(d)}
+  box.append(det);
+ }
+ if((r.unresolved||[]).length){
+  const u=el('div','unresolved');u.append(el('p','rhead','Couldn’t confirm'));const ul=document.createElement('ul');
+  for(const x of [...new Set(r.unresolved)])ul.append(el('li','',TOPIC_LABEL[x]||'Part of your question'));
+  u.append(ul);box.append(u);
+ }
+ if(r.applicability==='needs-review'&&srcs.length)box.append(el('p','tiny','Check it applies to you: rules can differ by institution, age, visa type or emirate.'));
+ return box;
+}
+
 /* ===== Settings: saved in this browser ===== */
 const settingsKey='orivia-private-settings-v1';
 const SET_DEFAULT={theme:'system',size:'standard',tone:'friendly',suggest:true};
@@ -698,21 +789,22 @@ $('form').onsubmit=async e=>{
  $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});turns=turns.slice(-12);save();draw();
  busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';
  try{
-  const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:turns,preferences:{language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI()}})});
+  const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:turns.map(({role,content})=>({role,content})),preferences:{language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI()}})});
   const d=await r.json().catch(()=>({}));
   if(!r.ok){
    const why=d&&d.error;
    if(r.status===401&&why==='human_check'){sessionStorage.removeItem(ck);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false;if(window.__siteKey)loadTurnstile(window.__siteKey);$('status').textContent='';return}
    $('status').textContent=why==='person_limit'?'You’ve reached today’s message limit for the beta. Your guides, calendar and journeys still work, and messages come back tomorrow.':why==='daily_limit'?'Orivia’s beta is very busy today. Please try again tomorrow; your guides, calendar and journeys still work.':r.status===429?'Too many messages at once. Please wait a moment and try again.':'Orivia is temporarily unavailable. Please try again.';return}
   if(typeof d.reply!=='string'||!d.reply.trim())throw Error('empty');
-  turns.push({role:'assistant',content:d.reply.slice(0,1200)});turns=turns.slice(-12);save();draw();
+  const meta={};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
+  turns.push({role:'assistant',content:d.reply.slice(0,2000),...(Object.keys(meta).length?{meta}:{})});turns=turns.slice(-12);save();draw();
   $('guide-offer')?.remove();
-  resources([...(d.actions||[]),...(d.liveSources||[]).map(s=>({title:'Live checked source: '+s.url,url:s.url}))]);
+  resources(d.actions||[]); // sources now show under the reply itself
   guideCard(d.guideOffer);
   if(!d.guideOffer&&!d.journey)rememberCard(d.transport);else $('remember-card')?.remove();
   if(!d.guideOffer)placementCard(d.journey);
   if(/\b(calendar|reminders?|appointments?|schedule)\b/i.test(text))chip('Open My calendar',()=>tab('calendar'));
-  $('status').textContent=d.liveSources?.length?'Checked approved official page(s) live. Routes and schedules are not checked.':d.verifiedSources?.length?'Verified campus references attached; live pages unavailable.':'AI reply • No approved live sources checked.';
+  $('status').textContent=d.liveSources?.length?'Opened approved source page(s) for this reply. Routes and schedules are not checked.':d.verifiedSources?.length?'Reviewed campus references attached; live pages unavailable.':'AI reply • No approved live sources checked.';
  }catch(_){$('status').textContent='Could not reach the private AI. Please try again.'}
  finally{busy=false;$('send').disabled=false}
 };

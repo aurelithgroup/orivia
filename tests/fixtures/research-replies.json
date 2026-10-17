@@ -1,0 +1,38 @@
+{
+  "_note": "FIXTURES for testing the research display while live search is unconfigured. Not real research results. Titles say [Fixture]; quotes are invented for layout only.",
+  "evidence-found": {
+    "reply": "Your child can usually apply to a school before their visa is finished, but the school decides which documents it needs. [1]\n\nSome schools ask for an Emirates ID later in the process. [2]\n\n[1] [Fixture] KHDA school admissions: https://web.khda.gov.ae/en/fixture-admissions\n[2] [Fixture] Example School admissions: https://www.example-school.ae/fixture-admissions",
+    "liveSources": [
+      {"id": "S1", "url": "https://web.khda.gov.ae/en/fixture-admissions", "title": "[Fixture] KHDA school admissions", "category": "official", "topic": "school", "checkedAt": "2026-10-17T09:30:00.000Z"},
+      {"id": "S2", "url": "https://www.example-school.ae/fixture-admissions", "title": "[Fixture] Example School admissions", "category": "organisation", "topic": "school", "checkedAt": "2026-10-17T09:30:05.000Z"}
+    ],
+    "research": {"status": "evidence-found", "applicability": "needs-review",
+      "claims": [
+        {"text": "Your child can usually apply to a school before their visa is finished.", "sourceId": "S1", "quote": "FIXTURE QUOTE: Parents may begin the application process before residency documents are complete."},
+        {"text": "Some schools ask for an Emirates ID later in the process.", "sourceId": "S2", "quote": "FIXTURE QUOTE: An Emirates ID copy is required before the first day of term."}
+      ], "unresolved": []}
+  },
+  "partial": {
+    "reply": "Medical fitness tests for residence are done at approved centres. [1]\n\nI couldn’t check every part of that question; I haven’t filled those gaps with guesses.\n\n[1] [Fixture] DHA medical fitness: https://www.dha.gov.ae/en/fixture-medical-fitness",
+    "liveSources": [{"id": "S1", "url": "https://www.dha.gov.ae/en/fixture-medical-fitness", "title": "[Fixture] DHA medical fitness", "category": "official", "topic": "medical", "checkedAt": "2026-10-17T09:31:00.000Z"}],
+    "research": {"status": "partial", "applicability": "needs-review",
+      "claims": [{"text": "Medical fitness tests for residence are done at approved centres.", "sourceId": "S1", "quote": "FIXTURE QUOTE: Medical fitness examinations for residency are carried out at approved centres."}],
+      "unresolved": ["biometrics", "community-permissions-pending"]}
+  },
+  "not-configured": {"reply": "I couldn’t check the relevant official information just now, so I won’t guess.", "liveSources": [], "research": {"status": "not-configured", "applicability": "needs-review"}},
+  "search-limit": {"reply": "I couldn’t check the relevant official information just now, so I won’t guess.", "liveSources": [], "research": {"status": "search-limit", "applicability": "needs-review"}},
+  "search-unavailable": {"reply": "I couldn’t check the relevant official information just now, so I won’t guess.", "liveSources": [], "research": {"status": "search-unavailable", "applicability": "needs-review"}},
+  "insufficient-evidence": {"reply": "I couldn’t find enough official evidence to answer that, so I won’t guess.", "liveSources": [], "research": {"status": "insufficient-evidence", "applicability": "needs-review"}},
+  "community-permissions-pending": {"reply": "Community research isn’t available yet, so I can’t check local discussions or claim what people recommend.", "liveSources": [], "research": {"status": "community-permissions-pending", "applicability": "needs-review"}},
+  "needs-context": {"reply": "Which emirate is the school in?", "liveSources": [], "research": {"status": "needs-context", "applicability": "needs-review"}},
+  "hostile": {
+    "reply": "Try this [1] and this [2].\n\n[1] Fake: http://evil.example/steal\n[2] [Fixture] GOV.UK: https://www.gov.uk/fixture",
+    "liveSources": [
+      {"id": "S1", "url": "http://evil.example/steal", "title": "Not https", "category": "official", "checkedAt": "2026-10-17T09:00:00.000Z"},
+      {"id": "S2", "url": "https://www.gov.uk/fixture", "title": "[Fixture] GOV.UK", "category": "official", "checkedAt": "2026-10-17T09:00:00.000Z"},
+      {"id": "S3", "url": "https://www.reddit.com/r/dubai", "title": "Community post", "category": "community", "checkedAt": "2026-10-17T09:00:00.000Z"},
+      {"id": "S4", "url": "javascript:alert(1)", "title": "Script", "category": "official"}
+    ],
+    "research": {"status": "evidence-found", "applicability": "needs-review", "claims": [{"text": "Claim pointing at an unknown source", "sourceId": "S9", "quote": "FIXTURE QUOTE: should not be shown because S9 isn't a vetted source."}], "unresolved": []}
+  }
+}
