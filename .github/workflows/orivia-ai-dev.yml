@@ -50,6 +50,8 @@ jobs:
         run: node tests/guide-cards.test.mjs
       - name: Settings and Calendar
         run: node tests/settings-calendar.test.mjs
+      - name: Public beta mode (human check, per-person and daily limits)
+        run: node --experimental-sqlite tests/public-beta.test.mjs
       - name: AI Worker contract and safety tests
         run: node tests/ai-preview.test.mjs
       - name: Read-only journey tool regression tests

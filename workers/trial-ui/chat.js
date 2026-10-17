@@ -532,8 +532,28 @@ function grow(){const m=$('msg');m.style.height='auto';m.style.height=Math.min(m
 $('msg').addEventListener('input',grow);
 $('msg').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('form').requestSubmit()}});
 function chip(label,fn){const holder=$('journey-actions')||(resources([]),$('journey-actions'));const b=document.createElement('button');b.type='button';b.className='action-chip';b.textContent=label;b.onclick=fn;holder.append(b)}
+/* Public beta: same app, plus a one-time "I'm human" check (Cloudflare Turnstile) before the first message */
+let mode='private',humanOk=true;
+function loadTurnstile(siteKey){
+ humanOk=false;$('human-check').hidden=false;$('human-note').hidden=false;
+ const go=()=>window.turnstile.render('#human-check',{sitekey:siteKey,callback:async token=>{
+  try{const r=await fetch('/v1/human',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});humanOk=r.ok;
+   $('human-note').textContent=r.ok?'Thanks, you’re all set.':'That check didn’t work. Please try again.';if(!r.ok)window.turnstile.reset('#human-check')}catch(_){$('human-note').textContent='Couldn’t reach Orivia. Please try again.'}
+ }});
+ if(window.turnstile)return go();
+ const sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;sc.onload=go;document.head.append(sc);
+}
+async function loadMode(){
+ try{const r=await fetch('/v1/config',{credentials:'same-origin',cache:'no-store'});const d=await r.json();
+  if(d&&d.mode==='public'){mode='public';document.body.dataset.mode='public';for(const n of document.querySelectorAll('[data-public]'))n.textContent=n.dataset.public;if(!$('intro').hidden&&d.turnstileSiteKey)loadTurnstile(d.turnstileSiteKey);else window.__siteKey=d.turnstileSiteKey}
+ }catch(_){}
+}
+loadMode();
 if(sessionStorage.getItem(ck)==='yes')show();
-$('start').onclick=()=>{if(!$('consent').checked)return;$('consent').checked=false;sessionStorage.setItem(ck,'yes');show()};
+$('start').onclick=()=>{
+ if(!$('consent').checked)return;
+ if(!humanOk){$('human-note').textContent='Please complete the quick check above first.';return}
+ $('consent').checked=false;sessionStorage.setItem(ck,'yes');show()};
 $('clear').onclick=()=>{if(busy)return;turns=[];sessionStorage.removeItem(key);draw();resources([]);$('guide-offer')?.remove();$('inline-calendar')?.remove();tab('chat')};
 $('form').onsubmit=async e=>{
  e.preventDefault();if(busy||sessionStorage.getItem(ck)!=='yes')return;
@@ -543,7 +563,10 @@ $('form').onsubmit=async e=>{
  try{
   const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:turns,preferences:{language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI()}})});
   const d=await r.json().catch(()=>({}));
-  if(!r.ok){$('status').textContent=r.status===429?'Trial limit reached. Try again later.':'Private AI is temporarily unavailable. Please try again.';return}
+  if(!r.ok){
+   const why=d&&d.error;
+   if(r.status===401&&why==='human_check'){sessionStorage.removeItem(ck);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false;if(window.__siteKey)loadTurnstile(window.__siteKey);$('status').textContent='';return}
+   $('status').textContent=why==='person_limit'?'You’ve reached today’s message limit for the beta. Your guides, calendar and journeys still work, and messages come back tomorrow.':why==='daily_limit'?'Orivia’s beta is very busy today. Please try again tomorrow; your guides, calendar and journeys still work.':r.status===429?'Too many messages at once. Please wait a moment and try again.':'Orivia is temporarily unavailable. Please try again.';return}
   if(typeof d.reply!=='string'||!d.reply.trim())throw Error('empty');
   turns.push({role:'assistant',content:d.reply.slice(0,1200)});turns=turns.slice(-12);save();draw();
   $('guide-offer')?.remove();

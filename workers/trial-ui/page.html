@@ -238,14 +238,15 @@ nav.bottom .help-tab{color:var(--ink)}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
 </style></head>
 <body><div class="app">
-<header class="top"><span class="brand">Oriv<b>i</b>a</span><span class="chip">Private AI trial</span><span class="top-title" id="view-title"></span><button type="button" id="open-settings" class="gear" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>
+<header class="top"><span class="brand">Oriv<b>i</b>a</span><span class="chip" data-public="Beta">Private AI trial</span><span class="top-title" id="view-title"></span><button type="button" id="open-settings" class="gear" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>
 <main>
 <section id="intro" class="pad">
  <h1>Hi, I’m Orivia.</h1>
  <p>Talk to me about real life here: settling in, getting around, plans and reminders. I’ll help you work out what comes next.</p>
  <div class="card"><p>I agree to send my messages and recent conversation to Cloudflare Workers AI. Messages are held in this browser tab, not stored in Orivia’s database.</p>
- <label><input type="checkbox" id="consent"> <span>I agree to start my private AI trial</span></label>
- <button id="start" class="btn" type="button">Start trial</button></div>
+ <label><input type="checkbox" id="consent"> <span data-public="I agree to start using Orivia (beta)">I agree to start my private AI trial</span></label>
+ <div id="human-check" hidden></div><p id="human-note" class="tiny" hidden>A quick check that you’re a person, so Orivia stays free for everyone.</p>
+ <button id="start" class="btn" type="button" data-public="Start">Start trial</button></div>
  <p class="notice">This early AI trial cannot look up live routes or verify immigration rules. Please do not enter sensitive personal identifiers.</p>
 </section>
 <section id="workspace" hidden>
@@ -333,7 +334,7 @@ nav.bottom .help-tab{color:var(--ink)}
    <p class="tiny">In an emergency in the UAE, call:</p>
    <div class="em"><a href="tel:999"><b>999</b>Police</a><a href="tel:998"><b>998</b>Ambulance</a><a href="tel:997"><b>997</b>Fire</a></div>
    <p class="tiny"><strong>What Orivia can’t do yet:</strong> see live routes, journey times or fares; confirm immigration or visa decisions; keep your data across devices.</p>
-   <p class="tiny">Private AI trial · only approved testers can sign in.</p>
+   <p class="tiny" data-public="Public beta · each person has a daily message limit so Orivia stays free.">Private AI trial · only approved testers can sign in.</p>
   </section>
  </div></section>
  <section id="guide-view" class="view" hidden><div class="pad section" style="overflow:auto" id="guide-body"></div></section>
