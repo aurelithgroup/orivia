@@ -233,6 +233,9 @@ a.src strong{font-size:14px;overflow-wrap:anywhere}
 .claim blockquote{margin:0;padding:6px 10px;border-inline-start:3px solid var(--ok);background:var(--surface);border-radius:6px;font-size:14px}
 .unresolved ul{margin:4px 0 0;padding-inline-start:20px;font-size:14px}
 /* Chat history drawer */
+.storage-warn{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--amber);border-radius:12px;padding:10px 12px;margin:6px 0;color:var(--ink);font-size:14px}
+.storage-warn[hidden]{display:none}
+.storage-warn p{margin:0}
 .menu-btn{margin-inline-start:0;margin-inline-end:4px}
 .drawer-scrim{position:fixed;inset:0;background:rgba(10,15,20,.5);z-index:25;display:flex}
 .drawer{background:var(--surface);color:var(--ink);width:min(88vw,360px);height:100%;overflow:auto;padding:calc(14px + env(safe-area-inset-top,0px)) 14px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;box-shadow:4px 0 24px rgba(0,0,0,.25)}
@@ -317,6 +320,7 @@ nav.bottom .help-tab{color:var(--ink)}
    <div id="listening" class="listening" hidden role="status"><span class="dot" aria-hidden="true"></span><span id="listening-text">Listening… speak now</span><button type="button" class="btn small" id="dict-stop">Stop</button><button type="button" class="btn text small" id="dict-cancel">Cancel</button></div>
    <form id="form"><label for="msg">Your message</label><textarea id="msg" rows="1" maxlength="900" required placeholder="Message Orivia…"></textarea><button id="mic" type="button" aria-label="Speak your message" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button id="send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
    <p id="status" role="status"></p>
+   <div id="storage-warn" class="storage-warn" role="alert" hidden><p id="storage-warn-text"></p><button type="button" id="storage-manage" class="btn small">Manage chats</button></div>
   </div>
  </section>
  <section id="calendar-panel" class="view" hidden><div class="pad section" style="overflow:auto">

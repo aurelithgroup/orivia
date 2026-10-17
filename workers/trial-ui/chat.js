@@ -13,33 +13,58 @@ function show(){
 /* ===== Chat history: saved on this device (localStorage), no account, no sync =====
    store = {chats:[{id,title,titled,created,updated,pinned,archived,turns}], active}
    Only the active chat is shown and only its latest messages go to the AI. */
-const chatsKey='orivia-private-chats-v1',MAX_CHATS=60,MAX_TURNS=200;
+const chatsKey='orivia-private-chats-v1',chatsBackupKey='orivia-private-chats-v1-unreadable';
+// Nothing here ever deletes or shortens a conversation on its own. If saving fails, the chat stays on screen,
+// the person is told plainly, and they choose what to delete. Only the latest 12 messages go to the AI.
 let store={chats:[],active:null};
 const validTurn=x=>x&&['user','assistant'].includes(x.role)&&typeof x.content==='string'&&x.content.trim();
 const newId=()=>'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 function autoTitle(ts){const u=(ts.find(t=>t.role==='user')||{}).content||'New chat';const t=u.replace(/\s+/g,' ').trim();return t.length>48?t.slice(0,46).replace(/\s\S*$/,'')+'…':t}
 function normChat(c){
  if(!c||typeof c!=='object'||typeof c.id!=='string')return null;
- const ts=Array.isArray(c.turns)?c.turns.filter(validTurn).slice(-MAX_TURNS).map(t=>({role:t.role,content:String(t.content).slice(0,2000),...(t.meta&&typeof t.meta==='object'?{meta:t.meta}:{})})):[];
+ const ts=Array.isArray(c.turns)?c.turns.filter(validTurn).map(t=>({role:t.role,content:String(t.content).slice(0,2000),...(t.meta&&typeof t.meta==='object'?{meta:t.meta}:{})})):[];
  return {id:c.id.slice(0,24),title:String(c.title||autoTitle(ts)).slice(0,80),titled:!!c.titled,created:Number(c.created)||Date.now(),updated:Number(c.updated)||Date.now(),pinned:!!c.pinned,archived:!!c.archived,turns:ts};
 }
+let storeLocked=false; // saved chats exist but couldn't be read or backed up: never overwrite them
+function storageWarn(msg){
+ const w=$('storage-warn');if(!w)return;
+ if(!msg){w.hidden=true;return}
+ $('storage-warn-text').textContent=msg;w.hidden=false;
+}
 function persist(){
- store.chats=store.chats.filter(c=>c.turns.length||c.id===store.active);
- for(let tries=0;tries<4;tries++){
-  try{localStorage.setItem(chatsKey,JSON.stringify(store));return true}
-  catch(_){ // out of space: drop the oldest chats that aren't pinned or open, then try again
-   const old=store.chats.filter(c=>!c.pinned&&c.id!==store.active).sort((a,b)=>a.updated-b.updated);
-   if(!old.length)break;store.chats=store.chats.filter(c=>c!==old[0]);
+ store.chats=store.chats.filter(c=>c.turns.length||c.id===store.active); // empty new chats aren't data
+ if(storeLocked){storageWarn('Your saved chats on this device couldn’t be read, so Orivia isn’t saving new messages over them. This chat will be lost when you close the page.');return false}
+ try{localStorage.setItem(chatsKey,JSON.stringify(store));storageWarn('');return true}
+ catch(_){
+  storageWarn('This device is out of space, so your latest messages aren’t saved yet. Nothing has been deleted. Delete chats you no longer need, and Orivia will save this one again.');
+  return false;
+ }
+}
+function savedHas(c){
+ try{const d=JSON.parse(localStorage.getItem(chatsKey)||'null');const x=d&&Array.isArray(d.chats)&&d.chats.find(y=>y&&y.id===c.id);return !!x&&Array.isArray(x.turns)&&x.turns.length===c.turns.length}catch(_){return false}
+}
+function legacyId(ts){let h=0;for(const ch of JSON.stringify(ts.map(t=>[t.role,t.content])))h=(h*31+ch.charCodeAt(0))|0;return 'clegacy'+(h>>>0).toString(36)}
+function loadChats(){
+ storeLocked=false;store={chats:[],active:null};
+ let raw=null;try{raw=localStorage.getItem(chatsKey)}catch(_){}
+ if(raw){
+  let d=null;try{d=JSON.parse(raw)}catch(_){}
+  if(d&&Array.isArray(d.chats))store={chats:d.chats.map(normChat).filter(Boolean),active:typeof d.active==='string'?d.active:null};
+  else{ // unreadable: keep an untouched copy before anything new is written; if that fails, don't write at all
+   try{if(localStorage.getItem(chatsBackupKey)===null)localStorage.setItem(chatsBackupKey,raw)}catch(_){storeLocked=true}
+   if(!storeLocked)storageWarn('Your earlier saved chats couldn’t be read. A copy has been kept on this device, and new chats will be saved separately.');
   }
  }
- $('status').textContent='This device is out of space for chat history. Delete some chats in the Chats menu.';return false;
-}
-function loadChats(){
- try{const d=JSON.parse(localStorage.getItem(chatsKey)||'null');if(d&&Array.isArray(d.chats))store={chats:d.chats.map(normChat).filter(Boolean).slice(0,MAX_CHATS),active:typeof d.active==='string'?d.active:null}}catch(_){store={chats:[],active:null}}
- // Migration: the conversation that used to live only in this tab becomes a saved chat (nothing is lost)
+ // Migration: the conversation that used to live only in this tab becomes a saved chat.
+ // The old copy is removed only after the new one is confirmed saved; otherwise it stays for next time.
  try{const old=JSON.parse(sessionStorage.getItem(key)||'null');
-  if(Array.isArray(old)&&old.some(validTurn)){const ts=old.filter(validTurn);const c=normChat({id:newId(),turns:ts,created:Date.now(),updated:Date.now()});store.chats.unshift(c);store.active=c.id;persist()}
-  sessionStorage.removeItem(key);
+  if(Array.isArray(old)&&old.some(validTurn)){
+   const ts=old.filter(validTurn);const id=legacyId(ts);
+   let c=store.chats.find(x=>x.id===id);
+   if(!c){c=normChat({id,turns:ts,created:Date.now(),updated:Date.now()});store.chats.unshift(c)}
+   store.active=c.id;
+   if(persist()&&savedHas(c))sessionStorage.removeItem(key);
+  }else if(Array.isArray(old))sessionStorage.removeItem(key); // nothing in it to keep
  }catch(_){}
  if(store.active&&!store.chats.some(c=>c.id===store.active))store.active=null;
 }
@@ -47,9 +72,8 @@ function activeChat(){return store.chats.find(c=>c.id===store.active)||null}
 function save(){
  let c=activeChat();
  if(!c){if(!turns.length)return;c=normChat({id:newId(),turns:[],created:Date.now()});store.chats.unshift(c);store.active=c.id}
- c.turns=turns.slice(-MAX_TURNS);c.updated=Date.now();if(!c.titled)c.title=autoTitle(c.turns);
- if(store.chats.length>MAX_CHATS){const drop=store.chats.filter(x=>!x.pinned&&x.id!==c.id).sort((a,b)=>a.updated-b.updated)[0];if(drop)store.chats=store.chats.filter(x=>x!==drop)}
- persist();renderChats();
+ c.turns=turns.slice();c.updated=Date.now();if(!c.titled)c.title=autoTitle(c.turns);
+ const ok=persist();renderChats();return ok;
 }
 function clearChatCards(){resources([]);for(const id of ['guide-offer','remember-card','inline-calendar'])$(id)?.remove();$('status').textContent=''}
 function openChat(id){stopSpeaking();stopDictation(false);store.active=id;persist();const c=activeChat();turns=c?c.turns.slice():[];clearChatCards();draw();closeChats();tab('chat')}
@@ -93,7 +117,7 @@ function renderChats(){
 let chatsReturnFocus=null;
 function openChats(){chatsReturnFocus=document.activeElement;renderChats();$('chats-drawer').hidden=false;$('new-chat').focus()}
 function closeChats(){if($('chats-drawer').hidden)return;$('chats-drawer').hidden=true;(chatsReturnFocus||$('open-chats')).focus?.()}
-$('open-chats').onclick=openChats;$('close-chats').onclick=closeChats;$('new-chat').onclick=newChat;
+$('open-chats').onclick=openChats;$('storage-manage').onclick=openChats;$('close-chats').onclick=closeChats;$('new-chat').onclick=newChat;
 $('chats-drawer').addEventListener('click',e=>{if(e.target.id==='chats-drawer')closeChats()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('chats-drawer').hidden)closeChats()});
 
@@ -375,7 +399,7 @@ $('about-done').onclick=()=>{aboutEditing=false;aboutSkipped=true;loadProfile()}
 $('place-form').addEventListener('submit',e=>{e.preventDefault();saveProfile({place:$('p-place').value.trim()})});
 $('p-place').addEventListener('change',e=>saveProfile({place:e.target.value.trim()}));
 function profileForAI(){const p=readProfile();if(!p||p.use===false)return undefined;const out={};for(const k of ['city','movingTo','movedFrom','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
-$('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.sure='';b.textContent='Clear saved data'},4000);return}try{localStorage.removeItem(profileKey);localStorage.removeItem(eventKey);localStorage.removeItem(journeysKey);localStorage.removeItem(chatsKey)}catch(_){}store={chats:[],active:null};turns=[];clearChatCards();draw();renderChats();events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent='Cleared'};
+$('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.sure='';b.textContent='Clear saved data'},4000);return}try{localStorage.removeItem(profileKey);localStorage.removeItem(eventKey);localStorage.removeItem(journeysKey);localStorage.removeItem(chatsKey);localStorage.removeItem(chatsBackupKey)}catch(_){}storeLocked=false;storageWarn('');store={chats:[],active:null};turns=[];clearChatCards();draw();renderChats();events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent='Cleared'};
 /* End session: back to the welcome screen. Clears this conversation and the human check; keeps journeys, calendar and My Life. */
 $('end-session').onclick=async()=>{
  const b=$('end-session');
@@ -903,7 +927,7 @@ $('form').onsubmit=async e=>{
  e.preventDefault();if(busy||sessionStorage.getItem(ck)!=='yes')return;
  stopDictation(true);stopSpeaking();
  const text=$('msg').value.trim();if(!text)return;
- $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});turns=turns.slice(-MAX_TURNS);save();draw();
+ $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});save();draw();
  const chatId=store.active,sentTurns=turns.slice();
  busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';
  try{
@@ -917,10 +941,10 @@ $('form').onsubmit=async e=>{
   const meta={};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
   const answer={role:'assistant',content:d.reply.slice(0,2000),...(Object.keys(meta).length?{meta}:{})};
   if(store.active!==chatId){ // they switched chats while Orivia was replying: file the answer in its own chat
-   const c=store.chats.find(x=>x.id===chatId);if(c){c.turns=[...c.turns,answer].slice(-MAX_TURNS);c.updated=Date.now();persist();renderChats()}
+   const c=store.chats.find(x=>x.id===chatId);if(c){c.turns=[...c.turns,answer];c.updated=Date.now();persist();renderChats()}
    $('status').textContent='Orivia replied in “'+(c?c.title:'another chat')+'”.';return;
   }
-  turns.push(answer);turns=turns.slice(-MAX_TURNS);save();draw();
+  turns.push(answer);save();draw();
   $('guide-offer')?.remove();
   resources(d.actions||[]); // sources now show under the reply itself
   guideCard(d.guideOffer);
