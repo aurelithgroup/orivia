@@ -117,6 +117,9 @@ export function buildQuery(kind,u,{name='',R=null,variant=0}={}){
 /* ---------- Leads: names from search results and list pages. Never facts. ---------- */
 // Menu and call-to-action text that looks like a name: starts with an action or list word, or talks about schools in general.
 const NAV_NAME=/^(?:view|list|see|find|explore|browse|discover|search|visit|read|learn|apply|book|enquire|enroll|enrol|register|contact|join|choose|compare|back|more|top|best|why|about|meet|go|click|download|watch|request)\b|\b(?:all|our|your|these|those|other|nearby|more)\s+(?:\w+\s+){0,2}(?:schools|academies|colleges|nurseries)\b|\ball\s+our\b|\blist of\b|\bschools\s*$/i;
+// Headings that describe schools rather than name one ("British Curriculum School", "Parent Rating for Best British School").
+// Real names that start with a category word ("The Indian High School", "Dubai British School") are kept.
+const GENERIC_NAME=/\b(?:curriculum|curricula|ratings?|reviews?|rankings?|ranked|rated|fees|parents?|parent's|guide|compared?|comparison|near(?:by)?|best|top|cheapest|affordable|list)\b/i;
 export function leadNames(raw,limit=LOOP_LIMITS.leadsKept){
  const text=String(raw).replace(/<(script|style|nav|footer|header)\b[^>]*>[\s\S]*?<\/\1>/gi,' ');const out=[];
  for(const m of text.matchAll(/<(h[1-5]|li|strong|b|td|a)\b[^>]*>([\s\S]{3,200}?)<\/\1>/gi)){
@@ -124,7 +127,7 @@ export function leadNames(raw,limit=LOOP_LIMITS.leadsKept){
   const n=t.match(/\b([A-Z][A-Za-z'.&-]*(?:\s+(?:[A-Z][A-Za-z'.&-]*|of|the|and|&|for)){0,8}\s+(?:School|Academy|College|Nursery)(?:\s*\([^)]{2,40}\))?)/);
   if(!n)continue;const name=n[1].trim();
   if(/^(?:The |Best |Top |Private |International |British |American |Indian |Our |Your |This |A )?(?:School|Academy|College|Nursery)$/i.test(name)||name.split(/\s+/).length<2)continue;
-  if(NAV_NAME.test(name)||(t.length<60&&NAV_NAME.test(t)))continue; // menu links ("View All Our Schools", "List of All GEMS School") aren't school names
+  if(NAV_NAME.test(name)||(t.length<60&&NAV_NAME.test(t))||GENERIC_NAME.test(name))continue; // menu links ("View All Our Schools", "List of All GEMS School") aren't school names
   if(!out.some(x=>nameScore(x,name)>=0.95))out.push(name);if(out.length>=limit)break;
  }
  return out;

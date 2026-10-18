@@ -88,6 +88,8 @@ const body=r=>r.reply.split('\n\n[1]')[0];
 // 6. Live pilot glitches (18 Oct): GEMS menu links read as school names; vague "Part of your question" placeholders
 {const names=leadNames('<ul><li><a>List of All GEMS School</a></li><li><a>View All Our School</a></li><li>Our Schools</li><li>All Schools</li><li>Explore Our Nursery</li><li>Find Your School</li><li>Our Own English High School</li><li>All Saints School</li><li><h3>GEMS Wellington Academy</h3></li></ul>');
  assert.deepEqual(names,['Our Own English High School','All Saints School','GEMS Wellington Academy'],'menu links dropped; real names that start with Our/All kept');
+ const more=leadNames('<ul><li>British Curriculum School</li><li>Parent Rating for Best British School</li><li>Top Rated British School</li><li>School Fees Guide</li><li>The Indian High School</li><li>Dubai British School</li><li>Dubai College</li></ul>');
+ assert.deepEqual(more,['The Indian High School','Dubai British School','Dubai College'],'descriptive headings dropped, real names kept (second live run, 18 Oct)');
  const w=world();const r=await runAgentTurn({messages:[{role:'user',content:'British curriculum schools in Dubai'}]},{...env,AI:{run:async()=>{throw Error('down')}}},{...w.opts,understanding:U('find','Dubai')});
  assert.deepEqual(r.research.unresolved,[],'internal planning notes are not sent as "couldn’t confirm" items');assert.ok(Array.isArray(r.research.process.missing),'still kept for diagnostics');}
 console.log('Web evidence: reworded searches, listing sites, own websites, leads checked against the regulator, conflicts stated, labelled sources, no-regulator city, early stop overruled, pilot search pool: passed');
