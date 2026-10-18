@@ -89,6 +89,13 @@ assert.ok(!JSON.stringify(sql.prepare('SELECT * FROM spend_ticket').all()).match
  openaiCalls.length=0;await worker.fetch(req('All British curriculum schools in Sharjah',consent),pilotEnv,ctx);
  assert.ok(openaiCalls.slice(1).some(c=>JSON.parse(c.user).goal?.place==='Sharjah'));}
 assert.match(cfg.providerPilot.text,/About me details, including your city/,'consent wording matches what is (not) sent');
+// A failing provider is tried once per turn, not on every step (the 18 Oct live test made six failing attempts in one turn).
+{let attempts=0;aiCalls.length=0;const failing=createPilotWorker({launchBrowser,fetcher:async()=>{attempts++;return Response.json({error:{type:'invalid_request_error',code:'model_not_found'}},{status:404})}});
+ const origLog=console.log;console.log=()=>{};
+ const res=await failing.fetch(req('All British curriculum schools in Sharjah',consent),pilotEnv,ctx);console.log=origLog;const out=await res.json();
+ assert.equal(res.status,200);assert.equal(attempts,1,'one failed attempt, then the existing provider carries the turn');
+ assert.equal(out.research.process.metrics.providerStopped,true);assert.ok(aiCalls.includes('understand')&&aiCalls.includes('plan'),'the existing provider carried the turn');
+ assert.match(out.reply,/SPEA/,'the person still gets an answer');}
 // Browser directory: off unless its own switch, binding and allowance are present
 assert.equal(launches,0);
 r=await worker.fetch(req('All British schools in Sharjah',consent),{...pilotEnv,BROWSER_DIRECTORY:'1',BROWSER:{}},ctx);d=await r.json();

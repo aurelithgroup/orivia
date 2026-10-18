@@ -55,11 +55,12 @@ let clock=new Date('2026-10-18T10:00:00Z');const now=()=>clock;let n=0;const new
  assert.equal((await budget.meter.usage()).day,1000*2+200*10,'settled to actual tokens (reasoning is inside output_tokens)');
  mode='timeout';await assert.rejects(()=>ai.run('',{messages:[{role:'user',content:'hello'}]}),{code:'provider-unavailable'});
  const kept=(await budget.meter.usage()).day;assert.ok(kept>4000+10240,'timeout keeps the conservative reservation');
- mode='500';await assert.rejects(()=>ai.run('',{messages:[{role:'user',content:'hello'}]}),{code:'provider-error'});
+ // A failed call stops that transport for the turn, so each failure case below is a new turn.
+ mode='500';await assert.rejects(()=>createOpenAIPilot(env,{consented:true,budget,fetcher}).run('',{messages:[{role:'user',content:'hello'}]}),{code:'provider-error'});
  assert.ok((await budget.meter.usage()).day>kept,'HTTP error with no usage keeps reservation');
  // Day limit $0.05 = 50000 micro-USD: after a few uncertain calls the next is refused before any request
- let sent=0;const ai2=createOpenAIPilot(env,{consented:true,budget,fetcher:async(...a)=>{sent++;return fetcher(...a)}});mode='timeout';
- for(let i=0;i<6;i++)await ai2.run('',{messages:[{role:'user',content:'x'.repeat(20000)}]}).catch(e=>e.code);
+ let sent=0;mode='timeout';
+ for(let i=0;i<6;i++)await createOpenAIPilot(env,{consented:true,budget,fetcher:async(...a)=>{sent++;return fetcher(...a)}}).run('',{messages:[{role:'user',content:'x'.repeat(20000)}]}).catch(e=>e.code);
  const u=await budget.meter.usage();assert.ok(u.day<=50000,'never above the day limit');assert.ok(sent<6,'refused calls never reach the provider');}
 
 // Browser meter in milliseconds

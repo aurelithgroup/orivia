@@ -346,14 +346,18 @@ function compose(state,a){
 /* ---------- The loop ---------- */
 export async function runAgentTurn({messages,profile={},context=null},env,{fetcher=fetch,reserve,understanding=null,planner=null,regulator=undefined,regulatorOverrides=null,ai:aiOverride=null}={}){
  // One model connection for understanding AND planning (a pilot provider is injected here, never by changing env.AI).
- const ai=aiOverride||env.AI||null;const started=Date.now();
+ let ai=aiOverride||env.AI||null;const started=Date.now();
  const task=context?.task&&typeof context.task==='object'?sanitizeTask(context.task):null;
  const external=!!aiOverride; // an outside provider sees the conversation only, never saved-profile details
- const u=understanding||await understandRequest({messages,profile,task},{ai,shareProfile:!external});
+ let u=understanding||await understandRequest({messages,profile,task},{ai,shareProfile:!external});
+ // A pilot provider that failed falls back to the existing provider for the rest of the turn (what testers without the OpenAI
+ // consent get), so one provider error doesn't turn a research question into ordinary chat.
+ let providerStopped=false;
+ if(aiOverride?.stopped){providerStopped=true;ai=env.AI||null;if(!understanding)u=await understandRequest({messages,profile,task},{ai,shareProfile:true})}
  if(!u.research||u.intent==='other'||u.intent==='rules')return null;
  if(!u.location?.country&&!u.organisations.some(o=>o.url))return wrap(u,{reply:'Which city is this for?',sources:[],claims:[],orgs:[],task:{...(task||{})},status:'needs-context',cardMode:'list'},{history:[],rejected:[]},makeTools({env,fetcher,reserve}),{});
  const goal=defineGoal(u),R=regulator===undefined?((x=>x&&regulatorOverrides?.[x.id]||x)(regulatorFor(u.topic,u.location))):regulator,tools=makeTools({env,fetcher,reserve});
- const state=newState(goal,u,task,R);state.hidePlace=external&&!placeWritten(messages,goal.location?.city);state.maxSteps=Math.max(1,Math.min(AGENT_LIMITS.maxSteps,Math.floor(Number(env.RESEARCH_AGENT_STEPS)||AGENT_LIMITS.defaultSteps)));
+ const state=newState(goal,u,task,R);state.providerStopped=providerStopped;state.hidePlace=external&&!placeWritten(messages,goal.location?.city);state.maxSteps=Math.max(1,Math.min(AGENT_LIMITS.maxSteps,Math.floor(Number(env.RESEARCH_AGENT_STEPS)||AGENT_LIMITS.defaultSteps)));
  const shownNames=(task?.shown||[]).map(s=>s.name);
  state.goalOrgs=(goal.organisations.length?goal.organisations:(['contacts','check'].includes(goal.kind)&&task?.focus?[{name:task.focus,url:''}]:[])).map((o,i)=>({id:'O'+(i+1),name:o.name||'',url:o.url||'',queryName:queryName(o.name||'',shownNames)}));
  for(const o of state.goalOrgs)if(o.url){const host=(()=>{try{return new URL(o.url).hostname.replace(/^www\./,'')}catch(_){return ''}})();if(host)ref(state,'S',{url:o.url,kind:'site',host,name:o.name,from:'user'})}
@@ -365,6 +369,7 @@ export async function runAgentTurn({messages,profile={},context=null},env,{fetch
   if(Date.now()-started>AGENT_LIMITS.wallMs){state.failures.push({what:'time',reason:'time-limit'});break} // answer with what's found rather than keep the person waiting
   state.searchesLeft=(tools.limits?.searches??4)-tools.used.searches;
   let proposal=null,by='policy';
+  if(ai===aiOverride&&aiOverride?.stopped){state.providerStopped=true;ai=env.AI||null} // failed once: never call it again this turn
   if((planner||ai?.run)&&state.modelCalls<state.maxSteps){try{state.modelCalls++;proposal=planner?await planner(viewFor(state,tools,a,lastObs),state):await modelNext(ai,viewFor(state,tools,a,lastObs));by='model'}catch(_){proposal=null}}
   let action=proposal?validateAction(proposal,state,tools):{error:'no-proposal'};
   // Stopping a list search before looking beyond the regulator (with searches left and nothing complete) is too early.
@@ -385,7 +390,7 @@ function wrap(u,c,state,tools,a){
   organisations:c.orgs.slice(0,8),cardMode:c.cardMode,
   research:{status:c.status,applicability:'needs-review',claims:c.claims,unresolved:[],agent:true,
    process:{missing:(a.missing||[]).slice(0,8),steps:state.history.map(h=>({action:h.type,by:h.by,args:h.args,why:h.why,result:h.result})),rejected:state.rejected,
-    metrics:{modelCalls:state.modelCalls||0,searches:tools.used.searches,fetches:tools.used.fetches,browserMs:state.browserMs||0,elapsedMs:state.elapsedMs||0}},
+    metrics:{modelCalls:state.modelCalls||0,providerStopped:!!state.providerStopped,searches:tools.used.searches,fetches:tools.used.fetches,browserMs:state.browserMs||0,elapsedMs:state.elapsedMs||0}},
    coverage:{complete:!!a.complete,listings:state.listings||[],claimedCounts:state.claimedCounts||[],failures:state.failures||[],searchesUsed:tools.used.searches,fetchesUsed:tools.used.fetches},
    understanding:{source:u.source,intent:u.intent,topic:u.topic,location:u.location,constraints:u.constraints},taskContext:{task:c.task},trace:tools.log}};
 }

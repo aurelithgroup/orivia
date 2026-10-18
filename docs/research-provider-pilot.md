@@ -95,3 +95,91 @@ See `docs/browser-directory.md`. It has its own switch (`BROWSER_DIRECTORY=1`), 
 - **Late browser launch.** A launch that finishes after the timeout is now closed as soon as it arrives. The reservation settles to the time used only once closure is confirmed. If the browser is still pending after the grace period (5 s), or its close fails, the full reservation is kept and it is still closed whenever it arrives.
 - **Consent accuracy.** When the pilot provider is used, the understanding request no longer contains `profileCity`. The task's place goes to the model only if the person wrote it in this chat, and the planning view leaves out a place that came only from About me. The code still uses the profile locally to validate the location. The wording now says exactly what is sent (recent messages in this chat, up to 10, plus public pages found) and what isn't (About me including city, documents, calendar, journeys). The consent version is now `openai-research-pilot-v2`, so earlier ticks don't carry over.
 - **Completeness.** A listing counts as complete only when `complete === true`. A missing, null, string or numeric flag doesn't count (regression test in `tests/browser-directory.test.mjs`).
+
+## Handoff to Ina, 18 Oct 2026 (Cleo): OpenAI pilot fixed and live-tested. `OPENAI_PILOT` is back at 0
+
+### What went wrong in the 10:19 UTC test
+
+The transport called `fetch` with `redirect:'error'`. Cloudflare Workers only accept `'follow'` or `'manual'`. With `'error'` they throw `TypeError: Invalid redirect value…` before sending anything. Every call therefore failed locally:
+
+- **Nothing reached OpenAI and nothing was billed.**
+- The offline tests missed it because they inject a fake fetcher.
+- I reproduced it in the local Workers runtime (`wrangler dev`).
+
+Evidence from the ledger, amounts and status only:
+
+- The six `spend_ticket` rows from 10:19:40–10:19:51 UTC are all `uncertain` with no usage.
+- Their gaps are 0.2–3 s, which means immediate rejections, not timeouts.
+- Being uncertain, they kept their full reservations: 103,456 micro-USD (≈ $0.10). That's internal only, not billing. I left those rows untouched.
+
+A second problem made it look worse:
+
+- **No give-up after a failure.** After the first failure the agent kept asking the provider at every step until the six-call cap ran out.
+- **Research became ordinary chat.** Once understanding had failed, the rule-based reading classed "Find British curriculum schools…" as `other`. The turn then left the research agent and fell back to the older path, so every step showed `policy`.
+
+### Changes (commit on `feature/proactive-requirements`)
+
+**`workers/orivia-openai-pilot.mjs`**
+- `redirect:'manual'`. The Responses API never redirects, so any 3xx is a `provider-redirect` failure.
+- **One safe log line per call** (`event:"orivia-openai-pilot"`). It contains:
+  - call number and HTTP status;
+  - OpenAI's `error.type`, `error.code` and `error.param`, only when each matches `^[a-z0-9_.-]{1,64}$`;
+  - response `status`, `incomplete_details.reason`, token counts (including reasoning tokens) and milliseconds;
+  - for thrown errors, the exception class name only.
+
+  Never the key, prompts, replies, the provider's `message` or exception text. Timeouts are now reported as `provider-timeout`.
+- **Any failure stops the transport for the rest of the turn** (`stopped` getter). Later calls throw `pilot-stopped` without reserving money or sending a request. A refused reservation (`budget-exhausted`) stops it too.
+
+**`workers/orivia-research-agent.mjs`**
+- If the pilot provider has stopped, the rest of the turn uses the existing provider (`env.AI`, Workers AI), which testers without the OpenAI consent already get.
+- That includes redoing understanding when the first OpenAI call failed, so a research question stays research.
+- `research.process.metrics.providerStopped` records that this happened.
+
+**Tests**
+- `tests/openai-pilot.test.mjs`: redirect mode, stop-after-failure, safe error codes, provider message and key never logged, 3xx handling.
+- `tests/research-pilot.test.mjs`: a whole turn against a failing provider makes exactly **one** OpenAI attempt, then Workers AI understands and plans it and the reply still uses SPEA.
+- `tests/spend-ledger.test.mjs`: each failure case is now its own turn.
+- All CI commands pass locally except `chat-history` (`replaceChildren` missing in its DOM stub) and `information-cards` (0 vs 3). Both fail the same way on `dd9e02d` without these changes, so they're not caused by this work. Please check them in CI.
+
+**`workers/pilot/wrangler.jsonc`**
+- Now holds the values you set in the dashboard: `OPENAI_INPUT_USD_PER_M=2`, `OPENAI_OUTPUT_USD_PER_M=10`, `PILOT_OPENAI_DAY_USD=0.50`, `PILOT_OPENAI_MONTH_USD=5`.
+- Before this, every `wrangler deploy` reset them to `""`/`0` (fail closed). Rates were confirmed on OpenAI's gpt-6.1-sol model page on 18 Oct: $2 / $10 per 1M tokens; `reasoning.effort:"low"` is supported.
+- `OPENAI_PILOT` stays `"0"`. No other limit changed.
+
+### Live check (one turn, founder-approved)
+
+1. Deployed with `--var OPENAI_PILOT:1` (version `02abb51c`).
+2. In a new chat, with the v2 consent ticked on the founder's test device, asked "Find British curriculum schools in Ajman".
+3. Redeployed straight after with `OPENAI_PILOT=0`: version `18cc9ac9`, current.
+
+Secrets (`OPENAI_API_KEY`, `BRAVE_SEARCH_API_KEY`) and `ACCESS_TEST_EMAIL` were kept on every deploy; checked with `wrangler versions view`, names only.
+
+| call | HTTP | status | input tok | output tok (reasoning) | ms | ledger actual (µUSD) |
+|---|---|---|---|---|---|---|
+| 1 understand | 200 | completed | 300 | 62 (0) | 4128 | 1220 |
+| 2 plan | 200 | completed | 393 | 37 (0) | 2676 | 1156 |
+| 3 plan | 200 | completed | 866 | 42 (0) | 2621 | 2152 |
+| 4 plan | 200 | completed | 1025 | 55 (12) | 3952 | 2600 |
+| 5 plan | 200 | completed | 1164 | 106 (65) | 4503 | 3388 |
+| 6 plan | 200 | completed | 1214 | 98 (55) | 3915 | 3408 |
+
+- **Turn cost:** 13,924 µUSD ≈ **$0.014**. All six tickets were settled to actual usage.
+- **Meter:** day/month now read 117,380 µUSD (the $0.103 kept from the failed run plus $0.014), against $0.50/day and $5/month.
+- **Agent log:** `intent:find`, `status:partial`; steps were five model-chosen (search, read list, search, search, read list) and then one by the rules, once the six-call cap was used up. 3 searches, 6 page reads.
+- **Answer:** listing-site leads only (Ajman has no regulator connected), labelled as unconfirmed.
+
+### What still stops answers being natural (for the founder's review)
+
+1. **The model never writes the answer.** OpenAI only classifies the request and picks the next tool. `compose()` builds every reply from fixed sentences. The result is accurate and source-labelled, but it reads like a template, and it can't answer what was actually asked ("which of these are near Al Nuaimiya?", "which is cheapest?"). Suggested next step: let the model write the reply only from the claims and sources code has already verified, with a validator that rejects any name, number or fact not in that evidence. Keep the code-built reply as the fallback.
+2. **Follow-ups must fit eight fixed intents** (`find`, `more`, `all`, `check`, `compare`, `contacts`, `rules`, `other`). Anything else, such as "what about fees?", "is that one mixed?" or "remind me which had Year 6 places", falls back to ordinary chat on Workers AI, which has no research context. `rules` questions also leave the agent. Add a general "answer from what we've already found" intent, plus a fees topic.
+3. **Six model calls per turn against up to 12 steps.** Once the cap is used up, later steps go to the rules. Each call takes 2.6–4.5 s in sequence, so the model alone adds about 21 s per turn. Options: plan several steps per call, or raise the cap only after reviewing cost (each call is about $0.001–0.003 here).
+4. **Ordinary chat never uses OpenAI**, by design and by the consent wording. Moving between chat and research changes "voice" and context. Any change needs new consent text (a v3) and the founder's approval.
+5. **Name extraction from listing sites is still regex-based.** This run let "Need Help Choosing the Right School" through as a school name, and new phrasing will keep finding gaps. Better: have the model mark which candidate strings are school names, with code checking each against the page text.
+6. **Only Sharjah (SPEA) has an official register.** Dubai (KHDA), Abu Dhabi (ADEK) and Ajman have none connected, so those answers stay "partial" whatever the model does.
+
+### For you to do
+
+- Review the diff and CI (two pre-existing UI test failures, noted above).
+- Re-enable `OPENAI_PILOT` only with `wrangler deploy --keep-vars --var OPENAI_PILOT:1`, or by setting `"1"` in `wrangler.jsonc`, so the caps travel with it. Dashboard edits are overwritten by the next CLI deploy.
+- To read OpenAI outcomes: `npx wrangler tail orivia-research-pilot --format json`, filtered to `event:"orivia-openai-pilot"`. The lines contain no chat text, but the full tail stream includes request headers, so filter before saving anything.
+- Decide whether to settle the six `uncertain` tickets from 10:19 by hand. They never reached OpenAI, but I left them as they are to preserve data.
