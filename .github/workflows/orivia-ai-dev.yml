@@ -20,6 +20,8 @@ jobs:
           node --check js/buddy.js
           node --check js/orivia-ai-bridge.js
           node --check workers/orivia-ai-preview.mjs
+      - name: OpenAI private pilot transport (offline only)
+        run: node tests/openai-pilot.test.mjs
       - name: Buddy rule and conversation regression tests
         run: node tests/buddy-smoke.js
       - name: Secure AI bridge tests
