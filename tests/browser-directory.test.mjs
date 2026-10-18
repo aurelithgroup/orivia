@@ -2,7 +2,8 @@
    The fake renders SPEA-shaped cards and a "from-to of total" counter, and can lag, under-render, time out or navigate away.
    Run: node tests/browser-directory.test.mjs */
 import assert from 'node:assert/strict';
-import {listDirectory,speaListFiltered,DIRECTORY_RECIPES} from '../workers/orivia-browser-directory.mjs';
+import {readFileSync} from 'node:fs';
+import {listDirectory,speaListFiltered,DIRECTORY_RECIPES,permittedDirectoryQuery} from '../workers/orivia-browser-directory.mjs';
 import {runAgentTurn} from '../workers/orivia-research-agent.mjs';
 import {REGULATORS} from '../workers/orivia-research-loop.mjs';
 
@@ -21,7 +22,7 @@ function fakeBrowser(opts={}){
   if(pending>0){pending--;const stale=ALL.slice(0,10);return {cards:stale,counter}} // counter ahead of the cards
   if(opts.neverLoad&&filter)return {cards:[],counter};
   return {cards:shown,counter}};
- const emit=r=>{const req={url:()=>r.url,method:()=>r.method||'GET',resourceType:()=>r.type||'xhr',isNavigationRequest:()=>!!r.nav,
+ const emit=r=>{const req={url:()=>r.url,method:()=>r.method||'GET',postData:()=>r.postData,resourceType:()=>r.type||'xhr',isNavigationRequest:()=>!!r.nav,
   abort:()=>log.aborted.push(r.url),continue:()=>log.continued.push(r.url)};handler?.(req)};
  const pageObj={
   setRequestInterception:async v=>{log.interception=v},
@@ -149,3 +150,13 @@ const fast={pollMs:2,sessionMs:3000};
   assert.equal(res.research.coverage?.complete??false,false,'complete='+String(flag)+' must not count');assert.doesNotMatch(res.reply,/complete list/)}
  const ok=await run({status:'ok',complete:true,filter:{curriculum:'british'},total:2,range:[1,2],items});assert.match(ok.reply,/complete list SPEA shows for the British filter: 2 of 2/);}
 console.log('Browser directory (scripted fake): counter-ahead guard, under-render, timeout, host/method/navigation checks, exhausted allowance, close in finally, action limit, year not confirmed by membership, long lists paged without loss, late launches closed with reservation kept, strict complete===true: passed');
+
+// The live site's actual read query is allowed; mutations and unrelated POSTs remain blocked.
+{const query=readFileSync(new URL('./fixtures/spea-directory-query.graphql',import.meta.url),'utf8');
+ const body={query,variables:{currentItemId:'94e8b02a-c86e-47f4-ae98-bc4ed8b8b94a',templateId:'497B122C-EF8B-4ABE-8651-1BCFFA4105F1',language:'en',first:100,after:null}};
+ const req=(data=body,url='https://spea.shj.ae/api/graphql-proxy',nav=false)=>({url:()=>url,method:()=>'POST',isNavigationRequest:()=>nav,postData:()=>JSON.stringify(data)});
+ assert.equal(permittedDirectoryQuery(req(),DIRECTORY_RECIPES.spea),true);
+ for(const request of [req({...body,query:query.replace('query VerticalFilterList','mutation VerticalFilterList')}),req({...body,query:query+' mutation Write { update }'}),req({...body,query:query.replace('VerticalFilterList','OtherQuery')}),req(body,'https://evil.example/api/graphql-proxy'),req(body,'https://spea.shj.ae/api/delete'),req(body,'https://spea.shj.ae/api/graphql-proxy',true),req({...body,variables:{...body.variables,first:10000}})])assert.equal(permittedDirectoryQuery(request,DIRECTORY_RECIPES.spea),false);
+ const f=fakeBrowser({requests:[{url:'https://spea.shj.ae/api/graphql-proxy',method:'POST',postData:JSON.stringify(body)}]});
+ await listDirectory({recipe:'spea',filter:{curriculum:'british'}},{launch:f.launch,budget:fakeBudget(),limits:fast});
+ assert(f.log.continued.includes('https://spea.shj.ae/api/graphql-proxy'),'read query reaches SPEA instead of being aborted');}

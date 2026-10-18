@@ -4,7 +4,7 @@
  * Boundaries enforced here, not by the caller:
  *  - Only a declared recipe runs (approved host, start page, filter labels observed on the live page). The only input is a
  *    filter value that must be one of the recipe's options — never chat text, names or documents.
- *  - Read-only: GET/HEAD only, images/media/fonts blocked, every request and navigation host-checked, links never clicked,
+ *  - Read-only: GET/HEAD plus exact SPEA directory GraphQL queries, images/media/fonts blocked, every request and navigation host-checked, links never clicked,
  *    and the page must stay on the directory path after every action.
  *  - Bounded: one session, a time limit and an action limit; browser time is reserved from the shared ledger before launch
  *    and settled afterwards; the session is closed in `finally`.
@@ -21,6 +21,7 @@ export const BROWSER_LIMITS=Object.freeze({sessionMs:45000,actions:14,pollMs:400
 export const DIRECTORY_RECIPES=Object.freeze({
  spea:Object.freeze({id:'spea',host:'spea.shj.ae',start:SPEA_DIRECTORY,path:'/en/education-institutes/schools',assetHosts:[],
   filters:{curriculum:{group:'Curriculum',options:{british:'British',american:'American',indian:'Indian',ib:'IB International Baccalareate',french:'FRENCH',german:'German',australian:'Australian',pakistani:'Pakistani',filipino:'Pilipinas',sabis:'SABIS'}}},
+  readQuery:{path:'/api/graphql-proxy',operations:['VerticalFilterList','VerticalFilterListPagination']},
   apply:'Apply Filter',rows:{group:'Rows Per Page',value:'100'},next:/^(next|next page)$/i,
   parse:parseDirectory,isRecord:u=>!!speaPage(u),record:u=>speaPage(u)})
 });
@@ -28,10 +29,26 @@ export const DIRECTORY_RECIPES=Object.freeze({
 const hostOf=u=>{try{return new URL(u).hostname.toLowerCase()}catch{return ''}};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
+/** SPEA's published directory uses POST for read-only GraphQL. Allow only these named query operations,
+ * on its exact HTTPS endpoint. Every mutation, other operation, navigation POST and unrelated endpoint stays blocked. */
+export function permittedDirectoryQuery(req,recipe){
+ try{
+  const u=new URL(req.url());if(req.method()!=='POST'||req.isNavigationRequest?.()||u.protocol!=='https:'||u.hostname!==recipe.host||u.pathname!==recipe.readQuery?.path||u.search||u.username||u.password||u.port)return false;
+  const raw=req.postData?.();if(typeof raw!=='string'||raw.length>32000)return false;
+  const body=JSON.parse(raw);if(!body||Array.isArray(body)||typeof body.query!=='string')return false;
+  const query=body.query.replace(/"(?:\\.|[^"\\])*"/g,'""').replace(/#[^\n]*/g,' ').trim();
+  const name=query.match(/^query\s+([A-Za-z_][A-Za-z_0-9]*)\s*[({]/)?.[1];
+  if(!recipe.readQuery.operations.includes(name)||body.operationName&&body.operationName!==name)return false;
+  if((query.match(/\bquery\b/g)||[]).length!==1||/\b(?:mutation|subscription)\b|__schema|__type\b/.test(query))return false;
+  const v=body.variables;if(!v||typeof v!=='object'||Array.isArray(v)||v.language!=='en'||!Number.isInteger(v.first)||v.first<1||v.first>200)return false;
+  return true;
+ }catch{return false}
+}
+
 /* In-page helpers (serialised into page.evaluate; no access to anything outside the page). */
 function pageClickExact(text,group){
  const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
- const visible=e=>{const r=e.getBoundingClientRect?.();return !r||r.width>0||r.height>0};
+ const visible=e=>{const style=getComputedStyle(e);if(style.visibility==='hidden'||style.display==='none')return false;const r=e.getBoundingClientRect?.();return !r||r.width>0||r.height>0};
  let root=document;
  if(group){
   const heads=[...document.querySelectorAll('*')].filter(e=>norm(e.textContent)===group);
@@ -41,6 +58,7 @@ function pageClickExact(text,group){
  const all=[...root.querySelectorAll('label,button,option,[role=option],[role=checkbox],[role=menuitem],[role=radio],li,span,div,p,input')].filter(e=>norm(e.textContent||e.value)===text&&visible(e));
  const el=all.find(e=>![...e.children].some(c=>norm(c.textContent)===text))||all[0];
  if(!el)return 'not-found';
+ if(!group&&el.tagName==='SPAN'){const toggle=el.parentElement?.querySelector('button');if(toggle&&visible(toggle)){toggle.click();return 'ok'}}
  if(el.closest('a[href]'))return 'refused-link';
  if(el.tagName==='OPTION'){const s=el.closest('select');if(!s)return 'not-found';s.value=el.value;s.dispatchEvent(new Event('change',{bubbles:true}));return 'ok'}
  el.click();return 'ok';
@@ -83,13 +101,14 @@ export async function listDirectory({recipe,filter={}},{launch,budget,now=()=>Da
   await page.setRequestInterception(true);
   page.on('request',req=>{
    const u=req.url(),h=hostOf(u),type=req.resourceType?.()||'other',m=(req.method?.()||'GET').toUpperCase();
-   const ok=(u.startsWith('https://')&&allowed.has(h)&&['GET','HEAD'].includes(m)&&!['image','media','font'].includes(type)
+   const readQuery=permittedDirectoryQuery(req,R);if(readQuery)d.readOnlyPosts=(d.readOnlyPosts||0)+1;
+   const ok=(u.startsWith('https://')&&allowed.has(h)&&(['GET','HEAD'].includes(m)||readQuery)&&!['image','media','font'].includes(type)
     &&(!req.isNavigationRequest?.()||h===R.host))||u.startsWith('data:');
    if(ok)return req.continue();
    d.blockedRequests++;if(h&&!allowed.has(h)&&d.blockedHosts.length<12&&!d.blockedHosts.includes(h))d.blockedHosts.push(h);
    return req.abort();
   });
-  act();await timed(page.goto(R.start,{waitUntil:'domcontentloaded',timeout:Math.max(1,left())}));
+  act();await timed(page.goto(R.start,{waitUntil:'networkidle2',timeout:Math.max(1,left())}));
   if(!onPath(page))throw Object.assign(Error('nav'),{code:'navigated-away'});
   step('open','ok');
   const read=async()=>{const html=String(await timed(page.content())).slice(0,L.htmlBytes);const dir=R.parse(html);
@@ -108,10 +127,10 @@ export async function listDirectory({recipe,filter={}},{launch,budget,now=()=>Da
   if(r==='group-not-found'||r==='not-found'){await click(R.filters.curriculum.group);r=await click(label,R.filters.curriculum.group)}
   step('filter',r);if(r!=='ok')throw Object.assign(Error('filter'),{code:'filter-not-applied'});
   r=await click(R.apply);step('apply',r);if(r!=='ok')throw Object.assign(Error('apply'),{code:'filter-not-applied'});
-  let s=await settle(null);if(!s.stable)throw Object.assign(Error('cards'),{code:'cards-not-loaded'});
+  step('wait-filtered-cards','started');let s=await settle(null);if(!s.stable)throw Object.assign(Error('cards'),{code:'cards-not-loaded'});
   last=s;for(const c of s.dir.cards)seen.set(c.url,c);
   // 2. Bigger pages, then paging if the range still stops short of the total
-  if(s.dir.to!==s.dir.total&&R.rows){const rr=await click(R.rows.value,R.rows.group);step('rows',rr);
+  if(s.dir.to!==s.dir.total&&R.rows){let rr=await click(R.rows.value,R.rows.group);if(rr==='not-found'||rr==='group-not-found'){await click(R.rows.group);rr=await click(R.rows.value,R.rows.group)}step('rows',rr);
    if(rr==='ok'){const s2=await settle(s.key);if(s2.stable){last=s2;for(const c of s2.dir.cards)seen.set(c.url,c)}}}
   for(let p=0;p<L.pages&&last.dir.to!==last.dir.total&&R.next;p++){act();const nr=await timed(page.evaluate(pageClickNext,R.next.source));step('next',nr);
    if(nr!=='ok'||!onPath(page))break;const s3=await settle(last.key);if(!s3.stable)break;last=s3;for(const c of s3.dir.cards)seen.set(c.url,c)}
@@ -141,5 +160,7 @@ export async function listDirectory({recipe,filter={}},{launch,budget,now=()=>Da
 
 /** Adapter for the research agent: R.listFiltered(filter, tools). Errors never throw into the turn. */
 export function speaListFiltered({launch,budget,limits,waitUntil=null}={}){
- return async(filter)=>{try{return await listDirectory({recipe:'spea',filter},{launch,budget,limits,waitUntil})}catch{return {status:'browser-unavailable',reason:'browser-error',items:[]}}};
+ return async(filter)=>{let result;try{result=await listDirectory({recipe:'spea',filter},{launch,budget,limits,waitUntil})}catch{result={status:'browser-unavailable',reason:'browser-error',items:[]}}
+  try{console.log(JSON.stringify({event:'orivia-browser-directory',status:result.status,reason:result.reason||null,complete:result.complete===true,total:result.total??null,items:result.items?.length||0,browserMs:result.browserMs||0,steps:result.diagnostics?.steps||[],blockedHosts:result.diagnostics?.blockedHosts||[],readOnlyPosts:result.diagnostics?.readOnlyPosts||0}))}catch{}
+  return result};
 }
