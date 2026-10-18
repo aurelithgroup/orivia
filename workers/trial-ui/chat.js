@@ -754,9 +754,9 @@ function researchBlock(srcs,research){
   }
   box.append(det);
  }
- if((r.unresolved||[]).length){
+ if((r.unresolved||[]).some(x=>TOPIC_LABEL[x])){ // unknown codes are never shown as a vague placeholder
   const u=el('div','unresolved');u.append(el('p','rhead','Couldn’t confirm'));const ul=document.createElement('ul');
-  for(const x of [...new Set(r.unresolved)])ul.append(el('li','',TOPIC_LABEL[x]||'Part of your question'));
+  for(const x of [...new Set(r.unresolved)])if(TOPIC_LABEL[x])ul.append(el('li','',TOPIC_LABEL[x]));
   u.append(ul);box.append(u);
  }
  if(r.applicability==='needs-review'&&srcs.length)box.append(el('p','tiny','Check it applies to you: rules can differ by institution, age, visa type or emirate.'));

@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {runAgentTurn} from '../workers/orivia-research-agent.mjs';
-import {buildQuery,makeTools} from '../workers/orivia-research-loop.mjs';
+import {buildQuery,makeTools,leadNames} from '../workers/orivia-research-loop.mjs';
 import {reserveSearch} from '../workers/orivia-research.mjs';
 import {SPEA_DIRECTORY} from '../workers/orivia-spea-reader.mjs';
 
@@ -84,4 +84,10 @@ const body=r=>r.reply.split('\n\n[1]')[0];
 // 5. Query wording is built from validated fields only (never chat text)
 {const u=U('find');assert.equal(buildQuery('web-list',u,{variant:0}),'list of British curriculum schools in Sharjah');
  assert.equal(buildQuery('web-list',u,{variant:1}),'IGCSE A Level UK curriculum schools Sharjah');assert.match(buildQuery('web-list',u,{variant:2}),/^best British schools in Sharjah \d{4}$/);}
+
+// 6. Live pilot glitches (18 Oct): GEMS menu links read as school names; vague "Part of your question" placeholders
+{const names=leadNames('<ul><li><a>List of All GEMS School</a></li><li><a>View All Our School</a></li><li>Our Schools</li><li>All Schools</li><li>Explore Our Nursery</li><li>Find Your School</li><li>Our Own English High School</li><li>All Saints School</li><li><h3>GEMS Wellington Academy</h3></li></ul>');
+ assert.deepEqual(names,['Our Own English High School','All Saints School','GEMS Wellington Academy'],'menu links dropped; real names that start with Our/All kept');
+ const w=world();const r=await runAgentTurn({messages:[{role:'user',content:'British curriculum schools in Dubai'}]},{...env,AI:{run:async()=>{throw Error('down')}}},{...w.opts,understanding:U('find','Dubai')});
+ assert.deepEqual(r.research.unresolved,[],'internal planning notes are not sent as "couldn’t confirm" items');assert.ok(Array.isArray(r.research.process.missing),'still kept for diagnostics');}
 console.log('Web evidence: reworded searches, listing sites, own websites, leads checked against the regulator, conflicts stated, labelled sources, no-regulator city, early stop overruled, pilot search pool: passed');

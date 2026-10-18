@@ -383,8 +383,8 @@ function wrap(u,c,state,tools,a){
  try{console.log(JSON.stringify({event:'orivia-research-agent',status:c.status,intent:u.intent,steps:state.history.map(h=>h.type+':'+h.by),rejected:state.rejected.length,searches:tools.used.searches,fetches:tools.used.fetches,complete:!!a.complete}))}catch(_){}
  return {reply:c.reply+refs,verifiedSources:[],liveSources:c.sources.map(({id,url,title,category,checkedAt})=>({id,url,title,category,checkedAt,topic:u.topic})),actions:[],liveInformation:c.sources.length>0,liveJourneyData:false,
   organisations:c.orgs.slice(0,8),cardMode:c.cardMode,
-  research:{status:c.status,applicability:'needs-review',claims:c.claims,unresolved:a.missing||[],agent:true,
-   process:{steps:state.history.map(h=>({action:h.type,by:h.by,args:h.args,why:h.why,result:h.result})),rejected:state.rejected,
+  research:{status:c.status,applicability:'needs-review',claims:c.claims,unresolved:[],agent:true,
+   process:{missing:(a.missing||[]).slice(0,8),steps:state.history.map(h=>({action:h.type,by:h.by,args:h.args,why:h.why,result:h.result})),rejected:state.rejected,
     metrics:{modelCalls:state.modelCalls||0,searches:tools.used.searches,fetches:tools.used.fetches,browserMs:state.browserMs||0,elapsedMs:state.elapsedMs||0}},
    coverage:{complete:!!a.complete,listings:state.listings||[],claimedCounts:state.claimedCounts||[],failures:state.failures||[],searchesUsed:tools.used.searches,fetchesUsed:tools.used.fetches},
    understanding:{source:u.source,intent:u.intent,topic:u.topic,location:u.location,constraints:u.constraints},taskContext:{task:c.task},trace:tools.log}};
