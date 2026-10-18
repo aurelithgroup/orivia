@@ -103,7 +103,15 @@ Each new host needs a source-policy review first. Candidates: KHDA (Dubai), ADEK
 
 ## Live-test checklist (switch stays off until Ina reviews; then `RESEARCH_ENABLED=1`, `RESEARCH_LOOP=1` on the private trial only)
 
-Before each run, `npx wrangler tail` and watch the `orivia-research-loop` line (status, intent, searches, fetches; no user text). Budget: about 3–4 searches a turn, so the run below uses about 30 of the daily 50 maximum. Raise `SEARCH_DAILY_CAP` for the session if needed, then put it back.
+Before each run, `npx wrangler tail` and watch the `orivia-research-loop` line (status, intent, searches, fetches; no user text).
+
+**Budget: the deployed caps are 10 searches a day and 100 a month (`SEARCH_DAILY_CAP=10`, `SEARCH_MONTHLY_CAP=100`). Don't raise them.** A research turn uses 0–4 searches (contacts for a shown list: 0; a named check: 2–3; find: 2–3; "all": up to 4). The checklist needs roughly 30 searches, so Ina stages it over about 4 days:
+- **Day 1 (~9):** steps 1, 3, 12.
+- **Day 2 (~9):** steps 4, 5, 9.
+- **Day 3 (~9):** steps 6, 7, 8, 10.
+- **Day 4 (~6):** steps 2, 11, 13, then 14 with the remaining budget, to see the honest limit message.
+
+Every failed or skipped search still counts, and a cap rejection uses no search call.
 
 | # | Say | Expect | Fail if |
 |---|---|---|---|

@@ -121,6 +121,6 @@ assert.ok(nameOnPage(SIPS,'<h1>Welcome to Sharjah International Private School</
 assert.ok(!nameOnPage(SIPS,'<h1>Sharjah American International School</h1>'),'a near-miss name on a page is not this school');
 assert.ok(nameOnPage('Wes green Int. Pvt. School. LLC','<title>Wesgreen International School</title>'));
 /* 9. Links and facts helpers */
-assert.deepEqual(sitePageLinks(veHome,'https://'+VE_SITE+'/',VE_SITE),['https://'+VE_SITE+'/admissions/','https://'+VE_SITE+'/curriculum','https://'+VE_SITE+'/contact-us/']);
+assert.deepEqual(sitePageLinks(veHome,'https://'+VE_SITE+'/',VE_SITE),['https://'+VE_SITE+'/curriculum','https://'+VE_SITE+'/admissions/','https://'+VE_SITE+'/contact-us/']);
 assert.equal(readSiteFacts([{url:'https://a.example/',raw:'<p>Nothing relevant here at all.</p>'}],'a.example').length,0);
 console.log('School sites: SPEA identity first, domain established only by regulator link or regulator-listed email (never rank, title, name or phone), facts tied to their page, differences flagged, bounds and budget kept: passed');

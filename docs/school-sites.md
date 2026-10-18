@@ -25,6 +25,9 @@ Owner: Cleo (retrieval). Recognising "all schools" requests, keeping named-schoo
    - Otherwise the host is `unverified`. The research loop can still show its statements, but only labelled "ownership not confirmed by a regulator".
 4. **Read the site by section:** menus, headers, footers, breadcrumbs, cookie banners and "related / other schools" blocks are removed. Short menu labels like "British Curriculum" are never read as statements; labelled fields (`Curriculum: …`, `Grade: …`) and full sentences are. Each fact carries its section heading.
    - "Year" (British) and "Grade" (US/MoE) ranges are kept apart and never converted. `yearEvidence(facts, 6)` counts only Year-scale ranges.
+   - **Link choice:** same-site links are ranked by what the request needs (curriculum, admissions, contact; contacts first for a contacts request) and the best link for each need is taken first. Leadership messages, "why choose us", news, galleries and careers pages are ranked last, so they never fill the cap.
+   - **Year groups** come from compact tables (any cell: "Year 6", "FS1"; ranges such as "Year 7 – Year 13", "Years 1–6", "Y3 to Y6") and labelled fields. Facts carry "Heading › table caption". Header rows are skipped.
+   - **Curriculum** comes from labelled values (`<dt>Curriculum</dt><dd>British</dd>`, table rows, label/value divs, `Curriculum: …`) or explicit sentences ("the National Curriculum for England"). IGCSE, A Level, EYFS and Cambridge Primary are recorded as `programme` facts and never make the whole school "British" on their own.
 5. **Pages read:** the homepage plus up to 4 same-site pages (admissions, curriculum, contact, about, fees). Paths only; no PDFs.
 6. **Return the school's own statements**, each tied to its page:
    - `curriculum`, `year-groups`, `admissions-page`, `phone`, `email` (only addresses at the school's own domain);

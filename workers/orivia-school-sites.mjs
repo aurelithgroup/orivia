@@ -61,69 +61,129 @@ export function establishDomain({school,host}){
  return {status:'unverified',basis:null,evidence:[],reasons};
 }
 
-/** Same-site pages worth reading: admissions, curriculum, contact, about, fees. Paths only (no query strings). */
-export function sitePageLinks(raw,baseUrl,host,limit=SITE_LIMITS.extraLinks){
- const out=[];
+/** Same-site pages worth reading, RANKED by what the current request needs, then capped.
+ * purpose: 'overview' (curriculum, year groups, admissions, contact), 'contacts', 'curriculum', 'admissions'.
+ * The best link for each need is taken first (so a cap of 3 gives curriculum + admissions + contact, not three "About" pages).
+ * Leadership messages, "why choose us", news, galleries and careers pages are ranked last. Paths only, no files. */
+const LINK_NEEDS={
+ curriculum:/curricul|academic|programme|program\b|learning|key-?stage|\bks[1-5]\b|primary|secondary|sixth-?form|eyfs|foundation|igcse|a-?level|year-?groups?|phases?|grades?/i,
+ admissions:/admission|enrol|enroll|apply|application|registration|fees|tuition|join/i,
+ contact:/contact|enquir|reach-us|location|find-us|get-in-touch/i
+};
+const LINK_LOW=/chairman|chairperson|founder|principal|director|head-?teacher|headmaster|message|welcome|why-?choose|vision|mission|values|history|news|events?|gallery|photos|blog|careers?|jobs|vacanc|alumni|calendar|policy|privacy|terms|sitemap|login|portal|tour/i;
+const PURPOSE_NEEDS={overview:['curriculum','admissions','contact'],contacts:['contact','admissions'],curriculum:['curriculum'],admissions:['admissions','contact']};
+export function sitePageLinks(raw,baseUrl,host,limit=SITE_LIMITS.extraLinks,purpose='overview'){
+ const needs=PURPOSE_NEEDS[purpose]||PURPOSE_NEEDS.overview,cands=new Map();
  for(const m of String(raw).matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)){
   let u;try{u=new URL(m[1].replace(/&amp;/g,'&'),baseUrl)}catch(_){continue}
   if(!sameSite(u.href,host))continue;u.search='';u.hash='';
-  const label=plain(m[2]);if(!/admission|enrol|curricul|academic|contact|about|fees|tuition/i.test(u.pathname+' '+label))continue;
-  if(/\.(pdf|jpe?g|png|gif|docx?|xlsx?|zip)$/i.test(u.pathname))continue;
-  if(!out.includes(u.href)&&u.href!==baseUrl)out.push(u.href);if(out.length>=limit)break;
+  if(/\.(pdf|jpe?g|png|gif|webp|docx?|xlsx?|zip|mp4)$/i.test(u.pathname)||u.href===baseUrl||u.pathname==='/')continue;
+  const key=u.pathname+' '+plain(m[2]);const prev=cands.get(u.href);cands.set(u.href,prev?prev+' '+key:key);
  }
- return out;
+ const scored=[...cands.entries()].map(([url,text])=>{
+  const hits=needs.filter(n=>LINK_NEEDS[n].test(text));
+  const low=LINK_LOW.test(text)&&!hits.length;
+  return {url,hits,score:(hits.length?10-needs.indexOf(hits[0]):0)-(LINK_LOW.test(text)?5:0)-(new URL(url).pathname.split('/').length>4?1:0),low};
+ }).filter(x=>x.hits.length).sort((a,b)=>b.score-a.score);
+ const out=[];
+ for(const n of needs){const best=scored.find(x=>x.hits.includes(n)&&!out.includes(x.url));if(best)out.push(best.url)} // one per need first
+ for(const x of scored)if(!out.includes(x.url))out.push(x.url);
+ return out.slice(0,limit);
 }
+
 /* ---------- Reading a page by section ----------
  * Menus, headers, footers, breadcrumbs, cookie banners and "related / other schools" blocks are not statements about this
- * organisation. The page is split into sections by heading; facts carry the section they came from. */
-const NAV_CLASS=/\b(nav|menu|mega|breadcrumb|footer|header|cookie|related|other-schools|sidebar|social|share|search)\b/i;
+ * organisation. The page is split into sections by heading; facts carry the section they came from. Labelled fields come
+ * from definition lists, table rows and adjacent label/value elements. */
+const NAV_CLASS=/\b(nav|navbar|menu|mega|breadcrumbs?|footer|header|cookie|related|other-schools|sidebar|social|share|search)\b/i;
 const OTHER_ORGS=/^(related|other|similar|nearby|more)\b.*\b(schools?|organisations?|nurseries|branches|campuses)\b|^view all|you (?:may|might) also like/i;
+const FIELD_LABEL=/^(curricul(?:um|a)(?: offered| followed)?|our curriculum|board|syllabus|year groups?|years?(?: offered)?|grades?(?: offered)?|grade levels?|classes|phases?|key stages?|age range|ages?)$/i;
 export function pageSections(raw){
  let h=String(raw||'').replace(/<!--[\s\S]*?-->/g,' ').replace(/<(script|style|svg|noscript|template|nav|header|footer|aside|form|button)\b[^>]*>[\s\S]*?<\/\1>/gi,' ');
- // Containers whose class/id says navigation or related content are removed with their contents (innermost first).
  for(let i=0;i<6;i++){const before=h;h=h.replace(/<(div|section|ul|ol)\b([^>]*\b(?:class|id)=["'][^"']*["'][^>]*)>((?:(?!<\1\b)[\s\S])*?)<\/\1>/gi,(m,tag,attrs)=>NAV_CLASS.test((attrs.match(/\b(?:class|id)=["']([^"']*)["']/gi)||[]).join(' '))?' ':m);if(h===before)break}
- // A list item that is only a link is a menu entry, not a statement.
- h=h.replace(/<li\b[^>]*>\s*<a\b[^>]*>[\s\S]*?<\/a>\s*<\/li>/gi,' ');
+ h=h.replace(/<li\b[^>]*>\s*<a\b[^>]*>[\s\S]*?<\/a>\s*<\/li>/gi,' '); // a list item that is only a link is a menu entry
  const parts=h.split(/(?=<h[1-4]\b)/i),sections=[];
  for(const part of parts){
   const heading=plain((part.match(/^<h[1-4][^>]*>([\s\S]*?)<\/h[1-4]>/i)||[])[1]||'');
   const body=part.replace(/^<h[1-4][^>]*>[\s\S]*?<\/h[1-4]>/i,'');
-  // Labelled fields: <dt>Label</dt><dd>Value</dd>, "Label: Value" spans/rows.
-  const fields=[];
-  for(const m of body.matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/gi))fields.push({label:plain(m[1]),value:plain(m[2])});
-  for(const m of body.matchAll(/<(?:span|p|li|td|div)[^>]*>\s*([A-Z][A-Za-z ()']{2,30}):\s*([^<]{2,120})<\/(?:span|p|li|td|div)>/g))fields.push({label:plain(m[1]),value:plain(m[2])});
+  const fields=[],rows=[];
+  for(const m of body.matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/gi))fields.push({label:plain(m[1]).replace(/:$/,''),value:plain(m[2])});
+  for(const m of body.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)){
+   const cells=[...m[1].matchAll(/<t[hd]\b[^>]*>([\s\S]*?)<\/t[hd]>/gi)].map(c=>plain(c[1])).filter(Boolean);
+   if(!cells.length)continue;
+   if(!/<td\b/i.test(m[1])&&cells.length>1)continue; // a header row ("Phase | Year group | Age") is not data
+   rows.push(cells);
+   if(cells.length>=2&&FIELD_LABEL.test(cells[0].replace(/:$/,'')))fields.push({label:cells[0].replace(/:$/,''),value:cells.slice(1).join(' | ')});
+  }
+  // Adjacent label/value elements: <div class="label">Curriculum</div><div class="value">British</div>
+  for(const m of body.matchAll(/<(\w+)\b[^>]*>\s*([A-Za-z][A-Za-z ]{1,30}?)\s*:?\s*<\/\1>\s*<(\w+)\b[^>]*>([\s\S]{1,240}?)<\/\3>/g))if(FIELD_LABEL.test(m[2].trim())&&!/^(caption|th|tr|table|thead|tbody)$/i.test(m[1])&&!/^(tr|table|thead|tbody)$/i.test(m[3]))fields.push({label:m[2].trim(),value:plain(m[4])});
+  for(const m of body.matchAll(/<(?:span|p|li|td|div|strong)[^>]*>\s*([A-Z][A-Za-z ()']{2,30}):\s*([^<]{2,160})<\/(?:span|p|li|td|div|strong)>/g))fields.push({label:plain(m[1]),value:plain(m[2])});
+  const caption=plain((body.match(/<caption[^>]*>([\s\S]*?)<\/caption>/i)||[])[1]||'');
   const text=plain(body);
   if(!heading&&!text)continue;
-  sections.push({heading,text,fields,kind:OTHER_ORGS.test(heading)?'other-organisations':'main'});
+  sections.push({heading:heading||caption,caption:heading&&caption?caption:'',text,fields,rows,kind:OTHER_ORGS.test(heading)?'other-organisations':'main'});
  }
  return sections;
 }
-const CURRICULUM_SIGNS=[
- ['British',/\b(British (?:National )?curriculum|National Curriculum (?:for|of|in) England|English National Curriculum|IGCSEs?|A[ -]Levels?|Cambridge (?:Primary|Lower Secondary|IGCSE|International|Secondary)|Early Years Foundation Stage)\b/i],
- ['MoE (UAE Ministry of Education)',/\b(Ministry of Education curriculum|MoE curriculum|UAE national curriculum)\b/i],
- ['American',/\b(American curriculum|US curriculum|Common Core)\b/i],
- ['IB',/\b(International Baccalaureate|IB (?:Diploma|PYP|MYP|Primary Years|Middle Years|curriculum))\b/i],
- ['Indian',/\b(CBSE|ICSE|Indian curriculum)\b/i]
+// Whole-school curriculum: only an explicit statement or a labelled value. Qualifications and stages (IGCSE, A Level,
+// EYFS, Cambridge Primary) are recorded as programmes, never as the school's curriculum on their own.
+const CURRICULUM_VALUE=[
+ ['British',/\b(British|UK|English National|National Curriculum (?:for|of|in) England|England)\b/i],
+ ['MoE (UAE Ministry of Education)',/\b(MoE|Ministry of Education|UAE National|Emirati)\b/i],
+ ['American',/\b(American|US|Common Core)\b/i],
+ ['IB',/\b(IB|International Baccalaureate)\b/i],
+ ['Indian',/\b(CBSE|ICSE|Indian)\b/i],
+ ['French',/\bFrench\b/i],['Australian',/\bAustralian\b/i],['SABIS',/\bSABIS\b/i]
 ];
-const curriculumOf=t=>CURRICULUM_SIGNS.filter(([,re])=>re.test(t)).map(([l])=>l);
-// "Year" (British) and "Grade" (US/MoE) are different scales: never converted into each other.
-const YEAR_RANGE=/\b((?:FS ?[12]|KG ?[12]|Pre-?KG|Foundation Stage(?: ?[12])?|Year \d{1,2}|Grades? \d{1,2}))\s*(?:to|-|–|through|until)\s*((?:Year|Grade) ?\d{1,2}|\d{1,2}|KG ?2|FS ?2)\b/gi;
+const CURRICULUM_SENTENCE=[
+ ['British',/\b(British (?:National )?curriculum|National Curriculum (?:for|of|in) England|English National Curriculum|UK curriculum)\b/i],
+ ['MoE (UAE Ministry of Education)',/\b(Ministry of Education curriculum|MoE curriculum|UAE national curriculum)\b/i],
+ ['American',/\b(American curriculum|US curriculum|Common Core State Standards)\b/i],
+ ['IB',/\b(International Baccalaureate (?:curriculum|programme|continuum|Diploma Programme)|IB (?:curriculum|continuum|World School))\b/i],
+ ['Indian',/\b(CBSE curriculum|ICSE curriculum|Indian curriculum)\b/i]
+];
+const PROGRAMMES=[['IGCSE',/\bI?GCSEs?\b/],['A Level',/\b(?:AS and )?A[ -]Levels?\b/i],['EYFS',/\bEarly Years Foundation Stage\b|\bEYFS\b/],['Cambridge Primary',/\bCambridge Primary\b/i],['Cambridge Lower Secondary',/\bCambridge (?:Lower )?Secondary(?: 1)?\b/i],['BTEC',/\bBTEC\b/]];
+const curriculumValues=v=>CURRICULUM_VALUE.filter(([,re])=>re.test(v)).map(([l])=>l);
+/* Year groups. "Year" (British scale) and "Grade" (US/MoE scale) are never converted into each other. */
+const YT='(?:FS ?[12]|F[12]|KG ?[12]|Pre-?KG|Nursery|Reception|Foundation(?: Stage)?(?: ?[12])?|(?:Years?|Yrs?|Y) ?\\d{1,2}|(?:Grades?|Gr) ?\\d{1,2})';
+const YEAR_RANGE=new RegExp('\\b('+YT+')\\s*(?:to|-|–|—|through|until)\\s*((?:(?:Years?|Yrs?|Y|Grades?|Gr) ?)?\\d{1,2}|KG ?2|FS ?2|F2|Reception)\\b','gi');
+const YEAR_SINGLE=new RegExp('^\\s*('+YT+')\\s*$','i');
+function normYear(t){const s=String(t).trim();let m;
+ if((m=s.match(/^(?:Years?|Yrs?|Y) ?(\d{1,2})$/i)))return 'Year '+(+m[1]);
+ if((m=s.match(/^(?:Grades?|Gr) ?(\d{1,2})$/i)))return 'Grade '+(+m[1]);
+ if((m=s.match(/^(?:FS|F) ?([12])$/i)))return 'FS'+m[1];
+ if((m=s.match(/^KG ?([12])$/i)))return 'KG'+m[1];
+ return s.replace(/\s+/g,' ');}
+function rangeValue(a,b){const A=normYear(a);let B=String(b).trim();
+ if(/^\d{1,2}$/.test(B))B=(/^Grade/.test(A)?'Grade ':'Year ')+(+B);else B=normYear(B); // "Years 1-6" → Year 1 to Year 6
+ return A+' to '+B;}
 const general=x=>/\b(all|every|other) (?:private )?schools\b|\bschools in (?:the )?(?:UAE|Sharjah|emirate)\b|\b(?:must|are required to|is required|mandatory|by law|regulations?)\b/i.test(x);
 /** The organisation's own statements from pages on its site. Each fact names its page, section and quote. */
 export function readSiteFacts(pages,host){
  const facts=[],seen=new Set();
  const add=(key,label,value,quote,url,section)=>{const k=key+'|'+value;if(seen.has(k))return;seen.add(k);facts.push({key,label,value,quote:String(quote).slice(0,SITE_LIMITS.quoteChars),source:{url,host,section:section||'',kind:'school-website',scope:'school-own-statement'}})};
+ const yearFacts=(text,quote,url,section)=>{for(const m of String(text).matchAll(YEAR_RANGE))add('year-groups','Year groups (school’s own statement)',rangeValue(m[1],m[2]),quote||m[0],url,section)};
  for(const p of pages){
   for(const sec of pageSections(p.raw)){
    if(sec.kind!=='main')continue;
    for(const f of sec.fields){
-    if(/^curricul/i.test(f.label))for(const c of curriculumOf(f.value.replace(/^british curriculum$/i,'British curriculum')))add('curriculum','Curriculum (school’s own statement)',c,f.label+': '+f.value,p.url,sec.heading);
-    if(/^(grades?|year groups?|years?|phases?)$/i.test(f.label))for(const m of (f.value).matchAll(YEAR_RANGE))add('year-groups','Year groups (school’s own statement)',m[1]+' to '+m[2],f.label+': '+f.value,p.url,sec.heading);
+    if(/^(curricul|our curriculum|board|syllabus)/i.test(f.label))for(const c of curriculumValues(f.value))add('curriculum','Curriculum (school’s own statement)',c,f.label+': '+f.value,p.url,sec.heading);
+    if(/^(year|grade|classes|phase|key stage)/i.test(f.label)){yearFacts(f.value,f.label+': '+f.value,p.url,sec.heading);const one=f.value.match(YEAR_SINGLE);if(one)add('year-groups','Year groups (school’s own statement)',normYear(one[1]),f.label+': '+f.value,p.url,sec.heading)}
    }
+   // Compact year-group tables: rows whose first cell is a single year/grade ("Year 6 | Ages 10–11"), or a phase row with a range.
+   const listed=[],tableSection=sec.caption?sec.heading+' › '+sec.caption:sec.heading;
+   for(const cells of sec.rows){
+    if(cells.length>=2&&FIELD_LABEL.test(cells[0].replace(/:$/,'')))continue; // already read as a labelled field
+    for(const c of cells){const one=c.match(YEAR_SINGLE);if(one)listed.push({v:normYear(one[1]),q:cells.join(' | ')});else yearFacts(c,cells.join(' | '),p.url,tableSection)}
+   }
+   for(const x of listed)add('year-groups','Year groups (school’s own statement)',x.v,x.q,p.url,tableSection);
    // Sentences only: a short label ("British Curriculum") is a menu or tag, not a statement.
    const sentences=sec.text.split(/(?<=[.!?])\s+/).filter(x=>x.split(/\s+/).length>=6&&x.length<=600&&!general(x));
-   for(const x of sentences){for(const c of curriculumOf(x))add('curriculum','Curriculum (school’s own statement)',c,x.length<=SITE_LIMITS.quoteChars?x:x.match(CURRICULUM_SIGNS.find(([l])=>l===c)[1])[0],p.url,sec.heading);
-    for(const m of x.matchAll(YEAR_RANGE))add('year-groups','Year groups (school’s own statement)',m[1]+' to '+m[2],m[0],p.url,sec.heading)}
+   for(const x of sentences){
+    for(const [label,re] of CURRICULUM_SENTENCE){const m=x.match(re);if(m)add('curriculum','Curriculum (school’s own statement)',label,x.length<=SITE_LIMITS.quoteChars?x:m[0],p.url,sec.heading)}
+    for(const [label,re] of PROGRAMMES){const m=x.match(re);if(m)add('programme','Programme or qualification (school’s own statement)',label,x.length<=SITE_LIMITS.quoteChars?x:m[0],p.url,sec.heading)}
+    if(!sec.rows.length)yearFacts(x,null,p.url,sec.heading);
+   }
   }
   for(const m of String(p.raw).matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)){
    const href=m[1].replace(/&amp;/g,'&'),label=plain(m[2]);
@@ -135,15 +195,17 @@ export function readSiteFacts(pages,host){
  }
  return facts;
 }
-/** Does a year-groups statement cover this British school year? Grade ranges are reported, never converted. */
+/** Does the site give Year-scale evidence for this British school year? Grade facts are reported separately, never converted. */
 export function yearEvidence(facts,year){
- const toNum=t=>{t=String(t).trim();if(/^(FS|KG|Pre-?KG|Foundation)/i.test(t))return 0;const m=t.match(/(\d{1,2})/);return m?+m[1]:null};
+ const pos=t=>{t=String(t).trim();if(/^(FS|KG|Pre-?KG|Nursery|Reception|Foundation)/i.test(t))return 0;const m=t.match(/(\d{1,2})/);return m?+m[1]:null};
  const out={listed:[],gradeOnly:[]};
  for(const f of facts.filter(x=>x.key==='year-groups')){
-  const [a,b]=f.value.split(' to ');const lo=toNum(a),hi=toNum(b);if(lo==null||hi==null)continue;
-  const usesGrade=/grade/i.test(f.value)&&!/year/i.test(f.value);
-  if(usesGrade){out.gradeOnly.push(f);continue}
-  if(/year/i.test(f.value)&&year>=lo&&year<=hi)out.listed.push(f);
+  const [a,b]=f.value.split(' to ');
+  if(/^Grade/.test(a)&&(!b||/^Grade/.test(b))){out.gradeOnly.push(f);continue}
+  if(!b){if(f.value==='Year '+year)out.listed.push(f);continue}
+  const lo=pos(a),hi=pos(b);if(lo==null||hi==null)continue;
+  if(/^Year/.test(b)&&year>=lo&&year<=hi)out.listed.push(f);
+  else if(/Grade/.test(f.value))out.gradeOnly.push(f);
  }
  return out;
 }
@@ -214,7 +276,7 @@ export async function lookupSchoolWithSite({name=''}={},{spea,site}){
  }
  if(!established)return {status:'match',candidates:identity.candidates,school,site:{status:hosts.length?'unverified':'none-found',host:null,facts:[]},coverage};
  // Read a few more pages on the established site.
- const more=pages.length?sitePageLinks(pages[0].raw,pages[0].url,established.host).filter(u=>!pages.some(p=>p.url===u)):[];
+ const more=pages.length?sitePageLinks(pages[0].raw,pages[0].url,established.host,SITE_LIMITS.extraLinks,'overview').filter(u=>!pages.some(p=>p.url===u)):[];
  for(const u of more.slice(0,Math.max(0,SITE_LIMITS.pagesPerSite-pages.length))){const g=await site.fetchSitePage(u,established.host);coverage.site.pagesOpened++;if(g.ok)pages.push({url:g.url,raw:g.raw});else coverage.site.failures.push({host:established.host,path:new URL(u).pathname,reason:g.reason,http:g.http??null})}
  const facts=readSiteFacts(pages,established.host);
  // Both sources are kept side by side; a difference is flagged, never resolved here.

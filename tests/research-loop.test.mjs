@@ -230,7 +230,7 @@ for(const [name,host] of [['Sharjah International Private School','sips.example'
  assert.ok(!facts.some(f=>/Al Barsha|Mizhar|Abu Dhabi/.test(f.quote)),'related-schools section excluded');
  const secs=pageSections(raw).map(x=>x.heading);assert.ok(secs.includes('Curriculum')&&secs.includes('Vision'));assert.ok(!secs.some(h=>/We are GEMS|Our Schools/.test(h)),'footer headings are not sections');
  const yg=facts.filter(f=>f.key==='year-groups').map(f=>f.value);
- assert.ok(yg.includes('FS1 to Year 13'));assert.ok(yg.some(v=>/^Grades? 1 to 6$/.test(v)),'grade ranges kept as grades');
+ assert.ok(yg.includes('FS1 to Year 13'));assert.ok(yg.includes('Grade 1 to Grade 6'),'grade ranges kept as grades');
  const y6=yearEvidence(facts,6);assert.ok(y6.listed.some(f=>f.value==='FS1 to Year 13'),'Year 6 evidence: covered by FS1 to Year 13');
  assert.ok(y6.gradeOnly.length>=1&&!y6.listed.some(f=>/Grade/.test(f.value)),'Grade 1–6 is not counted as Year 6 evidence');
  const gradesOnly=readSiteFacts([{url:'https://g.example/',raw:'<main><h2>Curriculum</h2><p>Our primary school teaches Grades 1 to 6 in English.</p></main>'}],'g.example');

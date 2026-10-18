@@ -5,7 +5,7 @@
 import {understandRequest} from './orivia-research-understand.mjs';
 import {RESEARCH_SOURCES} from './orivia-research-policy.mjs';
 import {speaPage,parseProfile,parseDirectory,classifyMatches,nameScore,curriculumMatches,listsYear,SPEA_DIRECTORY} from './orivia-spea-reader.mjs';
-import {siteHost,establishDomain,readSiteFacts,sitePageLinks,nameOnPage} from './orivia-school-sites.mjs';
+import {siteHost,establishDomain,readSiteFacts,sitePageLinks,nameOnPage,yearEvidence} from './orivia-school-sites.mjs';
 
 export const LOOP_LIMITS=Object.freeze({searchesPerTurn:4,fetchesPerTurn:24,profilesPerTurn:12,listPagesPerTurn:2,sitePagesPerOrg:4,orgsPerCompare:3,contactsPerTurn:4,leadsPerVerifyQuery:5,searchCount:20,timeoutMs:6500,pageBytes:1000000,leadsKept:25});
 export const LEVEL={regulator:'regulator',regulatorIndex:'regulator-index',siteLinked:'own-site-linked',siteUser:'own-site-user',siteFound:'own-site-found',lead:'lead'};
@@ -184,10 +184,11 @@ async function discoverWithRegulator(R,u,task,tools,cov){
 }
 
 /* ---------- Organisation websites ---------- */
-async function readSite(tools,startUrl,host,maxPages=LOOP_LIMITS.sitePagesPerOrg){
+async function readSite(tools,startUrl,host,maxPages=LOOP_LIMITS.sitePagesPerOrg,purpose='overview'){
  const first=await tools.fetchPage(startUrl,{kind:'site',host});if(!first.ok)return {ok:false,reason:first.reason,pages:[]};
  const pages=[{url:first.url,raw:first.raw}];
- for(const link of sitePageLinks(first.raw,first.url,host).slice(0,maxPages-1)){const p=await tools.fetchPage(link,{kind:'site',host});if(p.ok)pages.push({url:p.url,raw:p.raw})}
+ /* links ranked by what this request needs, then capped */
+ for(const link of sitePageLinks(first.raw,first.url,host,maxPages-1,purpose)){const p=await tools.fetchPage(link,{kind:'site',host});if(p.ok)pages.push({url:p.url,raw:p.raw})}
  return {ok:true,pages};
 }
 const siteTitle=raw=>plain((String(raw).match(/<title[^>]*>([\s\S]*?)<\/title>/i)||[])[1]||'').split(/\s[|\-–]\s/)[0].trim().slice(0,100)||plain((String(raw).match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)||[])[1]||'').slice(0,100);
@@ -196,7 +197,7 @@ async function checkOrganisation(org,u,R,tools,cov,shownNames=[]){
  // A link the person gave is read directly: its statements are the organisation's own, not regulatory confirmation.
  let userSite=null;
  if(org.url){const host=siteHost(org.url)||(()=>{try{return new URL(org.url).hostname.replace(/^www\./,'')}catch(_){return ''}})();
-  const s=host?await readSite(tools,org.url,host):{ok:false,reason:'not-allowed',pages:[]};
+  const s=host?await readSite(tools,org.url,host,LOOP_LIMITS.sitePagesPerOrg,u.intent==='contacts'?'contacts':'overview'):{ok:false,reason:'not-allowed',pages:[]};
   if(s.ok){userSite={host,level:LEVEL.siteUser,pages:s.pages,name:siteTitle(s.pages[0].raw),facts:readSiteFacts(s.pages,host)};out.site=userSite}
   else cov.failures.push({what:'user-link',reason:s.reason})}
  const name=org.name||userSite?.name||'';
@@ -227,7 +228,7 @@ async function checkOrganisation(org,u,R,tools,cov,shownNames=[]){
   if(!hosts.length&&(rec?.name||qn)){const q=buildQuery('name-site',u,{name:rec?.name||qn});const s=await tools.search(q);cov.searches.push({kind:'web',status:s.status,results:s.results.length});
    for(const r of s.results){const h=siteHost(r.url);if(h&&!AGGREGATOR.test(h)&&!hosts.some(x=>x.host===h))hosts.push({host:h,url:'https://'+h+'/'});if(hosts.length>=2)break}}
   for(const {host,url} of hosts.filter(x=>x.host)){
-   const s=await readSite(tools,url,host);if(!s.ok){cov.failures.push({what:'org-site',host,reason:s.reason});continue}
+   const s=await readSite(tools,url,host,LOOP_LIMITS.sitePagesPerOrg,u.intent==='contacts'?'contacts':'overview');if(!s.ok){cov.failures.push({what:'org-site',host,reason:s.reason});continue}
    const proof=rec?establishDomain({school:rec,host}):{status:'unverified',basis:null,evidence:[],reasons:['no-regulator-record']};
    if(proof.status==='established'){cov.siteChecks.push({host,status:'established',basis:proof.basis});out.site={host,level:LEVEL.siteLinked,basis:proof.basis,evidence:proof.evidence,pages:s.pages,facts:readSiteFacts(s.pages,host)};break}
    // A matching name (or phone) can be copied: the site is at most "found", and every statement from it is labelled so.
@@ -261,13 +262,22 @@ function orgCard(rec,src,site,siteSrc){
  return {id:'org-'+(rec.url||rec.name).replace(/[^a-z0-9]+/gi,'-').slice(-32),kind:'school',name:rec.name,sourceId:src.id,facts,contacts};
 }
 const LEVEL_SAYS={[LEVEL.siteUser]:'The website you shared says',[LEVEL.siteLinked]:'Its own website (linked from the regulator) says',[LEVEL.siteFound]:'A website that presents itself as this school (ownership not confirmed by a regulator) says'};
-function siteLines(site,addSrc){
- const lines=[],claims=[];
- for(const x of site.facts.filter(f=>['curriculum','year-groups','admissions-page','phone','email'].includes(f.key)).slice(0,6)){
-  const s=addSrc(x.source.url,(site.name||site.host)+' (organisation’s own website)','organisation');
-  const t=({curriculum:'Curriculum: '+x.value,'year-groups':'Year groups: '+x.value,'admissions-page':'Admissions page: '+x.value,phone:'Phone: '+x.value,email:'Email: '+x.value})[x.key];
-  lines.push(t+' ['+s.id.slice(1)+']');claims.push({text:t,sourceId:s.id,quote:x.quote,quotes:[{fact:x.key,label:x.label,quote:x.quote}]});
- }
+function siteLines(site,addSrc,{year=null,intent=''}={}){
+ const lines=[],claims=[],f=site.facts;
+ const push=(t,x)=>{const s=addSrc(x.source.url,(site.name||site.host)+' (organisation’s own website)','organisation');lines.push(t+' ['+s.id.slice(1)+']');claims.push({text:t,sourceId:s.id,quote:x.quote,quotes:[{fact:x.key,label:x.label,quote:x.quote}]})};
+ const curricula=()=>{for(const x of f.filter(x=>x.key==='curriculum'))push('Curriculum: '+x.value,x)};
+ const years=()=>{
+  if(year){const ev=yearEvidence(f,year);
+   if(ev.listed.length)push('Year '+year+': listed ('+ev.listed[0].quote+')',ev.listed[0]);
+   else if(ev.gradeOnly.length)push('Year '+year+': not stated. It describes Grades instead ('+ev.gradeOnly.slice(0,2).map(x=>x.value).join('; ')+'), which I haven’t converted to Years',ev.gradeOnly[0]);
+   else lines.push('Year '+year+': not stated on the pages I read.');
+   return}
+  const ys=f.filter(x=>x.key==='year-groups');const ranges=ys.filter(x=>/ to /.test(x.value)).slice(0,2);
+  for(const x of ranges.length?ranges:ys.slice(0,2))push('Year groups: '+x.value,x);
+ };
+ const contacts=()=>{for(const k of ['phone','email','admissions-page']){const x=f.find(y=>y.key===k);if(x)push(({phone:'Phone: ',email:'Email: ','admissions-page':'Admissions page: '})[k]+x.value,x)}};
+ if(intent==='contacts'){contacts();return {lines,claims}}
+ curricula();years();contacts();
  return {lines,claims};
 }
 
@@ -312,7 +322,7 @@ export async function runResearchTurn({messages,profile={},context=null},env,{fe
    for(const r of w.results.filter(isListPage).slice(0,LOOP_LIMITS.listPagesPerTurn)){const p=await tools.fetchPage(r.url,{kind:'discovery'});cov.listPages.push({host:r.host,outcome:p.ok?'read':p.reason});if(p.ok)for(const n of leadNames(p.raw))if(!leads.includes(n))leads.push(n)}
    const parts=['I can’t check '+(TOPIC_WORD[u.topic]||'these')+' in '+where+' against a regulator yet, so this comes from web search and the organisations’ own websites.'];
    for(const s of sites.slice(0,3)){const r=await readSite(tools,s.url,s.host,2);if(!r.ok||!nameOnPage(s.name,r.pages[0].raw))continue;const site={host:s.host,name:s.name,level:LEVEL.siteFound,pages:r.pages,facts:readSiteFacts(r.pages,s.host)};
-    const sl=siteLines(site,sid);parts.push(s.name+' — '+LEVEL_SAYS[LEVEL.siteFound].toLowerCase().replace(/ says$/,'')+':'+(sl.lines.length?'\n'+sl.lines.join('\n'):' (no clear details found on its pages)'));claims.push(...sl.claims);nextTask.shown.push({name:s.name,url:r.pages[0].url,level:LEVEL.siteFound})}
+    const sl=siteLines(site,sid,{year:u.constraints.year,intent:u.intent});parts.push(s.name+' — '+LEVEL_SAYS[LEVEL.siteFound].toLowerCase().replace(/ says$/,'')+':'+(sl.lines.length?'\n'+sl.lines.join('\n'):' (no clear details found on its pages)'));claims.push(...sl.claims);nextTask.shown.push({name:s.name,url:r.pages[0].url,level:LEVEL.siteFound})}
    if(leads.length)parts.push('Other names mentioned on listing sites (not checked): '+leads.slice(0,8).join('; ')+'.');
    parts.push('Without a regulator directory I can’t tell how complete this is.');cov.reasons.push('no-regulator-connected');
    reply=parts.join('\n\n');status=claims.length?'partial':'no-evidence';
@@ -347,7 +357,7 @@ export async function runResearchTurn({messages,profile={},context=null},env,{fe
     if(u.constraints.curriculum&&r.regulator.fields?.curriculum&&!curriculumMatches(r.regulator.fields.curriculum.value,u.constraints.curriculum))lines.push('Note: that isn’t the '+CURR_NAME[u.constraints.curriculum]+' curriculum you asked about earlier.');
    }else if(R&&t.name)lines.push('I couldn’t confirm “'+(t.name||r.query)+'” on '+R.short+', so nothing here is regulatory confirmation.');
    else if(!R)lines.push('I can’t check this against a regulator here, so nothing below is regulatory confirmation.');
-   if(r.site){const sl=siteLines(r.site,sid);if(sl.lines.length){lines.push(LEVEL_SAYS[r.site.level]+':\n'+sl.lines.join('\n'));claims.push(...sl.claims)}
+   if(r.site){const sl=siteLines(r.site,sid,{year:u.constraints.year,intent:u.intent});if(sl.lines.length){lines.push(LEVEL_SAYS[r.site.level]+':\n'+sl.lines.join('\n'));claims.push(...sl.claims)}
     else lines.push('I opened '+r.site.host+' but couldn’t find clear details on the pages I read.');
     if(!r.regulator){nextTask.focus=r.site.name||t.name;nextTask.shown.push({name:r.site.name||t.name||r.site.host,url:r.site.pages[0].url,level:r.site.level})}
     const sc=r.site.facts.filter(f=>f.key==='curriculum').map(f=>f.value),rc=r.regulator?.fields?.curriculum?.value;
