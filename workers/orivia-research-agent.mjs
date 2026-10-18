@@ -7,7 +7,7 @@
  * claim, and whether a list is complete. If the model is unavailable or proposes something invalid, a built-in policy
  * following the same method picks the next action instead. Enabled with RESEARCH_AGENT=1 (on top of RESEARCH_LOOP).
  */
-import {understandRequest} from './orivia-research-understand.mjs';
+import {understandRequest,placeWritten} from './orivia-research-understand.mjs';
 import {makeTools,regulatorFor,sanitizeTask,buildQuery,queryName,leadNames,LEVEL,regulatorRecord,readSite,makeSources,recordLine,orgCard,siteLines,LEVEL_SAYS,isListPage,AGGREGATOR,ORG_WORD,CURR_NAME,TOPIC_WORD} from './orivia-research-loop.mjs';
 import {nameScore,classifyMatches,curriculumMatches,listsYear,distinctiveTokens} from './orivia-spea-reader.mjs';
 // A lead and a record are the same organisation when names match closely, or every distinctive word of the shorter name
@@ -91,7 +91,7 @@ async function execute(action,state,tools){
   // Only the curriculum goes to the listing tool (a validated field): never chat text or names.
   if(R.listFiltered&&c.curriculum){const l=await R.listFiltered({curriculum:c.curriculum,year:c.year},tools);state.browserMs=(state.browserMs||0)+(l.browserMs||0);
    if((l.status==='ok'||l.status==='partial')&&l.items?.length){const listing={source:'regulator',filter:l.filter,total:l.total,range:l.range,items:l.items.length,
-     complete:l.complete!==false&&l.status==='ok'&&l.items.length===l.total&&l.range?.[1]===l.total,unapplied:l.unappliedFilters||[]};state.listings.push(listing);
+     complete:l.complete===true&&l.status==='ok'&&l.items.length===l.total&&l.range?.[1]===l.total,unapplied:l.unappliedFilters||[]};state.listings.push(listing);
     for(const it of l.items)addRecord(state,it.url,it.name,{level:LEVEL.regulator,fields:it.fields||{},from:'regulator-listing'});
     if(!listing.complete)state.failures.push({what:'regulator-listing',reason:l.reason||'not-all-results-read'});
     return 'Regulator listing with filter '+JSON.stringify(l.filter)+': '+l.items.length+' entries read, total shown '+l.total+(listing.complete?' (all results read)':' (not all results read: '+(l.reason||'partial')+')')+'.'}
@@ -227,7 +227,7 @@ export function policyNext(state){
 /* ---------- The model's view and choice ---------- */
 function viewFor(state,tools,a,lastObs){
  const recs=[...state.records.values()];const N=AGENT_LIMITS.viewItems;
- return {goal:{kind:state.goal.kind,topic:state.goal.topic,place:state.goal.location?.city||'',curriculum:state.goal.constraints.curriculum||'',year:state.goal.constraints.year||null,organisations:state.goalOrgs.map(o=>({id:o.id,name:o.name||o.url}))},
+ return {goal:{kind:state.goal.kind,topic:state.goal.topic,place:state.hidePlace?'':(state.goal.location?.city||''),curriculum:state.goal.constraints.curriculum||'',year:state.goal.constraints.year||null,organisations:state.goalOrgs.map(o=>({id:o.id,name:o.name||o.url}))},
   whatCountsAsAnswering:state.goal.criteria,stillMissing:a.missing,complete:a.complete,
   budget:{stepsLeft:state.maxSteps-state.step,searchesLeft:4-tools.used.searches,fetchesLeft:24-tools.used.fetches},
   found:{confirmedMatches:a.matches,regulatorRecordsOpened:recs.filter(r=>r.level===LEVEL.regulator).length,
@@ -314,11 +314,12 @@ export async function runAgentTurn({messages,profile={},context=null},env,{fetch
  // One model connection for understanding AND planning (a pilot provider is injected here, never by changing env.AI).
  const ai=aiOverride||env.AI||null;const started=Date.now();
  const task=context?.task&&typeof context.task==='object'?sanitizeTask(context.task):null;
- const u=understanding||await understandRequest({messages,profile,task},{ai});
+ const external=!!aiOverride; // an outside provider sees the conversation only, never saved-profile details
+ const u=understanding||await understandRequest({messages,profile,task},{ai,shareProfile:!external});
  if(!u.research||u.intent==='other'||u.intent==='rules')return null;
  if(!u.location?.country&&!u.organisations.some(o=>o.url))return wrap(u,{reply:'Which city is this for?',sources:[],claims:[],orgs:[],task:{...(task||{})},status:'needs-context',cardMode:'list'},{history:[],rejected:[]},makeTools({env,fetcher,reserve}),{});
  const goal=defineGoal(u),R=regulator===undefined?((x=>x&&regulatorOverrides?.[x.id]||x)(regulatorFor(u.topic,u.location))):regulator,tools=makeTools({env,fetcher,reserve});
- const state=newState(goal,u,task,R);state.maxSteps=Math.max(1,Math.min(AGENT_LIMITS.maxSteps,Math.floor(Number(env.RESEARCH_AGENT_STEPS)||AGENT_LIMITS.defaultSteps)));
+ const state=newState(goal,u,task,R);state.hidePlace=external&&!placeWritten(messages,goal.location?.city);state.maxSteps=Math.max(1,Math.min(AGENT_LIMITS.maxSteps,Math.floor(Number(env.RESEARCH_AGENT_STEPS)||AGENT_LIMITS.defaultSteps)));
  const shownNames=(task?.shown||[]).map(s=>s.name);
  state.goalOrgs=(goal.organisations.length?goal.organisations:(['contacts','check'].includes(goal.kind)&&task?.focus?[{name:task.focus,url:''}]:[])).map((o,i)=>({id:'O'+(i+1),name:o.name||'',url:o.url||'',queryName:queryName(o.name||'',shownNames)}));
  for(const o of state.goalOrgs)if(o.url){const host=(()=>{try{return new URL(o.url).hostname.replace(/^www\./,'')}catch(_){return ''}})();if(host)ref(state,'S',{url:o.url,kind:'site',host,name:o.name,from:'user'})}

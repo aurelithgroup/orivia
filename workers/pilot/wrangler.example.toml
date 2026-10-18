@@ -21,6 +21,8 @@ binding = "BROWSER"
 # Copy the private trial's AI_QUOTA rate-limit binding and Access settings here.
 
 [vars]
+# This Worker's own hostname (requests to any other host get 404). Put Cloudflare Access in front of this hostname too.
+PRIVATE_HOST = "orivia-research-pilot.habeebahsallah27.workers.dev"
 RESEARCH_ENABLED = "1"
 RESEARCH_LOOP = "1"
 RESEARCH_AGENT = "1"

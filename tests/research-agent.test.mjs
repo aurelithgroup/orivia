@@ -35,7 +35,7 @@ const U=(intent,extra={})=>({source:'test',research:true,intent,topic:'school',l
 const script=steps=>{let i=0;const views=[];const fn=async v=>{views.push(v);return steps[i++]||{action:'answer'}};fn.views=views;return fn};
 const spea=REGULATORS[0];
 // What Ina did in a browser (British filter, rows per page raised): modelled as a regulator listing that supports a filter.
-const speaWithFilter={...spea,listFiltered:async f=>f.curriculum==='british'?{status:'ok',filter:{curriculum:'british'},total:27,range:[1,27],items:BRITISH.map(b=>({name:b.name,url:b.url,fields:{curriculum:{value:'British',quote:'Curriculum::British'},area:{value:b.area,quote:'Area '+b.area}}}))}:{status:'unsupported'}};
+const speaWithFilter={...spea,listFiltered:async f=>f.curriculum==='british'?{status:'ok',complete:true,filter:{curriculum:'british'},total:27,range:[1,27],items:BRITISH.map(b=>({name:b.name,url:b.url,fields:{curriculum:{value:'British',quote:'Curriculum::British'},area:{value:b.area,quote:'Area '+b.area}}}))}:{status:'unsupported'}};
 
 /* ===== 1. Ina's case study: leads → broken old links → change route → complete filtered listing → finished check ===== */
 {

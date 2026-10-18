@@ -1109,7 +1109,7 @@ function setupPilot(d){
  const p=d&&d.mode!=='public'&&d.providerPilot&&typeof d.providerPilot==='object'?d.providerPilot:null;
  const row=$('pilot-row');if(!row)return;
  if(!p||p.provider!=='OpenAI'||typeof p.consent!=='string'||!/^[a-z0-9-]{4,60}$/.test(p.consent)){pilotOffer=null;row.hidden=true;return}
- pilotOffer=p.consent;row.hidden=false;$('pilot-text').textContent=String(p.text||'').slice(0,400);
+ pilotOffer=p.consent;row.hidden=false;$('pilot-text').textContent=String(p.text||'').slice(0,600);
  let saved='';try{saved=localStorage.getItem(pilotKey)||''}catch(_){}
  $('set-pilot').checked=saved===pilotOffer;
  $('set-pilot').onchange=e=>{try{if(e.target.checked)localStorage.setItem(pilotKey,pilotOffer);else localStorage.removeItem(pilotKey)}catch(_){}};

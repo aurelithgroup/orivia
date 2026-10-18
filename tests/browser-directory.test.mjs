@@ -116,4 +116,26 @@ const fast={pollMs:2,sessionMs:3000};
   if(process.env.SHOW)console.log("---TURN",turns,"\n"+last.reply);context={task:last.research.taskContext.task};
  }while(last.research.taskContext.task.cursor&&turns<6);
  assert.equal(seen.size,28,'all 28 delivered across '+turns+' turns');assert.equal(turns,4);assert.match(last.reply,/That’s all 28/);}
-console.log('Browser directory (scripted fake): counter-ahead guard, under-render, timeout, host/method/navigation checks, exhausted allowance, close in finally, action limit, year not confirmed by membership, long lists paged without loss: passed');
+
+// 12. Late launch (Ina's reproduction): the browser arrives after the launch timeout
+{const closed=[];const lateLaunch=delay=>()=>new Promise(r=>setTimeout(()=>r({newPage:async()=>{throw Error('unused')},close:async()=>{closed.push(delay)}}),delay));
+ // arrives within the grace period → closed straight away, then settled to time used
+ let b=fakeBudget();let r=await listDirectory({recipe:'spea',filter:{curriculum:'british'}},{launch:lateLaunch(60),budget:b,limits:{...fast,launchMs:20,lateLaunchMs:500}});
+ assert.equal(r.status,'partial');assert.deepEqual(closed,[60],'late browser closed');assert.equal(r.diagnostics.lateBrowserClosed,true);assert.notEqual(b.settled[0][1],null,'closure confirmed → settle to time used');
+ // still not there when we stop waiting → reservation kept in full, and the browser is closed whenever it arrives
+ b=fakeBudget();r=await listDirectory({recipe:'spea',filter:{curriculum:'british'}},{launch:lateLaunch(150),budget:b,limits:{...fast,launchMs:20,lateLaunchMs:30}});
+ assert.equal(b.settled.length,1);assert.equal(b.settled[0][1],null,'closure not confirmed → no refund');assert.equal(r.diagnostics.lateBrowserPending,true);
+ await new Promise(res=>setTimeout(res,200));assert.deepEqual(closed,[60,150],'the late browser is still closed when it finally arrives');
+ // a late browser whose close() fails → reservation kept
+ b=fakeBudget();await listDirectory({recipe:'spea',filter:{curriculum:'british'}},{launch:()=>new Promise(res=>setTimeout(()=>res({close:async()=>{throw Error('x')}}),40)),budget:b,limits:{...fast,launchMs:10,lateLaunchMs:300}});
+ assert.equal(b.settled[0][1],null);}
+
+// 13. The agent only treats a listing as complete when the tool says complete === true (a missing flag is not enough)
+{const items=[1,2].map(i=>({name:'[Synthetic] Listing School '+i,url:'https://spea.shj.ae'+P+'synthetic-listing-'+i,fields:{curriculum:{value:'British',quote:'Curriculum::British'}}}));
+ const understanding={research:true,intent:'all',topic:'school',location:{country:'uae',city:'Sharjah'},constraints:{curriculum:'british'},organisations:[],source:'test'};
+ const run=listing=>runAgentTurn({messages:[{role:'user',content:'All British schools in Sharjah'}]},{},{understanding,regulator:{...REGULATORS.find(x=>x.id==='spea'),listFiltered:async()=>listing},
+  fetcher:async()=>new Response('',{status:404}),reserve:async()=>false});
+ for(const flag of [undefined,null,'true',1]){const res=await run({status:'ok',filter:{curriculum:'british'},total:2,range:[1,2],items,...(flag===undefined?{}:{complete:flag})});
+  assert.equal(res.research.coverage?.complete??false,false,'complete='+String(flag)+' must not count');assert.doesNotMatch(res.reply,/complete list/)}
+ const ok=await run({status:'ok',complete:true,filter:{curriculum:'british'},total:2,range:[1,2],items});assert.match(ok.reply,/complete list SPEA shows for the British filter: 2 of 2/);}
+console.log('Browser directory (scripted fake): counter-ahead guard, under-render, timeout, host/method/navigation checks, exhausted allowance, close in finally, action limit, year not confirmed by membership, long lists paged without loss, late launches closed with reservation kept, strict complete===true: passed');

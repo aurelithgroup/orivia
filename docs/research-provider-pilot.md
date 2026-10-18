@@ -88,3 +88,10 @@ See `docs/browser-directory.md`. It has its own switch (`BROWSER_DIRECTORY=1`), 
    - If `diagnostics.steps` shows `not-found`, adjust the label.
    - If `blockedHosts` lists a CDN, review that host before adding it.
 7. Then turn on `OPENAI_PILOT=1`, tick the consent switch on one test device, and run the comparison conversations live. Label those rows `live`.
+
+### Review fixes, 18 Oct 2026 (Ina's review of a3c9f2e)
+
+- **Pilot URL.** The shared handler now serves `PRIVATE_HOST` when it is set to a valid hostname, otherwise the original private host. The example config sets `orivia-research-pilot.habeebahsallah27.workers.dev`. Tests call that exact URL and check that the old host, a missing `PRIVATE_HOST` and a malformed value all get 404. Cloudflare Access still has to cover the new hostname.
+- **Late browser launch.** A launch that finishes after the timeout is now closed as soon as it arrives. The reservation settles to the time used only once closure is confirmed. If the browser is still pending after the grace period (5 s), or its close fails, the full reservation is kept and it is still closed whenever it arrives.
+- **Consent accuracy.** When the pilot provider is used, the understanding request no longer contains `profileCity`. The task's place goes to the model only if the person wrote it in this chat, and the planning view leaves out a place that came only from About me. The code still uses the profile locally to validate the location. The wording now says exactly what is sent (recent messages in this chat, up to 10, plus public pages found) and what isn't (About me including city, documents, calendar, journeys). The consent version is now `openai-research-pilot-v2`, so earlier ticks don't carry over.
+- **Completeness.** A listing counts as complete only when `complete === true`. A missing, null, string or numeric flag doesn't count (regression test in `tests/browser-directory.test.mjs`).

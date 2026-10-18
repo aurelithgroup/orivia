@@ -14,8 +14,8 @@ import {createOpenAIBudget,createBrowserBudget} from './orivia-spend-ledger.mjs'
 import {speaListFiltered} from './orivia-browser-directory.mjs';
 import {REGULATORS} from './orivia-research-loop.mjs';
 
-export const PILOT_CONSENT='openai-research-pilot-v1';
-export const PILOT_CONSENT_TEXT='Use OpenAI for research planning in this private test. Your research requests (not your saved profile or documents) are sent to OpenAI to decide which public sources to check. You can turn this off at any time.';
+export const PILOT_CONSENT='openai-research-pilot-v2'; // v2: wording now matches exactly what is sent
+export const PILOT_CONSENT_TEXT='Use OpenAI for research in this private test. When you ask Orivia to look something up, the recent messages in this chat (up to 10) and the public pages Orivia has found are sent to OpenAI to decide what to check next. Your About me details, including your city, saved documents, calendar and journeys are not sent. You can turn this off at any time.';
 const isPublic=env=>env?.PUBLIC_BETA==='1';
 export const consentedToOpenAI=p=>!!p&&typeof p==='object'&&p.providerConsent&&typeof p.providerConsent==='object'&&p.providerConsent.openai===PILOT_CONSENT;
 export const pilotAvailable=env=>!isPublic(env)&&env?.OPENAI_PILOT==='1'&&!!env?.BUDGET_DB?.prepare;

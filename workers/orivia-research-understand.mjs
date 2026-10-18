@@ -118,11 +118,14 @@ A correction ("no, I meant X") replaces the earlier name. Keep filters (curricul
 Never invent names, links or places that are not in the conversation.`;
 
 /** Understand the latest request. ai: env.AI (optional). Returns a validated reading. */
-export async function understandRequest({messages,profile={},task=null},{ai=null}={}){
+export const placeWritten=(msgs,city)=>!!city&&(msgs||[]).some(m=>m?.role==='user'&&String(m.content||'').toLowerCase().includes(String(city).toLowerCase()));
+/** shareProfile:false (an outside pilot provider): the model sees only the conversation. No saved-profile city, and the task's
+ * place only if the person actually wrote it in this conversation. Code still uses the profile when validating. */
+export async function understandRequest({messages,profile={},task=null},{ai=null,shareProfile=true}={}){
  const msgs=(Array.isArray(messages)?messages:[]).filter(m=>m&&['user','assistant'].includes(m.role)).slice(-10).map(m=>({role:m.role,content:String(m.content||'').slice(0,700)}));
  if(ai?.run){
   try{
-   const out=await ai.run(MODEL,{messages:[{role:'system',content:SYSTEM},{role:'user',content:JSON.stringify({task:task?{intent:task.intent,topic:task.topic,location:task.location,constraints:task.constraints,shown:(task.shown||[]).slice(-12).map(s=>s.name),focus:task.focus||''}:null,profileCity:clean(profile.city||'').slice(0,60),conversation:msgs})}],max_tokens:400,temperature:0,stream:false});
+   const out=await ai.run(MODEL,{messages:[{role:'system',content:SYSTEM},{role:'user',content:JSON.stringify({task:task?{intent:task.intent,topic:task.topic,location:shareProfile||placeWritten(msgs,task.location?.city)?task.location:null,constraints:task.constraints,shown:(task.shown||[]).slice(-12).map(s=>s.name),focus:task.focus||''}:null,...(shareProfile?{profileCity:clean(profile.city||'').slice(0,60)}:{}),conversation:msgs})}],max_tokens:400,temperature:0,stream:false});
    const v=validateUnderstanding(out?.response??out,{messages:msgs,profile,task});
    if(v)return v;
   }catch(_){}

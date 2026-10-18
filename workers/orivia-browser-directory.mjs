@@ -14,7 +14,7 @@
  */
 import {parseDirectory,curriculumMatches,speaPage,SPEA_DIRECTORY} from './orivia-spea-reader.mjs';
 
-export const BROWSER_LIMITS=Object.freeze({sessionMs:45000,actions:14,pollMs:400,pages:4,htmlBytes:3000000,launchMs:15000});
+export const BROWSER_LIMITS=Object.freeze({sessionMs:45000,actions:14,pollMs:400,pages:4,htmlBytes:3000000,launchMs:15000,closeMs:5000,lateLaunchMs:5000});
 
 /* Recipes: only labels observed on the live page (SPEA, 18 Oct 2026: "Curriculum" filter with the options below,
  * "Apply Filter", "Rows Per Page" 10/25/50/100, counter "1-10 of 136"). No public data endpoint was visible in the page. */
@@ -71,13 +71,14 @@ export async function listDirectory({recipe,filter={}},{launch,budget,now=()=>Da
  const started=now(),deadline=started+L.sessionMs,d=base.diagnostics,allowed=new Set([R.host,...(R.assetHosts||[])]);
  const left=()=>deadline-now();
  const timed=(p,ms=left())=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(Object.assign(Error('timeout'),{code:'timeout'})),Math.max(1,ms)))]);
- let browser=null,closedOk=false,result=null;
+ let browser=null,launching=null,closedOk=false,result=null;
  const seen=new Map();let last=null;
  const step=(name,status)=>d.steps.push({name,status});
  const act=()=>{if(++d.actions>L.actions)throw Object.assign(Error('actions'),{code:'action-limit'})};
  const onPath=page=>{const u=page.url();return hostOf(u)===R.host&&new URL(u).pathname.replace(/\/$/,'')===R.path};
  try{
-  browser=await timed(Promise.resolve().then(launch),Math.min(L.launchMs,left()));
+  launching=Promise.resolve().then(launch);launching.catch(()=>{}); // kept: a launch that finishes after our timeout still gets closed
+  browser=await timed(launching,Math.min(L.launchMs,left()));
   const page=await timed(browser.newPage());
   await page.setRequestInterception(true);
   page.on('request',req=>{
@@ -116,10 +117,19 @@ export async function listDirectory({recipe,filter={}},{launch,budget,now=()=>Da
    if(nr!=='ok'||!onPath(page))break;const s3=await settle(last.key);if(!s3.stable)break;last=s3;for(const c of s3.dir.cards)seen.set(c.url,c)}
  }catch(e){result={status:'partial',reason:e?.code||'browser-error'}}
  finally{
-  if(browser){try{await timed(browser.close(),5000);closedOk=true}catch{closedOk=false}}
+  const closeIt=async b=>{if(!b||typeof b.close!=='function')return true;try{await timed(Promise.resolve().then(()=>b.close()),L.closeMs);return true}catch{return false}};
+  if(browser)closedOk=await closeIt(browser);
+  else if(launching){
+   // Launch timed out or failed. Wait briefly to learn which: failed → nothing is running; arrived late → close it now;
+   // still pending → close it whenever it arrives, and keep the whole reservation because closure isn't confirmed.
+   const late=await Promise.race([launching.then(b=>({b}),()=>({none:true})),sleep(L.lateLaunchMs).then(()=>({pending:true}))]);
+   if(late.none)closedOk=true;
+   else if(late.b){d.lateBrowserClosed=true;closedOk=await closeIt(late.b)}
+   else{closedOk=false;d.lateBrowserPending=true;launching.then(b=>closeIt(b)).catch(()=>{})}
+  }else closedOk=true;
   const ms=Math.max(0,now()-started);base.browserMs=ms;
-  // A session that didn't close cleanly may keep running until the platform timeout: keep the whole reservation.
-  try{await budget.settle(ticket,browser&&!closedOk?null:ms)}catch{}
+  // Settle to time used only once closure is confirmed; otherwise keep the full reservation (the session may still run).
+  try{await budget.settle(ticket,closedOk?ms:null)}catch{}
  }
  const items=[...seen.values()].map(c=>({name:c.name,url:c.url,fields:{...(c.curriculum?{curriculum:{value:c.curriculum,quote:c.quote}}:{}),...(c.area?{area:{value:c.area,quote:c.area}}:{})}}));
  const total=last?.dir?.total??null;
