@@ -171,7 +171,10 @@ async function handle(req,env,ctx,hooks={},opts={}){
  // the normal flow below answers instead.
  let admitted=!!opts.admitted;
  const assist=!PUBLIC&&hooks.assistant?hooks.assistant({env,preferences:input.preferences,ctx}):null;
- if(assist&&!planTrip(input.messages,input.preferences?.profile).active){
+ // The route planner keeps a message only when it recognised a destination the person named in this chat; its keyword
+ // trigger alone ("car … get it back") isn't enough (18 Oct probe: a towed-car question was asked "which university?").
+ const routing=(t=>t.active&&t.dest&&!t.destFromProfile)(planTrip(input.messages,input.preferences?.profile));
+ if(assist&&!routing){
   if(!admitted){const gate=await admit();if(gate)return gate;admitted=true}
   const args={messages:input.messages,profile:input.preferences?.profile,context:input.preferences?.researchContext,reserve:reserveSearch};
   // The page asks for a stream: progress lines describing what Orivia is actually doing, then {status,result}. If the

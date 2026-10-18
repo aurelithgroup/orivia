@@ -70,12 +70,12 @@ r=await worker.fetch(req('All British schools in Sharjah',consent),{...pilotEnv,
 // Consent but rates not confirmed → fail closed (no OpenAI request, no money reserved)
 r=await worker.fetch(req('All British schools in Sharjah',consent),{...pilotEnv,OPENAI_INPUT_USD_PER_M:undefined},ctx);assert.equal(r.status,200);assert.equal(openaiCalls.length,0);
 
-// Consent + switch + rates + limits, and the assistant can't use the model's reply (not its JSON) → the fallback research path
-// still uses OpenAI to understand and plan; Workers AI not used for research
+// Consent + switch + rates + limits, and the model's steps are unusable (this fake answers in the old planner's format) →
+// the assistant gives an honest "couldn't check, won't guess" reply: no hand-over, Workers AI not used for this tester.
 aiCalls.length=0;r=await worker.fetch(req('All British schools in Sharjah',consent),pilotEnv,ctx);let d=await r.json();
-assert.equal(r.status,200);assert.ok(openaiCalls.length>=2,'understanding + planning went to the pilot');assert.ok(openaiCalls.every(c=>c.store===false&&c.auth==='Bearer sk-test-not-real'));
-assert.ok(!aiCalls.includes('understand')&&!aiCalls.includes('plan'),'existing provider not used for this tester’s research');
-assert.equal(d.research.agent,true);assert.equal(d.research.process.steps[0].by,'model');
+assert.equal(r.status,200);assert.ok(openaiCalls.length>=2,'the assistant tried OpenAI');assert.ok(openaiCalls.every(c=>c.store===false&&c.auth==='Bearer sk-test-not-real'));
+assert.ok(!aiCalls.includes('understand')&&!aiCalls.includes('plan')&&!aiCalls.includes('chat'),'existing provider not used for this tester');
+assert.equal(d.research.assistant,true);assert.equal(d.research.status,'incomplete');assert.match(d.reply,/won’t guess/);
 const spent=sql.prepare("SELECT day_amount FROM spend_meter WHERE id='openai'").get();assert.ok(spent.day_amount>0,'usage recorded in the shared ledger');
 assert.ok(!JSON.stringify(sql.prepare('SELECT * FROM spend_ticket').all()).match(/British|Sharjah|sk-test/),'ledger stores amounts only');
 

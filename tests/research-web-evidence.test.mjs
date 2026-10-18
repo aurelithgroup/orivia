@@ -78,7 +78,7 @@ const body=r=>r.reply.split('\n\n[1]')[0];
  let n=0;while(await reserveSearch(pilot,now))n++;assert.equal(n,50,'pilot: 50 a day');
  let b=0;while(await reserveSearch(beta,now))b++;assert.equal(b,10,'the beta still has its own 10 a day, untouched by the pilot');
  assert.equal(await reserveSearch({...pilot,SEARCH_DAILY_CAP:'500'},new Date('2026-10-19T06:00:00Z'))&&true,true);
- let c=1;while(await reserveSearch({...pilot,SEARCH_DAILY_CAP:'500'},new Date('2026-10-19T06:00:00Z')))c++;assert.equal(c,50,'daily cap ceiling stays 50 even if misconfigured');
+ let c=1;while(await reserveSearch({...pilot,SEARCH_DAILY_CAP:'500'},new Date('2026-10-19T06:00:00Z')))c++;assert.equal(c,200,'daily cap ceiling stays 200 even if misconfigured (raised from 50 for testing, founder 18 Oct; the monthly ceiling of 1000 is unchanged)');
  assert.equal(await reserveSearch({...beta,SEARCH_POOL:'Bad Pool!'},new Date('2026-10-20T06:00:00Z')),true,'an invalid pool name falls back to the shared counters');}
 
 // 5. Query wording is built from validated fields only (never chat text)

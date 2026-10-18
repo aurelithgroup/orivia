@@ -33,7 +33,7 @@ function logCall(fields){try{console.log(JSON.stringify({event:'orivia-openai-pi
  * Reservation stays charged on timeout/error/unknown usage; never auto-refund an uncertain call.
  * The supplied implementation MUST atomically enforce the shared money limit across requests.
  */
-export function createOpenAIPilot(env,{consented=false,budget,fetcher=fetch,timeoutMs=20000}={}){
+export function createOpenAIPilot(env,{consented=false,budget,fetcher=fetch,timeoutMs=55000}={}){
  if(env.OPENAI_PILOT!=='1')throw new PilotError('pilot-disabled');
  if(!consented)throw new PilotError('provider-consent-required');
  if(typeof env.OPENAI_API_KEY!=='string'||!env.OPENAI_API_KEY.trim())throw new PilotError('missing-key');
@@ -52,7 +52,8 @@ export function createOpenAIPilot(env,{consented=false,budget,fetcher=fetch,time
   calls++;
   const ticket=await budget.reserve({model:MODEL,inputBytes,maxOutputTokens:maxOut});
   if(!ticket){blocked=true;logCall({call:calls,outcome:'budget-exhausted'});throw new PilotError('budget-exhausted')}
-  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),Math.max(1,Math.min(20000,timeoutMs)));
+  // 55 s: a written reply (up to 1,800 tokens from the assistant) can take 35-40 s; 20 s timed out live on 18 Oct.
+  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),Math.max(1,Math.min(55000,timeoutMs)));
   const started=Date.now();
   let usage={status:'unknown',inputTokens:null,outputTokens:null},log={call:calls,inputBytes};
   try{

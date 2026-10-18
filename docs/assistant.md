@@ -105,3 +105,28 @@ Fixed (commit after 9e498c2):
 ## Daily limit (decided 18 Oct)
 
 The money reservation is deliberately conservative: input bytes at the input rate, plus the maximum output. A research turn reserves up to about $0.10 but costs $0.02–0.07. With $0.50 a day, that allows roughly 6–8 research turns a day. The founder raised the daily limit to $1 (month still $10), roughly doubling that. Deployed as version 9d1a7d6e.
+
+## Milestone 1 live run, 18 Oct evening (full deployed conversations, consent v3)
+
+Testing limits for this run, approved by the founder: OpenAI $5 a day and $20 a month, and pilot searches 150 a day (code ceiling 200; the month stays at 1,000). Day totals: OpenAI ≈ $2.66 (including the old $0.10) and 134 Brave searches.
+
+| Conversation | Result | Fixes made during the run (all generic, no topic code) |
+|---|---|---|
+| A, Dubai British school, Year 6, Al Barsha | 8/8 verified. A4 ("Dubai Collge") was rerun after a fix | Own-site check for names made of common words ("Dubai College" → dubaicollege.org) and for group sites by a non-listing page title; stop rewriting when a rewrite fails for the same reasons |
+| B, GP in Edinburgh (UK) | 8/8. B2 and B3 were rerun after fixes; B5 asked one fair clarifying question | Search limit was exhausted; the model's unreadable steps went to Workers AI chat, which invented a practice. Now: tolerant JSON reading; an honest "couldn't check" reply instead of a hand-over; never two questions in a row |
+| C, bank account without Emirates ID (Abu Dhabi → Dubai) | 8/8. C4 and C6 were rerun after fixes | Short names and acronyms (wio.io, bankfab.com) recognised, not fan sites; model timeout 20 s → 55 s and replies capped at 1,800 tokens (~250 words); C3 pointed to the Central Bank register for a complete list |
+| Unseen-topic probes | Towed car in Sharjah (Sharjah Municipality); degree attestation **in Arabic** (UAE foreign and higher-education ministries); National Insurance on a UK Student visa (GOV.UK). All verified | The route planner's keyword trigger was taking over the towed-car question: it now keeps a message only when a destination was named |
+
+Also live now:
+
+- progress messages inside the chat, written from real steps ("Searching: …", "Read 6 pages, searched 3 times · deciding what to check next");
+- salvaged replies, which keep the verified sentences and say what was left out;
+- "are those all?" now names where a complete list would come from.
+
+Still open:
+
+1. Turn time is often 40–90 s.
+2. Forums (Reddit) can't be read, so "what do people say" answers have no community evidence yet.
+3. The interface labels around replies ("SOURCES", "Official source", the footer that mentions "emirate") are English-only and not region-aware.
+4. Card fact labels sometimes show only a value.
+5. The `browser` meter shows 134 s recorded on 18 Oct from before this run (Browser Run is switched off and its limits are 0).

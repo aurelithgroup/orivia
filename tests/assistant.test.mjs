@@ -1,7 +1,7 @@
 /* Pilot assistant (consent v3): source kinds, the answer check, one scripted turn with tools, a question, memory.
    SCRIPTED (fake model, fake pages, fake search). Run: node tests/assistant.test.mjs */
 import assert from 'node:assert/strict';
-import {sourceKind,verifyReply,pageText,excerptFor,ownSite,runAssistantTurn,cleanMemory,regionOf,personRegion,bestQuote,render,limitReply,progressLabel,salvageReply,evidenceView} from '../workers/orivia-assistant.mjs';
+import {sourceKind,verifyReply,pageText,excerptFor,ownSite,runAssistantTurn,cleanMemory,regionOf,personRegion,bestQuote,render,limitReply,progressLabel,salvageReply,evidenceView,parseJSON,normaliseStep} from '../workers/orivia-assistant.mjs';
 import {runAgentTurn} from '../workers/orivia-research-agent.mjs';
 
 // Source kinds come from the address, never from the model
@@ -97,7 +97,11 @@ const broken=await runAssistantTurn({messages:[{role:'user',content:'hi'}]},env,
 let calls=0;const junk=await runAssistantTurn({messages:[{role:'user',content:'hi'}]},env,{ai:{run:async()=>{calls++;return {response:'not json'}}},fetcher,reserve:async()=>true});
 console.log=origLog;
 assert.equal(asked.reply,'Which city are you in?');assert.equal(asked.research.taskContext.task.assistant.goal,'find a school');
-assert.equal(failing,null,'three rejected replies → fallback, never an unchecked answer');assert.equal(broken,null);assert.equal(junk,null);assert.equal(calls,2,'gives up after two unreadable steps');
+// Rejected replies or unusable steps after real work → an honest "couldn't check, won't guess" reply, never an unchecked
+// answer and never a hand-over to an unsourced path (B2, 18 Oct). Only a model that never answered leaves it to the caller.
+assert.equal(failing.research.status,'incomplete','rejected replies → honest reply');assert.match(failing.reply,/won’t guess/);assert.ok(!/123 4567/.test(failing.reply));
+assert.equal(broken,null,'model unreachable from the first call → caller decides');
+assert.equal(junk.research.status,'incomplete');assert.equal(calls,2,'gives up after two unreadable steps');
 // The tool deadline: with 2 steps left the model must answer
 let n=0;const late=await (async()=>{console.log=()=>{};const r=await runAssistantTurn({messages:[{role:'user',content:'x'}]},env,{maxCalls:2,ai:{run:async(_m,o)=>{n++;const st=JSON.parse(o.messages[1].content);assert.ok(st.instruction,'told to reply now');return {response:'{"action":"ask","question":"Which one?"}'}}},fetcher,reserve:async()=>true});console.log=origLog;return r})();
 assert.equal(late.reply,'Which one?');assert.equal(n,1);
@@ -143,6 +147,17 @@ assert.ok(!/Skip to main content/i.test(pageText('<nav>Home Services</nav><a hre
 {const quiet=console.log;console.log=()=>{};
  const out=await runAgentTurn({messages:[{role:'user',content:'find me a hospital in sharjah'}]},{},{understanding:{source:'model',research:true,intent:'find',topic:'hospital',location:{country:'uae',city:'Sharjah'},constraints:{curriculum:'',year:null},organisations:[],searches:[]},fetcher:async()=>{throw Error('no network')},reserve:async()=>true});
  console.log=quiet;assert.equal(out,null,'not school-shaped: left to other paths');}
+// Own site: a name of only common words is matched whole; group sites by a non-listing title; listing titles never
+assert.ok(ownSite({url:'https://www.dubaicollege.org/admissions',title:'Admissions',kind:'website'},'Dubai College'));
+assert.ok(ownSite({url:'https://www.taaleem.ae/dbs',title:'Dubai British School Jumeirah Park | Taaleem',kind:'website'},'Dubai British School Jumeirah Park'));
+assert.ok(!ownSite({url:'https://www.godubai.com/x',title:'Top 10 British schools in Dubai',kind:'website'},'Dubai British School'));
+// The model's step is read tolerantly: fences, raw line breaks in strings, a second object, a brace inside a string; synonyms
+assert.equal(parseJSON('```json\n{"action":"reply"}\n```').action,'reply');assert.equal(parseJSON('{"action":"ask","question":"a\nb"}').action,'ask');
+assert.equal(parseJSON('{"action":"tools"} {"action":"reply"}').action,'tools');assert.equal(parseJSON('ok {"action":"reply","x":"a } b"} bye').action,'reply');assert.equal(parseJSON('nothing'),null);
+assert.equal(normaliseStep({action:'answer',sentences:[{text:'x'}]}).action,'reply');assert.equal(normaliseStep({calls:[{tool:'web_search'}]}).action,'tools');assert.equal(normaliseStep({action:'dance'}).why,'unknown-action:dance');
+// Short names and acronyms: a whole address part, or with a generic word attached (bankfab); never a fan or blog site
+assert.ok(ownSite({url:'https://www.wio.io/personal',title:'Home',kind:'website'},'Wio'));assert.ok(ownSite({url:'https://www.bankfab.com/en-ae',title:'Home',kind:'website'},'First Abu Dhabi Bank (FAB)'));
+assert.ok(!ownSite({url:'https://wiofans.blogspot.com/',title:'Home',kind:'website'},'Wio'));
 // Progress labels describe the real tool calls (and never carry personal details from a query)
 assert.equal(progressLabel([{tool:'web_search',query:'24 hour pharmacy Al Nahda Sharjah'},{tool:'read_page',url:'https://www.mohap.gov.ae/x'},{tool:'read_page',url:'https://www.shj.ae/y'}]),'Searching: 24 hour pharmacy Al Nahda Sharjah · Reading 2 pages: mohap.gov.ae, shj.ae');
 assert.ok(!/0501234567/.test(progressLabel([{tool:'web_search',query:'call me on 0501234567 about rent'}])));
