@@ -130,3 +130,35 @@ Still open:
 3. The interface labels around replies ("SOURCES", "Official source", the footer that mentions "emirate") are English-only and not region-aware.
 4. Card fact labels sometimes show only a value.
 5. The `browser` meter shows 134 s recorded on 18 Oct from before this run (Browser Run is switched off and its limits are 0).
+
+## Hidden housing test, 18 Oct: trace and fixes
+
+**Trace of the founder's conversation:**
+
+- **Provider and route.** No OpenAI ledger entries exist for it, so the v3 consent was off on that device. All four replies came from basic mode: Workers AI chat, with no sources and closing offers.
+- **"Which institution is handling it?"** This came from `planResearch` in `orivia-research-plan.mjs`. Its keyword topic "institution" (from "uni") plus no named organisation produced a fixed clarification, even though the request was "write me a message".
+- **"Too many messages at once."** The private trial's daily counter (one row per UTC day, shared with the public beta in `orivia-beta-budget`) had reached `DAILY_CAP`=60. The server said "Daily private AI trial limit reached", but the page shows every non-beta 429 as "too many messages". Retrying couldn't help before midnight UTC, and each attempt also used the per-minute `AI_QUOTA` (5 a minute, one key for all private testers), because that was checked first.
+
+**General fixes (commits bf9e06a and the one after it):**
+
+- **Limits:**
+  - the daily cap is checked before the per-minute quota;
+  - assistant turns have their own counter (`assistant:<pool>:<day>`, `ASSISTANT_DAILY_CAP`=300) and quota key;
+  - the pilot's Workers AI counter is now `pilot:<day>`, no longer shared with the beta;
+  - refusals return `daily_limit` or `rate_limit` with `retryAfter`;
+  - the page says which limit was hit and when it resets, puts the message back in the box (no duplicate bubbles), and counts the Send button down.
+- **Visible mode.** The status line says "Research test (OpenAI) · facts checked…" or "Basic mode · the OpenAI research test is off on this device (turn it on in Settings)".
+- **Writing requests** (`isWritingRequest`) are never research or a canned clarification in the old path. Basic chat now writes the message to whoever the person is dealing with, and is told not to end on offers.
+- **Assistant drafting.** The `draft` field holds who it's to, the channel, the subject and the text. Facts in it must appear in what the person said or in cited evidence, and [placeholders] are used otherwise. The page shows it in an editable box with Copy; edits are kept with the chat; nothing is ever sent.
+
+**Live replay of the whole conversation (deployed, 18 Oct, 18:00–18:10 UTC):**
+
+- **Basic mode (consent off):** no institution question and no lockout; turn 4 wrote the message to the landlord. Llama still sometimes ends with "Would you like me to…?" despite the rule.
+- **Research test (consent on):** six turns, all model-written.
+  - Turn 1: Manchester Student Homes advice and its free contract check, with phone and email, plus England's deposit caps from GOV.UK.
+  - Turns 2–3: firm, specific answers to the actual questions.
+  - Turn 4, "Write me a message": an editable message to the person offering the room in about 20 s, from one model call with no research and no question.
+  - "the landlord i mean": readdressed to the landlord.
+  - "make it shorter and less formal": a three-sentence version.
+  - The edited text survived a page reload, and Copy worked.
+- **Not tested live:** the per-minute rate-limit countdown, since a single tester can't send 5 assistant turns a minute while each takes 20–60 s. It is covered by `tests/research-pilot.test.mjs`.
