@@ -1,6 +1,6 @@
 # Pilot assistant (consent v3): the model leads, code checks
 
-Status, 18 Oct 2026 (Cleo): built, offline-tested and live-tested for 3 turns on the private pilot. `OPENAI_PILOT` is back at `0`.
+Status, 18 Oct 2026 (Cleo): built, offline-tested and live-tested for 3 turns on the private pilot. `OPENAI_PILOT` is `1` in `wrangler.jsonc` (founder, 18 Oct: on for consenting testers before the 21 Oct mentor meeting; the daily and monthly limits still apply). Testers without the v3 tick are unaffected.
 
 ## What it is
 
