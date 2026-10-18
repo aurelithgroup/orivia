@@ -1,6 +1,8 @@
 // Copies workers/trial-ui/page.html and chat.js into workers/orivia-ai-private-trial.mjs
 // (the Worker serves them as embedded strings). Run: node tools/embed-trial-ui.mjs
-import fs from 'node:fs';
+import nodeFs from 'node:fs';
+// Windows checkouts can turn line endings into CRLF; always embed the same LF text that CI and GitHub hold.
+const fs={...nodeFs,readFileSync:(p,e)=>{const d=nodeFs.readFileSync(p,e);return typeof d==='string'?d.replace(/\r\n/g,'\n'):d}};
 const W='workers/orivia-ai-private-trial.mjs';
 let src=fs.readFileSync(W,'utf8');
 const swap=(path,content)=>{

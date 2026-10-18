@@ -16,6 +16,10 @@ assert.match(js,/calendar\.google\.com\/calendar\/render/);
 assert.match(js,/Confirm Save in Google Calendar/);
 assert.match(js,/\/reminder\.ics\?/); // the phone calendar file is the main export; Google Calendar stays optional
 assert.match(js,/Tap “Add to phone calendar” to get an alert on your phone/);
+// Platform-aware since 18 Oct (founder: "Add to phone calendar" only downloaded a file): iPhone/iPad open the Calendar app from
+// the .ics file; Android and computers get Google Calendar, with the file offered on computers for Outlook/Apple Calendar.
+assert.match(js,/only in your calendar after you tap Save or Add/);
+assert.match(js,/ios?[ics('Add to iPhone Calendar')/);assert.match(js,/android?[g('Add to Google Calendar')]/);
 assert.match(js,/events=events\.filter/);
 const fn=js.match(/function googleEvent\(e\)\{[\s\S]*?\n\}/)[0];
 const eventUrl=new Function('URLSearchParams',fn+';return googleEvent')(

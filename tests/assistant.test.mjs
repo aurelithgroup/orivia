@@ -193,4 +193,30 @@ assert.equal(maybeResearch(housing,{task:{topic:'housing'}}),false);
  let k2=0;const draftOnly={run:async()=>({response:JSON.stringify({action:'reply',sentences:[],draft:{to:'the landlord',channel:'email',subject:'Viewing before deposit',text:'Hello, could I view the room first? [your name]'}})})};
  console.log=()=>{};const o2=await runAssistantTurn({messages:housing},env,{ai:draftOnly,fetcher,reserve:async()=>true});console.log=quiet;
  assert.equal(o2.draft.channel,'email');assert.equal(o2.draft.subject,'Viewing before deposit');assert.ok(o2.reply.length>10,'a short line introduces the draft');}
-console.log('Assistant: source kinds by address, answer check (contacts, amounts, claim/source fit, own site, jurisdiction), cards never guessed, one source per page, relevant quotes, private search terms, memory carried and cleaned, ask, budget-aware with an honest limit reply, fallback on failure, drafted messages from the conversation (no research, no institution question): passed');
+/* ---- 18 Oct accommodation test: "can you please set me a reminder i'd like to send it tomorrow" ---- */
+{const convo=[...housing,{role:'assistant',content:'Here’s a message you can edit before you send it.'},{role:'user',content:'can you please set me a reminder i’d like to send it tomorrow'}];
+ let seen;const setter={run:async(_m,o)=>{seen=JSON.parse(o.messages[1].content);return {response:JSON.stringify({action:'reply',sentences:[{text:'Done: I’ve set a reminder for tomorrow at 9am to send the message to the landlord.',kind:'general'}],
+  reminder:{title:'Send the message to the landlord',date:'2026-10-19',time:'09:00'},memory:{}})}}};
+ const quiet=console.log;console.log=()=>{};
+ const o=await runAssistantTurn({messages:convo,localNow:{date:'2026-10-18',time:'21:05',weekday:'Sunday',tz:'Europe/London'}},env,{ai:setter,fetcher:async()=>{throw Error('no research expected')},reserve:async()=>true});console.log=quiet;
+ assert.deepEqual(seen.local_now,{date:'2026-10-18',time:'21:05',weekday:'Sunday',tz:'Europe/London'},'the model sees the person’s own clock');
+ assert.deepEqual(o.reminder,{title:'Send the message to the landlord',date:'2026-10-19',time:'09:00'});assert.match(o.reply,/reminder for tomorrow/);
+ // Past dates and empty titles are refused; a reminder-only reply still gets a confirmation line
+ assert.match(verifyReply({sentences:[{text:'Done.',kind:'general'}],reminder:{title:'Send it',date:'2026-10-17'}},[],{today:'2026-10-18'}).errors.join(' '),/reminder: date/);
+ assert.match(verifyReply({sentences:[{text:'Done.',kind:'general'}],reminder:{title:'x',date:'2026-10-19'}},[],{today:'2026-10-18'}).errors.join(' '),/reminder: needs a short title/);
+ assert.equal(verifyReply({sentences:[],reminder:{title:'Renew the Emirates ID',date:'2026-10-25',time:'25:99'}},[],{today:'2026-10-18'}).reminder.time,'09:00','a bad time falls back to 9am');
+ const only={run:async()=>({response:JSON.stringify({action:'reply',sentences:[],reminder:{title:'Call the GP practice',date:'2026-10-19',time:'08:30'}})})};
+ console.log=()=>{};const o2=await runAssistantTurn({messages:convo,localNow:{date:'2026-10-18'}},env,{ai:only,fetcher,reserve:async()=>true});console.log=quiet;
+ assert.equal(o2.reminder.time,'08:30');assert.match(o2.reply,/set that reminder/);}
+// A site not on the listing list still counts as a listing when its page reads like one
+{const page='<html><title>Apartments For Rent in Sharjah - Find Properties</title><body><p>Al Nabba AED 24,000 1BHK apartment.</p></body></html>';
+ const st=[{action:'tools',calls:[{tool:'read_page',url:'https://findproperties.ae/for-rent/apartments/sharjah'}]},{action:'reply',sentences:[{text:'One advert lists a 1BHK in Al Nabba for AED 24,000.',kind:'listing',evidence:['E1']}],memory:{}}];let k=0;
+ const quiet=console.log;console.log=()=>{};const o=await runAssistantTurn({messages:[{role:'user',content:'apartments in sharjah'}]},env,{ai:{run:async()=>({response:JSON.stringify(st[k++])})},fetcher:async()=>new Response(page,{headers:{'content-type':'text/html'}}),reserve:async()=>true});console.log=quiet;
+ assert.equal(o.liveSources[0].category,'directory','shown as a listing site, not an organisation source');}
+// Basic mode: the keyword card steps aside in research mode and, otherwise, fills a clean title and the date the message names
+{const src=(await import('../workers/orivia-inline-calendar.js')).default;
+ assert.match(src,/window\.oriviaResearchEnabled\(\):window\.oriviaResearchMode\)return;/);
+ const title=new Function(src.match(/function reminderTitle[\s\S]*?\n \}\n/)[0]+'return reminderTitle')(),when=new Function(src.match(/function reminderWhen[\s\S]*?\n \}\n/)[0]+'return reminderWhen')();
+ assert.equal(title('can you please set me a reminder i’d like to send it tomorrow'.replace('’',"'")),'Send it');assert.equal(title('remind me to call the landlord at 5pm tomorrow'),'Call the landlord');
+ assert.match(when('remind me to call the landlord at 5pm tomorrow'),/T17:00$/);assert.equal(when('remind me about it'),'');}
+console.log('Assistant: source kinds by address, answer check (contacts, amounts, claim/source fit, own site, jurisdiction), cards never guessed, one source per page, relevant quotes, private search terms, memory carried and cleaned, ask, budget-aware with an honest limit reply, fallback on failure, drafted messages from the conversation (no research, no institution question), reminders set from the conversation on the person’s own clock: passed');
