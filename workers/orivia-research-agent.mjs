@@ -92,7 +92,7 @@ async function execute(action,state,tools){
   if(R.listFiltered&&c.curriculum){const l=await R.listFiltered({curriculum:c.curriculum,year:c.year},tools);state.browserMs=(state.browserMs||0)+(l.browserMs||0);
    if((l.status==='ok'||l.status==='partial')&&l.items?.length){const listing={source:'regulator',filter:l.filter,total:l.total,range:l.range,items:l.items.length,
      complete:l.complete===true&&l.status==='ok'&&l.items.length===l.total&&l.range?.[1]===l.total,unapplied:l.unappliedFilters||[]};state.listings.push(listing);
-    for(const it of l.items)addRecord(state,it.url,it.name,{level:LEVEL.regulator,fields:it.fields||{},from:'regulator-listing'});
+    for(const it of l.items)addRecord(state,it.url,it.name,{level:LEVEL.regulator,fields:it.fields||{},sourceUrl:it.sourceUrl||'',from:'regulator-listing'});
     if(!listing.complete)state.failures.push({what:'regulator-listing',reason:l.reason||'not-all-results-read'});
     return 'Regulator listing with filter '+JSON.stringify(l.filter)+': '+l.items.length+' entries read, total shown '+l.total+(listing.complete?' (all results read)':' (not all results read: '+(l.reason||'partial')+')')+'.'}
    state.failures.push({what:'regulator-listing',reason:l.reason||l.status});}
@@ -265,10 +265,11 @@ function compose(state,a){
   const PAGE=AGENT_LIMITS.listPage,page=list.slice(0,PAGE),rest=list.slice(PAGE);
   const prevTotal=state.task?.listTotal&&state.task.listTotal.curriculum===(c.curriculum||'')?state.task.listTotal.total:null;
   if(page.length){parts.push((g.kind==='more'?'Here are '+page.length+' more ':rest.length?'Here are the first '+page.length+' ':page.length+' ')+label+(where?' in '+where:'')+(R?' from '+R.short+':':':'));
-   for(const r of page){const s=sid(r.url,r.name+' ('+R.short+')','official');const l=recordLine(r,s);parts.push(l.text+' ['+s.id.slice(1)+']');if(l.claim)claims.push(l.claim);orgs.push(orgCard(r,s));task.shown.push({name:r.name,url:r.url,level:LEVEL.regulator})}}
+   for(const r of page){const s=sid(r.sourceUrl||r.url,r.sourceUrl?R.short+' school directory data':r.name+' ('+R.short+')','official');const l=recordLine(r,s);parts.push(l.text+' ['+s.id.slice(1)+']');if(l.claim)claims.push(l.claim);orgs.push(orgCard(r,s));task.shown.push({name:r.name,url:r.url,level:LEVEL.regulator})}}
   else parts.push('I couldn’t confirm any '+(g.kind==='more'?'new ':'')+label+(where?' in '+where:'')+(R?' on '+R.short:'')+' in this check.');
   const unopened=[...state.records.values()].filter(r=>r.level===LEVEL.regulatorIndex&&!r.failed&&r.name&&!shown.has(r.url));
   const queued=[...state.records.values()].filter(r=>r.level===LEVEL.regulatorIndex&&!r.failed&&!r.name&&!shown.has(r.url)); // carried from an earlier page
+  if(page.some(r=>r.sourceUrl))parts.push('These classifications come from the Sharjah Private Education Authority (SPEA), the authority overseeing private schools in Sharjah. Its directory covers the whole emirate. I read its directory data; I haven’t opened each school’s profile.');
   if(unopened.length)parts.push('Also listed on '+R.short+', not opened yet: '+unopened.slice(0,8).map(r=>r.name).join('; ')+(unopened.length>8?' and '+(unopened.length-8)+' more':'')+'.');
   const leads=state.leads.filter(l=>!l.matched&&![...state.records.values()].some(r=>r.name&&sameOrg(l.name,r.name)));
   if(leads.length)parts.push('Mentioned on other websites, not confirmed'+(R?' on '+R.short:'')+': '+leads.slice(0,6).map(l=>l.name).join('; ')+'.');

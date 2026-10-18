@@ -12,6 +12,7 @@ import {createTrialWorker} from './orivia-ai-private-trial.mjs';
 import {createOpenAIPilot} from './orivia-openai-pilot.mjs';
 import {createOpenAIBudget,createBrowserBudget} from './orivia-spend-ledger.mjs';
 import {speaListFiltered} from './orivia-browser-directory.mjs';
+import {readSpeaDirectoryFeed} from './orivia-spea-directory-feed.mjs';
 import {REGULATORS} from './orivia-research-loop.mjs';
 
 export const PILOT_CONSENT='openai-research-pilot-v2'; // v2: wording now matches exactly what is sent
@@ -32,6 +33,7 @@ export function pilotResearchOptions({env,preferences,ctx},{launchBrowser,fetche
   const budget=createBrowserBudget(env,env.BUDGET_DB);
   if(budget.configured){const spea=REGULATORS.find(r=>r.id==='spea');options.regulatorOverrides={spea:{...spea,listFiltered:speaListFiltered({launch:()=>launchBrowser(env),budget,waitUntil:ctx?.waitUntil?p=>ctx.waitUntil(p):null})}};notes.push('browser')}
  }
+ if(env.SPEA_DIRECTORY_FEED==='1'){const spea=REGULATORS.find(r=>r.id==='spea');options.regulatorOverrides={spea:{...spea,listFiltered:(filter,tools)=>readSpeaDirectoryFeed(filter,tools)}};notes.push('official-directory-feed')}
  return notes.length?{agent:true,options,pilot:notes}:null;
 }
 
