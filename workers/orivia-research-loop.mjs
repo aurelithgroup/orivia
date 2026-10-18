@@ -381,7 +381,7 @@ export async function runResearchTurn({messages,profile={},context=null},env,{fe
 }
 function result(u,status,reply,sources,claims,orgs,task,cov,tools,cardMode){
  const refs=sources.length?'\n\n'+sources.map((s,i)=>'['+(i+1)+'] '+s.title+': '+s.url).join('\n'):'';
- task.shown=task.shown.filter((s,i,a)=>s.url&&a.findIndex(x=>x.url===s.url)===i).slice(-40);
+ task.shown=task.shown.filter((s,i,a)=>s.url&&a.findIndex(x=>x.url===s.url)===i).slice(-60);
  // One log line for `wrangler tail`: outcome codes and counts only, never user text, names, keys or queries.
  try{console.log(JSON.stringify({event:'orivia-research-loop',status,understanding:u.source,intent:u.intent,topic:u.topic,city:u.location?.city||'',searches:tools.used.searches,fetches:tools.used.fetches,sources:sources.length,trace:tools.log.map(x=>({step:x.step,site:x.site,status:x.status,http:x.http,results:x.results}))}))}catch(_){}
  return {reply:reply+refs,verifiedSources:[],liveSources:sources.map(({id,url,title,category,checkedAt})=>({id,url,title,category,checkedAt,topic:u.topic})),actions:[],liveInformation:sources.length>0,liveJourneyData:false,
@@ -392,10 +392,10 @@ function result(u,status,reply,sources,claims,orgs,task,cov,tools,cardMode){
 /** Client-held task state is scope, never evidence: re-validate every field. */
 export function sanitizeTask(t){
  const str=(v,n)=>typeof v==='string'?v.slice(0,n):'';
- const shown=(Array.isArray(t.shown)?t.shown:[]).slice(-40).map(s=>{let url='';try{const x=new URL(s?.url);if(x.protocol==='https:'&&!x.username&&!x.password&&!x.port)url=x.href}catch(_){}return url?{name:str(s.name,120),url,level:Object.values(LEVEL).includes(s.level)?s.level:LEVEL.lead}:null}).filter(Boolean);
- const cur=t.cursor&&typeof t.cursor==='object'?{offset:Math.max(0,Math.min(10,Math.floor(Number(t.cursor.offset)||0))),pending:(Array.isArray(t.cursor.pending)?t.cursor.pending:[]).map(x=>speaPage(x)).filter(Boolean).slice(0,24)}:null;
+ const shown=(Array.isArray(t.shown)?t.shown:[]).slice(-60).map(s=>{let url='';try{const x=new URL(s?.url);if(x.protocol==='https:'&&!x.username&&!x.password&&!x.port)url=x.href}catch(_){}return url?{name:str(s.name,120),url,level:Object.values(LEVEL).includes(s.level)?s.level:LEVEL.lead}:null}).filter(Boolean);
+ const cur=t.cursor&&typeof t.cursor==='object'?{offset:Math.max(0,Math.min(10,Math.floor(Number(t.cursor.offset)||0))),pending:(Array.isArray(t.cursor.pending)?t.cursor.pending:[]).map(x=>speaPage(x)).filter(Boolean).slice(0,48)}:null;
  const loc=t.location&&typeof t.location==='object'?{country:['uae','uk'].includes(t.location.country)?t.location.country:null,city:str(t.location.city,40)}:null;
- return {intent:str(t.intent,12),topic:str(t.topic,24),location:loc,constraints:{curriculum:str(t.constraints?.curriculum,12),year:Number.isInteger(t.constraints?.year)?t.constraints.year:null},shown,focus:str(t.focus,120),cursor:cur,regulatorTotal:Number.isInteger(t.regulatorTotal)?t.regulatorTotal:null,pendingOffer:str(t.pendingOffer,12)};
+ return {intent:str(t.intent,12),topic:str(t.topic,24),location:loc,constraints:{curriculum:str(t.constraints?.curriculum,12),year:Number.isInteger(t.constraints?.year)?t.constraints.year:null},shown,focus:str(t.focus,120),cursor:cur,regulatorTotal:Number.isInteger(t.regulatorTotal)?t.regulatorTotal:null,pendingOffer:str(t.pendingOffer,12),listTotal:t.listTotal&&Number.isInteger(t.listTotal.total)&&t.listTotal.total>0&&t.listTotal.total<=500?{curriculum:str(t.listTotal.curriculum,12),total:t.listTotal.total}:null};
 }
 /** Cheap pre-check (no model call) so ordinary chat doesn't spend a model call on understanding. */
 export function maybeResearch(messages,context){

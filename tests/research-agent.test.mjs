@@ -56,7 +56,9 @@ const speaWithFilter={...spea,listFiltered:async f=>f.curriculum==='british'?{st
  assert.match(r.reply,/Schools teaching more than one curriculum may be classified under another curriculum/,'mixed-curriculum exception stated');
  assert.match(r.reply,/2 old SPEA links returned “not found”\. That’s a broken address, not evidence a school has closed\./);
  assert.match(r.reply,/includes schools outside Sharjah city/,'emirate vs city distinguished');
- assert.equal(r.research.claims.length,27);assert.ok(r.liveSources.every(s=>s.url.startsWith('https://spea.shj.ae/')),'classification only from the regulator');
+ // Long list: first page of 8 source-backed entries, the other 19 queued for "more" (none silently cut)
+ assert.equal(r.research.claims.length,8);assert.match(r.reply,/I’ve shown 8 of the 27\. Say “more” for the next 8\./);
+ assert.equal(r.research.taskContext.task.cursor.pending.length,19);assert.deepEqual(r.research.taskContext.task.listTotal,{curriculum:'british',total:27});assert.ok(r.liveSources.every(s=>s.url.startsWith('https://spea.shj.ae/')),'classification only from the regulator');
  assert.match(r.reply,/Synthetic Dual Pathway School/,'a lead not on the British filter is named as unconfirmed, not dropped or added');
  const v=planner.views[2];assert.ok(!JSON.stringify(v).includes('https://'),'the model sees ids and names, never URLs');
  assert.ok(v.whatCountsAsAnswering[0].includes('complete regulator listing'));assert.ok(v.found.claimedCounts.some(c=>c.n===28),'the directory’s “28” is visible to the model as a claim to check');

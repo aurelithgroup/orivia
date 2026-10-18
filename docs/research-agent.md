@@ -50,15 +50,19 @@ The earlier loop ran a fixed recipe per intent. The agent lets the model choose 
 - SPEA covers the whole emirate, not just Sharjah city.
 - A Year 6 listing isn't a seat.
 
-## What Ina did that Orivia can't yet: the filtered listing
+## The filtered listing (what Ina did in a browser)
 
 Ina opened SPEA's directory **in a browser**, selected British, raised the rows per page and read "1–27 of 27". The server only renders the first 10 of 136 schools, and the filter runs in the browser.
 
-The agent supports this through a regulator adapter method, `listFiltered({curriculum, year}) → {status, filter, total, range, items}`. Tests exercise it, but **it isn't connected for SPEA yet**. Two routes:
-1. **The directory's own data request.** Capture what the page requests when the filter is applied (browser developer tools → Network). If that's a plain request on `spea.shj.ae`, `listFiltered` can call it under the existing source policy (after review).
-2. **A headless browser** (e.g. Cloudflare Browser Rendering). This needs a plan and cost check before use.
+The agent uses a regulator adapter method for this: `listFiltered({curriculum, year}) → {status, complete, filter, total, range, items, unappliedFilters, browserMs, reason}`.
 
-Until then, "all of them" gives honest coverage ("confirmed N so far… isn't the full list") rather than claiming completeness.
+- **Where it's connected:** on the private pilot Worker only, through `workers/orivia-browser-directory.mjs` (see `docs/browser-directory.md`) behind `BROWSER_DIRECTORY=1`. If a public data endpoint turns up, a fetch adapter with the same output replaces the browser.
+- **What it receives:** only the validated curriculum. Chat text never reaches it.
+- **Partial listings:** their entries are added as regulator records, but they never count as complete. The failure reason is kept.
+- **Year groups:** these aren't shown on directory cards. When a year was asked about, the answer says it hasn't been confirmed.
+- **Long lists:** shown 8 at a time ("I've shown N of the T. Say "more" for the next 8."). The rest are queued as record URLs and re-opened on "more".
+
+Without the listing, "all of them" still gives honest coverage ("confirmed N so far… isn't the full list") rather than claiming completeness.
 
 ## Tests (whole process, not just readers): `tests/research-agent.test.mjs`
 

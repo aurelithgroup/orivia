@@ -1,0 +1,41 @@
+# EXAMPLE ONLY: copy to wrangler.toml and fill in from the existing private trial Worker's bindings.
+# Private pilot Worker. Separate name and URL from the public beta. Do not set PUBLIC_BETA here.
+name = "orivia-research-pilot"
+main = "index.mjs"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]   # needed by @cloudflare/puppeteer
+
+[ai]
+binding = "AI"
+
+# Same shared D1 database as the private trial: the money ledger (spend_meter, spend_ticket) and search caps live here.
+[[d1_databases]]
+binding = "BUDGET_DB"
+database_name = "FILL_IN_FROM_PRIVATE_TRIAL"
+database_id = "FILL_IN_FROM_PRIVATE_TRIAL"
+
+# Browser Run (free plan: about 10 browser-minutes a day, 3 browsers at once). Only used when BROWSER_DIRECTORY = "1".
+[browser]
+binding = "BROWSER"
+
+# Copy the private trial's AI_QUOTA rate-limit binding and Access settings here.
+
+[vars]
+RESEARCH_ENABLED = "1"
+RESEARCH_LOOP = "1"
+RESEARCH_AGENT = "1"
+SEARCH_DAILY_CAP = "10"      # do not raise
+SEARCH_MONTHLY_CAP = "100"   # do not raise
+OPENAI_PILOT = "0"           # "1" only after Ina's review, key saved as a secret, and the provider hard limit confirmed
+BROWSER_DIRECTORY = "0"      # "1" only after Ina's review and a live check of the SPEA filter steps
+# Rates: copy from OpenAI's pricing page for gpt-6.1-sol (USD per 1M tokens). Missing = nothing is sent.
+OPENAI_INPUT_USD_PER_M = ""
+OPENAI_OUTPUT_USD_PER_M = ""
+# Pilot money limits enforced by the shared ledger (USD). Missing = nothing is sent.
+PILOT_OPENAI_DAY_USD = ""
+PILOT_OPENAI_MONTH_USD = ""
+# Browser allowance enforced by the shared ledger (seconds). Keep under the free allowance. Missing = no browser.
+BROWSER_DAY_SECONDS = ""
+BROWSER_MONTH_SECONDS = ""
+
+# Secrets (set with `wrangler secret put`, never in this file or in chat): OPENAI_API_KEY, BRAVE_SEARCH_API_KEY

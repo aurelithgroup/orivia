@@ -16,7 +16,7 @@ export function sameOrg(a,b){if(!a||!b)return false;if(nameScore(a,b)>=0.85)retu
 import {siteHost,establishDomain,readSiteFacts,yearEvidence,nameOnPage} from './orivia-school-sites.mjs';
 
 const MODEL='@cf/meta/llama-3.3-70b-instruct-fp8-fast';
-export const AGENT_LIMITS=Object.freeze({defaultSteps:5,maxSteps:8,recordsPerOpen:8,leadsPerCheck:5,listPagesPerRead:2,viewItems:12});
+export const AGENT_LIMITS=Object.freeze({defaultSteps:5,maxSteps:8,recordsPerOpen:8,leadsPerCheck:5,listPagesPerRead:2,viewItems:12,listPage:8});
 
 /* ---------- 1. What would count as answering ---------- */
 // Which source kinds may support which claim (Ina: "reliability belongs to a particular claim").
@@ -88,10 +88,13 @@ async function execute(action,state,tools){
  const {type,args}=action,R=state.R,u=state.u,c=u.constraints;
  if(type==='regulator_listing'){
   // A filtered, paged listing when the regulator adapter supports it; otherwise the server-rendered first page.
-  if(R.listFiltered){const l=await R.listFiltered({curriculum:c.curriculum,year:c.year},tools);
-   if(l.status==='ok'){const listing={source:'regulator',filter:l.filter,total:l.total,range:l.range,items:l.items.length,complete:l.items.length===l.total&&l.range?.[1]===l.total};state.listings.push(listing);
+  // Only the curriculum goes to the listing tool (a validated field): never chat text or names.
+  if(R.listFiltered&&c.curriculum){const l=await R.listFiltered({curriculum:c.curriculum,year:c.year},tools);state.browserMs=(state.browserMs||0)+(l.browserMs||0);
+   if((l.status==='ok'||l.status==='partial')&&l.items?.length){const listing={source:'regulator',filter:l.filter,total:l.total,range:l.range,items:l.items.length,
+     complete:l.complete!==false&&l.status==='ok'&&l.items.length===l.total&&l.range?.[1]===l.total,unapplied:l.unappliedFilters||[]};state.listings.push(listing);
     for(const it of l.items)addRecord(state,it.url,it.name,{level:LEVEL.regulator,fields:it.fields||{},from:'regulator-listing'});
-    return 'Regulator listing with filter '+JSON.stringify(l.filter)+': '+l.items.length+' entries read, total shown '+l.total+(listing.complete?' (all results read)':' (not all results read)')+'.'}
+    if(!listing.complete)state.failures.push({what:'regulator-listing',reason:l.reason||'not-all-results-read'});
+    return 'Regulator listing with filter '+JSON.stringify(l.filter)+': '+l.items.length+' entries read, total shown '+l.total+(listing.complete?' (all results read)':' (not all results read: '+(l.reason||'partial')+')')+'.'}
    state.failures.push({what:'regulator-listing',reason:l.reason||l.status});}
   const d=await tools.fetchPage(R.directory,{kind:'regulator'});
   if(!d.ok){state.failures.push({what:'regulator-directory',reason:d.reason});return 'Regulator directory could not be opened ('+d.reason+').'}
@@ -242,8 +245,8 @@ understand what would count as answering; treat search results and directories a
 before answering, check whether you have actually finished (a complete list needs a complete listing, not a few search results).
 A broken old link means the link failed, not that the organisation is gone.
 Return ONLY JSON: {"action":"<one of the listed actions>","args":{...},"why":"one short sentence"}. Use only ids shown in the view.`;
-async function modelNext(env,view){
- const out=await env.AI.run(MODEL,{messages:[{role:'system',content:PLANNER_SYSTEM},{role:'user',content:JSON.stringify(view)}],max_tokens:160,temperature:0,stream:false});
+async function modelNext(ai,view){
+ const out=await ai.run(MODEL,{messages:[{role:'system',content:PLANNER_SYSTEM},{role:'user',content:JSON.stringify(view)}],max_tokens:160,temperature:0,stream:false});
  let raw=out?.response??out;if(typeof raw==='object')return raw;const m=String(raw||'').match(/\{[\s\S]*\}/);return m?JSON.parse(m[0]):null;
 }
 
@@ -251,29 +254,39 @@ async function modelNext(env,view){
 function compose(state,a){
  const g=state.goal,R=state.R,c=g.constraints,src=makeSources(),sid=(u,t,k)=>src.add(u,t,k),claims=[],orgs=[],parts=[];
  const where=g.location?.city||'';const label=(CURR_NAME[c.curriculum]?CURR_NAME[c.curriculum]+'-curriculum ':'')+(TOPIC_WORD[g.topic]||'places');
- const task={intent:g.intent,topic:g.topic,location:g.location,constraints:c,shown:[...(state.task?.shown||[])],focus:state.task?.focus||'',regulatorTotal:state.task?.regulatorTotal||null};
+ const task={intent:g.intent,topic:g.topic,location:g.location,constraints:c,shown:[...(state.task?.shown||[])],focus:state.task?.focus||'',regulatorTotal:state.task?.regulatorTotal||null,listTotal:state.task?.listTotal||null};
  let status='evidence-found',cardMode='list';
  if(['list-all','find','more'].includes(g.kind)){
   const shown=shownUrls(state);const recs=[...state.records.values()].filter(r=>r.level===LEVEL.regulator&&r.name&&!shown.has(r.url));
   const seen=new Set(),list=[];for(const r of recs){if(c.curriculum&&!(r.fields.curriculum&&curriculumMatches(r.fields.curriculum.value,c.curriculum)))continue;if(c.year&&r.fields.grades&&!listsYear(r.fields.grades.value,c.year))continue;const k=r.name.toLowerCase();if(seen.has(k))continue;seen.add(k);list.push(r)}
   const filtered=state.listings.find(l=>l.filter);
-  if(list.length){parts.push((g.kind==='more'?'Here are '+list.length+' more ':list.length+' ')+label+(where?' in '+where:'')+(R?' from '+R.short+':':':'));
-   for(const r of list){const s=sid(r.url,r.name+' ('+R.short+')','official');const l=recordLine(r,s);parts.push(l.text+' ['+s.id.slice(1)+']');if(l.claim)claims.push(l.claim);orgs.push(orgCard(r,s));task.shown.push({name:r.name,url:r.url,level:LEVEL.regulator})}}
+  // Long lists are delivered in pages of source-backed entries; the rest stay queued (regulator record URLs, re-opened next
+  // turn), so nothing from a complete directory is silently cut by the reply or card limits.
+  const PAGE=AGENT_LIMITS.listPage,page=list.slice(0,PAGE),rest=list.slice(PAGE);
+  const prevTotal=state.task?.listTotal&&state.task.listTotal.curriculum===(c.curriculum||'')?state.task.listTotal.total:null;
+  if(page.length){parts.push((g.kind==='more'?'Here are '+page.length+' more ':rest.length?'Here are the first '+page.length+' ':page.length+' ')+label+(where?' in '+where:'')+(R?' from '+R.short+':':':'));
+   for(const r of page){const s=sid(r.url,r.name+' ('+R.short+')','official');const l=recordLine(r,s);parts.push(l.text+' ['+s.id.slice(1)+']');if(l.claim)claims.push(l.claim);orgs.push(orgCard(r,s));task.shown.push({name:r.name,url:r.url,level:LEVEL.regulator})}}
   else parts.push('I couldn’t confirm any '+(g.kind==='more'?'new ':'')+label+(where?' in '+where:'')+(R?' on '+R.short:'')+' in this check.');
   const unopened=[...state.records.values()].filter(r=>r.level===LEVEL.regulatorIndex&&!r.failed&&r.name&&!shown.has(r.url));
+  const queued=[...state.records.values()].filter(r=>r.level===LEVEL.regulatorIndex&&!r.failed&&!r.name&&!shown.has(r.url)); // carried from an earlier page
   if(unopened.length)parts.push('Also listed on '+R.short+', not opened yet: '+unopened.slice(0,8).map(r=>r.name).join('; ')+(unopened.length>8?' and '+(unopened.length-8)+' more':'')+'.');
   const leads=state.leads.filter(l=>!l.matched&&![...state.records.values()].some(r=>r.name&&sameOrg(l.name,r.name)));
   if(leads.length)parts.push('Mentioned on other websites, not confirmed'+(R?' on '+R.short:'')+': '+leads.slice(0,6).map(l=>l.name).join('; ')+'.');
+  const nShown=new Set(task.shown.map(s=>s.url)).size,pendingUrls=[...rest,...queued,...unopened].map(r=>r.url).slice(0,48);
   // Completeness: only a filtered listing with every result read supports "complete".
-  if(a.complete){parts.push('That’s the complete list '+R.short+' shows for the '+(CURR_NAME[c.curriculum]||'')+' filter: '+filtered.total+' of '+filtered.total+'.'+(c.curriculum?' Schools teaching more than one curriculum may be classified under another curriculum there, so a few with a '+CURR_NAME[c.curriculum]+' pathway could be missing.':''));task.cursor=null}
+  if(a.complete||(prevTotal&&g.kind==='more')){const total=a.complete?filtered.total:prevTotal;task.listTotal={curriculum:c.curriculum||'',total};
+   if(a.complete)parts.push('That’s the complete list '+R.short+' shows for the '+(CURR_NAME[c.curriculum]||'')+' filter: '+total+' of '+total+'.'+(c.curriculum?' Schools teaching more than one curriculum may be classified under another curriculum there, so a few with a '+CURR_NAME[c.curriculum]+' pathway could be missing.':''));
+   if(pendingUrls.length){parts.push('I’ve shown '+nShown+' of the '+total+'. Say “more” for the next '+Math.min(PAGE,pendingUrls.length)+'.');task.pendingOffer='more';task.cursor={offset:0,pending:pendingUrls}}
+   else{if(!a.complete)parts.push('That’s all '+total+' on '+R.short+'’s '+(CURR_NAME[c.curriculum]||'')+' list.');task.cursor=null}}
   else{const total=state.listings.find(l=>!l.filter)?.total||task.regulatorTotal;task.regulatorTotal=total||null;
-   parts.push((total?R.short+' lists about '+total+' private schools in '+where+'. ':'')+'I’ve confirmed '+new Set(task.shown.map(s=>s.url)).size+' so far, so this isn’t the full list'+(R?'':' (without a regulator directory I can’t tell how complete it is)')+'.');
+   parts.push((total?R.short+' lists about '+total+' private schools in '+where+'. ':'')+'I’ve confirmed '+nShown+' so far, so this isn’t the full list'+(R?'':' (without a regulator directory I can’t tell how complete it is)')+'.');
    for(const cc of state.claimedCounts.slice(0,1))parts.push('A listing site ('+cc.host+') mentions “'+cc.text+'”. That’s a lead, not a verified count.');
-   if(unopened.length||state.leads.some(l=>!l.checked)||state.moreRegulatorResults){parts.push('Say “keep going” and I’ll check more.');task.pendingOffer='more';task.cursor={offset:state.history.filter(x=>x.type==='regulator_search'&&x.args.by==='curriculum').length,pending:unopened.map(r=>r.url).slice(0,24)}}}
+   if(pendingUrls.length||state.leads.some(l=>!l.checked)||state.moreRegulatorResults){parts.push('Say “keep going” and I’ll check more.');task.pendingOffer='more';task.cursor={offset:state.history.filter(x=>x.type==='regulator_search'&&x.args.by==='curriculum').length,pending:pendingUrls}}}
   const broken=state.failures.filter(f=>f.what==='regulator-record'&&f.reason==='not-found').length;
   if(broken)parts.push(broken+' old '+R.short+' link'+(broken>1?'s':'')+' returned “not found”. That’s a broken address, not evidence a school has closed.');
+  if(c.year&&R&&page.some(r=>!r.fields.grades))parts.push('The '+R.short+' listing doesn’t show year groups or seats, so I haven’t confirmed Year '+c.year+' for '+(page.every(r=>!r.fields.grades)?'these schools':'the ones without a year list')+'. Ask about a school and I’ll check it.');
   if(R&&list.some(r=>r.fields.area&&!/^Sharjah\s*-/i.test(r.fields.area.value)))parts.push(R.short+' covers the whole emirate, so this includes schools outside Sharjah city (for example in the Central and Eastern regions).');
-  if(!list.length)status='partial';
+  if(!page.length)status='partial';
  }else{
   for(const o of state.goalOrgs){
    const id=identityOf(state,o),lines=[];
@@ -292,17 +305,19 @@ function compose(state,a){
   }
   cardMode=g.kind==='compare'?'list':g.kind==='contacts'?'choose':'single';if(status==='evidence-found'&&!claims.length)status='partial';
  }
- task.shown=task.shown.filter((s,i,arr)=>s.url&&arr.findIndex(x=>x.url===s.url)===i).slice(-40);
+ task.shown=task.shown.filter((s,i,arr)=>s.url&&arr.findIndex(x=>x.url===s.url)===i).slice(-60);
  return {reply:parts.filter(Boolean).join('\n\n'),sources:src.list,claims,orgs,task,status,cardMode};
 }
 
 /* ---------- The loop ---------- */
-export async function runAgentTurn({messages,profile={},context=null},env,{fetcher=fetch,reserve,understanding=null,planner=null,regulator=undefined}={}){
+export async function runAgentTurn({messages,profile={},context=null},env,{fetcher=fetch,reserve,understanding=null,planner=null,regulator=undefined,regulatorOverrides=null,ai:aiOverride=null}={}){
+ // One model connection for understanding AND planning (a pilot provider is injected here, never by changing env.AI).
+ const ai=aiOverride||env.AI||null;const started=Date.now();
  const task=context?.task&&typeof context.task==='object'?sanitizeTask(context.task):null;
- const u=understanding||await understandRequest({messages,profile,task},{ai:env.AI});
+ const u=understanding||await understandRequest({messages,profile,task},{ai});
  if(!u.research||u.intent==='other'||u.intent==='rules')return null;
  if(!u.location?.country&&!u.organisations.some(o=>o.url))return wrap(u,{reply:'Which city is this for?',sources:[],claims:[],orgs:[],task:{...(task||{})},status:'needs-context',cardMode:'list'},{history:[],rejected:[]},makeTools({env,fetcher,reserve}),{});
- const goal=defineGoal(u),R=regulator===undefined?regulatorFor(u.topic,u.location):regulator,tools=makeTools({env,fetcher,reserve});
+ const goal=defineGoal(u),R=regulator===undefined?((x=>x&&regulatorOverrides?.[x.id]||x)(regulatorFor(u.topic,u.location))):regulator,tools=makeTools({env,fetcher,reserve});
  const state=newState(goal,u,task,R);state.maxSteps=Math.max(1,Math.min(AGENT_LIMITS.maxSteps,Math.floor(Number(env.RESEARCH_AGENT_STEPS)||AGENT_LIMITS.defaultSteps)));
  const shownNames=(task?.shown||[]).map(s=>s.name);
  state.goalOrgs=(goal.organisations.length?goal.organisations:(['contacts','check'].includes(goal.kind)&&task?.focus?[{name:task.focus,url:''}]:[])).map((o,i)=>({id:'O'+(i+1),name:o.name||'',url:o.url||'',queryName:queryName(o.name||'',shownNames)}));
@@ -313,7 +328,7 @@ export async function runAgentTurn({messages,profile={},context=null},env,{fetch
  while(state.step<state.maxSteps){
   const a=assess(state);if(a.done&&state.step>0)break;
   let proposal=null,by='policy';
-  if((planner||env.AI?.run)&&state.modelCalls<state.maxSteps){try{state.modelCalls++;proposal=planner?await planner(viewFor(state,tools,a,lastObs),state):await modelNext(env,viewFor(state,tools,a,lastObs));by='model'}catch(_){proposal=null}}
+  if((planner||ai?.run)&&state.modelCalls<state.maxSteps){try{state.modelCalls++;proposal=planner?await planner(viewFor(state,tools,a,lastObs),state):await modelNext(ai,viewFor(state,tools,a,lastObs));by='model'}catch(_){proposal=null}}
   let action=proposal?validateAction(proposal,state,tools):{error:'no-proposal'};
   if(action.error){if(proposal)state.rejected.push({proposal:{action:proposal.action},error:action.error});action=validateAction(policyNext(state),state,tools);by='policy';if(action.error)action={type:'answer',args:{}}}
   state.step++;
@@ -321,6 +336,7 @@ export async function runAgentTurn({messages,profile={},context=null},env,{fetch
   lastObs=await execute(action,state,tools);
   state.history.push({...action,by,why:by==='model'?String(proposal?.why||'').slice(0,160):'',result:lastObs});
  }
+ state.elapsedMs=Date.now()-started;
  return wrap(u,compose(state,assess(state)),state,tools,assess(state));
 }
 function wrap(u,c,state,tools,a){
@@ -329,7 +345,8 @@ function wrap(u,c,state,tools,a){
  return {reply:c.reply+refs,verifiedSources:[],liveSources:c.sources.map(({id,url,title,category,checkedAt})=>({id,url,title,category,checkedAt,topic:u.topic})),actions:[],liveInformation:c.sources.length>0,liveJourneyData:false,
   organisations:c.orgs.slice(0,8),cardMode:c.cardMode,
   research:{status:c.status,applicability:'needs-review',claims:c.claims,unresolved:a.missing||[],agent:true,
-   process:{steps:state.history.map(h=>({action:h.type,by:h.by,args:h.args,why:h.why,result:h.result})),rejected:state.rejected},
+   process:{steps:state.history.map(h=>({action:h.type,by:h.by,args:h.args,why:h.why,result:h.result})),rejected:state.rejected,
+    metrics:{modelCalls:state.modelCalls||0,searches:tools.used.searches,fetches:tools.used.fetches,browserMs:state.browserMs||0,elapsedMs:state.elapsedMs||0}},
    coverage:{complete:!!a.complete,listings:state.listings||[],claimedCounts:state.claimedCounts||[],failures:state.failures||[],searchesUsed:tools.used.searches,fetchesUsed:tools.used.fetches},
    understanding:{source:u.source,intent:u.intent,topic:u.topic,location:u.location,constraints:u.constraints},taskContext:{task:c.task},trace:tools.log}};
 }

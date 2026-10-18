@@ -1,0 +1,9 @@
+{
+  "name": "orivia-research-pilot",
+  "private": true,
+  "type": "module",
+  "description": "Private research pilot Worker. Add the browser library with: npm install --save-exact @cloudflare/puppeteer",
+  "scripts": {
+    "check": "wrangler deploy --dry-run --config wrangler.example.toml"
+  }
+}

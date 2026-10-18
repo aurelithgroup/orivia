@@ -22,7 +22,7 @@ const newId=()=>'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,7
 function autoTitle(ts){const u=(ts.find(t=>t.role==='user')||{}).content||'New chat';const t=u.replace(/\s+/g,' ').trim();return t.length>48?t.slice(0,46).replace(/\s\S*$/,'')+'…':t}
 function normChat(c){
  if(!c||typeof c!=='object'||typeof c.id!=='string')return null;
- const ts=Array.isArray(c.turns)?c.turns.filter(validTurn).map(t=>({role:t.role,content:String(t.content).slice(0,2000),...(t.meta&&typeof t.meta==='object'?{meta:t.meta}:{})})):[];
+ const ts=Array.isArray(c.turns)?c.turns.filter(validTurn).map(t=>({role:t.role,content:String(t.content).slice(0,t.role==='assistant'?4000:2000),...(t.meta&&typeof t.meta==='object'?{meta:t.meta}:{})})):[];
  return {id:c.id.slice(0,24),title:String(c.title||autoTitle(ts)).slice(0,80),titled:!!c.titled,created:Number(c.created)||Date.now(),updated:Number(c.updated)||Date.now(),pinned:!!c.pinned,archived:!!c.archived,turns:ts};
 }
 let storeLocked=false; // saved chats exist but couldn't be read or backed up: never overwrite them
@@ -678,7 +678,7 @@ function safeSchoolContext(v){
  return {...(typeof v.targetName==='string'?{targetName:v.targetName.slice(0,80)}:{}),city:'Sharjah',curriculum:typeof v.curriculum==='string'?v.curriculum.slice(0,20):'',year:Number.isInteger(v.year)?v.year:null,shown:urls(v.shown),...(v.cursor?{cursor:{skipDirectory:v.cursor.skipDirectory===true,searchOffset:Math.max(0,Math.min(10,Number(v.cursor.searchOffset)||0)),pending:urls(v.cursor.pending).slice(0,20)}}:{})};
 }
 // The research loop's task state: scope only (what was asked, shown and where to continue). The server re-validates all of it.
-function safeLoopTask(v){try{if(!v||typeof v!=='object'||Array.isArray(v))return undefined;const j=JSON.stringify(v);return j.length<8000?JSON.parse(j):undefined}catch(_){return undefined}}
+function safeLoopTask(v){try{if(!v||typeof v!=='object'||Array.isArray(v))return undefined;const j=JSON.stringify(v);return j.length<16000?JSON.parse(j):undefined}catch(_){return undefined}}
 function safeTaskContext(v){const school=safeSchoolContext(v),task=safeLoopTask(v&&v.task);if(!school&&!task)return undefined;return {...(school||{}),...(task?{task}:{})}}
 function currentResearchContext(ts){const last=ts.filter(t=>t.role==='assistant').at(-1);return safeTaskContext(last?.meta?.research?.taskContext)}
 function safeResearch(r){
@@ -1102,8 +1102,22 @@ function loadTurnstile(siteKey){
  if(window.turnstile)return go();
  const sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;sc.onload=go;sc.onerror=()=>humanFailed('The human check couldn’t load. Please try reloading Orivia.');document.head.append(sc);
 }
+/* Private research pilot: shown only when this private deployment offers it; off unless the tester ticks it. The consent names
+   OpenAI and is versioned, so a changed pilot never reuses an older tick. Stored on this device only. */
+const pilotKey='orivia-pilot-consent';let pilotOffer=null;
+function setupPilot(d){
+ const p=d&&d.mode!=='public'&&d.providerPilot&&typeof d.providerPilot==='object'?d.providerPilot:null;
+ const row=$('pilot-row');if(!row)return;
+ if(!p||p.provider!=='OpenAI'||typeof p.consent!=='string'||!/^[a-z0-9-]{4,60}$/.test(p.consent)){pilotOffer=null;row.hidden=true;return}
+ pilotOffer=p.consent;row.hidden=false;$('pilot-text').textContent=String(p.text||'').slice(0,400);
+ let saved='';try{saved=localStorage.getItem(pilotKey)||''}catch(_){}
+ $('set-pilot').checked=saved===pilotOffer;
+ $('set-pilot').onchange=e=>{try{if(e.target.checked)localStorage.setItem(pilotKey,pilotOffer);else localStorage.removeItem(pilotKey)}catch(_){}};
+}
+function pilotConsent(){if(!pilotOffer)return null;try{return localStorage.getItem(pilotKey)===pilotOffer?{openai:pilotOffer}:null}catch(_){return null}}
 async function loadMode(){
  try{const r=await fetch('/v1/config',{credentials:'same-origin',cache:'no-store'});const d=await r.json();
+  setupPilot(d);
   if(d&&d.mode==='public'){mode='public';document.body.dataset.mode='public';for(const n of document.querySelectorAll('[data-public]'))n.textContent=n.dataset.public;if(!$('intro').hidden&&d.turnstileSiteKey)loadTurnstile(d.turnstileSiteKey);else window.__siteKey=d.turnstileSiteKey}
  }catch(_){}
 }
@@ -1128,7 +1142,7 @@ $('form').onsubmit=async e=>{
  const chatId=store.active,sentTurns=turns.slice();
  busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';
  try{
-  const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{researchContext:currentResearchContext(sentTurns),language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI()}})});
+  const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{researchContext:currentResearchContext(sentTurns),language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
   const d=await r.json().catch(()=>({}));
   if(!r.ok){
    const why=d&&d.error;
@@ -1137,7 +1151,7 @@ $('form').onsubmit=async e=>{
   if(typeof d.reply!=='string'||!d.reply.trim())throw Error('empty');
   const meta={};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
   if(vetted.length&&Array.isArray(d.organisations)){const orgs=d.organisations.slice(0,8);if(safeOrgs(orgs,vetted).length){meta.organisations=JSON.parse(JSON.stringify(orgs));if(['list','single','choose'].includes(d.cardMode))meta.cardMode=d.cardMode}}
-  const answer={role:'assistant',content:d.reply.slice(0,2000),...(Object.keys(meta).length?{meta}:{})};
+  const answer={role:'assistant',content:d.reply.slice(0,4000),...(Object.keys(meta).length?{meta}:{})};
   if(store.active!==chatId){ // they switched chats while Orivia was replying: file the answer in its own chat
    const c=store.chats.find(x=>x.id===chatId);if(c){c.turns=[...c.turns,answer];c.updated=Date.now();persist();renderChats()}
    $('status').textContent='Orivia replied in “'+(c?c.title:'another chat')+'”.';return;

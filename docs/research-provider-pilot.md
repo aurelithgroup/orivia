@@ -32,3 +32,59 @@ Official references (checked 18 October 2026):
 - https://developers.openai.com/api/docs/guides/spend-limits
 - https://developers.cloudflare.com/browser-run/limits/
 - https://developers.cloudflare.com/browser-run/pricing/
+
+## Implemented by Cleo, 18 Oct 2026. Not activated; for Ina's review
+
+Everything below is off by default, offline-tested only, and not deployed.
+
+### 1. Shared money ledger: `workers/orivia-spend-ledger.mjs`
+
+- **Storage:** D1 (`BUDGET_DB`), in the tables `spend_meter` and `spend_ticket`. Each reservation is one atomic `INSERT … ON CONFLICT DO UPDATE … WHERE (day and month fit) RETURNING`, so concurrent requests can't overspend together. No in-memory counter is involved.
+- **Fails closed:** nothing is reserved without both limits and both confirmed rates.
+- **Settling:** known usage settles to the actual cost (refunding only the unused part, and charging any overrun). Unknown, timeout or HTTP-error outcomes keep the full reservation. Settling is idempotent, and a refund made after midnight goes back to the ticket's own day.
+- **OpenAI cost bound:** `(inputBytes + 64) × input rate + max_output_tokens × output rate`. Reasoning tokens count as output and sit inside `max_output_tokens`.
+- **Settings:** `OPENAI_INPUT_USD_PER_M`, `OPENAI_OUTPUT_USD_PER_M`, `PILOT_OPENAI_DAY_USD`, `PILOT_OPENAI_MONTH_USD`.
+- **Rates:** a third-party page quotes $2 / $10 per 1M tokens for gpt-6.1-sol. **Please confirm on OpenAI's own pricing page before setting these.**
+- **Browser meter:** milliseconds, set by `BROWSER_DAY_SECONDS` and `BROWSER_MONTH_SECONDS`.
+- **Privacy:** tickets store amounts, status and time only.
+
+### 2. Private pilot Worker: `workers/orivia-research-pilot.mjs`, with `workers/pilot/` as its entry and example config
+
+- **Separation:** it wraps the private trial through a new `createTrialWorker(hooks)` export. The public file never imports the pilot, the transport, the ledger, the browser code or puppeteer (a test checks this), and the hook is ignored when `PUBLIC_BETA=1`.
+- **When OpenAI is used:** OpenAI handles research **understanding and planning together** (`runAgentTurn({ai})`) only if all of these hold:
+  - `OPENAI_PILOT=1`;
+  - the tester ticked the Settings switch, whose text names OpenAI (consent version `openai-research-pilot-v1`), on this device;
+  - rates and limits are configured.
+
+  In every other case the existing provider is used. Ordinary chat and `env.AI` are untouched.
+- **Order of checks:** auth, quota and daily caps still run first.
+- **Consent offer:** `/v1/config` adds `providerPilot` (fixed text, no key, no limits) only when the pilot is available.
+
+### 3. Browser directory: `workers/orivia-browser-directory.mjs`
+
+See `docs/browser-directory.md`. It has its own switch (`BROWSER_DIRECTORY=1`), needs the `BROWSER` binding and a browser allowance, and is plugged in as SPEA's `listFiltered`. The agent now accepts partial listings honestly and counts browser time in its metrics.
+
+### 4. Comparison harness: `tools/provider-comparison.mjs`
+
+- **Rows:** label, provider, conversation, success, status, model calls, tokens, searches, fetches, browser seconds and time. Rows hold no prompts, replies or names.
+- **Labels:** `scripted` and `live` can't be mixed.
+- **Test:** `tests/provider-comparison.test.mjs` runs 9 conversations × 2 providers:
+  - discovery, all (complete listing), more, a named organisation, a correction, contacts, comparison, source failure and exhausted budget;
+  - schools beyond SIPS: Wes Green, Victoria English and synthetic schools.
+
+### 5. Long lists
+
+- **Paging:** complete lists come 8 at a time. The rest are queued, and "more" re-opens the regulator records. Each page says "shown N of T", and the last one says "That's all T".
+- **Limits raised:** stored assistant replies go from 2,000 to 4,000 characters. The task context goes from 8,000 to 16,000 characters on the client, and the request body from 32,000 to 48,000 on the server. The queue holds 48 entries and the shown list 60.
+
+### Ina: setup before any real run (in order)
+
+1. Pull and review. Optionally run the CI commands locally.
+2. Check SPEA's Network tab for a public data endpoint (see `docs/browser-directory.md`).
+3. Create the pilot Worker from `workers/pilot/wrangler.example.toml` with its own name. Copy the private trial's bindings and Access settings. Run `npm install --save-exact @cloudflare/puppeteer` in `workers/pilot/`.
+4. Save the key with `wrangler secret put OPENAI_API_KEY` (never in chat or files). Confirm the provider's hard spend limit and that automatic top-up is off.
+5. Set the confirmed rates and small limits, for example a day limit of $0.50 and a month limit of $5 (well under the 250 AED budget), plus `BROWSER_DAY_SECONDS=300`. Keep the search caps at 10 a day and 100 a month.
+6. Turn on `BROWSER_DIRECTORY=1` first and run "All British curriculum schools in Sharjah".
+   - If `diagnostics.steps` shows `not-found`, adjust the label.
+   - If `blockedHosts` lists a CDN, review that host before adding it.
+7. Then turn on `OPENAI_PILOT=1`, tick the consent switch on one test device, and run the comparison conversations live. Label those rows `live`.
