@@ -42,7 +42,7 @@ Status, 18 Oct 2026 (Cleo): built, offline-tested and live-tested for 3 turns on
 ## Limits
 
 - **Transport:** 12 calls a turn. Input up to 40 KB per call. Output up to 1,200 tokens for a step and 2,500 for a reply.
-- **Ledger:** $0.50 a day and $10 a month. The monthly limit was raised from $5 on 18 Oct at the founder's request; it is set in `wrangler.jsonc` so deploys keep it.
+- **Ledger:** $1 a day and $10 a month. Both were raised on 18 Oct at the founder's request (from $0.50 a day and $5 a month); it is set in `wrangler.jsonc` so deploys keep it.
 - **Search and fetch:** the existing pilot limits (8 searches and 32 page reads a turn, 50 searches a day, 1,000 a month).
 
 ## Live results, 18 Oct (full deployed conversation, consent v3, conversation A)
@@ -102,6 +102,6 @@ Fixed (commit after 9e498c2):
   - A source from the other country is titled "(UK guidance)" or "(UAE guidance)".
   - The model is told to use such pages as general information and say whose guidance it is.
 
-## Open question for the founder
+## Daily limit (decided 18 Oct)
 
-The money reservation is deliberately conservative: input bytes at the input rate, plus the maximum output. A research turn reserves up to about $0.10 but costs $0.02–0.07. With $0.50 a day, that allows roughly 6–8 research turns a day. A $1 daily limit (keeping the $10 month) would roughly double testing capacity.
+The money reservation is deliberately conservative: input bytes at the input rate, plus the maximum output. A research turn reserves up to about $0.10 but costs $0.02–0.07. With $0.50 a day, that allows roughly 6–8 research turns a day. The founder raised the daily limit to $1 (month still $10), roughly doubling that. Deployed as version 9d1a7d6e.
