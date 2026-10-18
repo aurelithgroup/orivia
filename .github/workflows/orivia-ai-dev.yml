@@ -78,6 +78,8 @@ jobs:
         run: node tests/site-captures.test.mjs
       - name: Website reader across page layouts (link ranking, year tables, labelled curriculum)
         run: node tests/site-reader-layouts.test.mjs
+      - name: Navigation and year evidence on raw captured pages
+        run: node tests/site-captures-navigation.test.mjs
       - name: Public beta mode (human check, per-person and daily limits)
         run: node --experimental-sqlite tests/public-beta.test.mjs
       - name: AI Worker contract and safety tests

@@ -25,7 +25,15 @@ Owner: Cleo (retrieval). Recognising "all schools" requests, keeping named-schoo
    - Otherwise the host is `unverified`. The research loop can still show its statements, but only labelled "ownership not confirmed by a regulator".
 4. **Read the site by section:** menus, headers, footers, breadcrumbs, cookie banners and "related / other schools" blocks are removed. Short menu labels like "British Curriculum" are never read as statements; labelled fields (`Curriculum: …`, `Grade: …`) and full sentences are. Each fact carries its section heading.
    - "Year" (British) and "Grade" (US/MoE) ranges are kept apart and never converted. `yearEvidence(facts, 6)` counts only Year-scale ranges.
-   - **Link choice:** same-site links are ranked by what the request needs (curriculum, admissions, contact; contacts first for a contacts request) and the best link for each need is taken first. Leadership messages, "why choose us", news, galleries and careers pages are ranked last, so they never fill the cap.
+   - **Link choice:** same-site links are ranked by what the request needs (curriculum, admissions, contact; contacts first for a contacts request), and the best link for each need is taken first.
+     - Scoring uses the link text and the page's **own** path segment; parent folders count little.
+     - Person and role pages (head of…, principal, team, staff, meet the…) are never chosen.
+     - Low-value pages (news, events, galleries, newsletters, policies, careers) rank last.
+     - A direct Contact page beats a generic Location page.
+     - When a year is asked about, pages whose own name or path covers it (e.g. `primary-year-2-6`, "Secondary (Year 7–10)") come first.
+     - The path is only a hint for navigation, never evidence.
+   - **Year follow-up:** if the requested year isn't confirmed after the first pages, the loop opens up to 2 more year-relevant pages within the fetch cap. If it's still missing, the reply says "I couldn't confirm Year N on the pages I read… That doesn't mean it isn't offered."
+   - **People sections:** biography and leadership blocks are skipped for curriculum and year facts; a teacher's FS2 role isn't whole-school evidence.
    - **Year groups** come from compact tables (any cell: "Year 6", "FS1"; ranges such as "Year 7 – Year 13", "Years 1–6", "Y3 to Y6") and labelled fields. Facts carry "Heading › table caption". Header rows are skipped.
    - **Curriculum** comes from labelled values (`<dt>Curriculum</dt><dd>British</dd>`, table rows, label/value divs, `Curriculum: …`) or explicit sentences ("the National Curriculum for England"). IGCSE, A Level, EYFS and Cambridge Primary are recorded as `programme` facts and never make the whole school "British" on their own.
 5. **Pages read:** the homepage plus up to 4 same-site pages (admissions, curriculum, contact, about, fees). Paths only; no PDFs.
@@ -91,4 +99,5 @@ Owner: Cleo (retrieval). Recognising "all schools" requests, keeping named-schoo
 - SPEA pages as in `docs/spea-reader.md`.
 - Every school website in `tests/school-sites.test.mjs` is synthetic (`.example` hosts or `[Synthetic]` text).
 - `tests/fixtures/sites/gems-wesgreen-outline.html`: the real GEMS Wesgreen page, rebuilt from a structured outline of the live page. Menus, key facts and related schools are exact; two paragraphs were paraphrased by the fetch tool. Raw HTML couldn't be fetched from this workspace.
-- **Raw captures:** `node tools/capture-site.mjs <url>` saves a real page to `tests/fixtures/sites/captured/`. Add its expected facts to `expectations.json`; `tests/site-captures.test.mjs` then checks every capture.
+- **Raw captures (Ina, 18 Oct):** `captured/sips-home.html.gz` and `captured/sips-curriculum.html.gz`, tested by `site-captures.test.mjs` and `site-captures-navigation.test.mjs` (general-layout cases, no school-specific code).
+- **Capturing more:** `node tools/capture-site.mjs <url>` saves a real page to `tests/fixtures/sites/captured/`. Add its expected facts to `expectations.json`; `tests/site-captures.test.mjs` then checks every capture.

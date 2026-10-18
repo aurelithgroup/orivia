@@ -20,7 +20,9 @@
       "American",
       "IB",
       "Indian"
-    ]
+    ],
+    "year": 6,
+    "yearListed": false
   },
   "sips-curriculum.html.gz": {
     "curriculum": [
@@ -30,6 +32,8 @@
       "American",
       "IB",
       "Indian"
-    ]
+    ],
+    "year": 6,
+    "yearListed": false
   }
 }

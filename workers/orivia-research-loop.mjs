@@ -7,7 +7,7 @@ import {RESEARCH_SOURCES} from './orivia-research-policy.mjs';
 import {speaPage,parseProfile,parseDirectory,classifyMatches,nameScore,curriculumMatches,listsYear,SPEA_DIRECTORY} from './orivia-spea-reader.mjs';
 import {siteHost,establishDomain,readSiteFacts,sitePageLinks,nameOnPage,yearEvidence} from './orivia-school-sites.mjs';
 
-export const LOOP_LIMITS=Object.freeze({searchesPerTurn:4,fetchesPerTurn:24,profilesPerTurn:12,listPagesPerTurn:2,sitePagesPerOrg:4,orgsPerCompare:3,contactsPerTurn:4,leadsPerVerifyQuery:5,searchCount:20,timeoutMs:6500,pageBytes:1000000,leadsKept:25});
+export const LOOP_LIMITS=Object.freeze({yearFollowups:2,searchesPerTurn:4,fetchesPerTurn:24,profilesPerTurn:12,listPagesPerTurn:2,sitePagesPerOrg:4,orgsPerCompare:3,contactsPerTurn:4,leadsPerVerifyQuery:5,searchCount:20,timeoutMs:6500,pageBytes:1000000,leadsKept:25});
 export const LEVEL={regulator:'regulator',regulatorIndex:'regulator-index',siteLinked:'own-site-linked',siteUser:'own-site-user',siteFound:'own-site-found',lead:'lead'};
 const plain=s=>String(s||'').replace(/<!--[\s\S]*?-->/g,' ').replace(/<(script|style|svg|noscript|template)\b[^>]*>[\s\S]*?<\/\1>/gi,' ').replace(/<br\s*\/?>|<\/(p|div|li|h[1-6]|tr)>/gi,'. ').replace(/<[^>]*>/g,' ').replace(/&(?:nbsp|#160);/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;|&rsquo;/g,"'").replace(/\s+/g,' ').trim();
 const CURR_NAME={british:'British',american:'American',indian:'Indian',ib:'IB',australian:'Australian',french:'French',german:'German',moe:'MoE',pakistani:'Pakistani',filipino:'Filipino',sabis:'SABIS'};
@@ -184,12 +184,18 @@ async function discoverWithRegulator(R,u,task,tools,cov){
 }
 
 /* ---------- Organisation websites ---------- */
-async function readSite(tools,startUrl,host,maxPages=LOOP_LIMITS.sitePagesPerOrg,purpose='overview'){
+async function readSite(tools,startUrl,host,maxPages=LOOP_LIMITS.sitePagesPerOrg,purpose='overview',year=null){
  const first=await tools.fetchPage(startUrl,{kind:'site',host});if(!first.ok)return {ok:false,reason:first.reason,pages:[]};
- const pages=[{url:first.url,raw:first.raw}];
- /* links ranked by what this request needs, then capped */
- for(const link of sitePageLinks(first.raw,first.url,host,maxPages-1,purpose)){const p=await tools.fetchPage(link,{kind:'site',host});if(p.ok)pages.push({url:p.url,raw:p.raw})}
- return {ok:true,pages};
+ const pages=[{url:first.url,raw:first.raw}],tried=new Set([first.url]);
+ /* links ranked by what this request needs (and the year asked about), then capped */
+ for(const link of sitePageLinks(first.raw,first.url,host,maxPages-1,purpose,{year})){tried.add(link);const p=await tools.fetchPage(link,{kind:'site',host});if(p.ok)pages.push({url:p.url,raw:p.raw})}
+ // Asked about a year and not found yet: follow the pages most likely to cover it (a phase or year-group page), within budget.
+ const followed=[];
+ if(year&&!yearEvidence(readSiteFacts(pages,host),year).listed.length){
+  const next=[...new Set(pages.flatMap(p=>sitePageLinks(p.raw,p.url,host,4,'year',{year})))].filter(u=>!tried.has(u));
+  for(const link of next.slice(0,LOOP_LIMITS.yearFollowups)){tried.add(link);const p=await tools.fetchPage(link,{kind:'site',host});followed.push({path:new URL(link).pathname,outcome:p.ok?'read':p.reason});if(p.ok)pages.push({url:p.url,raw:p.raw});if(yearEvidence(readSiteFacts(pages,host),year).listed.length)break}
+ }
+ return {ok:true,pages,followed};
 }
 const siteTitle=raw=>plain((String(raw).match(/<title[^>]*>([\s\S]*?)<\/title>/i)||[])[1]||'').split(/\s[|\-–]\s/)[0].trim().slice(0,100)||plain((String(raw).match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)||[])[1]||'').slice(0,100);
 async function checkOrganisation(org,u,R,tools,cov,shownNames=[]){
@@ -197,7 +203,8 @@ async function checkOrganisation(org,u,R,tools,cov,shownNames=[]){
  // A link the person gave is read directly: its statements are the organisation's own, not regulatory confirmation.
  let userSite=null;
  if(org.url){const host=siteHost(org.url)||(()=>{try{return new URL(org.url).hostname.replace(/^www\./,'')}catch(_){return ''}})();
-  const s=host?await readSite(tools,org.url,host,LOOP_LIMITS.sitePagesPerOrg,u.intent==='contacts'?'contacts':'overview'):{ok:false,reason:'not-allowed',pages:[]};
+  const s=host?await readSite(tools,org.url,host,LOOP_LIMITS.sitePagesPerOrg,u.intent==='contacts'?'contacts':'overview',u.constraints.year):{ok:false,reason:'not-allowed',pages:[]};
+  if(s.followed?.length)cov.yearFollowups=s.followed;
   if(s.ok){userSite={host,level:LEVEL.siteUser,pages:s.pages,name:siteTitle(s.pages[0].raw),facts:readSiteFacts(s.pages,host)};out.site=userSite}
   else cov.failures.push({what:'user-link',reason:s.reason})}
  const name=org.name||userSite?.name||'';
@@ -228,7 +235,8 @@ async function checkOrganisation(org,u,R,tools,cov,shownNames=[]){
   if(!hosts.length&&(rec?.name||qn)){const q=buildQuery('name-site',u,{name:rec?.name||qn});const s=await tools.search(q);cov.searches.push({kind:'web',status:s.status,results:s.results.length});
    for(const r of s.results){const h=siteHost(r.url);if(h&&!AGGREGATOR.test(h)&&!hosts.some(x=>x.host===h))hosts.push({host:h,url:'https://'+h+'/'});if(hosts.length>=2)break}}
   for(const {host,url} of hosts.filter(x=>x.host)){
-   const s=await readSite(tools,url,host,LOOP_LIMITS.sitePagesPerOrg,u.intent==='contacts'?'contacts':'overview');if(!s.ok){cov.failures.push({what:'org-site',host,reason:s.reason});continue}
+   const s=await readSite(tools,url,host,LOOP_LIMITS.sitePagesPerOrg,u.intent==='contacts'?'contacts':'overview',u.constraints.year);if(!s.ok){cov.failures.push({what:'org-site',host,reason:s.reason});continue}
+   if(s.followed?.length)cov.yearFollowups=s.followed;
    const proof=rec?establishDomain({school:rec,host}):{status:'unverified',basis:null,evidence:[],reasons:['no-regulator-record']};
    if(proof.status==='established'){cov.siteChecks.push({host,status:'established',basis:proof.basis});out.site={host,level:LEVEL.siteLinked,basis:proof.basis,evidence:proof.evidence,pages:s.pages,facts:readSiteFacts(s.pages,host)};break}
    // A matching name (or phone) can be copied: the site is at most "found", and every statement from it is labelled so.
@@ -270,7 +278,7 @@ function siteLines(site,addSrc,{year=null,intent=''}={}){
   if(year){const ev=yearEvidence(f,year);
    if(ev.listed.length)push('Year '+year+': listed ('+ev.listed[0].quote+')',ev.listed[0]);
    else if(ev.gradeOnly.length)push('Year '+year+': not stated. It describes Grades instead ('+ev.gradeOnly.slice(0,2).map(x=>x.value).join('; ')+'), which I haven’t converted to Years',ev.gradeOnly[0]);
-   else lines.push('Year '+year+': not stated on the pages I read.');
+   else lines.push('I couldn’t confirm Year '+year+' on the '+(site.pages?.length||'')+' pages I read from its website. That doesn’t mean it isn’t offered; the school can confirm.');
    return}
   const ys=f.filter(x=>x.key==='year-groups');const ranges=ys.filter(x=>/ to /.test(x.value)).slice(0,2);
   for(const x of ranges.length?ranges:ys.slice(0,2))push('Year groups: '+x.value,x);
@@ -321,7 +329,7 @@ export async function runResearchTurn({messages,profile={},context=null},env,{fe
    for(const r of w.results){const h=siteHost(r.url);if(isListPage(r)){continue}if(h&&ORG_WORD.test(r.title)&&!sites.some(x=>x.host===h))sites.push({host:h,url:r.url,name:r.title.split(/\s[|\-–]\s/)[0].trim()})}
    for(const r of w.results.filter(isListPage).slice(0,LOOP_LIMITS.listPagesPerTurn)){const p=await tools.fetchPage(r.url,{kind:'discovery'});cov.listPages.push({host:r.host,outcome:p.ok?'read':p.reason});if(p.ok)for(const n of leadNames(p.raw))if(!leads.includes(n))leads.push(n)}
    const parts=['I can’t check '+(TOPIC_WORD[u.topic]||'these')+' in '+where+' against a regulator yet, so this comes from web search and the organisations’ own websites.'];
-   for(const s of sites.slice(0,3)){const r=await readSite(tools,s.url,s.host,2);if(!r.ok||!nameOnPage(s.name,r.pages[0].raw))continue;const site={host:s.host,name:s.name,level:LEVEL.siteFound,pages:r.pages,facts:readSiteFacts(r.pages,s.host)};
+   for(const s of sites.slice(0,3)){const r=await readSite(tools,s.url,s.host,2,'overview',u.constraints.year);if(!r.ok||!nameOnPage(s.name,r.pages[0].raw))continue;const site={host:s.host,name:s.name,level:LEVEL.siteFound,pages:r.pages,facts:readSiteFacts(r.pages,s.host)};
     const sl=siteLines(site,sid,{year:u.constraints.year,intent:u.intent});parts.push(s.name+' — '+LEVEL_SAYS[LEVEL.siteFound].toLowerCase().replace(/ says$/,'')+':'+(sl.lines.length?'\n'+sl.lines.join('\n'):' (no clear details found on its pages)'));claims.push(...sl.claims);nextTask.shown.push({name:s.name,url:r.pages[0].url,level:LEVEL.siteFound})}
    if(leads.length)parts.push('Other names mentioned on listing sites (not checked): '+leads.slice(0,8).join('; ')+'.');
    parts.push('Without a regulator directory I can’t tell how complete this is.');cov.reasons.push('no-regulator-connected');
