@@ -1,0 +1,62 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "orivia-research-pilot",
+  "main": "index.mjs",
+  "account_id": "dca77f1ed4a6d4407bc82e27b4581f7d",
+  "compatibility_date": "2026-10-18",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "preview_urls": false,
+  "ai": {
+    "binding": "AI"
+  },
+  "browser": {
+    "binding": "BROWSER"
+  },
+  "d1_databases": [
+    {
+      "binding": "BUDGET_DB",
+      "database_name": "orivia-beta-budget",
+      "database_id": "bd521420-65a0-4b7d-9bf2-801010c7ca86"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "AI_QUOTA",
+      "namespace_id": "602114",
+      "simple": {
+        "limit": 5,
+        "period": 60
+      }
+    }
+  ],
+  "vars": {
+    "PRIVATE_HOST": "orivia-research-pilot.habeebahsallah27.workers.dev",
+    "ACCESS_TEAM_DOMAIN": "shy-rain-efa9.cloudflareaccess.com",
+    "ACCESS_AUD": "dbdcd14c948acf07a9ecc9d720e19c6fcf455922f66704221fa2f80db9c21028",
+    "RESEARCH_ENABLED": "1",
+    "RESEARCH_LOOP": "1",
+    "RESEARCH_AGENT": "1",
+    "SEARCH_DAILY_CAP": "10",
+    "SEARCH_MONTHLY_CAP": "100",
+    "DAILY_CAP": "60",
+    "OPENAI_PILOT": "0",
+    "BROWSER_DIRECTORY": "0",
+    "OPENAI_INPUT_USD_PER_M": "",
+    "OPENAI_OUTPUT_USD_PER_M": "",
+    "PILOT_OPENAI_DAY_USD": "0",
+    "PILOT_OPENAI_MONTH_USD": "0",
+    "BROWSER_DAY_SECONDS": "0",
+    "BROWSER_MONTH_SECONDS": "0"
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": false
+    },
+    "head_sampling_rate": 1
+  }
+}

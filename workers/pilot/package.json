@@ -2,8 +2,14 @@
   "name": "orivia-research-pilot",
   "private": true,
   "type": "module",
-  "description": "Private research pilot Worker. Add the browser library with: npm install --save-exact @cloudflare/puppeteer",
+  "description": "Protected private research pilot; OpenAI and browser execution disabled by default.",
   "scripts": {
-    "check": "wrangler deploy --dry-run --config wrangler.example.toml"
+    "check": "wrangler deploy --dry-run --config wrangler.jsonc"
+  },
+  "dependencies": {
+    "@cloudflare/puppeteer": "1.4.0"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.1"
   }
 }
