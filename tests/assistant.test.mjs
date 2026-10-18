@@ -3,6 +3,8 @@
 import assert from 'node:assert/strict';
 import {sourceKind,verifyReply,pageText,excerptFor,ownSite,runAssistantTurn,cleanMemory,regionOf,personRegion,bestQuote,render,limitReply,progressLabel,salvageReply,evidenceView,parseJSON,normaliseStep} from '../workers/orivia-assistant.mjs';
 import {runAgentTurn} from '../workers/orivia-research-agent.mjs';
+import {planResearch,isWritingRequest} from '../workers/orivia-research-plan.mjs';
+import {maybeResearch} from '../workers/orivia-research-loop.mjs';
 
 // Source kinds come from the address, never from the model
 assert.equal(sourceKind('https://u.ae/en/information-and-services/visa'),'government');
@@ -168,4 +170,27 @@ assert.ok(!/0501234567/.test(progressLabel([{tool:'web_search',query:'call me on
 // What the model sees: newest pages in full, older ones shortened, within the limit
 {const big=Array.from({length:12},(_,i)=>({id:'E'+(i+1),kind:'website',url:'https://x'+i+'.example/',title:'T',from:'this-turn',excerpt:'w'.repeat(2000)}));const v=evidenceView(big,8000);
  assert.equal(v.length,12);assert.equal(v.at(-1).text.length,2000);assert.ok(v[0].text.length<400);assert.ok(v.reduce((n,e)=>n+e.text.length,0)<8000+12*250);}
-console.log('Assistant: source kinds by address, answer check (contacts, amounts, claim/source fit, own site, jurisdiction), cards never guessed, one source per page, relevant quotes, private search terms, memory carried and cleaned, ask, budget-aware with an honest limit reply, fallback on failure: passed');
+/* ---- 18 Oct housing test: "Okay, what should I ask them? Write me a message." ---- */
+const housing=[{role:'user',content:'I’ve just moved to Manchester for uni and found a room on Facebook. The landlord wants a deposit before I view it. What should I do?'},
+ {role:'assistant',content:'Generally, it’s not a good idea to pay a deposit before viewing.'},{role:'user',content:'They said someone else will take it if I don’t pay today'},
+ {role:'assistant',content:'That’s a common pressure tactic.'},{role:'user',content:'They sent me a tenancy agreement though. Doesn’t that prove it’s legit?'},
+ {role:'assistant',content:'A tenancy agreement doesn’t prove the landlord is genuine.'},{role:'user',content:'Okay, what should I ask them? Write me a message.'}];
+// The old path: a writing request is not research and never gets an institution clarification
+assert.ok(isWritingRequest('Okay, what should I ask them? Write me a message.'));assert.ok(!isWritingRequest('how do i ask for a refund'));assert.ok(!isWritingRequest('find me a hospital'));
+assert.equal(planResearch(housing,{place:'University of Manchester'},null).needed,false,'no research, no "Which institution is handling it?"');
+assert.equal(maybeResearch(housing,{task:{topic:'housing'}}),false);
+// The assistant: drafts straight from the conversation; facts in the draft come from what the person said or the evidence
+{let calls=0;const drafting={run:async(_m,o)=>{calls++;const st=JSON.parse(o.messages[1].content);assert.ok(st.conversation.some(m=>/landlord/.test(m.content)),'the landlord context is in view');
+  return {response:JSON.stringify({action:'reply',sentences:[{text:'Here’s a message that asks for a viewing and proof before you pay anything.',kind:'general'}],
+   draft:{to:'the landlord',channel:'message',text:'Hi, thanks for sending the tenancy agreement. Before I pay any deposit I’d like to view the room in person. Could you tell me the full address and a time this week I can come? Please also send proof that you own or manage the property. I won’t pay until I’ve seen it. Thanks, [your name]'},memory:{goal:'check a Facebook room before paying'}})}}};
+ const quiet=console.log;console.log=()=>{};
+ const o=await runAssistantTurn({messages:housing},env,{ai:drafting,fetcher:async()=>{throw Error('no research expected')},reserve:async()=>true});console.log=quiet;
+ assert.equal(calls,1,'one step: no research, no question');assert.equal(o.draft.to,'the landlord');assert.match(o.draft.text,/view the room/);assert.match(o.draft.text,/\[your name\]/);assert.match(o.reply,/message that asks/);
+ // An invented figure in a draft is rejected; one the person gave is fine; a draft-only reply still gets a line of text
+ const ev=[{id:'E1',url:'https://www.gov.uk/deposit-protection-schemes-and-landlords',title:'Deposit protection',kind:'government',excerpt:'Your landlord must put your deposit in a government-backed tenancy deposit scheme.'}];
+ assert.match(verifyReply({sentences:[{text:'Here it is.',kind:'general'}],draft:{to:'landlord',text:'I can pay £450 on Friday.'}},ev,{conversation:'the room is £600 a month'}).errors.join(' '),/draft: amount "£450"/);
+ assert.equal(verifyReply({sentences:[{text:'Here it is.',kind:'general'}],draft:{to:'landlord',text:'The advert says £600 a month.'}},ev,{conversation:'the room is £600 a month'}).ok,true);
+ let k2=0;const draftOnly={run:async()=>({response:JSON.stringify({action:'reply',sentences:[],draft:{to:'the landlord',channel:'email',subject:'Viewing before deposit',text:'Hello, could I view the room first? [your name]'}})})};
+ console.log=()=>{};const o2=await runAssistantTurn({messages:housing},env,{ai:draftOnly,fetcher,reserve:async()=>true});console.log=quiet;
+ assert.equal(o2.draft.channel,'email');assert.equal(o2.draft.subject,'Viewing before deposit');assert.ok(o2.reply.length>10,'a short line introduces the draft');}
+console.log('Assistant: source kinds by address, answer check (contacts, amounts, claim/source fit, own site, jurisdiction), cards never guessed, one source per page, relevant quotes, private search terms, memory carried and cleaned, ask, budget-aware with an honest limit reply, fallback on failure, drafted messages from the conversation (no research, no institution question): passed');

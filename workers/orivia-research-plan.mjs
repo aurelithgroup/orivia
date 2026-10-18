@@ -30,10 +30,17 @@ const detect=t=>{
  if(/hang[ -]?out|meet people|what.*area.*like|local tips|caf[eé]s?|restaurants?/.test(t))topics.push('community');
  return [...new Set(topics)];
 };
+/** A request to write or word something for the person (a message, email, reply, script), not to look something up. */
+export function isWritingRequest(text){
+ return /\b(write|draft|compose|word|phrase|reword|rewrite)\b[^.?!]{0,40}\b(message|msg|email|e-mail|text|letter|reply|note|dm|whatsapp|script)\b|\bwhat (?:should|do|can|could) i (?:ask|say|tell|write|text|reply)\b|\bhow (?:should|do|can) i (?:word|phrase|reply|respond)\b|\bhelp me (?:write|reply|respond|word|ask)\b/i.test(String(text||''));
+}
 export function planResearch(messages,profile,context){
  let task=schoolTaskContext(context);
  const users=(Array.isArray(messages)?messages:[]).filter(m=>m.role==='user').map(m=>String(m.content||''));
  const latest=clean(users.at(-1));if(!latest)return {needed:false};
+ // "Write me a message" / "what should I say to them?" is writing help from this conversation, never a lookup or a
+ // clarification about some institution (18 Oct housing test). The chat path answers it with the conversation in view.
+ if(isWritingRequest(latest))return {needed:false};
  if(detect(latest).length&&!detect(latest).includes('school'))task=null;
  const assistants=(Array.isArray(messages)?messages:[]).slice(0,-1).filter(m=>m.role==='assistant');
  const previous=clean(assistants.at(-1)?.content);

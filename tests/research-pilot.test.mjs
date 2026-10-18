@@ -95,9 +95,19 @@ assert.ok(!JSON.stringify(sql.prepare('SELECT * FROM spend_ticket').all()).match
  asked.length=0;res=await v3.fetch(req('hello',{providerConsent:{openai:'openai-research-pilot-v2'}}),pilotEnv,ctx);assert.equal(asked.length,0);
  // Switch off → never the assistant
  res=await v3.fetch(req('hello',consent),{...pilotEnv,OPENAI_PILOT:'0'},ctx);assert.equal(asked.length,0);
- // Daily caps still come first: a full day refuses before any model call
- const capped=createPilotWorker({launchBrowser,fetcher:assistantFetch});sql.exec("INSERT INTO trial_usage (day,calls) VALUES ('"+new Date().toISOString().slice(0,10)+"',100000) ON CONFLICT(day) DO UPDATE SET calls=100000");
- res=await capped.fetch(req('hello',consent),{...pilotEnv,DAILY_CAP:'5'},ctx);assert.equal(res.status,429);assert.equal(asked.length,0);
+ // Daily caps still come first: a full day refuses before any model call. The assistant has its own daily counter (it doesn't
+ // use Workers AI), the refusal says what it is and when it resets, and the per-minute limiter isn't touched by it.
+ const today=new Date().toISOString().slice(0,10);let quotaCalls=0;const countingQuota={limit:async()=>{quotaCalls++;return {success:true}}};
+ const capped=createPilotWorker({launchBrowser,fetcher:assistantFetch});sql.exec("INSERT INTO trial_usage (day,calls) VALUES ('assistant:"+today+"',100000) ON CONFLICT(day) DO UPDATE SET calls=100000");
+ res=await capped.fetch(req('hello',consent),{...pilotEnv,ASSISTANT_DAILY_CAP:'5',AI_QUOTA:countingQuota},ctx);assert.equal(res.status,429);assert.equal(asked.length,0);
+ let body=await res.json();assert.equal(body.error,'daily_limit');assert.ok(body.retryAfter>0&&body.retryAfter<=86400,'seconds until midnight UTC');
+ assert.equal(quotaCalls,0,'a refused day does not use up the per-minute allowance');
+ // …while the Workers AI counter is separate: a full assistant day doesn't block ordinary chat for someone without the consent
+ res=await capped.fetch(req('hello'),{...pilotEnv,ASSISTANT_DAILY_CAP:'5',AI_QUOTA:countingQuota},ctx);assert.equal(res.status,200);
+ // Per-minute refusal: a code and a wait the page can count down
+ const busyQuota={limit:async()=>({success:false})};
+ res=await capped.fetch(req('hello'),{...pilotEnv,AI_QUOTA:busyQuota},ctx);body=await res.json();assert.equal(res.status,429);assert.equal(body.error,'rate_limit');assert.equal(body.retryAfter,60);
+ sql.exec("DELETE FROM trial_usage WHERE day='assistant:"+today+"'");
  sql.exec("DELETE FROM trial_usage");console.log=quiet;}
 assert.match(cfg.providerPilot.text,/About me details \(unless/,'consent wording matches what is sent');assert.equal(cfg.providerPilot.consent,'openai-assistant-pilot-v3');
 // Streamed replies: when the page accepts NDJSON, progress lines describe real steps, then {status,result}; a failed assistant
@@ -107,14 +117,17 @@ assert.match(cfg.providerPilot.text,/About me details \(unless/,'consent wording
  const streamReq=(text,prefs)=>new Request('https://'+host+'/v1/chat',{method:'POST',headers:{origin:'https://'+host,'content-type':'application/json',accept:'application/x-ndjson, application/json'},body:JSON.stringify({messages:[{role:'user',content:text}],preferences:prefs})});
  let k=0;const script=[{action:'tools',calls:[{tool:'web_search',query:'pharmacy open late'}]},{action:'reply',sentences:[{text:'I searched, but I couldn’t confirm a specific pharmacy from the results.',kind:'general'},{text:'Tell me your area and I’ll look again.',kind:'general'}],memory:{}}];
  const streaming=createPilotWorker({launchBrowser,fetcher:async(url,init)=>Response.json({status:'completed',usage:{input_tokens:100,output_tokens:50},output:[{type:'message',role:'assistant',content:[{type:'output_text',text:JSON.stringify(script[Math.min(k++,1)])}]}]})});
- const day=new Date().toISOString().slice(0,10),used=()=>sql.prepare('SELECT calls FROM trial_usage WHERE day=?').get(day)?.calls||0;
- let before=used();let out=await lines(await streaming.fetch(streamReq('pharmacy open late?',consent),pilotEnv,ctx));
+ // Each path counts once in its own daily counter: assistant turns in "assistant:<day>", Workers AI turns in "<day>".
+ const day=new Date().toISOString().slice(0,10),count=k=>sql.prepare('SELECT calls FROM trial_usage WHERE day=?').get(k)?.calls||0;
+ const used=()=>count('assistant:'+day),usedAI=()=>count(day);
+ let before=used(),beforeAI=usedAI();let out=await lines(await streaming.fetch(streamReq('pharmacy open late?',consent),pilotEnv,ctx));
  const progress=out.filter(x=>x.progress).map(x=>x.progress);assert.ok(progress.includes('Searching: pharmacy open late'),JSON.stringify(progress));assert.ok(progress.includes('Checking every fact against the sources'));
- const fin=out.at(-1);assert.equal(fin.status,200);assert.equal(fin.result.research.assistant,true);assert.equal(used()-before,1,'counted once');
- // Assistant fails (provider error) → the stream ends with the normal flow's reply, still counted once
+ const fin=out.at(-1);assert.equal(fin.status,200);assert.equal(fin.result.research.assistant,true);assert.equal(used()-before,1,'counted once');assert.equal(usedAI()-beforeAI,0,'Workers AI allowance untouched');
+ // Assistant fails (provider error) → the stream ends with the normal flow's reply, admitted under the Workers AI limit once
  const broken=createPilotWorker({launchBrowser,fetcher:async()=>Response.json({error:{code:'server_error'}},{status:500})});
- before=used();out=await lines(await broken.fetch(streamReq('hello there',consent),pilotEnv,ctx));
- assert.equal(out.at(-1).status,200);assert.ok(typeof out.at(-1).result.reply==='string'&&!out.at(-1).result.research?.assistant,'normal flow answered');assert.equal(used()-before,1,'fallback not counted twice');
+ before=used();beforeAI=usedAI();out=await lines(await broken.fetch(streamReq('hello there',consent),pilotEnv,ctx));
+ assert.equal(out.at(-1).status,200);assert.ok(typeof out.at(-1).result.reply==='string'&&!out.at(-1).result.research?.assistant,'normal flow answered');
+ assert.equal(used()-before,1);assert.equal(usedAI()-beforeAI,1,'fallback counted once, against the Workers AI allowance it uses');
  // Without the Accept header: plain JSON, as before
  k=0;const plain=await streaming.fetch(req('pharmacy open late?',consent),pilotEnv,ctx);assert.match(plain.headers.get('content-type'),/application\/json/);
  console.log=quiet;}

@@ -303,6 +303,7 @@ function draw(){
   if(srcs.length)txt.append(...citedText(t.content,srcs));else txt.textContent=t.content;p.append(b,txt);
   const cards=t.role==='assistant'&&t.meta&&t.meta.organisations?orgCards(t,srcs):null;
   if(cards){p.append(cards);p.classList.add('has-cards')}
+  if(t.role==='assistant'&&t.meta&&safeDraft(t.meta.draft))p.append(draftBox(t));
   if(t.role==='assistant'&&(srcs.length||(t.meta&&t.meta.research))){
    const rb=researchBlock(srcs,t.meta.research);
    if(cards){const d=document.createElement('details'),sm=document.createElement('summary');d.className='sources-fold';sm.textContent='All sources for this reply ('+srcs.length+')';d.append(sm,rb);p.append(d)}else p.append(rb);
@@ -1135,6 +1136,32 @@ $('clear').onclick=()=>{
  if(busy)return;const b=$('clear');
  if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete this chat';setTimeout(()=>{b.dataset.sure='';b.textContent='Delete this chat'},4000);return}
  store.chats=store.chats.filter(c=>c.id!==store.active);store.active=null;persist();turns=[];clearChatCards();draw();renderChats();b.dataset.sure='';b.textContent='Delete this chat';tab('chat')};
+/* A drafted message: editable here, copied by the person and sent by them. Orivia never sends anything. Edits are kept with
+   the chat on this device. */
+function safeDraft(x){
+ if(!x||typeof x!=='object'||typeof x.text!=='string'||!x.text.trim())return null;
+ const s=(v,n)=>typeof v==='string'?v.slice(0,n):'';
+ return {to:s(x.to,80),channel:['message','email','letter','call script'].includes(x.channel)?x.channel:'message',subject:s(x.subject,140),text:x.text.slice(0,2000)};
+}
+function draftBox(t){
+ const d=t.meta.draft,box=document.createElement('div');box.className='draft-box';box.style.cssText='margin-top:10px;display:flex;flex-direction:column;gap:6px';
+ const label=document.createElement('label');label.textContent=(d.channel==='email'?'Email':d.channel==='call script'?'What to say':d.channel==='letter'?'Letter':'Message')+(d.to?' to '+d.to:'')+' · edit it, then copy and send it yourself';label.style.cssText='font-size:.85em;opacity:.8';
+ let subj=null;
+ if(d.channel==='email'){subj=document.createElement('input');subj.type='text';subj.value=d.subject||'';subj.setAttribute('aria-label','Email subject');subj.oninput=()=>{d.subject=subj.value.slice(0,140);save()};subj.style.cssText='width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit'}
+ const area=document.createElement('textarea');area.value=d.text;area.rows=Math.min(14,Math.max(5,d.text.split('\n').length+1));area.setAttribute('aria-label','Drafted message, editable');
+ area.style.cssText='width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;resize:vertical';
+ area.oninput=()=>{d.text=area.value.slice(0,2000);save()};
+ const copy=document.createElement('button');copy.type='button';copy.className='btn small';copy.textContent='Copy';
+ copy.onclick=async()=>{const v=(subj&&subj.value?'Subject: '+subj.value+'\n\n':'')+area.value;let ok=false;try{await navigator.clipboard.writeText(v);ok=true}catch(_){try{area.select();ok=document.execCommand('copy')}catch(__){}}copy.textContent=ok?'Copied':'Select the text and copy it';setTimeout(()=>{copy.textContent='Copy'},2500)};
+ box.append(label,...(subj?[subj]:[]),area,copy);return box;
+}
+/* After a rate limit: the Send button waits, counting down, so repeated taps can't keep the limit going. */
+let coolTimer=null,coolUntil=0;
+function cooldown(secs){
+ clearInterval(coolTimer);let left=Math.max(1,Math.round(secs));coolUntil=Date.now()+left*1000;const send=$('send');send.disabled=true;
+ const tick=()=>{if(left<=0){clearInterval(coolTimer);if(!busy)send.disabled=false;send.removeAttribute('aria-label');return}send.setAttribute('aria-label','Send again in '+left+' seconds');left--};
+ tick();coolTimer=setInterval(tick,1000);
+}
 /* Research progress inside the chat: the server streams what Orivia is actually doing ("Searching: …", "Reading 3 pages: …"),
    one line at a time, then the reply. Plain JSON replies (every other path) work as before. */
 function working(text){
@@ -1155,7 +1182,7 @@ async function readReply(res,chatId){
  return {r:{ok:final.status<400,status:final.status},d:final.body};
 }
 $('form').onsubmit=async e=>{
- e.preventDefault();if(busy||sessionStorage.getItem(ck)!=='yes')return;
+ e.preventDefault();if(busy||sessionStorage.getItem(ck)!=='yes'||Date.now()<coolUntil)return;
  stopDictation(true);stopSpeaking();
  const text=$('msg').value.trim();if(!text)return;
  $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});save();draw();
@@ -1167,10 +1194,18 @@ $('form').onsubmit=async e=>{
   if(!r.ok){
    const why=d&&d.error;
    if(r.status===401&&why==='human_check'){sessionStorage.removeItem(ck);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false;if(window.__siteKey)loadTurnstile(window.__siteKey);$('status').textContent='';return}
-   $('status').textContent=why==='person_limit'?'You’ve reached today’s message limit for the beta. Your guides, calendar and journeys still work, and messages come back tomorrow.':why==='daily_limit'?'Orivia’s beta is very busy today. Please try again tomorrow; your guides, calendar and journeys still work.':r.status===429?'Too many messages at once. Please wait a moment and try again.':'Orivia is temporarily unavailable. Please try again.';return}
+   // The message didn't go through: take it back out of the chat and put it in the composer, so a retry doesn't repeat it.
+   if(turns.at(-1)?.role==='user'&&turns.at(-1).content===text.slice(0,900)&&store.active===chatId){turns.pop();save();draw();if(!$('msg').value)$('msg').value=text}
+   const wait=Math.max(0,Math.min(86400,Math.round(Number(d&&d.retryAfter)||0)));
+   $('status').textContent=why==='person_limit'?'You’ve reached today’s message limit for the beta. Your guides, calendar and journeys still work, and messages come back tomorrow.'
+    :why==='daily_limit'?(mode==='public'?'Orivia’s beta is very busy today. Please try again tomorrow; your guides, calendar and journeys still work.':'Today’s message allowance for this private test is used up. It resets at midnight UTC (4am in the UAE). Your guides, calendar and journeys still work.')
+    :why==='rate_limit'||r.status===429?'Orivia is getting a lot of messages right now. Your message is back in the box; you can send it again in '+(wait||60)+' seconds.':'Orivia is temporarily unavailable. Please try again.';
+   if(why==='rate_limit'||(r.status===429&&!why))cooldown(wait||60);
+   return}
   if(typeof d.reply!=='string'||!d.reply.trim())throw Error('empty');
   const meta={};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
   if(vetted.length&&Array.isArray(d.organisations)){const orgs=d.organisations.slice(0,8);if(safeOrgs(orgs,vetted).length){meta.organisations=JSON.parse(JSON.stringify(orgs));if(['list','single','choose'].includes(d.cardMode))meta.cardMode=d.cardMode}}
+  const dr=safeDraft(d.draft);if(dr)meta.draft=dr;
   const answer={role:'assistant',content:d.reply.slice(0,4000),...(Object.keys(meta).length?{meta}:{})};
   if(store.active!==chatId){ // they switched chats while Orivia was replying: file the answer in its own chat
    const c=store.chats.find(x=>x.id===chatId);if(c){c.turns=[...c.turns,answer];c.updated=Date.now();persist();renderChats()}
@@ -1183,7 +1218,11 @@ $('form').onsubmit=async e=>{
   if(!d.guideOffer&&!d.journey)rememberCard(d.transport);else $('remember-card')?.remove();
   if(!d.guideOffer)placementCard(d.journey);
   if(/\b(calendar|reminders?|appointments?|schedule)\b/i.test(text))chip('Open My calendar',()=>tab('calendar'));
-  $('status').textContent=d.liveSources?.length?'Opened approved source page(s) for this reply. Routes and schedules are not checked.':d.verifiedSources?.length?'Reviewed campus references attached; live pages unavailable.':'AI reply • No approved live sources checked.';
+  // Say which Orivia answered: the OpenAI research test, or basic mode (and why), so a tester always knows what they tested.
+  const viaTest=!!(d.research&&d.research.assistant);
+  $('status').textContent=viaTest?(d.liveSources?.length?'Research test (OpenAI) · facts checked against the sources shown.':'Research test (OpenAI).')
+   :pilotOffer&&!pilotConsent()?'Basic mode · the OpenAI research test is off on this device (turn it on in Settings).'
+   :d.liveSources?.length?'Opened approved source page(s) for this reply. Routes and schedules are not checked.':d.verifiedSources?.length?'Reviewed campus references attached; live pages unavailable.':'AI reply • No approved live sources checked.';
  }catch(_){$('status').textContent='Could not reach the private AI. Please try again.'}
- finally{busy=false;$('send').disabled=false;working('')}
+ finally{busy=false;$('send').disabled=Date.now()<coolUntil;working('')}
 };

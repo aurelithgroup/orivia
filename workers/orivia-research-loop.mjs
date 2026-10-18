@@ -2,6 +2,7 @@
  * The model only proposes (intent, names, filters, extra searches). Code enforces tools, sources, budgets and citations.
  * Documented in docs/research-loop.md. Enabled with RESEARCH_LOOP=1.
  */
+import {isWritingRequest} from './orivia-research-plan.mjs';
 import {understandRequest} from './orivia-research-understand.mjs';
 import {RESEARCH_SOURCES} from './orivia-research-policy.mjs';
 import {speaPage,parseProfile,parseDirectory,classifyMatches,nameScore,curriculumMatches,listsYear,SPEA_DIRECTORY} from './orivia-spea-reader.mjs';
@@ -416,6 +417,7 @@ export function sanitizeTask(t){
 /** Cheap pre-check (no model call) so ordinary chat doesn't spend a model call on understanding. */
 export function maybeResearch(messages,context){
  const latest=String((messages||[]).filter(m=>m.role==='user').at(-1)?.content||'');
+ if(isWritingRequest(latest))return false; // writing help, not a lookup
  if(context?.task?.topic&&latest.length<300)return true;
  return /https?:\/\/|\b(schools?|nurser(?:y|ies)|universit(?:y|ies)|colleges?|academy|banks?|clinics?|hospitals?)\b/i.test(latest);
 }
