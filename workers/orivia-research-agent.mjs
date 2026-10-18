@@ -8,7 +8,7 @@
  * following the same method picks the next action instead. Enabled with RESEARCH_AGENT=1 (on top of RESEARCH_LOOP).
  */
 import {understandRequest,placeWritten} from './orivia-research-understand.mjs';
-import {makeTools,regulatorFor,sanitizeTask,buildQuery,queryName,leadNames,LEVEL,regulatorRecord,readSite,makeSources,recordLine,orgCard,siteLines,LEVEL_SAYS,isListPage,AGGREGATOR,ORG_WORD,CURR_NAME,TOPIC_WORD} from './orivia-research-loop.mjs';
+import {makeTools,regulatorFor,sanitizeTask,buildQuery,queryName,leadNames,LEVEL,regulatorRecord,readSite,makeSources,recordLine,orgCard,siteLines,LEVEL_SAYS,isListPage,AGGREGATOR,ORG_WORD,CURR_NAME,TOPIC_WORD,WEB_VARIANTS} from './orivia-research-loop.mjs';
 import {nameScore,classifyMatches,curriculumMatches,listsYear,distinctiveTokens} from './orivia-spea-reader.mjs';
 // A lead and a record are the same organisation when names match closely, or every distinctive word of the shorter name
 // (at least two) appears in the longer one ("Alder British School" ↔ "[Synthetic] Alder British School").
@@ -16,7 +16,7 @@ export function sameOrg(a,b){if(!a||!b)return false;if(nameScore(a,b)>=0.85)retu
 import {siteHost,establishDomain,readSiteFacts,yearEvidence,nameOnPage} from './orivia-school-sites.mjs';
 
 const MODEL='@cf/meta/llama-3.3-70b-instruct-fp8-fast';
-export const AGENT_LIMITS=Object.freeze({defaultSteps:5,maxSteps:8,recordsPerOpen:8,leadsPerCheck:5,listPagesPerRead:2,viewItems:12,listPage:8});
+export const AGENT_LIMITS=Object.freeze({defaultSteps:5,maxSteps:12,recordsPerOpen:8,leadsPerCheck:5,listPagesPerRead:2,viewItems:12,listPage:8,wallMs:40000});
 
 /* ---------- 1. What would count as answering ---------- */
 // Which source kinds may support which claim (Ina: "reliability belongs to a particular claim").
@@ -31,7 +31,7 @@ export function defineGoal(u){
  const listAll=u.intent==='all',kind=listAll?'list-all':u.intent;
  const criteria={
   'list-all':['every matching record from a complete regulator listing (filter applied, all results read)','otherwise: honest coverage and what remains'],
-  find:['at least 3 confirmed matches, or everything found if fewer'],
+  find:['a page of matches (8), or everything found if fewer, each labelled by who says it'],
   more:['new confirmed matches not already shown'],
   check:['who the organisation is (regulator identity or candidates)','what it says about itself, labelled','the year asked about, if any'],
   contacts:['phone or email from the regulator or its own site'],
@@ -53,7 +53,7 @@ const shownUrls=state=>new Set((state.task?.shown||[]).map(s=>s.url));
 export const ACTIONS={
  regulator_listing:{args:'{"page":1}',when:s=>!!s.R,does:'Open the regulator’s own directory listing (with the curriculum filter when the regulator supports it). Gives names, classifications and the result total.'},
  regulator_search:{args:'{"by":"curriculum"|"name","org":"O1 (for name)","offset":0}',when:s=>!!s.R,does:'Search within the regulator’s website. Finds record pages (not yet opened). Costs 1 search.'},
- web_search:{args:'{"purpose":"discover"|"official-site","org":"O1 (for official-site)"}',when:()=>true,does:'Search the open web. Results are leads only (directories, schools, articles). Costs 1 search.'},
+ web_search:{args:'{"purpose":"discover"|"official-site","org":"O1 (for official-site)"}',when:()=>true,does:'Search the open web for listing sites, schools’ own websites and articles. Each discover search uses a different wording (up to 3), so repeat it if the first found little. Costs 1 search.'},
  read_list_page:{args:'{"ids":["W1"]}',when:s=>s.web.some(w=>w.list&&!w.read),does:'Read up to 2 listing pages from web results for names (leads only, never facts).'},
  check_leads:{args:'{"ids":["L1","L2"]}',when:s=>!!s.R&&s.leads.some(l=>!l.checked),does:'Check up to 5 lead names against the regulator in one search. Costs 1 search.'},
  open_records:{args:'{"ids":["R1","R2"]}',when:s=>[...s.records.values()].some(r=>r.level!==LEVEL.regulator&&!r.failed),does:'Open up to 8 regulator record pages to confirm name, curriculum, year groups and contacts.'},
@@ -65,7 +65,7 @@ const idList=(args,prefix,max)=>(Array.isArray(args?.ids)?args.ids:[]).filter(x=
 export function validateAction(p,state,tools){
  const type=p?.action;const def=ACTIONS[type];if(!def)return {error:'unknown-action'};
  if(!def.when(state))return {error:'not-available-now'};
- const a=p.args&&typeof p.args==='object'?p.args:{};const left=4-tools.used.searches;
+ const a=p.args&&typeof p.args==='object'?p.args:{};const left=(tools.limits?.searches??4)-tools.used.searches;
  const costsSearch=['regulator_search','web_search','check_leads'].includes(type);if(costsSearch&&left<=0)return {error:'no-search-budget'};
  if(type==='regulator_search'){const by=a.by==='name'?'name':'curriculum';const org=by==='name'?state.goalOrgs.find(o=>o.id===a.org)||state.goalOrgs[0]:null;
   if(by==='name'&&!org?.queryName)return {error:'name-not-searchable'};const offset=Math.max(0,Math.min(9,Math.floor(Number(a.offset)||0)));
@@ -73,8 +73,10 @@ export function validateAction(p,state,tools){
   return {type,args:{by,offset,org:org?.id||''}}}
  if(type==='web_search'){const purpose=a.purpose==='official-site'?'official-site':'discover';const org=purpose==='official-site'?state.goalOrgs.find(o=>o.id===a.org)||state.goalOrgs[0]:null;
   if(purpose==='official-site'&&!(org?.queryName||org?.identity))return {error:'name-not-searchable'};
-  if(state.history.some(h=>h.type==='web_search'&&h.args.purpose===purpose&&(h.args.org||'')===(org?.id||'')))return {error:'already-done'};
-  return {type,args:{purpose,org:org?.id||''}}}
+  if(purpose==='official-site'&&state.history.some(h=>h.type==='web_search'&&h.args.purpose===purpose&&(h.args.org||'')===(org?.id||'')))return {error:'already-done'};
+  // Discovery may be repeated with a different wording each time (code picks the wording; up to WEB_VARIANTS).
+  const variant=state.history.filter(h=>h.type==='web_search'&&h.args.purpose==='discover').length;if(purpose==='discover'&&variant>=WEB_VARIANTS)return {error:'already-done'};
+  return {type,args:{purpose,org:org?.id||'',...(purpose==='discover'?{variant}:{})}}}
  if(type==='read_list_page'){const ids=idList(a,'W',AGENT_LIMITS.listPagesPerRead).filter(id=>state.web.some(w=>w.id===id&&w.list&&!w.read));return ids.length?{type,args:{ids}}:{error:'no-valid-ids'}}
  if(type==='check_leads'){const ids=idList(a,'L',AGENT_LIMITS.leadsPerCheck).filter(id=>state.leads.some(l=>l.id===id&&!l.checked));return ids.length?{type,args:{ids}}:{error:'no-valid-ids'}}
  if(type==='open_records'){const ids=idList(a,'R',AGENT_LIMITS.recordsPerOpen).filter(id=>{const r=state.refs.get(id);const rec=r&&state.records.get(r.url);return rec&&rec.level!==LEVEL.regulator&&!rec.failed});return ids.length?{type,args:{ids}}:{error:'no-valid-ids'}}
@@ -109,11 +111,12 @@ async function execute(action,state,tools){
   state.moreRegulatorResults=!!s.more;return 'Regulator search found '+n+' record pages (not opened yet)'+(s.more?'; more results available at the next offset.':'.');
  }
  if(type==='web_search'){
-  const org=state.goalOrgs.find(o=>o.id===args.org);const q=args.purpose==='official-site'?buildQuery('name-site',u,{name:org.identity||org.queryName}):buildQuery('web-list',u);
+  const org=state.goalOrgs.find(o=>o.id===args.org);const q=args.purpose==='official-site'?buildQuery('name-site',u,{name:org.identity||org.queryName}):buildQuery('web-list',u,{variant:args.variant||0});
   const s=await tools.search(q);if(s.status!=='searched')return 'Web search failed ('+s.status+').';
   let lists=0,sites=0;
   for(const r of s.results){
    const list=isListPage(r);const host=siteHost(r.url);
+   if(state.web.some(x=>x.url===r.url))continue; // the same page from a reworded search is not new
    const id=ref(state,'W',{url:r.url,kind:'web',title:r.title});state.web.push({id,url:r.url,host:r.host,title:r.title,list,read:false});if(list)lists++;
    // Directories often state a count ("28 British schools"): a lead about size, never evidence of completeness.
    const m=(r.title+' '+r.snippet).match(/\b(\d{1,3})\s+(?:best\s+|top\s+)?(?:[A-Z][a-z]+\s+){0,2}(?:schools|nurseries|clinics)\b/i);if(m&&list)state.claimedCounts.push({host:r.host,n:+m[1],text:m[0]});
@@ -124,7 +127,7 @@ async function execute(action,state,tools){
  if(type==='read_list_page'){
   let found=0;for(const id of args.ids){const w=state.web.find(x=>x.id===id);w.read=true;const p=await tools.fetchPage(w.url,{kind:'discovery'});
    if(!p.ok){state.failures.push({what:'list-page',host:w.host,reason:p.reason});continue}
-   for(const name of leadNames(p.raw))if(!state.leads.some(l=>sameOrg(l.name,name))){state.leads.push({id:'L'+(state.leads.length+1),name,from:w.host,checked:false});found++}}
+   for(const name of leadNames(p.raw))if(!state.leads.some(l=>sameOrg(l.name,name))){state.leads.push({id:'L'+(state.leads.length+1),name,from:w.host,url:p.url||w.url,title:String(w.title||'').slice(0,140),checked:false});found++}}
   return 'Listing pages gave '+found+' new lead names (not verified).';
  }
  if(type==='check_leads'){
@@ -168,7 +171,8 @@ export function assess(state){
  const complete=!!(filtered&&filtered.complete);
  if(['list-all','find','more'].includes(g.kind)){
   if(g.kind==='list-all'&&!complete)missing.push(state.R?'a complete regulator listing for this filter (not available yet): keep confirming records and report coverage':'no regulator: completeness cannot be established');
-  const enough=g.kind!=='list-all'&&matches.length>=(g.kind==='find'?3:1);
+  // "find" fills a page (8) before stopping, like a person giving a useful list; "more" needs one new match.
+  const enough=g.kind!=='list-all'&&matches.length>=(g.kind==='find'?AGENT_LIMITS.listPage:1);
   if(g.kind!=='list-all'&&!enough)missing.push('more confirmed matches');
   // Only "all" (or not having enough yet) keeps widening: unopened records and unchecked leads.
   if(!enough&&recs.some(r=>r.level===LEVEL.regulatorIndex&&!r.failed))missing.push('regulator records found but not opened');
@@ -202,13 +206,19 @@ export function policyNext(state){
  if(['list-all','find','more'].includes(g.kind)){
   if(R&&!h('regulator_listing').length&&g.kind!=='more')return {action:'regulator_listing',args:{}};
   if(assess(state).done)return {action:'answer'};
+  // Search the way a person would: the regulator, then the open web (listing sites and schools' own websites), rewording
+  // the web search when it finds little, checking names against the regulator, and reading a few schools' own websites.
+  const discovers=h('web_search').filter(x=>x.args.purpose==='discover').length,searchesLeft=state.searchesLeft??4;
   if(R&&!h('regulator_search').length)return {action:'regulator_search',args:{by:'curriculum',offset:(state.task?.cursor?.offset)||0}};
-  if(!h('web_search').length&&(g.kind!=='find'||!R))return {action:'web_search',args:{purpose:'discover'}};
+  if(!discovers&&g.kind!=='more')return {action:'web_search',args:{purpose:'discover'}};
   if(listsToRead.length)return {action:'read_list_page',args:{ids:listsToRead.slice(0,2)}};
   if(R&&uncheckedLeads.length)return {action:'check_leads',args:{ids:uncheckedLeads.slice(0,5)}};
   if(R&&unopened.length)return {action:'open_records',args:{ids:unopened.slice(0,8)}};
+  if(discovers&&discovers<WEB_VARIANTS&&searchesLeft>=2&&state.leads.length<12&&g.kind!=='more')return {action:'web_search',args:{purpose:'discover'}};
   if(R&&g.kind==='list-all'&&state.moreRegulatorResults)return {action:'regulator_search',args:{by:'curriculum',offset:h('regulator_search').length+((state.task?.cursor?.offset)||0)}};
-  if(!R&&sitesToRead.length)return {action:'open_site',args:{id:sitesToRead[0].id}};
+  const openedSites=h('open_site').length,regNames=[...state.records.values()].filter(r=>r.level===LEVEL.regulator&&r.name).map(r=>r.name);
+  const siteToRead=sitesToRead.find(r=>r.from==='web-search'&&!regNames.some(n=>sameOrg(n,r.name||'')))||(!R&&sitesToRead[0]);
+  if(siteToRead&&openedSites<3)return {action:'open_site',args:{id:siteToRead.id}};
   return {action:'answer'};
  }
  // check / contacts / compare
@@ -229,7 +239,7 @@ function viewFor(state,tools,a,lastObs){
  const recs=[...state.records.values()];const N=AGENT_LIMITS.viewItems;
  return {goal:{kind:state.goal.kind,topic:state.goal.topic,place:state.hidePlace?'':(state.goal.location?.city||''),curriculum:state.goal.constraints.curriculum||'',year:state.goal.constraints.year||null,organisations:state.goalOrgs.map(o=>({id:o.id,name:o.name||o.url}))},
   whatCountsAsAnswering:state.goal.criteria,stillMissing:a.missing,complete:a.complete,
-  budget:{stepsLeft:state.maxSteps-state.step,searchesLeft:4-tools.used.searches,fetchesLeft:24-tools.used.fetches},
+  budget:{stepsLeft:state.maxSteps-state.step,searchesLeft:(tools.limits?.searches??4)-tools.used.searches,fetchesLeft:(tools.limits?.fetches??24)-tools.used.fetches},
   found:{confirmedMatches:a.matches,regulatorRecordsOpened:recs.filter(r=>r.level===LEVEL.regulator).length,
    regulatorRecordsNotOpened:[...state.refs.values()].filter(d=>d.kind==='record'&&state.records.get(d.url)?.level===LEVEL.regulatorIndex&&!state.records.get(d.url)?.failed).slice(0,N).map(d=>({id:d.id,name:d.name})),
    leadsNotChecked:state.leads.filter(l=>!l.checked).slice(0,N).map(l=>({id:l.id,name:l.name})),
@@ -266,21 +276,44 @@ function compose(state,a){
   const prevTotal=state.task?.listTotal&&state.task.listTotal.curriculum===(c.curriculum||'')?state.task.listTotal.total:null;
   if(page.length){parts.push((g.kind==='more'?'Here are '+page.length+' more ':rest.length?'Here are the first '+page.length+' ':page.length+' ')+label+(where?' in '+where:'')+(R?' from '+R.short+':':':'));
    for(const r of page){const s=sid(r.sourceUrl||r.url,r.sourceUrl?R.short+' school directory data':r.name+' ('+R.short+')','official');const l=recordLine(r,s);parts.push(l.text+' ['+s.id.slice(1)+']');if(l.claim)claims.push(l.claim);orgs.push(orgCard(r,s));task.shown.push({name:r.name,url:r.url,level:LEVEL.regulator})}}
+  else if(!R)parts.push('I don’t have an official school register connected for '+(where||'this area')+' yet, so this comes from schools’ own websites and listing sites, labelled by who says it.');
   else parts.push('I couldn’t confirm any '+(g.kind==='more'?'new ':'')+label+(where?' in '+where:'')+(R?' on '+R.short:'')+' in this check.');
   const unopened=[...state.records.values()].filter(r=>r.level===LEVEL.regulatorIndex&&!r.failed&&r.name&&!shown.has(r.url));
   const queued=[...state.records.values()].filter(r=>r.level===LEVEL.regulatorIndex&&!r.failed&&!r.name&&!shown.has(r.url)); // carried from an earlier page
   if(page.some(r=>r.sourceUrl))parts.push('These classifications come from the Sharjah Private Education Authority (SPEA), the authority overseeing private schools in Sharjah. Its directory covers the whole emirate. I read its directory data; I haven’t opened each school’s profile.');
   if(unopened.length)parts.push('Also listed on '+R.short+', not opened yet: '+unopened.slice(0,8).map(r=>r.name).join('; ')+(unopened.length>8?' and '+(unopened.length-8)+' more':'')+'.');
-  const leads=state.leads.filter(l=>!l.matched&&![...state.records.values()].some(r=>r.name&&sameOrg(l.name,r.name)));
-  if(leads.length)parts.push('Mentioned on other websites, not confirmed'+(R?' on '+R.short:'')+': '+leads.slice(0,6).map(l=>l.name).join('; ')+'.');
-  const nShown=new Set(task.shown.map(s=>s.url)).size,pendingUrls=[...rest,...queued,...unopened].map(r=>r.url).slice(0,48);
+  // Beyond the regulator, labelled by who says it (the evidence rule): an organisation's own website describing itself,
+  // then names on listing sites that nobody has confirmed yet, then disagreements between sources.
+  const regRecs=[...state.records.values()].filter(r=>r.level===LEVEL.regulator&&r.name);
+  const shownBefore=(state.task?.shown||[]).map(x=>x.name).filter(Boolean),already=n=>list.some(r=>sameOrg(r.name,n))||shownBefore.some(x=>sameOrg(x,n));
+  const conflicts=[];
+  const siteFinds=[];for(const st of state.sites){const name=st.name||st.host;if(!name||already(name))continue;
+   const f=st.facts.find(x=>x.key==='curriculum'&&(!c.curriculum||curriculumMatches(x.value,c.curriculum)));if(!f)continue;
+   const rec=regRecs.find(r=>r.url===st.record||sameOrg(r.name,name));
+   if(rec&&c.curriculum&&rec.fields.curriculum&&!curriculumMatches(rec.fields.curriculum.value,c.curriculum)){conflicts.push({name:rec.name,says:'its own website',saysSrc:sid(f.source.url,name+' (organisation’s own website)','organisation'),reg:rec});continue}
+   if(siteFinds.length<6&&!siteFinds.some(x=>sameOrg(x.name,name)))siteFinds.push({name,st,f})}
+  if(siteFinds.length){parts.push(R?'Not confirmed on '+R.short+' in this check, but their own websites describe them this way:':'What their own websites say:');
+   for(const x of siteFinds){const sr=sid(x.f.source.url,x.name+' (organisation’s own website)','organisation');const q=x.f.quote.slice(0,140);const text=x.name+': its website says “'+q+'”'+(/[.!?]$/.test(q)?'':'.');
+    parts.push(text+' ['+sr.id.slice(1)+']');claims.push({text,sourceId:sr.id,quote:x.f.quote,quotes:[{fact:'curriculum',label:'Curriculum (own website)',quote:x.f.quote}]});task.shown.push({name:x.name,url:x.f.source.url,level:x.st.level})}}
+  const leads=[];for(const l of state.leads){if(already(l.name)||siteFinds.some(x=>sameOrg(x.name,l.name)))continue;
+   const rec=(l.matched&&regRecs.find(r=>r.url===l.matched))||regRecs.find(r=>sameOrg(l.name,r.name));
+   if(l.matched&&!rec)continue; // matched to a record that wasn't opened: it is listed under “not opened yet”
+   if(rec){if(c.curriculum&&rec.fields.curriculum&&!curriculumMatches(rec.fields.curriculum.value,c.curriculum)&&l.url)conflicts.push({name:rec.name,says:l.from,saysSrc:sid(l.url,(l.title||l.from).slice(0,100)+' ('+l.from+')','directory'),reg:rec});continue}
+   if([...state.records.values()].some(r=>r.name&&sameOrg(l.name,r.name)))continue;leads.push(l)}
+  if(leads.length){const groups=new Map();for(const l of leads.slice(0,12)){const k=l.url||l.from;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(l)}
+   parts.push('Listed on other websites but not yet confirmed'+(R?' on '+R.short:'')+' (listing sites can be out of date or wrong about the curriculum):');
+   for(const [k,ls] of groups){const l0=ls[0];const sr=l0.url?sid(l0.url,(l0.title||l0.from).slice(0,100)+' ('+l0.from+')','directory'):null;parts.push(ls.map(l=>l.name).join('; ')+(sr?' ['+sr.id.slice(1)+']':' ('+l0.from+')'))}
+   if(leads.length>12)parts.push('…and '+(leads.length-12)+' more names on those pages.')}
+  for(const x of conflicts.slice(0,4)){const rs=sid(x.reg.sourceUrl||x.reg.url,x.reg.sourceUrl?R.short+' school directory data':x.reg.name+' ('+R.short+')','official');
+   parts.push(x.name+': '+x.says+' suggests '+CURR_NAME[c.curriculum]+' ['+x.saysSrc.id.slice(1)+'], but '+R.short+' lists '+x.reg.fields.curriculum.value+' ['+rs.id.slice(1)+']. It may offer more than one; worth asking the school.')}
+  const nShown=new Set(task.shown.filter(s=>s.level===LEVEL.regulator).map(s=>s.url)).size,pendingUrls=[...rest,...queued,...unopened].map(r=>r.url).slice(0,48);
   // Completeness: only a filtered listing with every result read supports "complete".
   if(a.complete||(prevTotal&&g.kind==='more')){const total=a.complete?filtered.total:prevTotal;task.listTotal={curriculum:c.curriculum||'',total};
    if(a.complete)parts.push('That’s the complete list '+R.short+' shows for the '+(CURR_NAME[c.curriculum]||'')+' filter: '+total+' of '+total+'.'+(c.curriculum?' Schools teaching more than one curriculum may be classified under another curriculum there, so a few with a '+CURR_NAME[c.curriculum]+' pathway could be missing.':''));
    if(pendingUrls.length){parts.push('I’ve shown '+nShown+' of the '+total+'. Say “more” for the next '+Math.min(PAGE,pendingUrls.length)+'.');task.pendingOffer='more';task.cursor={offset:0,pending:pendingUrls}}
    else{if(!a.complete)parts.push('That’s all '+total+' on '+R.short+'’s '+(CURR_NAME[c.curriculum]||'')+' list.');task.cursor=null}}
   else{const total=state.listings.find(l=>!l.filter)?.total||task.regulatorTotal;task.regulatorTotal=total||null;
-   parts.push((total?R.short+' lists about '+total+' private schools in '+where+'. ':'')+'I’ve confirmed '+nShown+' so far, so this isn’t the full list'+(R?'':' (without a regulator directory I can’t tell how complete it is)')+'.');
+   parts.push(R?(total?R.short+' lists about '+total+' private schools in '+where+'. ':'')+'I’ve confirmed '+nShown+' on '+R.short+' so far, so this isn’t the full list.':'Without an official register I can’t tell how complete this is, so treat it as a starting point.');
    for(const cc of state.claimedCounts.slice(0,1))parts.push('A listing site ('+cc.host+') mentions “'+cc.text+'”. That’s a lead, not a verified count.');
    if(pendingUrls.length||state.leads.some(l=>!l.checked)||state.moreRegulatorResults){parts.push('Say “keep going” and I’ll check more.');task.pendingOffer='more';task.cursor={offset:state.history.filter(x=>x.type==='regulator_search'&&x.args.by==='curriculum').length,pending:pendingUrls}}}
   const broken=state.failures.filter(f=>f.what==='regulator-record'&&f.reason==='not-found').length;
@@ -329,9 +362,13 @@ export async function runAgentTurn({messages,profile={},context=null},env,{fetch
  let lastObs='';
  while(state.step<state.maxSteps){
   const a=assess(state);if(a.done&&state.step>0)break;
+  if(Date.now()-started>AGENT_LIMITS.wallMs){state.failures.push({what:'time',reason:'time-limit'});break} // answer with what's found rather than keep the person waiting
+  state.searchesLeft=(tools.limits?.searches??4)-tools.used.searches;
   let proposal=null,by='policy';
   if((planner||ai?.run)&&state.modelCalls<state.maxSteps){try{state.modelCalls++;proposal=planner?await planner(viewFor(state,tools,a,lastObs),state):await modelNext(ai,viewFor(state,tools,a,lastObs));by='model'}catch(_){proposal=null}}
   let action=proposal?validateAction(proposal,state,tools):{error:'no-proposal'};
+  // Stopping a list search before looking beyond the regulator (with searches left and nothing complete) is too early.
+  if(action.type==='answer'&&['list-all','find'].includes(state.goal.kind)&&!a.done&&state.searchesLeft>0&&!state.history.some(x=>x.type==='web_search'))action={error:'too-early'};
   if(action.error){if(proposal)state.rejected.push({proposal:{action:proposal.action},error:action.error});action=validateAction(policyNext(state),state,tools);by='policy';if(action.error)action={type:'answer',args:{}}}
   state.step++;
   if(action.type==='answer'){state.history.push({type:'answer',args:{},by,why:String(proposal?.why||'').slice(0,160)});break}

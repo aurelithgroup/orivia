@@ -33,10 +33,13 @@ async function readBounded(r,max){
  const out=new Uint8Array(size);let o=0;for(const c of chunks){out.set(c,o);o+=c.length}return new TextDecoder().decode(out);
 }
 const publicHost=h=>h&&h.includes('.')&&!/^\d+\.\d+\.\d+\.\d+$/.test(h)&&!h.includes(':')&&!/(^|\.)localhost$|\.local$|\.internal$/.test(h);
+const turnLimit=(v,def,max)=>{const n=Math.floor(Number(v));return Number.isFinite(n)&&n>0?Math.min(n,max):def};
 export function makeTools({env={},fetcher=fetch,reserve}={}){
+ // Per-turn limits: defaults as before; a deployment may raise them (RESEARCH_TURN_SEARCHES ≤ 10, RESEARCH_TURN_FETCHES ≤ 40).
+ const limits={searches:turnLimit(env.RESEARCH_TURN_SEARCHES,LOOP_LIMITS.searchesPerTurn,10),fetches:turnLimit(env.RESEARCH_TURN_FETCHES,LOOP_LIMITS.fetchesPerTurn,40)};
  const used={searches:0,fetches:0},log=[];
  const search=async(q,{site='',offset=0}={})=>{
-  if(used.searches>=LOOP_LIMITS.searchesPerTurn){log.push({step:'search',status:'turn-limit'});return {status:'turn-limit',results:[]}}
+  if(used.searches>=limits.searches){log.push({step:'search',status:'turn-limit'});return {status:'turn-limit',results:[]}}
   if(!env.BRAVE_SEARCH_API_KEY){log.push({step:'search',status:'not-configured'});return {status:'not-configured',results:[]}}
   if(typeof reserve!=='function'||!(await reserve(env))){log.push({step:'search',status:'search-limit'});return {status:'search-limit',results:[]}}
   used.searches++;
@@ -60,7 +63,7 @@ export function makeTools({env={},fetcher=fetch,reserve}={}){
   if(kind==='regulator'&&!(RESEARCH_SOURCES[u.hostname.toLowerCase()]&&(speaPage(url)||speaPage(url,{directory:true}))))return {ok:false,reason:'not-allowed'};
   if(kind==='site'&&h!==host)return {ok:false,reason:'not-allowed'};
   if(kind==='discovery'&&(RESEARCH_SOURCES[u.hostname.toLowerCase()]||/(^|\.)gov\.[a-z]{2}$/.test(h)))return {ok:false,reason:'not-allowed'};
-  if(used.fetches>=LOOP_LIMITS.fetchesPerTurn)return {ok:false,reason:'turn-limit'};
+  if(used.fetches>=limits.fetches)return {ok:false,reason:'turn-limit'};
   used.fetches++;
   const get=x=>fetcher(x,{redirect:'manual',signal:AbortSignal.timeout(LOOP_LIMITS.timeoutMs),headers:{Accept:'text/html','User-Agent':'OriviaSourceReader/0.3'}});
   try{
@@ -69,7 +72,7 @@ export function makeTools({env={},fetcher=fetch,reserve}={}){
     const to=(()=>{try{return new URL(r.headers.get('location')||'',u.href)}catch(_){return null}})();await r.body?.cancel?.();
     if(!to||to.protocol!=='https:'||to.hostname.toLowerCase().replace(/^www\./,'')!==h)return {ok:false,reason:'redirected-elsewhere',http:r.status};
     if(kind==='regulator'&&!speaPage(to.href))return {ok:false,reason:'redirected-elsewhere',http:r.status};
-    if(used.fetches>=LOOP_LIMITS.fetchesPerTurn)return {ok:false,reason:'turn-limit'};
+    if(used.fetches>=limits.fetches)return {ok:false,reason:'turn-limit'};
     used.fetches++;r=await get(to.href);final=to.href;if(r.status>=300&&r.status<400){await r.body?.cancel?.();return {ok:false,reason:'too-many-redirects',http:r.status}}
    }
    if(!r.ok){await r.body?.cancel?.();return {ok:false,reason:r.status===404?'not-found':'not-available',http:r.status}}
@@ -79,7 +82,7 @@ export function makeTools({env={},fetcher=fetch,reserve}={}){
    return {ok:true,raw,url:final,http:r.status};
   }catch(e){return {ok:false,reason:e?.message==='too-large'?'too-large':e?.name==='TimeoutError'?'timeout':'not-available'}}
  };
- return {search,fetchPage,used,log};
+ return {search,fetchPage,used,log,limits};
 }
 
 /* ---------- Search queries: built only from validated fields (topic, curriculum, place, organisation name) ---------- */
@@ -94,10 +97,17 @@ export function queryName(name,shown=[]){
  if(shown.some(s=>nameScore(n,s)>=0.85))return n;
  return (typed&&rest.length>=1)||rest.length>=2?n:'';
 }
-export function buildQuery(kind,u,{name='',R=null}={}){
+// How people actually write about each curriculum: a second and third discovery search use these words, the way a person
+// rewrites a search ("British schools" → "IGCSE schools") when the first wording finds little. Fixed words, never chat text.
+const CURR_ALT={british:'IGCSE A Level UK curriculum',american:'US curriculum American diploma',ib:'International Baccalaureate IB',indian:'CBSE ICSE',french:'French curriculum lycée',german:'German curriculum',australian:'Australian curriculum',moe:'Ministry of Education curriculum',pakistani:'Pakistani curriculum FBISE',filipino:'Philippine curriculum',sabis:'SABIS'};
+export const WEB_VARIANTS=3;
+export function buildQuery(kind,u,{name='',R=null,variant=0}={}){
  const c=u.constraints||{},cur=CURR_NAME[c.curriculum]||'',topic=TOPIC_WORD[u.topic]||'',city=String(u.location?.city||'').replace(/[^\p{L} ]/gu,'');
  if(kind==='regulator')return R.searchTerms(c);
- if(kind==='web-list')return ['list of',cur?cur+' curriculum':'',topic,city?'in '+city:''].filter(Boolean).join(' ');
+ if(kind==='web-list'){const v=Math.max(0,Math.min(WEB_VARIANTS-1,Math.floor(Number(variant)||0)));
+  if(v===1)return [CURR_ALT[c.curriculum]||cur,topic,city].filter(Boolean).join(' ');
+  if(v===2)return ['best',cur,topic,city?'in '+city:'',new Date().getUTCFullYear()].filter(Boolean).join(' ');
+  return ['list of',cur?cur+' curriculum':'',topic,city?'in '+city:''].filter(Boolean).join(' ')}
  if(kind==='web-find')return [cur?cur+' curriculum':'',topic,city].filter(Boolean).join(' ');
  if(kind==='name')return name?'"'+name.replace(/"/g,'')+'"':'';
  if(kind==='name-site')return name?'"'+name.replace(/"/g,'')+'" '+city+' official website':'';

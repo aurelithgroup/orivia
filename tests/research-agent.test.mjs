@@ -58,7 +58,10 @@ const speaWithFilter={...spea,listFiltered:async f=>f.curriculum==='british'?{st
  assert.match(r.reply,/includes schools outside Sharjah city/,'emirate vs city distinguished');
  // Long list: first page of 8 source-backed entries, the other 19 queued for "more" (none silently cut)
  assert.equal(r.research.claims.length,8);assert.match(r.reply,/I’ve shown 8 of the 27\. Say “more” for the next 8\./);
- assert.equal(r.research.taskContext.task.cursor.pending.length,19);assert.deepEqual(r.research.taskContext.task.listTotal,{curriculum:'british',total:27});assert.ok(r.liveSources.every(s=>s.url.startsWith('https://spea.shj.ae/')),'classification only from the regulator');
+ assert.equal(r.research.taskContext.task.cursor.pending.length,19);assert.deepEqual(r.research.taskContext.task.listTotal,{curriculum:'british',total:27});{const byId=new Map(r.liveSources.map(s=>[s.id,s]));
+  assert.ok(r.research.claims.every(cl=>byId.get(cl.sourceId)?.url.startsWith('https://spea.shj.ae/')),'classification claims only from the regulator');
+  assert.ok(r.liveSources.filter(s=>s.category==='directory').every(s=>!r.research.claims.some(cl=>cl.sourceId===s.id)),'a listing site is cited for a lead, never as a source-backed claim');
+  assert.match(r.reply,/Listed on other websites but not yet confirmed on SPEA/,'leads are labelled, with their listing page cited');}
  assert.match(r.reply,/Synthetic Dual Pathway School/,'a lead not on the British filter is named as unconfirmed, not dropped or added');
  const v=planner.views[2];assert.ok(!JSON.stringify(v).includes('https://'),'the model sees ids and names, never URLs');
  assert.ok(v.whatCountsAsAnswering[0].includes('complete regulator listing'));assert.ok(v.found.claimedCounts.some(c=>c.n===28),'the directory’s “28” is visible to the model as a claim to check');
@@ -108,7 +111,7 @@ const speaWithFilter={...spea,listFiltered:async f=>f.curriculum==='british'?{st
   sites:{'https://www.whichschooladvisor.com/dubai':'<h3>Synthetic Oak School</h3>','https://www.cedar-dubai.example/':'<title>[Synthetic] Cedar British School Dubai</title><main><h1>[Synthetic] Cedar British School Dubai</h1><p>We follow the National Curriculum for England from FS1 to Year 13.</p></main>'}});
  const r=await runAgentTurn({messages:[{role:'user',content:'all British schools in Dubai'}]},w.env,{...w.opts,understanding:U('all',{location:{country:'uae',city:'Dubai'}})});
  assert.ok(!r.research.process.steps.some(s=>/regulator|check_leads|open_records/.test(s.action)),'no regulator actions offered without a regulator');
- assert.match(r.reply,/without a regulator directory I can’t tell how complete it is/);assert.equal(r.research.coverage.complete,false);
+ assert.match(r.reply,/Without an official register I can’t tell how complete this is/);assert.match(r.reply,/don’t have an official school register connected for Dubai/);assert.equal(r.research.coverage.complete,false);
 }
 /* ===== 7. Contacts follow-up uses the school in focus ===== */
 {
@@ -118,7 +121,7 @@ const speaWithFilter={...spea,listFiltered:async f=>f.curriculum==='british'?{st
 }
 /* ===== Rules that hold whatever the model says ===== */
 assert.deepEqual(CLAIM_SOURCES.classification,[LEVEL.regulator],'only the regulator classifies');assert.ok(!CLAIM_SOURCES.classification.includes(LEVEL.lead));
-assert.ok(Object.keys(ACTIONS).includes('answer'));assert.ok(AGENT_LIMITS.maxSteps<=8);
+assert.ok(Object.keys(ACTIONS).includes('answer'));assert.ok(AGENT_LIMITS.maxSteps<=12,"hard step ceiling");
 { // the model can't exceed the search budget
  const w=world({budget:10});const r=await runAgentTurn({messages:[{role:'user',content:'all British schools in Sharjah'}]},{...w.env,RESEARCH_AGENT_STEPS:'8'},{...w.opts,understanding:U('all'),planner:script(Array(8).fill({action:'web_search',args:{purpose:'discover'}}))});
  assert.ok(r.research.coverage.searchesUsed<=4);assert.ok(w.queries.length<=4);

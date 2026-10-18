@@ -86,6 +86,8 @@ jobs:
         run: node tests/site-captures-navigation.test.mjs
       - name: Research agent (whole process: model-chosen steps, code-enforced rules, Ina's case study)
         run: node tests/research-agent.test.mjs
+      - name: Searching like a person with labelled evidence (listing sites, own websites, reworded searches)
+        run: node --experimental-sqlite tests/research-web-evidence.test.mjs
       - name: Shared spending ledger (atomic day/month limits, uncertain outcomes kept)
         run: node --experimental-sqlite tests/spend-ledger.test.mjs
       - name: Browser directory tool (scripted fake browser; counter-ahead guard, host checks, long lists)

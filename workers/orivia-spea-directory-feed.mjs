@@ -35,7 +35,7 @@ export async function readSpeaDirectoryFeed({curriculum='',year=null},tools,{fet
   const query=QUERY.replace('FILTER','{name:'+JSON.stringify(cfg.field)+',value:'+JSON.stringify(cfg.optionId)+',operator:EQ}');
   const seen=new Map();let cursor=null,total=null,finished=false;const cursors=new Set();
   for(let round=0;round<3;round++){
-   if(tools.used.fetches>=24)return {...base,items:[...seen.values()],total,reason:'turn-limit'};
+   if(tools.used.fetches>=(tools.limits?.fetches??24))return {...base,items:[...seen.values()],total,reason:'turn-limit'};
    tools.used.fetches++;
    const response=await fetcher(ENDPOINT,{method:'POST',redirect:'manual',signal:AbortSignal.timeout(12000),headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({query,variables:{...cfg.variables,after:cursor}})});
    if(!response.ok){await response.body?.cancel();return {...base,items:[...seen.values()],total,reason:'feed-http-'+response.status}}

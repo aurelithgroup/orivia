@@ -660,11 +660,12 @@ function resources(items){let holder=$('journey-actions');if(!holder){holder=doc
    Shows only sources the server approved and opened (liveSources). Labels follow the agreed wording:
    "Official source" / "Organisation source" (later "Community experiences"); "Opened" = retrieved, not
    comprehensively verified; claims are "Source-backed" (an exact quote, not proof of interpretation). */
-const SOURCE_KIND={official:'Official source',government:'Official source',organisation:'Organisation source',institution:'Organisation source',operator:'Organisation source',business:'Organisation source',transport:'Organisation source'};
+/* A listing site is cited for names to check, never as proof. */
+const SOURCE_KIND={official:'Official source',government:'Official source',organisation:'Organisation source',institution:'Organisation source',operator:'Organisation source',business:'Organisation source',transport:'Organisation source',directory:'Listing site'};
 function safeSources(list){
  if(!Array.isArray(list))return [];
  const out=[];
- for(const x of list.slice(0,8)){
+ for(const x of list.slice(0,20)){
   try{const u=new URL(String(x&&x.url));if(u.protocol!=='https:'||u.username||u.password)continue;
    const kind=SOURCE_KIND[x.category];if(!kind)continue; // unknown or community categories are not shown yet
    out.push({id:typeof x.id==='string'?x.id.slice(0,8):'',url:u.href,host:u.hostname.replace(/^www\./,''),title:String(x.title||u.hostname).slice(0,140),kind,category:String(x.category),checkedAt:typeof x.checkedAt==='string'?x.checkedAt:''});
@@ -730,7 +731,7 @@ function researchBlock(srcs,research){
   const ol=document.createElement('ol');ol.className='sources-list';
   srcs.forEach((s,i)=>{
    const li=document.createElement('li');const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.className='src';
-   const top=el('span','src-top');top.append(el('span','src-n',String(i+1)),el('span','src-kind '+(s.kind==='Official source'?'official':'org'),s.kind));
+   const top=el('span','src-top');top.append(el('span','src-n',String(i+1)),el('span','src-kind '+(s.kind==='Official source'?'official':s.kind==='Listing site'?'listing':'org'),s.kind));
    const when=s.checkedAt&&Number.isFinite(Date.parse(s.checkedAt))?new Date(s.checkedAt).toLocaleString(undefined,{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'';
    a.append(top,el('strong','',s.title),el('span','src-meta',s.host+(when?' · Opened by Orivia '+when:'')+' ↗'));
    li.append(a);ol.append(li);

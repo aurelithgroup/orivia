@@ -147,7 +147,9 @@ export async function reserveSearch(env,now=new Date()){
  if(!env.BUDGET_DB?.prepare)return false;
  try{
   await env.BUDGET_DB.prepare('CREATE TABLE IF NOT EXISTS research_usage (period TEXT PRIMARY KEY, calls INTEGER NOT NULL)').run();
-  for(const [period,limit] of [['month:'+now.toISOString().slice(0,7),cap(env.SEARCH_MONTHLY_CAP,100,1000)],['day:'+now.toISOString().slice(0,10),cap(env.SEARCH_DAILY_CAP,10,50)]]){
+  // SEARCH_POOL gives a deployment its own counters (the private pilot's searches never use up the public beta's 10 a day).
+  const pool=/^[a-z]{1,16}$/.test(env.SEARCH_POOL||'')?env.SEARCH_POOL+':':'';
+  for(const [period,limit] of [[pool+'month:'+now.toISOString().slice(0,7),cap(env.SEARCH_MONTHLY_CAP,100,1000)],[pool+'day:'+now.toISOString().slice(0,10),cap(env.SEARCH_DAILY_CAP,10,50)]]){
    const r=await env.BUDGET_DB.prepare('INSERT INTO research_usage (period,calls) VALUES (?,1) ON CONFLICT(period) DO UPDATE SET calls=calls+1 WHERE calls < ? RETURNING calls').bind(period,limit).first();
    if(!r)return false;
   }
