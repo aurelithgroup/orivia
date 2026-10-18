@@ -79,3 +79,29 @@ The OpenAI meter for 18 Oct closed at $0.391, with no reservations left open. Th
   - a v2 tick doesn't count;
   - caps checked before any model call;
   - one failure means one attempt across both paths.
+
+## Fixes after the founder's hospital conversation, 18 Oct
+
+The first two turns ("I need a hospital, no insurance or Emirates ID", then "Sharjah, vomiting and high fever") were good, verified answers. Turns 3 and 4 ("what hospital can I go to?") came back as a school-shaped list naming "Kings College", taken from Wikipedia. Two causes:
+
+1. **The $0.50 daily limit ran out mid-turn.** Ledger tickets 12:49 and 12:52 UTC: the next reservation was refused. The assistant then handed over to the old research path.
+2. **The old path writes lists for schools only.** Its wording ("official school register", "curriculum") and its school-style name extraction came out for a hospital question.
+
+Fixed (commit after 9e498c2):
+
+- **The old agent declines lists outside schools.** `runAgentTurn` returns `null` for `find`/`list-all`/`more` unless the topic is `school` or `nursery`. Named organisations are still handled.
+- **The assistant plans around money.** Before each model call it checks what is left (`ai.budgetLeft()`) against what a reply could cost (`ai.costOf()`):
+  - if a step plus a reply won't fit, it tells the model to reply now;
+  - if not even a reply fits, or the transport refuses a reservation, it returns `limitReply()`: an honest "can't check sources right now, won't guess" message that keeps the memory. It adds emergency numbers (998/999 in the UAE, 999/111 in the UK) when recent messages mention health or safety.
+  - Verified live: the limit reply came back for "im in sharjah… find me a hospital" with no OpenAI call.
+- **One page, one source.** A second read of the same URL merges into the same evidence item, so there are no more duplicate `[1][2]` citations for the NHS page.
+- **Quotes:** `<nav>` and "Skip to main content" are dropped from page text. A claim's quote is now the best-matching passage (`bestQuote`), or nothing if no passage matches, never the site's menu.
+- **Jurisdiction:**
+  - `personRegion()` reads UAE or UK from the conversation, then About me, then memory.
+  - A rule or regulatory claim can't rest only on the other country's official pages.
+  - A source from the other country is titled "(UK guidance)" or "(UAE guidance)".
+  - The model is told to use such pages as general information and say whose guidance it is.
+
+## Open question for the founder
+
+The money reservation is deliberately conservative: input bytes at the input rate, plus the maximum output. A research turn reserves up to about $0.10 but costs $0.02–0.07. With $0.50 a day, that allows roughly 6–8 research turns a day. A $1 daily limit (keeping the $10 month) would roughly double testing capacity.

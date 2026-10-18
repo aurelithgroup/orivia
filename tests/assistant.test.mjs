@@ -1,7 +1,8 @@
 /* Pilot assistant (consent v3): source kinds, the answer check, one scripted turn with tools, a question, memory.
    SCRIPTED (fake model, fake pages, fake search). Run: node tests/assistant.test.mjs */
 import assert from 'node:assert/strict';
-import {sourceKind,verifyReply,pageText,excerptFor,ownSite,runAssistantTurn,cleanMemory} from '../workers/orivia-assistant.mjs';
+import {sourceKind,verifyReply,pageText,excerptFor,ownSite,runAssistantTurn,cleanMemory,regionOf,personRegion,bestQuote,render,limitReply} from '../workers/orivia-assistant.mjs';
+import {runAgentTurn} from '../workers/orivia-research-agent.mjs';
 
 // Source kinds come from the address, never from the model
 assert.equal(sourceKind('https://u.ae/en/information-and-services/visa'),'government');
@@ -100,4 +101,46 @@ assert.equal(failing,null,'three rejected replies → fallback, never an uncheck
 // The tool deadline: with 2 steps left the model must answer
 let n=0;const late=await (async()=>{console.log=()=>{};const r=await runAssistantTurn({messages:[{role:'user',content:'x'}]},env,{maxCalls:2,ai:{run:async(_m,o)=>{n++;const st=JSON.parse(o.messages[1].content);assert.ok(st.instruction,'told to reply now');return {response:'{"action":"ask","question":"Which one?"}'}}},fetcher,reserve:async()=>true});console.log=origLog;return r})();
 assert.equal(late.reply,'Which one?');assert.equal(n,1);
-console.log('Assistant: source kinds by address, answer check (contacts, amounts, claim/source fit, own site), cards never guessed, private search terms, memory carried and cleaned, ask, fallback on failure: passed');
+/* ---- 18 Oct pilot feedback: the hospital conversation ---- */
+// Jurisdiction: a UK page can't establish a UAE rule; as general information it is allowed and labelled
+assert.equal(regionOf('https://www.nhs.uk/x'),'uk');assert.equal(regionOf('https://u.ae/en/x'),'uae');assert.equal(regionOf('https://www.reddit.com/r/x'),'');
+assert.equal(personRegion([{role:'user',content:'i need a hospital'},{role:'user',content:'im in sharjah and vomiting'}]),'uae');
+assert.equal(personRegion([{role:'user',content:'just moved to edinburgh'}]),'uk');
+const nhs={id:'E9',url:'https://www.nhs.uk/symptoms/diarrhoea-and-vomiting/',title:'Diarrhoea and vomiting - NHS',kind:'government',excerpt:'Skip to main content\nTake small, frequent sips of water if you feel sick.\nGet urgent help if you cannot keep fluids down.'};
+let r=verifyReply({sentences:[{text:'You must stay home for 48 hours.',kind:'official_rule',evidence:['E9']}]},[nhs],{region:'uae'});
+assert.equal(r.ok,false);assert.match(r.errors.join(' '),/someone in the UAE cannot rest on UK official pages/);
+r=verifyReply({sentences:[{text:'NHS (UK) advice is to take small, frequent sips of water.',kind:'general',evidence:['E9']}]},[nhs],{region:'uae'});assert.equal(r.ok,true,JSON.stringify(r.errors));
+assert.match(render(r,{region:'uae'}).liveSources[0].title,/\(UK guidance\)$/,'a UK page says so for someone in the UAE');
+assert.equal(render(r,{region:'uk'}).liveSources[0].title,'Diarrhoea and vomiting - NHS');
+// Quotes: the matching passage, never the site's menu
+assert.equal(bestQuote(nhs,'take small, frequent sips of water'),'Take small, frequent sips of water if you feel sick.');
+assert.equal(bestQuote(nhs,'apply for a residence visa online'),'','nothing relevant → no quote');
+assert.ok(!/Skip to main content/i.test(pageText('<nav>Home Services</nav><a href="#m">Skip to main content</a><p>Take small sips.</p>').text));
+// Same page read twice = one source, one citation number
+{const page='<html><title>Sharjah hospitals</title><body><p>Al Qassimi Hospital emergency department is open 24 hours.</p><p>Call 06 518 8888.</p></body></html>';
+ const steps=[{action:'tools',calls:[{tool:'read_page',url:'https://www.shj.ae/hospitals',focus:'emergency'},{tool:'read_page',url:'https://www.shj.ae/hospitals',focus:'phone'}]},
+  {action:'reply',sentences:[{text:'Al Qassimi Hospital has an emergency department open 24 hours.',kind:'official_rule',evidence:['E1']},{text:'Its number is 06 518 8888.',kind:'official_rule',evidence:['E1']}],memory:{}}];let k=0;
+ const quiet=console.log;console.log=()=>{};
+ const o=await runAssistantTurn({messages:[{role:'user',content:'which hospital in sharjah'}]},env,{ai:{run:async()=>({response:JSON.stringify(steps[k++])})},fetcher:async()=>new Response(page,{headers:{'content-type':'text/html'}}),reserve:async()=>true});
+ console.log=quiet;assert.ok(o,'verified');assert.equal(o.liveSources.length,1,'one source for one page');assert.ok(!/\[2\]/.test(o.reply));}
+// Money: too little left to write a reply → an honest limit reply (with emergency numbers for health), never a hand-over
+{const quiet=console.log;console.log=()=>{};let called=0;
+ const poor={run:async()=>{called++;return {response:'{}'}},budgetLeft:async()=>1000,costOf:(b,o)=>b*2+o*10};
+ const o=await runAssistantTurn({messages:[{role:'user',content:'im in sharjah, vomiting with a high fever'},{role:'user',content:'find me a hospital'}],context:{task:{assistant:{goal:'find a hospital'}}}},env,{ai:poor,fetcher,reserve:async()=>true});
+ console.log=quiet;assert.equal(called,0,'no model call the budget cannot finish');assert.equal(o.research.status,'limit-reached');
+ assert.match(o.reply,/998 for an ambulance/);assert.match(o.reply,/won’t guess/);assert.equal(o.research.taskContext.task.assistant.goal,'find a hospital','memory kept');
+ assert.ok(!/998/.test(limitReply([{role:'user',content:'british schools in dubai'}],'uae',{}).reply),'no emergency line for a school question');
+ assert.match(limitReply([{role:'user',content:'chest pain'}],'uk',{}).reply,/call 999 now, or 111/);
+ // Enough for one reply but not a step plus a reply → the model is told to reply now
+ let seen;const tight={run:async(_m,op)=>{seen=JSON.parse(op.messages[1].content);return {response:'{"action":"ask","question":"Which area?"}'}},budgetLeft:async()=>60000,costOf:(b,o)=>Math.ceil(b+o*10)};
+ console.log=()=>{};await runAssistantTurn({messages:[{role:'user',content:'hospital?'}]},env,{ai:tight,fetcher,reserve:async()=>true});console.log=quiet;
+ assert.ok(seen.instruction&&seen.budget.model_steps_left===1,'reply now when money is tight');
+ // The transport refusing a reservation mid-turn also ends in the limit reply
+ const refused={run:async()=>{throw Object.assign(Error('x'),{code:'budget-exhausted'})}};
+ console.log=()=>{};const o2=await runAssistantTurn({messages:[{role:'user',content:'hospital near me'}]},env,{ai:refused,fetcher,reserve:async()=>true});console.log=quiet;
+ assert.equal(o2.research.status,'limit-reached');}
+// The old research path no longer answers list requests outside schools and nurseries (the "Kings College" hospital list)
+{const quiet=console.log;console.log=()=>{};
+ const out=await runAgentTurn({messages:[{role:'user',content:'find me a hospital in sharjah'}]},{},{understanding:{source:'model',research:true,intent:'find',topic:'hospital',location:{country:'uae',city:'Sharjah'},constraints:{curriculum:'',year:null},organisations:[],searches:[]},fetcher:async()=>{throw Error('no network')},reserve:async()=>true});
+ console.log=quiet;assert.equal(out,null,'not school-shaped: left to other paths');}
+console.log('Assistant: source kinds by address, answer check (contacts, amounts, claim/source fit, own site, jurisdiction), cards never guessed, one source per page, relevant quotes, private search terms, memory carried and cleaned, ask, budget-aware with an honest limit reply, fallback on failure: passed');

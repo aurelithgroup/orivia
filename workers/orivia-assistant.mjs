@@ -27,6 +27,18 @@ export function sourceKind(url){
  let h='';try{h=new URL(url).hostname.toLowerCase().replace(/^www\./,'')}catch(_){return 'unknown'}
  return REGULATOR.test(h)?'regulator':GOVERNMENT.test(h)?'government':COMMUNITY.test(h)?'community':LISTING.test(h)?'listing':'website';
 }
+// Whose rules a page speaks for, from its address: an official page from one country is not an authority in the other.
+const UAE_HOST=/(^|\.)(ae|u\.ae|tamm\.abudhabi)$/i, UK_HOST=/(^|\.)(uk|scot|wales)$/i;
+export function regionOf(url){let h='';try{h=new URL(url).hostname.toLowerCase()}catch(_){return ''}return UAE_HOST.test(h)?'uae':UK_HOST.test(h)?'uk':''}
+const UAE_WORDS=/\b(uae|emirates?|emirati|dubai|sharjah|abu dhabi|ajman|fujairah|ras al khaimah|umm al quwain|al ain)\b/i;
+const UK_WORDS=/\b(uk|u\.k\.|united kingdom|britain|england|scotland|wales|northern ireland|london|edinburgh|glasgow|manchester|birmingham|leeds|liverpool|bristol|cardiff|belfast|nhs)\b/i;
+/** Where the person is dealing with things: their latest message that names a place wins, then About me, then memory. */
+export function personRegion(msgs,profile,memory){
+ const look=t=>{const a=UAE_WORDS.test(t),b=UK_WORDS.test(t.replace(/\bnhs\b/ig,''));return a&&!b?'uae':b&&!a?'uk':''};
+ for(const m of [...(msgs||[])].reverse().filter(m=>m.role==='user')){const r=look(String(m.content||''));if(r)return r}
+ return look([profile?.city,profile?.movingTo].filter(Boolean).join(' '))||look((memory?.criteria||[]).map(c=>c.value).join(' ')+' '+(memory?.goal||''));
+}
+const REGION_NAME={uae:'UAE',uk:'UK'};
 // What the chat screen calls each kind (workers/trial-ui/chat.js SOURCE_KIND).
 const CATEGORY={regulator:'official',government:'official',website:'organisation',listing:'directory',community:'community'};
 // Which source kinds may support which kind of sentence.
@@ -46,7 +58,9 @@ export function pageText(raw){
  const title=(html.match(/<title[^>]*>([\s\S]{0,300}?)<\/title>/i)?.[1]||'').replace(/\s+/g,' ').trim();
  // Contacts often live only in links: keep tel: and mailto: targets as text.
  const links=[...html.matchAll(/href\s*=\s*["'](?:tel:|mailto:)([^"'?]{3,80})/gi)].map(m=>decodeURIComponent(m[1]).trim());
- const text=html.replace(/<!--[\s\S]*?-->/g,' ').replace(/<(script|style|svg|noscript|template|iframe)\b[^>]*>[\s\S]*?<\/\1>/gi,' ')
+ // Menus are dropped (they read as quotes like "Skip to main content Search…"); headers and footers stay: contacts live there.
+ const text=html.replace(/<!--[\s\S]*?-->/g,' ').replace(/<(script|style|svg|noscript|template|iframe|nav)\b[^>]*>[\s\S]*?<\/\1>/gi,' ')
+  .replace(/<a\b[^>]*>\s*skip to (?:main )?content\s*<\/a>/gi,' ')
   .replace(/<br\s*\/?>|<\/(p|div|li|h[1-6]|tr|td|th|section|article|dd|dt)>/gi,'\n').replace(/<[^>]*>/g,' ')
   .replace(/&#(\d{1,6});/g,(_,n)=>{const c=Number(n);return c>31&&c<0x110000?String.fromCodePoint(c):' '}).replace(/&#x([0-9a-f]{1,6});/gi,(_,n)=>{const c=parseInt(n,16);return c>31&&c<0x110000?String.fromCodePoint(c):' '})
   .replace(/&([a-z]+);/gi,(m,n)=>ENT[n.toLowerCase()]??' ').replace(/[ \t\f\v\r]+/g,' ').replace(/\n\s*/g,'\n').replace(/\n{2,}/g,'\n').trim();
@@ -107,7 +121,7 @@ function factInEvidence(f,evs){
 const nameIn=(name,evs)=>{const want=words(name).filter(w=>!['the','and','llc','pvt','l.l.c'].includes(w));if(!want.length)return false;const hay=norm(evs.map(e=>e.excerpt+' '+e.title).join(' '));const hit=want.filter(w=>hay.includes(w)).length;return hit/want.length>=0.75};
 
 /** Check a proposed reply against the ledger. Returns {ok, errors[], sentences, orgs, used[]} (cards cleaned, never guessed). */
-export function verifyReply(reply,ledger){
+export function verifyReply(reply,ledger,{region=''}={}){
  const errors=[],byId=new Map(ledger.map(e=>[e.id,e]));const used=[];const use=e=>{if(!used.includes(e))used.push(e)};
  const sentences=Array.isArray(reply?.sentences)?reply.sentences.slice(0,ASSISTANT_LIMITS.sentences):[];
  if(!sentences.length)errors.push('reply has no sentences');
@@ -126,6 +140,9 @@ export function verifyReply(reply,ledger){
    if(!evs.length)errors.push(`sentence ${i+1}: a ${kind} sentence must cite evidence`);
    const allowed=CLAIM_SOURCES[kind];const fit=evs.filter(e=>allowed.includes(e.kind));
    if(evs.length&&!fit.length)errors.push(`sentence ${i+1}: a ${kind} claim cannot rest on ${[...new Set(evs.map(e=>e.kind))].join('/')} sources`);
+   // A rule or a regulator's status holds only where that government or regulator has authority.
+   else if(region&&['official_rule','regulatory_status'].includes(kind)&&fit.length&&fit.every(e=>regionOf(e.url)&&regionOf(e.url)!==region))
+    errors.push(`sentence ${i+1}: a ${kind} claim for someone in the ${REGION_NAME[region]} cannot rest on ${REGION_NAME[regionOf(fit[0].url)]} official pages (use them only as general information, kind "general", and say whose guidance it is)`);
    if(kind==='organisation_fact'&&evs.length&&!evs.some(e=>['government','regulator'].includes(e.kind)||ownSite(e,s.org||'')||ownSite(e,orgNamesIn(text,reply))))errors.push(`sentence ${i+1}: an organisation fact must come from that organisation's own site (set "org" to its name) or an official page`);
   }
   for(const f of facts)if(evs.length&&!factInEvidence(f,evs))errors.push(`sentence ${i+1}: ${f.type} "${f.value}" is not in the cited evidence`);
@@ -151,11 +168,19 @@ export function verifyReply(reply,ledger){
 }
 
 /* ---------- Turning a checked reply into what the chat screen shows ---------- */
-const quoteAround=(ev,value)=>{const t=ev.excerpt.replace(/\s+/g,' ');const d=digits(value);let i=t.toLowerCase().indexOf(String(value).toLowerCase());
+/** The passage of the page that best supports a sentence (most shared words), or '' when nothing on the page matches:
+ * an unrelated quote (a site's menu) is worse than none. */
+export function bestQuote(ev,text){
+ const want=new Set(words(text).filter(w=>w.length>=4));if(!want.size)return '';
+ let best='',score=0;
+ for(const p of String(ev.excerpt||'').split(/\n|(?<=[.!?])\s+/)){const s=new Set(words(p));let n=0;for(const w of want)if(s.has(w))n++;if(n>score){score=n;best=p}}
+ return score>=Math.min(2,want.size)?best.replace(/\s+/g,' ').trim().slice(0,300):'';
+}
+const quoteAround=(ev,value,context='')=>{const t=ev.excerpt.replace(/\s+/g,' ');const d=digits(value);let i=t.toLowerCase().indexOf(String(value).toLowerCase());
  if(i<0&&d.length>=7){const tail=d.slice(-6);let acc='';for(let k=0;k<t.length;k++){if(/\d/.test(t[k])){acc+=t[k];if(acc.endsWith(tail)){i=Math.max(0,k-20);break}}}}
- return (i<0?t.slice(0,160):t.slice(Math.max(0,i-60),i+120)).trim()};
+ return i<0?bestQuote(ev,context||value):t.slice(Math.max(0,i-60),i+120).trim()};
 const LABEL_EXPERIENCE=/\b(people|parents|residents|users|members|posters|some|many|others)\b.{0,40}\b(say|said|report|reported|mention|mentioned|describe|found|share|shared|recommend)/i;
-export function render(checked){
+export function render(checked,{region=''}={}){
  const sources=[];const n=ev=>{let i=sources.indexOf(ev);if(i<0){sources.push(ev);i=sources.length-1}return i+1};
  let text='';
  for(const s of checked.sentences){
@@ -166,7 +191,7 @@ export function render(checked){
   const piece=cites?bare.slice(0,bare.length-end.length)+' '+cites+end:bare;
   text+=(text?(s.brk==='paragraph'?'\n\n':s.brk==='line'||/^[•\-–]/.test(t)?'\n':' '):'')+piece;
  }
- const liveSources=sources.map((e,i)=>({id:'S'+(i+1),url:e.url,title:e.title||hostOf(e.url),category:CATEGORY[e.kind]||'organisation',checkedAt:e.checkedAt}));
+ const liveSources=sources.map((e,i)=>({id:'S'+(i+1),url:e.url,title:sourceTitle(e,region),category:CATEGORY[e.kind]||'organisation',checkedAt:e.checkedAt}));
  const sid=ev=>{const i=sources.indexOf(ev);return i<0?'S'+n(ev):'S'+(i+1)};
  const organisations=checked.orgs.map((o,i)=>({id:'A'+(i+1),name:o.name,kind:o.kind,sourceId:sid(o.home),
   facts:o.facts.map(f=>({label:f.label,value:f.value,sourceId:sid(f.ev),quote:quoteAround(f.ev,f.value)})),
@@ -174,10 +199,13 @@ export function render(checked){
    ...(o.email?{email:{value:o.email.value,sourceId:sid(o.email.ev),quote:quoteAround(o.email.ev,o.email.value)}}:{}),
    ...(o.site?{website:{url:o.site.value.startsWith('http')?o.site.value:'https://'+o.site.value,sourceId:sid(o.site.ev),quote:quoteAround(o.site.ev,o.site.value)}}:{})}}));
  // Sources added for cards after the text was numbered: refresh the list.
- const all=sources.map((e,i)=>({id:'S'+(i+1),url:e.url,title:e.title||hostOf(e.url),category:CATEGORY[e.kind]||'organisation',checkedAt:e.checkedAt}));
+ const all=sources.map((e,i)=>({id:'S'+(i+1),url:e.url,title:sourceTitle(e,region),category:CATEGORY[e.kind]||'organisation',checkedAt:e.checkedAt}));
  return {text:text.slice(0,ASSISTANT_LIMITS.replyChars),liveSources:all.length>liveSources.length?all:liveSources,organisations};
 }
 const hostOf=u=>{try{return new URL(u).hostname.replace(/^www\./,'')}catch(_){return 'a website'}};
+// A page from the other country says so in its title ("Diarrhoea and vomiting - NHS (UK guidance)" for someone in Sharjah).
+const sourceTitle=(e,region)=>{const t=e.title||hostOf(e.url),r=regionOf(e.url);
+ return region&&r&&r!==region?t.slice(0,120)+' ('+REGION_NAME[r]+(e.kind==='government'||e.kind==='regulator'?' guidance)':' source)'):t};
 
 /* ---------- Memory carried between turns (client-held; re-checked here every turn) ---------- */
 const str=(v,n)=>typeof v==='string'?v.replace(/[\u0000-\u001f]/g,' ').trim().slice(0,n):'';
@@ -210,6 +238,7 @@ Writing the reply (only from the evidence ledger; search snippets are not eviden
 - Answer the question actually asked, in the language of the person's latest message. Short paragraphs; plain text, no markdown; list lines start with "• ".
 - When they ask for contacts, give contacts (do not repeat the earlier list). When they compare, compare sourced details and name the unknowns. When they ask for "all", state the scope and whether the list is complete and why; show long lists 8 at a time and offer the rest.
 - Never invent a name, number, fee, date, link, phone number or email. If something could not be established, say exactly what, and what they can do instead.
+- person_region (when given) says which country's rules apply. An official page from the other country is general information only: use kind "general" with evidence and say whose guidance it is (for example "NHS (UK) advice").
 - Separate official requirements from people's experiences. Don't promise outcomes (a seat, an approval) the evidence doesn't support. Never call something verified just because a page was opened.
 - Each sentence: {"text":"...","kind":"general|official_rule|regulatory_status|organisation_fact|experience|listing","evidence":["E1",...],"org":"<organisation name, for organisation_fact>","break":"paragraph|line|null"}
   * general: explanation or next step with no facts needing a source: no phone numbers, emails, links, amounts or figures.
@@ -245,6 +274,17 @@ function profileFacts(p){
  return Object.keys(out).length?{...out,note:'From the person’s About me. "movedFrom" is where they lived before, not nationality or immigration status. The institution is as typed, not verified.'}:null;
 }
 
+// Health or safety words in the person's recent messages: the limit reply then adds the emergency numbers.
+const URGENT=/\b(hospital|a&e|emergency|ambulance|urgent|doctor|clinic|fever|pain|bleed\w*|vomit\w*|sick|ill|injur\w*|breath\w*|faint\w*|chest|unconscious|pregnan\w*|overdose|suicid\w*|self[- ]harm|danger|unsafe|attack\w*)\b/i;
+export function limitReply(msgs,region,memory,{metrics}={}){
+ const recent=(msgs||[]).filter(m=>m.role==='user').slice(-3).map(m=>m.content).join(' ');
+ const help=!URGENT.test(recent)?'':region==='uk'?' If anyone’s health or safety is at risk, call 999 now, or 111 for urgent medical advice that isn’t an emergency.'
+  :region==='uae'?' If anyone’s health or safety is at risk, call 998 for an ambulance or 999 for the police now.'
+  :' If anyone’s health or safety is at risk, call the emergency services now: 998 for an ambulance in the UAE, 999 in the UK.';
+ const reply='I’ve used up today’s research allowance for this private test, so I can’t check sources for this right now, and I won’t guess names, numbers or contacts.'+help+' Ask me again tomorrow and I’ll pick up from here.';
+ return {reply,verifiedSources:[],liveSources:[],actions:[],liveInformation:false,liveJourneyData:false,
+  research:{status:'limit-reached',applicability:'needs-review',claims:[],unresolved:[],assistant:true,progress:[],taskContext:{task:{assistant:cleanMemory(memory)}},process:{metrics}}};
+}
 /** Run one assistant turn. ai: the pilot transport (json mode). Returns the chat reply object, or null (caller falls back). */
 export async function runAssistantTurn({messages,profile=null,context=null},env,{ai,fetcher=fetch,reserve,now=()=>new Date(),maxCalls=12}={}){
  if(!ai?.run)return null;
@@ -253,7 +293,10 @@ export async function runAssistantTurn({messages,profile=null,context=null},env,
  const msgs=(Array.isArray(messages)?messages:[]).filter(m=>m&&['user','assistant'].includes(m.role)).slice(-12).map(m=>({role:m.role,content:clip(m.content,1200)}));
  const tools=makeTools({env,fetcher,reserve});
  const ledger=[];let nextE=1;const leads=[];let nextL=1;const steps=[];const failures=[];
- const addEvidence=(e)=>{const kind=sourceKind(e.url);if(kind==='unknown')return null;const have=ledger.find(x=>x.url===e.url&&x.excerpt===e.excerpt);if(have)return have;
+ const addEvidence=(e)=>{const kind=sourceKind(e.url);if(kind==='unknown')return null;
+  // One page = one source: a second read of the same address adds its new passages to the same evidence item.
+  const have=ledger.find(x=>x.url===e.url);
+  if(have){const add=String(e.excerpt||'').split('\n').filter(p=>p.trim()&&!have.excerpt.includes(p.trim()));if(add.length)have.excerpt=clip(have.excerpt+'\n'+add.join('\n'),Math.max(have.excerpt.length,(e.max||ASSISTANT_LIMITS.pageChars)*2));return have}
   const ev={id:'E'+(nextE++),url:e.url,title:clip(e.title,160),kind,excerpt:clip(e.excerpt,e.max||ASSISTANT_LIMITS.pageChars),checkedAt:e.checkedAt||now().toISOString(),from:e.from||'this-turn'};ledger.push(ev);
   if(ledger.length>ASSISTANT_LIMITS.evidenceKept+8)ledger.splice(0,ledger.length-(ASSISTANT_LIMITS.evidenceKept+8));return ev};
  for(const e of memory.evidence)addEvidence({...e,from:'earlier-in-chat',max:ASSISTANT_LIMITS.memoryExcerpt});
@@ -289,7 +332,8 @@ export async function runAssistantTurn({messages,profile=null,context=null},env,
   return {tool:clip(tool,30),status:'unknown-tool'};
  };
 
- let rejection=null,result=null;
+ const region=personRegion(msgs,profile,memory);
+ let rejection=null,result=null,budgetOut=false;
  for(let call=0;call<maxCalls&&!result;call++){
   const left=maxCalls-call,mustReply=left<=2||Date.now()-started>ASSISTANT_LIMITS.wallMs;
   const state={today:now().toISOString().slice(0,10),...(profileFacts(profile)?{aboutMe:profileFacts(profile)}:{}),memory:{...memory,evidence:undefined},
@@ -300,9 +344,18 @@ export async function runAssistantTurn({messages,profile=null,context=null},env,
    budget:{model_steps_left:left,searches_left:tools.limits.searches-tools.used.searches,page_reads_left:tools.limits.fetches-tools.used.fetches},
    ...(mustReply?{instruction:'Reply now (action "reply" or "ask") with what the evidence supports; say what is still unknown.'}:{}),
    ...(rejection?{previous_reply_rejected:rejection}:{})};
+  if(region)state.person_region=REGION_NAME[region];
+  // Money: never start a step that would leave too little to write the reply. Out of money before any reply → say so.
+  if(typeof ai.budgetLeft==='function'&&typeof ai.costOf==='function'){
+   const bytes=new TextEncoder().encode(JSON.stringify([{role:'developer',content:SYSTEM},{role:'user',content:JSON.stringify(state)}])).length;
+   let money=Infinity;try{money=await ai.budgetLeft()}catch(_){}
+   const replyCost=ai.costOf(bytes+6000,2500),stepCost=ai.costOf(bytes+8000,1200);
+   if(money<replyCost){budgetOut=true;failures.push('budget-low');break}
+   if(money<replyCost+stepCost&&!state.instruction){state.instruction='Reply now (action "reply" or "ask") with what the evidence supports; say what is still unknown.';state.budget.model_steps_left=1}
+  }
   let out;
   try{out=await ai.run(MODEL,{messages:[{role:'system',content:SYSTEM},{role:'user',content:JSON.stringify(state)}],json:true,maxOutputTokens:mustReply||rejection?2500:1200})}
-  catch(e){failures.push('model:'+(e?.code||'error'));break}
+  catch(e){failures.push('model:'+(e?.code||'error'));if(e?.code==='budget-exhausted')budgetOut=true;break}
   const p=parseJSON(out?.response??out);
   if(!p||!['tools','ask','reply'].includes(p.action)){failures.push('unreadable-step');steps.push({action:'invalid'});if(failures.filter(f=>f==='unreadable-step').length>=2)break;continue}
   if(p.action==='tools'&&!mustReply){
@@ -317,7 +370,7 @@ export async function runAssistantTurn({messages,profile=null,context=null},env,
    const q=str(p.question,400);if(!q){failures.push('empty-question');continue}
    steps.push({action:'ask'});result={kind:'ask',text:q,mem};break;
   }
-  const checked=verifyReply(p,ledger);
+  const checked=verifyReply(p,ledger,{region});
   if(!checked.ok){steps.push({action:'reply',rejected:checked.errors.length,codes:checked.errors.map(errorCode)});failures.push('reply-rejected');if(failures.filter(f=>f==='reply-rejected').length>=3){result=null;break}rejection=checked.errors;continue}
   steps.push({action:'reply',verified:true});result={kind:'reply',checked,mem};
  }
@@ -325,6 +378,8 @@ export async function runAssistantTurn({messages,profile=null,context=null},env,
  const metrics={modelCalls:steps.length+failures.filter(f=>f.startsWith('model:')).length,searches:tools.used.searches,fetches:tools.used.fetches,evidence:ledger.length,elapsedMs};
  try{console.log(JSON.stringify({event:'orivia-assistant',outcome:result?result.kind:'fallback',steps:steps.map(s=>s.action+(s.verified?':verified':s.rejected?':rejected':'')),
   tools:steps.flatMap(s=>(s.results||[]).map(r=>r.tool+':'+r.status)),failures,rejectedFor:steps.flatMap(s=>s.codes||[]).slice(0,16),...metrics}))}catch(_){}
+ // Out of money: an honest reply that keeps the conversation's memory, never a hand-over to a path that may answer off-topic.
+ if(!result&&budgetOut)return limitReply(msgs,region,memory,{metrics});
  if(!result)return null;
 
  // Memory for the next turn: the model's notes (cleaned) plus the evidence it chose to keep and everything it cited.
@@ -337,9 +392,13 @@ export async function runAssistantTurn({messages,profile=null,context=null},env,
  const progress=steps.filter(s=>s.note).map(s=>s.note).slice(0,6);
  if(result.kind==='ask')return {reply:result.text,verifiedSources:[],liveSources:[],actions:[],liveInformation:false,liveJourneyData:false,
   research:{status:'needs-context',applicability:'needs-review',claims:[],unresolved:[],assistant:true,progress,taskContext,process:{metrics}}};
- const view=render(result.checked);
- const claims=result.checked.sentences.filter(s=>s.evs.length&&s.kind!=='general').slice(0,6).map(s=>{const ev=s.evs[0];const i=view.liveSources.findIndex(x=>x.url===ev.url);
-  return {text:s.text.slice(0,300),sourceId:i>=0?view.liveSources[i].id:'',quote:quoteAround(ev,(factsIn(s.text)[0]?.value)||s.text.split(' ').slice(0,4).join(' ')).slice(0,520)}}).filter(c=>c.sourceId&&c.quote);
+ const view=render(result.checked,{region});
+ const claims=result.checked.sentences.filter(s=>s.evs.length&&s.kind!=='general').slice(0,6).map(s=>{
+  // The cited page whose passage best matches the sentence; a fact (number, contact) is quoted around where it appears.
+  const f=factsIn(s.text)[0]?.value;let ev=s.evs[0],quote='';
+  for(const e of s.evs){const q=f?quoteAround(e,f,s.text):bestQuote(e,s.text);if(q){ev=e;quote=q;break}}
+  const i=view.liveSources.findIndex(x=>x.url===ev.url);
+  return {text:s.text.slice(0,300),sourceId:i>=0?view.liveSources[i].id:'',quote:quote.slice(0,520)}}).filter(c=>c.sourceId&&c.quote);
  return {reply:view.text,verifiedSources:[],liveSources:view.liveSources,actions:[],liveInformation:view.liveSources.length>0,liveJourneyData:false,
   organisations:view.organisations,cardMode:view.organisations.length>1?'list':'single',
   research:{status:view.liveSources.length?'evidence-found':'answered',applicability:'needs-review',claims,unresolved:(Array.isArray(result.mem.open)?result.mem.open:[]).map(x=>str(x,40)).filter(Boolean).slice(0,6),

@@ -10,7 +10,7 @@
  */
 import {createTrialWorker} from './orivia-ai-private-trial.mjs';
 import {createOpenAIPilot} from './orivia-openai-pilot.mjs';
-import {createOpenAIBudget,createBrowserBudget} from './orivia-spend-ledger.mjs';
+import {createOpenAIBudget,createBrowserBudget,maxCallCostMicro} from './orivia-spend-ledger.mjs';
 import {speaListFiltered} from './orivia-browser-directory.mjs';
 import {readSpeaDirectoryFeed} from './orivia-spea-directory-feed.mjs';
 import {REGULATORS} from './orivia-research-loop.mjs';
@@ -28,7 +28,12 @@ export const pilotAvailable=env=>!isPublic(env)&&env?.OPENAI_PILOT==='1'&&!!env?
 /** The OpenAI transport for one message, or null (switch off, no consent, no confirmed rates and limits, or no key). */
 export function pilotAI(env,preferences,{fetcher}={}){
  if(isPublic(env)||env.OPENAI_PILOT!=='1'||!consentedToOpenAI(preferences)||!env.BUDGET_DB?.prepare)return null;
- try{const budget=createOpenAIBudget(env,env.BUDGET_DB);return budget.configured?createOpenAIPilot(env,{consented:true,budget,...(fetcher?{fetcher}:{})}):null}
+ try{const budget=createOpenAIBudget(env,env.BUDGET_DB);if(!budget.configured)return null;
+  const ai=createOpenAIPilot(env,{consented:true,budget,...(fetcher?{fetcher}:{})});
+  // For the assistant: money left today/this month and what one call could cost at most (it plans around both).
+  ai.budgetLeft=async()=>{const u=await budget.meter.usage();return Math.max(0,Math.min(u.limits.day-u.day,u.limits.month-u.month))};
+  ai.costOf=(inputBytes,maxOutputTokens)=>maxCallCostMicro(budget.rates,{inputBytes,maxOutputTokens});
+  return ai}
  catch(_){return null} // missing key / disabled: stay on the existing provider
 }
 export function pilotResearchOptions({env,preferences,ctx},{launchBrowser,fetcher,getAI}={}){

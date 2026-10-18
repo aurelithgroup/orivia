@@ -357,6 +357,10 @@ export async function runAgentTurn({messages,profile={},context=null},env,{fetch
  if(!u.research||u.intent==='other'||u.intent==='rules')return null;
  if(!u.location?.country&&!u.organisations.some(o=>o.url))return wrap(u,{reply:'Which city is this for?',sources:[],claims:[],orgs:[],task:{...(task||{})},status:'needs-context',cardMode:'list'},{history:[],rejected:[]},makeTools({env,fetcher,reserve}),{});
  const goal=defineGoal(u),R=regulator===undefined?((x=>x&&regulatorOverrides?.[x.id]||x)(regulatorFor(u.topic,u.location))):regulator,tools=makeTools({env,fetcher,reserve});
+ // Lists are composed for schools and nurseries only (curriculum filters, school registers, "… School/Academy/College" lead
+ // names). A list of hospitals, banks or anything else would come out school-shaped and wrong ("Kings College" as a
+ // hospital, 18 Oct pilot), so those are left to the caller's other paths. Named organisations (check/contacts/compare) stay.
+ if(['find','list-all','more'].includes(goal.kind)&&!['school','nursery'].includes(u.topic))return null;
  const state=newState(goal,u,task,R);state.providerStopped=providerStopped;state.hidePlace=external&&!placeWritten(messages,goal.location?.city);state.maxSteps=Math.max(1,Math.min(AGENT_LIMITS.maxSteps,Math.floor(Number(env.RESEARCH_AGENT_STEPS)||AGENT_LIMITS.defaultSteps)));
  const shownNames=(task?.shown||[]).map(s=>s.name);
  state.goalOrgs=(goal.organisations.length?goal.organisations:(['contacts','check'].includes(goal.kind)&&task?.focus?[{name:task.focus,url:''}]:[])).map((o,i)=>({id:'O'+(i+1),name:o.name||'',url:o.url||'',queryName:queryName(o.name||'',shownNames)}));
