@@ -100,6 +100,24 @@ assert.ok(!JSON.stringify(sql.prepare('SELECT * FROM spend_ticket').all()).match
  res=await capped.fetch(req('hello',consent),{...pilotEnv,DAILY_CAP:'5'},ctx);assert.equal(res.status,429);assert.equal(asked.length,0);
  sql.exec("DELETE FROM trial_usage");console.log=quiet;}
 assert.match(cfg.providerPilot.text,/About me details \(unless/,'consent wording matches what is sent');assert.equal(cfg.providerPilot.consent,'openai-assistant-pilot-v3');
+// Streamed replies: when the page accepts NDJSON, progress lines describe real steps, then {status,result}; a failed assistant
+// still ends with the normal flow's reply, and the message counts once against the daily cap.
+{const quiet=console.log;console.log=()=>{};
+ const lines=async res=>{assert.match(res.headers.get('content-type'),/ndjson/);return (await res.text()).trim().split('\n').map(l=>JSON.parse(l))};
+ const streamReq=(text,prefs)=>new Request('https://'+host+'/v1/chat',{method:'POST',headers:{origin:'https://'+host,'content-type':'application/json',accept:'application/x-ndjson, application/json'},body:JSON.stringify({messages:[{role:'user',content:text}],preferences:prefs})});
+ let k=0;const script=[{action:'tools',calls:[{tool:'web_search',query:'pharmacy open late'}]},{action:'reply',sentences:[{text:'I searched, but I couldn’t confirm a specific pharmacy from the results.',kind:'general'},{text:'Tell me your area and I’ll look again.',kind:'general'}],memory:{}}];
+ const streaming=createPilotWorker({launchBrowser,fetcher:async(url,init)=>Response.json({status:'completed',usage:{input_tokens:100,output_tokens:50},output:[{type:'message',role:'assistant',content:[{type:'output_text',text:JSON.stringify(script[Math.min(k++,1)])}]}]})});
+ const day=new Date().toISOString().slice(0,10),used=()=>sql.prepare('SELECT calls FROM trial_usage WHERE day=?').get(day)?.calls||0;
+ let before=used();let out=await lines(await streaming.fetch(streamReq('pharmacy open late?',consent),pilotEnv,ctx));
+ const progress=out.filter(x=>x.progress).map(x=>x.progress);assert.ok(progress.includes('Searching: pharmacy open late'),JSON.stringify(progress));assert.ok(progress.includes('Checking every fact against the sources'));
+ const fin=out.at(-1);assert.equal(fin.status,200);assert.equal(fin.result.research.assistant,true);assert.equal(used()-before,1,'counted once');
+ // Assistant fails (provider error) → the stream ends with the normal flow's reply, still counted once
+ const broken=createPilotWorker({launchBrowser,fetcher:async()=>Response.json({error:{code:'server_error'}},{status:500})});
+ before=used();out=await lines(await broken.fetch(streamReq('hello there',consent),pilotEnv,ctx));
+ assert.equal(out.at(-1).status,200);assert.ok(typeof out.at(-1).result.reply==='string'&&!out.at(-1).result.research?.assistant,'normal flow answered');assert.equal(used()-before,1,'fallback not counted twice');
+ // Without the Accept header: plain JSON, as before
+ k=0;const plain=await streaming.fetch(req('pharmacy open late?',consent),pilotEnv,ctx);assert.match(plain.headers.get('content-type'),/application\/json/);
+ console.log=quiet;}
 // A failing provider is tried once per turn, not on every step (the 18 Oct live test made six failing attempts in one turn).
 {let attempts=0;aiCalls.length=0;const failing=createPilotWorker({launchBrowser,fetcher:async()=>{attempts++;return Response.json({error:{type:'invalid_request_error',code:'model_not_found'}},{status:404})}});
  const origLog=console.log;console.log=()=>{};

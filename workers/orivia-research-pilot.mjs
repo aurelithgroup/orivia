@@ -60,7 +60,7 @@ export function createPilotWorker({launchBrowser,fetcher}={}){
   const inner=createTrialWorker({
    research:async({env,preferences})=>pilotResearchOptions({env,preferences,ctx},{launchBrowser,fetcher,getAI}),
    assistant:({env,preferences})=>{const ai=getAI(env,preferences);if(!ai)return null;
-    return ({messages,profile,context,reserve})=>runAssistantTurn({messages,profile,context},env,{ai,reserve,...(fetcher?{fetcher}:{})})}
+    return ({messages,profile,context,reserve,onProgress})=>runAssistantTurn({messages,profile,context},env,{ai,reserve,onProgress,...(fetcher?{fetcher}:{})})}
   });
   const res=await inner.fetch(req,env,ctx);
   const url=new URL(req.url);

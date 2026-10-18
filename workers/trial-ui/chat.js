@@ -1135,6 +1135,25 @@ $('clear').onclick=()=>{
  if(busy)return;const b=$('clear');
  if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete this chat';setTimeout(()=>{b.dataset.sure='';b.textContent='Delete this chat'},4000);return}
  store.chats=store.chats.filter(c=>c.id!==store.active);store.active=null;persist();turns=[];clearChatCards();draw();renderChats();b.dataset.sure='';b.textContent='Delete this chat';tab('chat')};
+/* Research progress inside the chat: the server streams what Orivia is actually doing ("Searching: …", "Reading 3 pages: …"),
+   one line at a time, then the reply. Plain JSON replies (every other path) work as before. */
+function working(text){
+ if(!text){$('working')?.remove();return}
+ let w=$('working');
+ if(!w){w=document.createElement('div');w.id='working';w.className='bubble assistant';const b=document.createElement('b');b.textContent='Orivia';const s=document.createElement('span');s.setAttribute('aria-live','polite');s.style.opacity='0.75';s.style.fontStyle='italic';w.append(b,s);$('history').append(w)}
+ w.querySelector('span').textContent=String(text).slice(0,140);const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight;
+}
+async function readReply(res,chatId){
+ if(!/ndjson/i.test(res.headers.get('content-type')||''))return {r:res,d:await res.json().catch(()=>({}))};
+ const reader=res.body.getReader(),dec=new TextDecoder();let buf='',final=null;
+ const line=l=>{if(!l.trim())return;let m;try{m=JSON.parse(l)}catch(_){return}
+  if(typeof m.progress==='string'&&store.active===chatId)working(m.progress+'…');
+  if(m.result&&typeof m.result==='object')final={status:Number(m.status)||200,body:m.result}};
+ while(true){const {done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;while((i=buf.indexOf('\n'))>=0){line(buf.slice(0,i));buf=buf.slice(i+1)}}
+ line(buf);working('');
+ if(!final)return {r:{ok:false,status:502},d:{}};
+ return {r:{ok:final.status<400,status:final.status},d:final.body};
+}
 $('form').onsubmit=async e=>{
  e.preventDefault();if(busy||sessionStorage.getItem(ck)!=='yes')return;
  stopDictation(true);stopSpeaking();
@@ -1143,8 +1162,8 @@ $('form').onsubmit=async e=>{
  const chatId=store.active,sentTurns=turns.slice();
  busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';
  try{
-  const r=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{researchContext:currentResearchContext(sentTurns),language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
-  const d=await r.json().catch(()=>({}));
+  const res=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{researchContext:currentResearchContext(sentTurns),language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
+  const {r,d}=await readReply(res,chatId);
   if(!r.ok){
    const why=d&&d.error;
    if(r.status===401&&why==='human_check'){sessionStorage.removeItem(ck);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false;if(window.__siteKey)loadTurnstile(window.__siteKey);$('status').textContent='';return}
@@ -1166,5 +1185,5 @@ $('form').onsubmit=async e=>{
   if(/\b(calendar|reminders?|appointments?|schedule)\b/i.test(text))chip('Open My calendar',()=>tab('calendar'));
   $('status').textContent=d.liveSources?.length?'Opened approved source page(s) for this reply. Routes and schedules are not checked.':d.verifiedSources?.length?'Reviewed campus references attached; live pages unavailable.':'AI reply • No approved live sources checked.';
  }catch(_){$('status').textContent='Could not reach the private AI. Please try again.'}
- finally{busy=false;$('send').disabled=false}
+ finally{busy=false;$('send').disabled=false;working('')}
 };

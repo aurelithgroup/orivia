@@ -1,7 +1,7 @@
 /* Pilot assistant (consent v3): source kinds, the answer check, one scripted turn with tools, a question, memory.
    SCRIPTED (fake model, fake pages, fake search). Run: node tests/assistant.test.mjs */
 import assert from 'node:assert/strict';
-import {sourceKind,verifyReply,pageText,excerptFor,ownSite,runAssistantTurn,cleanMemory,regionOf,personRegion,bestQuote,render,limitReply} from '../workers/orivia-assistant.mjs';
+import {sourceKind,verifyReply,pageText,excerptFor,ownSite,runAssistantTurn,cleanMemory,regionOf,personRegion,bestQuote,render,limitReply,progressLabel,salvageReply,evidenceView} from '../workers/orivia-assistant.mjs';
 import {runAgentTurn} from '../workers/orivia-research-agent.mjs';
 
 // Source kinds come from the address, never from the model
@@ -143,4 +143,14 @@ assert.ok(!/Skip to main content/i.test(pageText('<nav>Home Services</nav><a hre
 {const quiet=console.log;console.log=()=>{};
  const out=await runAgentTurn({messages:[{role:'user',content:'find me a hospital in sharjah'}]},{},{understanding:{source:'model',research:true,intent:'find',topic:'hospital',location:{country:'uae',city:'Sharjah'},constraints:{curriculum:'',year:null},organisations:[],searches:[]},fetcher:async()=>{throw Error('no network')},reserve:async()=>true});
  console.log=quiet;assert.equal(out,null,'not school-shaped: left to other paths');}
+// Progress labels describe the real tool calls (and never carry personal details from a query)
+assert.equal(progressLabel([{tool:'web_search',query:'24 hour pharmacy Al Nahda Sharjah'},{tool:'read_page',url:'https://www.mohap.gov.ae/x'},{tool:'read_page',url:'https://www.shj.ae/y'}]),'Searching: 24 hour pharmacy Al Nahda Sharjah · Reading 2 pages: mohap.gov.ae, shj.ae');
+assert.ok(!/0501234567/.test(progressLabel([{tool:'web_search',query:'call me on 0501234567 about rent'}])));
+// Salvage: the sentences that passed are kept with a plain note; too little left → null
+{const sv=salvageReply({sentences:[{text:'You can call the admissions office on +971 6 555 1234.',kind:'organisation_fact',org:'Wes Green',evidence:['E1']},{text:'Fees are AED 99,999.',kind:'organisation_fact',org:'Wes Green',evidence:['E1']},{text:'Ask about Year 6 places when you call.',kind:'general'}]},ledger,'',['sentence 2: amount "AED 99,999" is not in the cited evidence']);
+ assert.ok(sv&&sv.sentences.length===3&&/left out some details/.test(sv.sentences.at(-1).text)&&!sv.sentences.some(s=>/99,999/.test(s.text)));
+ assert.equal(salvageReply({sentences:[{text:'Fees are AED 99,999.',kind:'organisation_fact',org:'Wes Green',evidence:['E1']},{text:'Good luck!',kind:'general'}]},ledger,'',['sentence 1: x']),null);}
+// What the model sees: newest pages in full, older ones shortened, within the limit
+{const big=Array.from({length:12},(_,i)=>({id:'E'+(i+1),kind:'website',url:'https://x'+i+'.example/',title:'T',from:'this-turn',excerpt:'w'.repeat(2000)}));const v=evidenceView(big,8000);
+ assert.equal(v.length,12);assert.equal(v.at(-1).text.length,2000);assert.ok(v[0].text.length<400);assert.ok(v.reduce((n,e)=>n+e.text.length,0)<8000+12*250);}
 console.log('Assistant: source kinds by address, answer check (contacts, amounts, claim/source fit, own site, jurisdiction), cards never guessed, one source per page, relevant quotes, private search terms, memory carried and cleaned, ask, budget-aware with an honest limit reply, fallback on failure: passed');
