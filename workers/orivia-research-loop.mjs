@@ -253,7 +253,7 @@ function gradeSpan(g){const items=String(g||'').split(/[|,]/).map(x=>x.trim()).f
 function makeSources(){const list=[];return {list,add:(url,title,category)=>{let s=list.find(x=>x.url===url);if(!s){s={id:'S'+(list.length+1),url,title:String(title).slice(0,140),category,checkedAt:new Date().toISOString()};list.push(s)}return s}}}
 function recordLine(rec,src,want=['curriculum','grades','area']){
  const f=rec.fields||{},bits=[],quotes=[];
- for(const k of want){const x=f[k];if(!x)continue;const v=k==='grades'?gradeSpan(x.value):k==='area'?String(x.value).replace(/^Sharjah\s*-\s*/i,'')+(/^Sharjah/i.test(x.value)?', Sharjah':''):x.value;if(!v)continue;bits.push(k==='curriculum'?v+' curriculum':k==='grades'?'classes '+v:v);quotes.push({fact:k,label:FIELD_LABEL[k],quote:x.quote})}
+ for(const k of want){const x=f[k];if(!x||!x.value)continue;const v=k==='grades'?gradeSpan(x.value):k==='area'?String(x.value).replace(/^Sharjah\s*-\s*/i,'')+(/^Sharjah/i.test(x.value)?', Sharjah':''):x.value;if(!v)continue;bits.push(k==='curriculum'?v+' curriculum':k==='grades'?'classes '+v:v);quotes.push({fact:k,label:FIELD_LABEL[k],quote:x.quote})}
  const text=rec.name+(bits.length?': '+bits.join(', '):'')+'.';
  return {text,claim:quotes.length?{text,sourceId:src.id,quote:quotes.map(q=>q.quote).join(' … '),quotes}:null};
 }
@@ -403,3 +403,5 @@ export function maybeResearch(messages,context){
  if(context?.task?.topic&&latest.length<300)return true;
  return /https?:\/\/|\b(schools?|nurser(?:y|ies)|universit(?:y|ies)|colleges?|academy|banks?|clinics?|hospitals?)\b/i.test(latest);
 }
+// Shared with the research agent (orivia-research-agent.mjs): readers and answer composition, one implementation.
+export {regulatorRecord,readSite,makeSources,recordLine,orgCard,siteLines,LEVEL_SAYS,isListPage,checkOrganisation,AGGREGATOR,ORG_WORD,CURR_NAME,TOPIC_WORD};

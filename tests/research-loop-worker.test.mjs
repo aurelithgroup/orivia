@@ -14,6 +14,7 @@ const sql=new DatabaseSync(':memory:');const stmt=(s,args=[])=>({bind:(...v)=>st
 const aiCalls=[];
 const AI={run:async(_m,o)=>{const sys=o.messages[0].content;aiCalls.push(/describe what research the LATEST/.test(sys)?'understand':'chat');
  if(/describe what research the LATEST/.test(sys))return {response:JSON.stringify({research:true,intent:'find',topic:'school',location:{country:'uae',city:'Sharjah'},constraints:{curriculum:'british'},organisations:[],searches:[]})};
+ if(/choose Orivia's next research step/.test(sys)){aiCalls.push('plan');const v=JSON.parse(o.messages[1].content);return {response:JSON.stringify(v.done.length?{action:'answer',why:'enough'}:{action:'regulator_listing',args:{},why:'start with the regulator listing'})}}
  return {response:'Hello! How can I help?'}}};
 const worker=(await import('../workers/orivia-ai-private-trial.mjs')).default;
 const host='orivia-ai-preview.habeebahsallah27.workers.dev';
@@ -35,4 +36,9 @@ assert.deepEqual(aiCalls,['understand'],'one model call for understanding; the a
 aiCalls.length=0;w=await worker.fetch(req('how are you today?'),env,ctx);assert.equal(w.status,200);assert.ok(!aiCalls.includes('understand'));
 // Switch off → previous path (no loop marker)
 w=await worker.fetch(req('Find British curriculum schools in Sharjah'),{...env,RESEARCH_LOOP:undefined},ctx);d=await w.json();assert.notEqual(d.research?.loop,true);
+// RESEARCH_AGENT=1: the model chooses each step (planner calls), code still enforces and composes
+aiCalls.length=0;w=await worker.fetch(req('Find British curriculum schools in Sharjah'),{...env,RESEARCH_AGENT:'1'},ctx);d=await w.json();
+assert.equal(d.research.agent,true);assert.equal(d.research.process.steps[0].action,'regulator_listing');assert.equal(d.research.process.steps[0].by,'model');
+assert.ok(aiCalls.filter(x=>x==='plan').length>=1&&aiCalls.filter(x=>x==='plan').length<=8,'bounded planner calls');
+assert.match(d.reply,/Wes green Int\. Pvt\. School\. LLC: British curriculum/);
 console.log('Research loop through the Worker: opt-in, authenticated, quota first, model understanding, ordinary chat untouched, switch off restores the old path: passed');

@@ -6,6 +6,7 @@ import {readApprovedPage} from './orivia-official-live.mjs';
 import {planResearch} from './orivia-research-plan.mjs';
 import {answerResearch,researchClarification,reserveSearch} from './orivia-research.mjs';
 import {runResearchTurn,maybeResearch} from './orivia-research-loop.mjs';
+import {runAgentTurn} from './orivia-research-agent.mjs';
 import {createCalendarReminder} from './orivia-calendar-reminder.mjs';
 import inlineCalendar from './orivia-inline-calendar.js';
 import {guideOffer,guideContent,guideCatalogue,readGuideState,progressSummary} from './orivia-guide-offers.mjs';
@@ -185,7 +186,7 @@ async function handle(req,env,ctx){
   const used=await env.BUDGET_DB.prepare('INSERT INTO trial_usage (day,calls) VALUES (?,1) ON CONFLICT(day) DO UPDATE SET calls=calls+1 WHERE calls < ? RETURNING calls').bind(day,cap).first();
   if(!used)return reply({error:PUBLIC?'daily_limit':'Daily private AI trial limit reached'},429);
  }catch(_){return reply({error:'Daily trial limit unavailable'},503)}
- if(loopCandidate){const out=await runResearchTurn({messages:input.messages,profile:input.preferences?.profile,context:input.preferences?.researchContext},env,{reserve:reserveSearch});if(out)return reply(out);if(research?.needed&&research.clarification)return reply(researchClarification(research))}
+ if(loopCandidate){const run=env.RESEARCH_AGENT==='1'?runAgentTurn:runResearchTurn; /* RESEARCH_AGENT=1: model chooses each step */ const out=await run({messages:input.messages,profile:input.preferences?.profile,context:input.preferences?.researchContext},env,{reserve:reserveSearch});if(out)return reply(out);if(research?.needed&&research.clarification)return reply(researchClarification(research))}
  if(research?.needed)return reply(await answerResearch(research,env));
  const latest=input.messages.filter(m=>m.role==='user').slice(-3).map(m=>m.content).join(' ');
  // Official university pages are still used as evidence; the links and trip facts come only from the transport planner.

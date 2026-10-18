@@ -80,6 +80,8 @@ jobs:
         run: node tests/site-reader-layouts.test.mjs
       - name: Navigation and year evidence on raw captured pages
         run: node tests/site-captures-navigation.test.mjs
+      - name: Research agent (whole process: model-chosen steps, code-enforced rules, Ina's case study)
+        run: node tests/research-agent.test.mjs
       - name: Public beta mode (human check, per-person and daily limits)
         run: node --experimental-sqlite tests/public-beta.test.mjs
       - name: AI Worker contract and safety tests
