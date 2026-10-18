@@ -21,7 +21,7 @@ export const consentedToOpenAI=p=>!!p&&typeof p==='object'&&p.providerConsent&&t
 export const pilotAvailable=env=>!isPublic(env)&&env?.OPENAI_PILOT==='1'&&!!env?.BUDGET_DB?.prepare;
 
 /** Per-request research options for the private trial's hook. Returns null when nothing applies (existing provider path). */
-export function pilotResearchOptions({env,preferences},{launchBrowser,fetcher}={}){
+export function pilotResearchOptions({env,preferences,ctx},{launchBrowser,fetcher}={}){
  if(isPublic(env))return null;
  const options={},notes=[];
  if(env.OPENAI_PILOT==='1'&&consentedToOpenAI(preferences)&&env.BUDGET_DB?.prepare){
@@ -30,16 +30,17 @@ export function pilotResearchOptions({env,preferences},{launchBrowser,fetcher}={
  }
  if(env.BROWSER_DIRECTORY==='1'&&env.BROWSER&&typeof launchBrowser==='function'&&env.BUDGET_DB?.prepare){
   const budget=createBrowserBudget(env,env.BUDGET_DB);
-  if(budget.configured){const spea=REGULATORS.find(r=>r.id==='spea');options.regulatorOverrides={spea:{...spea,listFiltered:speaListFiltered({launch:()=>launchBrowser(env),budget})}};notes.push('browser')}
+  if(budget.configured){const spea=REGULATORS.find(r=>r.id==='spea');options.regulatorOverrides={spea:{...spea,listFiltered:speaListFiltered({launch:()=>launchBrowser(env),budget,waitUntil:ctx?.waitUntil?p=>ctx.waitUntil(p):null})}};notes.push('browser')}
  }
  return notes.length?{agent:true,options,pilot:notes}:null;
 }
 
 /** Build the pilot Worker. launchBrowser(env) → Puppeteer browser (production: puppeteer.launch(env.BROWSER)). */
 export function createPilotWorker({launchBrowser,fetcher}={}){
- const inner=createTrialWorker({research:async({env,preferences})=>pilotResearchOptions({env,preferences},{launchBrowser,fetcher})});
  return {async fetch(req,env,ctx){
   if(isPublic(env))return new Response(JSON.stringify({error:'Pilot is private only'}),{status:404,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
+  // Capture the execution context per request; never retain it in module state.
+  const inner=createTrialWorker({research:async({env,preferences})=>pilotResearchOptions({env,preferences,ctx},{launchBrowser,fetcher})});
   const res=await inner.fetch(req,env,ctx);
   const url=new URL(req.url);
   // Tell the private UI the consent checkbox may be shown (booleans and fixed text only; never keys or limits).

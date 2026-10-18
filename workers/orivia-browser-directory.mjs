@@ -58,7 +58,7 @@ function pageClickNext(pattern){
  * launch() must return a Puppeteer-compatible browser (Cloudflare Browser Run binding in production, a fake in tests).
  * budget is the browser meter from orivia-spend-ledger.mjs (reserve(ms) → ticket|null, settle(ticket, ms|null)).
  */
-export async function listDirectory({recipe,filter={}},{launch,budget,now=()=>Date.now(),limits={}}={}){
+export async function listDirectory({recipe,filter={}},{launch,budget,now=()=>Date.now(),limits={},waitUntil=null}={}){
  const L={...BROWSER_LIMITS,...limits};
  const base={complete:false,filter:{},total:null,range:null,items:[],unappliedFilters:[],browserMs:0,diagnostics:{actions:0,blockedHosts:[],blockedRequests:0,steps:[]}};
  const R=typeof recipe==='string'?DIRECTORY_RECIPES[recipe]:recipe;
@@ -125,7 +125,7 @@ export async function listDirectory({recipe,filter={}},{launch,budget,now=()=>Da
    const late=await Promise.race([launching.then(b=>({b}),()=>({none:true})),sleep(L.lateLaunchMs).then(()=>({pending:true}))]);
    if(late.none)closedOk=true;
    else if(late.b){d.lateBrowserClosed=true;closedOk=await closeIt(late.b)}
-   else{closedOk=false;d.lateBrowserPending=true;launching.then(b=>closeIt(b)).catch(()=>{})}
+   else{closedOk=false;d.lateBrowserPending=true;const cleanup=launching.then(b=>closeIt(b)).catch(()=>{});if(typeof waitUntil==='function')waitUntil(cleanup)}
   }else closedOk=true;
   const ms=Math.max(0,now()-started);base.browserMs=ms;
   // Settle to time used only once closure is confirmed; otherwise keep the full reservation (the session may still run).
@@ -140,6 +140,6 @@ export async function listDirectory({recipe,filter={}},{launch,budget,now=()=>Da
 }
 
 /** Adapter for the research agent: R.listFiltered(filter, tools). Errors never throw into the turn. */
-export function speaListFiltered({launch,budget,limits}={}){
- return async(filter)=>{try{return await listDirectory({recipe:'spea',filter},{launch,budget,limits})}catch{return {status:'browser-unavailable',reason:'browser-error',items:[]}}};
+export function speaListFiltered({launch,budget,limits,waitUntil=null}={}){
+ return async(filter)=>{try{return await listDirectory({recipe:'spea',filter},{launch,budget,limits,waitUntil})}catch{return {status:'browser-unavailable',reason:'browser-error',items:[]}}};
 }

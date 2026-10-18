@@ -130,6 +130,16 @@ const fast={pollMs:2,sessionMs:3000};
  b=fakeBudget();await listDirectory({recipe:'spea',filter:{curriculum:'british'}},{launch:()=>new Promise(res=>setTimeout(()=>res({close:async()=>{throw Error('x')}}),40)),budget:b,limits:{...fast,launchMs:10,lateLaunchMs:300}});
  assert.equal(b.settled[0][1],null);}
 
+// Worker lifecycle: retain late cleanup after the response via the execution context.
+{const deferred=[];let closed=false;
+ const b=fakeBudget();
+ const r=await listDirectory({recipe:'spea',filter:{curriculum:'british'}},{
+  launch:()=>new Promise(resolve=>setTimeout(()=>resolve({close:async()=>{closed=true}}),80)),budget:b,
+  waitUntil:p=>deferred.push(p),limits:{...fast,launchMs:5,lateLaunchMs:5}});
+ assert.equal(r.diagnostics.lateBrowserPending,true);assert.equal(deferred.length,1,'cleanup registered with Worker lifetime');
+ assert.equal(b.settled[0][1],null,'uncertain session keeps full reservation');
+ await Promise.all(deferred);assert.equal(closed,true,'registered cleanup closes late browser');}
+
 // 13. The agent only treats a listing as complete when the tool says complete === true (a missing flag is not enough)
 {const items=[1,2].map(i=>({name:'[Synthetic] Listing School '+i,url:'https://spea.shj.ae'+P+'synthetic-listing-'+i,fields:{curriculum:{value:'British',quote:'Curriculum::British'}}}));
  const understanding={research:true,intent:'all',topic:'school',location:{country:'uae',city:'Sharjah'},constraints:{curriculum:'british'},organisations:[],source:'test'};
