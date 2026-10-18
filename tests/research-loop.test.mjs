@@ -5,7 +5,9 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runResearchTurn,makeTools,leadNames,sanitizeTask,maybeResearch,LOOP_LIMITS,regulatorFor} from '../workers/orivia-research-loop.mjs';
-import {understandRequest,validateUnderstanding,ruleUnderstanding,safeQuery} from '../workers/orivia-research-understand.mjs';
+import {understandRequest,validateUnderstanding,ruleUnderstanding,safeQuery,resolveConstraints} from '../workers/orivia-research-understand.mjs';
+import {queryName,buildQuery} from '../workers/orivia-research-loop.mjs';
+import {readSiteFacts,yearEvidence,pageSections} from '../workers/orivia-school-sites.mjs';
 import {SPEA_DIRECTORY} from '../workers/orivia-spea-reader.mjs';
 const fx=f=>readFileSync(new URL('./fixtures/'+f,import.meta.url),'utf8');
 const P='https://spea.shj.ae/en/education-institutes/schools/';
@@ -102,9 +104,10 @@ assert.match(r.reply,/Wes green Int\. Pvt\. School\. LLC: British curriculum/);a
   sites:{'https://sips.example/':'<title>Sharjah International Private School</title><p>[Synthetic] Call +971 6 558 6624.</p><a href="/admissions">Admissions</a>','https://sips.example/admissions':'<h1>Admissions</h1><a href="mailto:admissions@sips.example">Email admissions</a>'}});
  const r2=await runResearchTurn({messages:[{role:'user',content:'Sharjah International Private School'}]},w2.env,{...w2.opts,understanding:U('check',{constraints:{curriculum:'',year:null},organisations:[{name:'Sharjah International Private School',url:''}]})});
  assert.match(r2.reply,/SPEA lists Sharjah International Private School: \[Synthetic test value\] curriculum/,'the curriculum comes from the listing, never assumed');
- assert.match(r2.reply,/linked from the regulator\) says:[\s\S]*Email: admissions@sips\.example/,'site proven by the SPEA-listed phone, then read');
+ assert.match(r2.reply,/A website that presents itself as this school \(ownership not confirmed by a regulator\) says:[\s\S]*Email: admissions@sips\.example/,'name + SPEA phone on a site is not proof: labelled unconfirmed');
+ assert.doesNotMatch(r2.reply,/linked from the regulator/);
  assert.ok(!w2.calls.some(c=>c.includes('linkedin')));
- assert.equal(r2.research.coverage.siteChecks[0].basis,'contact-match');
+ assert.equal(r2.research.coverage.siteChecks[0].status,'found-ownership-not-confirmed');
 }
 
 /* =================== Other places, organisations and wording =================== */
@@ -156,7 +159,7 @@ const msgs=[{role:'user',content:'Find British curriculum schools in Sharjah'},{
 let v=validateUnderstanding(JSON.stringify({intent:'check',topic:'school',location:{country:'uae',city:'Sharjah'},constraints:{curriculum:'british',year:6},organisations:[{name:'Victoria English',url:''},{name:'Hogwarts School',url:'https://hogwarts.example'}],searches:['Victoria English school Sharjah 0501234567 my son is in year 6']}),{messages:msgs});
 assert.deepEqual(v.organisations,[{name:'Victoria English',url:''}],'invented names and links are dropped');
 assert.equal(v.constraints.year,6);assert.equal(v.location.city,'Sharjah');
-assert.ok(!/\d{6}/.test(v.searches[0])&&!/my son/i.test(v.searches[0]),'personal details stripped from searches');
+assert.equal(v.searches,undefined,'model-proposed searches are not used at all');
 assert.equal(validateUnderstanding('{"intent":"teleport"}',{messages:msgs}),null);
 assert.equal(validateUnderstanding(JSON.stringify({intent:'find',topic:'school',location:{city:'Atlantis'}}),{messages:msgs}).location.city,'Sharjah','a place not in the chat is ignored');
 v=await understandRequest({messages:msgs},{ai:{run:async()=>({response:'```json\n{"intent":"check","topic":"school","organisations":[{"name":"Victoria English"}],"location":{"city":"Sharjah"}}\n```'})}});
@@ -177,4 +180,60 @@ assert.equal(safeQuery('school near me email a@b.com phone +971 50 123 4567'),'s
 assert.ok(maybeResearch([{role:'user',content:'any good nurseries?'}],null));assert.ok(!maybeResearch([{role:'user',content:'how are you?'}],null));
 assert.deepEqual(leadNames(LIST_PAGE),['Wes Green International School','Synthetic Cedar British School','Synthetic Palm Academy']);
 assert.equal(sanitizeTask({shown:[{name:'x',url:'javascript:alert(1)'}],cursor:{pending:['https://evil.example/x']}}).shown.length,0);
+
+/* =================== Review fixes (Ina, 18 Oct): regressions =================== */
+// 1. A named organisation the regulator doesn't return: website discovery continues, ownership kept separate from regulation
+for(const [name,host] of [['Sharjah International Private School','sips.example'],['Pearl Example Academy','pearl-academy.example']]){
+ const w8=world({webResults:{['"'+name.toLowerCase()+'"']:[{url:'https://www.edustoke.com/x',title:name},{url:'https://'+host+'/',title:name}]},
+  sites:{['https://'+host+'/']:'<title>'+name+'</title><main><h1>'+name+'</h1><p>[Synthetic] We follow the National Curriculum for England from FS1 to Year 13.</p><a href="mailto:office@'+host+'">Email us</a></main>'}});
+ const r8=await runResearchTurn({messages:[{role:'user',content:'have you heard of '+name+'?'}]},w8.env,{...w8.opts,understanding:U('check',{constraints:{curriculum:'',year:null},organisations:[{name,url:''}]})});
+ assert.match(r8.reply,new RegExp('I couldn’t confirm “'+name+'” on SPEA, so nothing here is regulatory confirmation'));
+ assert.match(r8.reply,/A website that presents itself as this school \(ownership not confirmed by a regulator\) says:\nCurriculum: British/);
+ assert.ok(r8.liveSources.every(s=>s.category==='organisation'),'no regulator source claimed');assert.ok(!w8.calls.some(c=>c.includes('edustoke')));
+}
+// 3. Constraints need the person's own words or a valid active task
+{
+ const m=[{role:'user',content:'Find me schools in Sharjah'}];
+ assert.equal(validateUnderstanding(JSON.stringify({intent:'find',topic:'school',location:{city:'Sharjah'},constraints:{curriculum:'moe',year:6}}),{messages:m}).constraints.curriculum,'','model-proposed MoE rejected');
+ assert.equal(validateUnderstanding(JSON.stringify({intent:'find',topic:'school',location:{city:'Sharjah'},constraints:{curriculum:'moe',year:6}}),{messages:m}).constraints.year,null);
+ const task={topic:'school',location:{country:'uae',city:'Sharjah'},constraints:{curriculum:'british',year:null}};
+ assert.equal(validateUnderstanding(JSON.stringify({intent:'find',topic:'school',location:{city:'Sharjah'}}),{messages:m,task}).constraints.curriculum,'','a fresh find does not inherit');
+ assert.equal(validateUnderstanding(JSON.stringify({intent:'more',topic:'school',location:{city:'Sharjah'}}),{messages:[{role:'user',content:'any more?'}],task}).constraints.curriculum,'british','more continues the task');
+ const dlg=[{role:'user',content:'what school options are there in Sharjah'},{role:'assistant',content:'Which curriculum?'},{role:'user',content:'british since they came from the UK'},{role:'assistant',content:'Shall I find British schools?'},{role:'user',content:'yes please'}];
+ assert.equal(validateUnderstanding(JSON.stringify({intent:'find',topic:'school',location:{city:'Sharjah'}}),{messages:dlg}).constraints.curriculum,'british','acceptance continues the stated curriculum');
+ assert.equal(validateUnderstanding(JSON.stringify({intent:'check',topic:'school',location:{city:'Sharjah'},organisations:[{name:'Sharjah American International School'}],constraints:{curriculum:'american'}}),{messages:[{role:'user',content:'what about Sharjah American International School?'}]}).constraints.curriculum,'','a curriculum word inside a school name is not a filter');
+ assert.equal(resolveConstraints({users:['find IB schools in Sharjah for year 6'],intent:'find'}).curriculum,'ib');
+ assert.equal(resolveConstraints({users:['find schools in Sharjah, grade 6'],intent:'find'}).year,null,'Grade is not converted to Year');
+ assert.equal(ruleUnderstanding({messages:m}).constraints.curriculum,'','rules fallback: same rule');
+}
+// 4. Queries come only from validated fields; personal details never reach the search provider
+{
+ const leak=[{role:'user',content:'my daughter Layla Ahmed is 10, find a school in Sharjah for her'}];
+ const v8=validateUnderstanding(JSON.stringify({intent:'find',topic:'school',location:{city:'Sharjah'},searches:['schools in Sharjah for Layla Ahmed age 10'],organisations:[{name:'Layla Ahmed'}]}),{messages:leak});
+ assert.equal(v8.searches,undefined,'model free-text searches are not accepted');
+ const w9=world();await runResearchTurn({messages:leak},w9.env,{...w9.opts,understanding:v8});
+ assert.ok(w9.queries.length>0&&w9.queries.every(q=>!/layla|ahmed|daughter|10\b/i.test(q.q)),'no personal details in any query: '+w9.queries.map(q=>q.q).join(' | '));
+ assert.equal(queryName('Layla'),'');assert.equal(queryName("Layla's school"),'');assert.equal(queryName('my son’s school'),'');
+ assert.equal(queryName('Victoria English'),'Victoria English');assert.equal(queryName('Our Own English High School'),'Our Own English High School');
+ assert.equal(buildQuery('web-list',{topic:'school',location:{city:'Sharjah'},constraints:{curriculum:'british'}}),'list of British curriculum schools in Sharjah');
+ const w10=world();const r10=await runResearchTurn({messages:[{role:'user',content:'check Layla'}]},w10.env,{...w10.opts,understanding:U('check',{organisations:[{name:'Layla',url:''}]})});
+ assert.ok(w10.queries.every(q=>!/layla/i.test(q.q)),'a lone first name is never searched');assert.match(r10.reply,/full name or website/);
+}
+// 5. Website reader on a real page structure (GEMS Wesgreen, reconstructed from the live page)
+{
+ const raw=fx('sites/gems-wesgreen-outline.html');const page=[{url:'https://www.gemseducation.com/wesgreen',raw}];
+ const facts=readSiteFacts(page,'gemseducation.com');
+ const curr=facts.filter(f=>f.key==='curriculum');
+ assert.deepEqual([...new Set(curr.map(f=>f.value))],['British'],'menu labels (American/IB/Indian Curriculum) and related schools are not this school’s curriculum');
+ assert.ok(curr.every(f=>['Wesgreen International School - Sharjah','Curriculum'].includes(f.source.section)),'facts carry their section');
+ assert.ok(curr.some(f=>f.quote==='Curriculum: British Curriculum'),'labelled key fact read as a field');
+ assert.ok(!facts.some(f=>/Al Barsha|Mizhar|Abu Dhabi/.test(f.quote)),'related-schools section excluded');
+ const secs=pageSections(raw).map(x=>x.heading);assert.ok(secs.includes('Curriculum')&&secs.includes('Vision'));assert.ok(!secs.some(h=>/We are GEMS|Our Schools/.test(h)),'footer headings are not sections');
+ const yg=facts.filter(f=>f.key==='year-groups').map(f=>f.value);
+ assert.ok(yg.includes('FS1 to Year 13'));assert.ok(yg.some(v=>/^Grades? 1 to 6$/.test(v)),'grade ranges kept as grades');
+ const y6=yearEvidence(facts,6);assert.ok(y6.listed.some(f=>f.value==='FS1 to Year 13'),'Year 6 evidence: covered by FS1 to Year 13');
+ assert.ok(y6.gradeOnly.length>=1&&!y6.listed.some(f=>/Grade/.test(f.value)),'Grade 1–6 is not counted as Year 6 evidence');
+ const gradesOnly=readSiteFacts([{url:'https://g.example/',raw:'<main><h2>Curriculum</h2><p>Our primary school teaches Grades 1 to 6 in English.</p></main>'}],'g.example');
+ assert.equal(yearEvidence(gradesOnly,6).listed.length,0,'no Year 6 evidence from a Grade-only page');
+}
 console.log('Research loop: Sharjah conversation (find → more → all → named check → correction → contacts → compare), exact listing + proven site, Dubai without regulator, user link, list contacts, rules fallback, budgets, tool limits, model validation and wording: passed');

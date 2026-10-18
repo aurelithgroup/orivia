@@ -6,8 +6,8 @@
  * 3. A domain is evidence only once it is tied to that SPEA listing:
  *      regulator-link        SPEA's profile links to it
  *      regulator-email       SPEA lists an email address at that domain (not @spea.shj.ae)
- *      contact-match         the site shows the phone number SPEA lists, and the SPEA name
- *    Search rank, titles, snippets or a similar name never establish a domain.
+ *    A name or phone number on a page never establishes it: both can be copied.
+ *    Search rank, titles or snippets never establish a domain either.
  * 4. From an established site, read a few pages and return the school's own statements (curriculum, year groups,
  *    admissions page, contacts), each with its quote and page. These describe the school only; they can't establish
  *    government or regulator requirements.
@@ -49,24 +49,15 @@ export function nameOnPage(name,raw){
  const all=nameTokens(name).join(' ');return all.length>0&&(' '+page.join(' ')+' ').includes(' '+all+' ');
 }
 
-/** Is this host the school's own site? Pure: uses the SPEA identity and the pages already fetched from that host. */
-export function establishDomain({school,host,pages=[]}){
+/** Is this host the school's own site? Only regulator evidence proves it: a name and phone number on a page can both be
+ * copied, so they never establish ownership. Anything else is at most "found" (ownership not confirmed). */
+export function establishDomain({school,host}){
  const f=school?.fields||{},evidence=[],reasons=[];
  if(f.website&&siteHost(f.website.url)===host){evidence.push({kind:'regulator-link',quote:f.website.quote,sourceUrl:school.url,value:f.website.url});return {status:'established',basis:'regulator-link',evidence,reasons}}
  reasons.push(f.website?'regulator-links-a-different-site':'no-regulator-website-link');
  const mailDomain=String(f.email?.value||'').split('@')[1]?.toLowerCase()||'';
  if(mailDomain&&mailDomain!=='spea.shj.ae'&&(mailDomain===host||mailDomain.endsWith('.'+host))){evidence.push({kind:'regulator-email',quote:f.email.quote,sourceUrl:school.url,value:f.email.value});return {status:'established',basis:'regulator-email',evidence,reasons}}
  reasons.push('no-regulator-email-at-domain');
- const want=phoneKey(f.phone?.value);
- if(!want){reasons.push('no-regulator-phone-to-compare');return {status:'unverified',basis:null,evidence:[],reasons}}
- for(const p of pages){
-  const hit=phonesIn(p.raw).find(x=>x.key===want);if(!hit)continue;
-  const titled=nameOnPage(school.name,p.raw);
-  if(!titled){reasons.push('phone-matches-but-name-does-not');continue}
-  evidence.push({kind:'contact-match',quote:hit.quote,sourceUrl:p.url,value:hit.quote},{kind:'regulator-phone',quote:f.phone.quote,sourceUrl:school.url,value:f.phone.value});
-  return {status:'established',basis:'contact-match',evidence,reasons};
- }
- reasons.push('no-matching-contact-on-site');
  return {status:'unverified',basis:null,evidence:[],reasons};
 }
 
@@ -82,33 +73,79 @@ export function sitePageLinks(raw,baseUrl,host,limit=SITE_LIMITS.extraLinks){
  }
  return out;
 }
+/* ---------- Reading a page by section ----------
+ * Menus, headers, footers, breadcrumbs, cookie banners and "related / other schools" blocks are not statements about this
+ * organisation. The page is split into sections by heading; facts carry the section they came from. */
+const NAV_CLASS=/\b(nav|menu|mega|breadcrumb|footer|header|cookie|related|other-schools|sidebar|social|share|search)\b/i;
+const OTHER_ORGS=/^(related|other|similar|nearby|more)\b.*\b(schools?|organisations?|nurseries|branches|campuses)\b|^view all|you (?:may|might) also like/i;
+export function pageSections(raw){
+ let h=String(raw||'').replace(/<!--[\s\S]*?-->/g,' ').replace(/<(script|style|svg|noscript|template|nav|header|footer|aside|form|button)\b[^>]*>[\s\S]*?<\/\1>/gi,' ');
+ // Containers whose class/id says navigation or related content are removed with their contents (innermost first).
+ for(let i=0;i<6;i++){const before=h;h=h.replace(/<(div|section|ul|ol)\b([^>]*\b(?:class|id)=["'][^"']*["'][^>]*)>((?:(?!<\1\b)[\s\S])*?)<\/\1>/gi,(m,tag,attrs)=>NAV_CLASS.test((attrs.match(/\b(?:class|id)=["']([^"']*)["']/gi)||[]).join(' '))?' ':m);if(h===before)break}
+ // A list item that is only a link is a menu entry, not a statement.
+ h=h.replace(/<li\b[^>]*>\s*<a\b[^>]*>[\s\S]*?<\/a>\s*<\/li>/gi,' ');
+ const parts=h.split(/(?=<h[1-4]\b)/i),sections=[];
+ for(const part of parts){
+  const heading=plain((part.match(/^<h[1-4][^>]*>([\s\S]*?)<\/h[1-4]>/i)||[])[1]||'');
+  const body=part.replace(/^<h[1-4][^>]*>[\s\S]*?<\/h[1-4]>/i,'');
+  // Labelled fields: <dt>Label</dt><dd>Value</dd>, "Label: Value" spans/rows.
+  const fields=[];
+  for(const m of body.matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/gi))fields.push({label:plain(m[1]),value:plain(m[2])});
+  for(const m of body.matchAll(/<(?:span|p|li|td|div)[^>]*>\s*([A-Z][A-Za-z ()']{2,30}):\s*([^<]{2,120})<\/(?:span|p|li|td|div)>/g))fields.push({label:plain(m[1]),value:plain(m[2])});
+  const text=plain(body);
+  if(!heading&&!text)continue;
+  sections.push({heading,text,fields,kind:OTHER_ORGS.test(heading)?'other-organisations':'main'});
+ }
+ return sections;
+}
 const CURRICULUM_SIGNS=[
- ['British',/\b(British curriculum|National Curriculum (?:for|of|in) England|English National Curriculum|IGCSEs?|A[ -]Levels?|Cambridge (?:Primary|Lower Secondary|IGCSE|International))\b/i],
- ['MoE (UAE Ministry of Education)',/\b(Ministry of Education|MoE curriculum|UAE national curriculum)\b/i],
+ ['British',/\b(British (?:National )?curriculum|National Curriculum (?:for|of|in) England|English National Curriculum|IGCSEs?|A[ -]Levels?|Cambridge (?:Primary|Lower Secondary|IGCSE|International|Secondary)|Early Years Foundation Stage)\b/i],
+ ['MoE (UAE Ministry of Education)',/\b(Ministry of Education curriculum|MoE curriculum|UAE national curriculum)\b/i],
  ['American',/\b(American curriculum|US curriculum|Common Core)\b/i],
- ['IB',/\b(International Baccalaureate|IB (?:Diploma|PYP|MYP|Primary Years|Middle Years))\b/],
- ['Indian',/\b(CBSE|ICSE)\b/]
+ ['IB',/\b(International Baccalaureate|IB (?:Diploma|PYP|MYP|Primary Years|Middle Years|curriculum))\b/i],
+ ['Indian',/\b(CBSE|ICSE|Indian curriculum)\b/i]
 ];
-const YEAR_RANGE=/\b((?:FS ?[12]|KG ?[12]|Pre-?KG|Foundation Stage(?: ?[12])?|Year \d{1,2}|Grade \d{1,2}))\s*(?:to|-|–|through|until)\s*((?:Year|Grade) ?\d{1,2}|KG ?2|FS ?2)\b/gi;
-/** The school's own statements from pages on its established site. Each fact names the exact page and quote. */
+const curriculumOf=t=>CURRICULUM_SIGNS.filter(([,re])=>re.test(t)).map(([l])=>l);
+// "Year" (British) and "Grade" (US/MoE) are different scales: never converted into each other.
+const YEAR_RANGE=/\b((?:FS ?[12]|KG ?[12]|Pre-?KG|Foundation Stage(?: ?[12])?|Year \d{1,2}|Grades? \d{1,2}))\s*(?:to|-|–|through|until)\s*((?:Year|Grade) ?\d{1,2}|\d{1,2}|KG ?2|FS ?2)\b/gi;
+const general=x=>/\b(all|every|other) (?:private )?schools\b|\bschools in (?:the )?(?:UAE|Sharjah|emirate)\b|\b(?:must|are required to|is required|mandatory|by law|regulations?)\b/i.test(x);
+/** The organisation's own statements from pages on its site. Each fact names its page, section and quote. */
 export function readSiteFacts(pages,host){
  const facts=[],seen=new Set();
- const add=(key,label,value,quote,url)=>{const k=key+'|'+value;if(seen.has(k))return;seen.add(k);facts.push({key,label,value,quote:quote.slice(0,SITE_LIMITS.quoteChars),source:{url,host,kind:'school-website',scope:'school-own-statement'}})};
+ const add=(key,label,value,quote,url,section)=>{const k=key+'|'+value;if(seen.has(k))return;seen.add(k);facts.push({key,label,value,quote:String(quote).slice(0,SITE_LIMITS.quoteChars),source:{url,host,section:section||'',kind:'school-website',scope:'school-own-statement'}})};
  for(const p of pages){
-  const text=plain(p.raw);const sentences=text.split(/(?<=[.!?])\s+/).filter(s=>s.length>=12&&s.length<=600);
-  // A sentence about rules for all schools ("all schools in the UAE must…") is not the school describing itself.
-  const general=x=>/\b(all|every|other) (?:private )?schools\b|\bschools in (?:the )?(?:UAE|Sharjah|emirate)\b|\b(?:must|are required to|is required|mandatory|by law|regulations?)\b/i.test(x);
-  for(const s of sentences.filter(x=>!general(x)))for(const [label,re] of CURRICULUM_SIGNS){const m=s.match(re);if(m)add('curriculum','Curriculum (school’s own statement)',label,s.length<=SITE_LIMITS.quoteChars?s:m[0],p.url)}
-  for(const m of text.matchAll(YEAR_RANGE))add('year-groups','Year groups (school’s own statement)',m[1]+' to '+m[2],m[0],p.url);
+  for(const sec of pageSections(p.raw)){
+   if(sec.kind!=='main')continue;
+   for(const f of sec.fields){
+    if(/^curricul/i.test(f.label))for(const c of curriculumOf(f.value.replace(/^british curriculum$/i,'British curriculum')))add('curriculum','Curriculum (school’s own statement)',c,f.label+': '+f.value,p.url,sec.heading);
+    if(/^(grades?|year groups?|years?|phases?)$/i.test(f.label))for(const m of (f.value).matchAll(YEAR_RANGE))add('year-groups','Year groups (school’s own statement)',m[1]+' to '+m[2],f.label+': '+f.value,p.url,sec.heading);
+   }
+   // Sentences only: a short label ("British Curriculum") is a menu or tag, not a statement.
+   const sentences=sec.text.split(/(?<=[.!?])\s+/).filter(x=>x.split(/\s+/).length>=6&&x.length<=600&&!general(x));
+   for(const x of sentences){for(const c of curriculumOf(x))add('curriculum','Curriculum (school’s own statement)',c,x.length<=SITE_LIMITS.quoteChars?x:x.match(CURRICULUM_SIGNS.find(([l])=>l===c)[1])[0],p.url,sec.heading);
+    for(const m of x.matchAll(YEAR_RANGE))add('year-groups','Year groups (school’s own statement)',m[1]+' to '+m[2],m[0],p.url,sec.heading)}
+  }
   for(const m of String(p.raw).matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)){
    const href=m[1].replace(/&amp;/g,'&'),label=plain(m[2]);
-   if(/^tel:/i.test(href)){const v=decodeURIComponent(href.slice(4)).trim();if(phoneKey(v).length>=10&&label)add('phone','Phone (school website)',v,label,p.url);continue}
-   if(/^mailto:/i.test(href)){const v=decodeURIComponent(href.slice(7)).split('?')[0].trim().toLowerCase();const dom=v.split('@')[1]||'';if(/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(v)&&(dom===host||dom.endsWith('.'+host))&&label)add('email','Email (school website)',v,label,p.url);continue}
+   if(/^tel:/i.test(href)){const v=decodeURIComponent(href.slice(4)).trim();if(phoneKey(v).length>=10&&label)add('phone','Phone (school website)',v,label,p.url,'');continue}
+   if(/^mailto:/i.test(href)){const v=decodeURIComponent(href.slice(7)).split('?')[0].trim().toLowerCase();const dom=v.split('@')[1]||'';if(/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(v)&&(dom===host||dom.endsWith('.'+host))&&label)add('email','Email (school website)',v,label,p.url,'');continue}
    let u;try{u=new URL(href,p.url)}catch(_){continue}
-   if(sameSite(u.href,host)&&/admission|enrol/i.test(u.pathname+' '+label)&&label){u.search='';u.hash='';add('admissions-page','Admissions page',u.href,label,p.url)}
+   if(sameSite(u.href,host)&&/admission|enrol/i.test(u.pathname+' '+label)&&label){u.search='';u.hash='';add('admissions-page','Admissions page',u.href,label,p.url,'')}
   }
  }
  return facts;
+}
+/** Does a year-groups statement cover this British school year? Grade ranges are reported, never converted. */
+export function yearEvidence(facts,year){
+ const toNum=t=>{t=String(t).trim();if(/^(FS|KG|Pre-?KG|Foundation)/i.test(t))return 0;const m=t.match(/(\d{1,2})/);return m?+m[1]:null};
+ const out={listed:[],gradeOnly:[]};
+ for(const f of facts.filter(x=>x.key==='year-groups')){
+  const [a,b]=f.value.split(' to ');const lo=toNum(a),hi=toNum(b);if(lo==null||hi==null)continue;
+  const usesGrade=/grade/i.test(f.value)&&!/year/i.test(f.value);
+  if(usesGrade){out.gradeOnly.push(f);continue}
+  if(/year/i.test(f.value)&&year>=lo&&year<=hi)out.listed.push(f);
+ }
+ return out;
 }
 
 /* ---------- Network dependencies: bounded, budgeted ---------- */
@@ -171,11 +208,7 @@ export async function lookupSchoolWithSite({name=''}={},{spea,site}){
   const got=await site.fetchSitePage(home,host);coverage.site.pagesOpened++;
   const seenPages=[];
   if(got.ok)seenPages.push({url:got.url,raw:got.raw});else coverage.site.failures.push({host,path:new URL(home).pathname,reason:got.reason,http:got.http??null});
-  let check=establishDomain({school,host,pages:seenPages});
-  if(check.status!=='established'&&got.ok&&check.reasons.includes('no-matching-contact-on-site')){
-   const contact=sitePageLinks(got.raw,got.url,host,8).find(u=>/contact/i.test(u));
-   if(contact){const c=await site.fetchSitePage(contact,host);coverage.site.pagesOpened++;if(c.ok){seenPages.push({url:c.url,raw:c.raw});check=establishDomain({school,host,pages:seenPages})}else coverage.site.failures.push({host,path:new URL(contact).pathname,reason:c.reason,http:c.http??null})}
-  }
+  let check=establishDomain({school,host});
   coverage.site.hostsConsidered.push({host,from,status:check.status,basis:check.basis,reasons:check.reasons});
   if(check.status==='established'){established={host,...check};pages=seenPages;break}
  }

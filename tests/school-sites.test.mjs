@@ -67,21 +67,22 @@ function world({web=[],sites={},budget=10,spea={}}={}){
  assert.ok(r.site.pagesRead.length<=SITE_LIMITS.pagesPerSite);assert.deepEqual(r.site.differences,[]);
  assert.equal(r.school.fields.curriculum.quote,'Curriculum: British','the SPEA fact stays tied to SPEA');
 }
-/* 2. No SPEA website link: search nominates hosts; an impostor with the right name but wrong phone is rejected,
-      and the real site is established by the SPEA-listed phone on its contact page */
+/* 2. No SPEA website link: a site showing the right name AND the SPEA-listed phone is still NOT proven
+      (both can be copied). Nothing from it is used as the school's own statements by this module. */
 {
  const w=world({web:['https://ae.linkedin.com/in/wesgreen','https://wes-green-admissions.example/','https://www.edustoke.com/wes','https://'+WG+'/'],
-  sites:{'https://wes-green-admissions.example/':impostorHome,['https://'+WG+'/']:{redirect:'https://www.'+WG+'/'},['https://www.'+WG+'/']:'<title>Wes Green International School</title><a href="/contact">Contact</a>',['https://www.'+WG+'/contact']:wgHome}});
+  sites:{'https://wes-green-admissions.example/':impostorHome,['https://'+WG+'/']:{redirect:'https://www.'+WG+'/'},['https://www.'+WG+'/']:wgHome}});
  const r=await lookupSchoolWithSite({name:'Wesgreen'},w.deps);
- assert.equal(r.status,'match');assert.equal(r.site.status,'established');assert.equal(r.site.basis,'contact-match');assert.equal(r.site.host,WG);
- assert.deepEqual(r.coverage.site.hostsConsidered.map(h=>[h.host,h.status]),[['wes-green-admissions.example','unverified'],[WG,'established']],'top search result and matching name were not enough');
- assert.ok(r.coverage.site.hostsConsidered[0].reasons.includes('no-matching-contact-on-site'));
+ assert.equal(r.status,'match');assert.equal(r.site.status,'unverified');assert.deepEqual(r.site.facts,[]);
+ assert.ok(r.coverage.site.hostsConsidered.every(h=>h.status==='unverified'),'name + matching phone is not proof of ownership');
+ assert.ok(r.coverage.site.hostsConsidered.every(h=>h.reasons.includes('no-regulator-website-link')));
  assert.ok(!w.calls.some(c=>/linkedin|edustoke/.test(c)),'directories and social sites are never opened as school sites');
  assert.match(w.queries.find(q=>!q.includes('site:spea')),/^"Wes green Int\. Pvt\. School\. LLC" Sharjah school$/,'searches the exact SPEA name');
- assert.deepEqual(r.site.evidence.map(e=>e.kind),['contact-match','regulator-phone']);
 }
-/* 3. Phone matches but the site is someone else's: not established */
+/* 3. Phone (and name) on a page never establish ownership */
 assert.equal(establishDomain({school:{name:'Wes green Int. Pvt. School. LLC',url:P+'x',fields:{phone:{value:'065062999',quote:'Phone Number 065062999'}}},host:'nursery.example',pages:[{url:'https://nursery.example/',raw:wrongNameHome}]}).status,'unverified');
+assert.equal(establishDomain({school:{name:'Wes green Int. Pvt. School. LLC',url:P+'x',fields:{phone:{value:'065062999',quote:'Phone Number 065062999'}}},host:WG,pages:[{url:'https://'+WG+'/',raw:wgHome}]}).status,'unverified','copied name + phone: still unverified');
+assert.equal(establishDomain({school:{name:'X',url:P+'x',fields:{email:{value:'office@school.example',quote:'Email office@school.example'}}},host:'school.example'}).basis,'regulator-email');
 /* 4. SPEA links a different site than the candidate: that candidate is not established by the link */
 assert.ok(establishDomain({school:{name:'X',url:P+'x',fields:{website:{url:'https://real.example/',quote:'Website'}}},host:'other.example',pages:[]}).reasons.includes('regulator-links-a-different-site'));
 /* 5. Off-site redirects are refused; the site is then unverified and nothing is read */
@@ -122,4 +123,4 @@ assert.ok(nameOnPage('Wes green Int. Pvt. School. LLC','<title>Wesgreen Internat
 /* 9. Links and facts helpers */
 assert.deepEqual(sitePageLinks(veHome,'https://'+VE_SITE+'/',VE_SITE),['https://'+VE_SITE+'/admissions/','https://'+VE_SITE+'/curriculum','https://'+VE_SITE+'/contact-us/']);
 assert.equal(readSiteFacts([{url:'https://a.example/',raw:'<p>Nothing relevant here at all.</p>'}],'a.example').length,0);
-console.log('School sites: SPEA identity first, domain established by regulator link or matching contact (never rank, title or name), facts tied to their page, differences flagged, bounds and budget kept: passed');
+console.log('School sites: SPEA identity first, domain established only by regulator link or regulator-listed email (never rank, title, name or phone), facts tied to their page, differences flagged, bounds and budget kept: passed');

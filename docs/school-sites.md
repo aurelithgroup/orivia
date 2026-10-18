@@ -20,17 +20,18 @@ Owner: Cleo (retrieval). Recognising "all schools" requests, keeping named-schoo
    | --- | --- |
    | `regulator-link` | SPEA's profile links to this site |
    | `regulator-email` | SPEA lists an email at this domain |
-   | `contact-match` | a page on the site shows the phone number SPEA lists (any UAE format), and that page names the school |
 
-   - "Names the school" means every distinctive word of the SPEA name appears. For a name made only of common words (e.g. "Sharjah International Private School"), the whole name must appear, in order.
-   - Otherwise the host is `unverified`, with reasons such as `no-matching-contact-on-site` or `phone-matches-but-name-does-not`, and nothing from it is used.
-4. **Read the established site:** the homepage plus up to 4 same-site pages (admissions, curriculum, contact, about, fees). Paths only; no PDFs.
-5. **Return the school's own statements**, each tied to its page:
+   - **A name and phone number on a page are never proof**: both can be copied (changed 18 Oct after Ina's review).
+   - Otherwise the host is `unverified`. The research loop can still show its statements, but only labelled "ownership not confirmed by a regulator".
+4. **Read the site by section:** menus, headers, footers, breadcrumbs, cookie banners and "related / other schools" blocks are removed. Short menu labels like "British Curriculum" are never read as statements; labelled fields (`Curriculum: …`, `Grade: …`) and full sentences are. Each fact carries its section heading.
+   - "Year" (British) and "Grade" (US/MoE) ranges are kept apart and never converted. `yearEvidence(facts, 6)` counts only Year-scale ranges.
+5. **Pages read:** the homepage plus up to 4 same-site pages (admissions, curriculum, contact, about, fees). Paths only; no PDFs.
+6. **Return the school's own statements**, each tied to its page:
    - `curriculum`, `year-groups`, `admissions-page`, `phone`, `email` (only addresses at the school's own domain);
    - `source: {url, host, kind: "school-website", scope: "school-own-statement"}`.
    - Sentences about rules for all schools ("all schools in the UAE must…") are **not** read as the school's curriculum.
      A school website can't establish government or regulator requirements.
-6. **SPEA and website facts are kept separately.** If the curriculum differs, `site.differences` flags it and nothing is merged or resolved.
+7. **SPEA and website facts are kept separately.** If the curriculum differs, `site.differences` flags it and nothing is merged or resolved.
 
 ## Output of `lookupSchoolWithSite({name}, {spea, site})`
 
@@ -85,4 +86,6 @@ Owner: Cleo (retrieval). Recognising "all schools" requests, keeping named-schoo
 ## Fixtures
 
 - SPEA pages as in `docs/spea-reader.md`.
-- Every school website in `tests/school-sites.test.mjs` is synthetic (`.example` hosts or `[Synthetic]` text). No real school site has been captured yet.
+- Every school website in `tests/school-sites.test.mjs` is synthetic (`.example` hosts or `[Synthetic]` text).
+- `tests/fixtures/sites/gems-wesgreen-outline.html`: the real GEMS Wesgreen page, rebuilt from a structured outline of the live page. Menus, key facts and related schools are exact; two paragraphs were paraphrased by the fetch tool. Raw HTML couldn't be fetched from this workspace.
+- **Raw captures:** `node tools/capture-site.mjs <url>` saves a real page to `tests/fixtures/sites/captured/`. Add its expected facts to `expectations.json`; `tests/site-captures.test.mjs` then checks every capture.

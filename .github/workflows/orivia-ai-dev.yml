@@ -74,6 +74,8 @@ jobs:
         run: node tests/research-loop.test.mjs
       - name: Research loop through the Worker (opt-in, auth and quota first)
         run: node --experimental-sqlite tests/research-loop-worker.test.mjs
+      - name: Website reader against raw captured pages
+        run: node tests/site-captures.test.mjs
       - name: Public beta mode (human check, per-person and daily limits)
         run: node --experimental-sqlite tests/public-beta.test.mjs
       - name: AI Worker contract and safety tests

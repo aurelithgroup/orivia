@@ -9,6 +9,22 @@ const CURRICULA=['british','american','indian','ib','australian','french','germa
 const UAE_CITIES=['Dubai','Sharjah','Abu Dhabi','Ajman','Fujairah','Umm Al Quwain','Ras Al Khaimah'];
 const UK_CITIES=['London','Edinburgh','Manchester','Birmingham','Glasgow','Leeds','Liverpool','Bristol','Cardiff','Belfast'];
 const MODEL='@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+// Constraints come from the person's own words, never from the model's guess.
+const CURR_RE={british:/\bbritish\b|\buk curriculum\b|english national curriculum|\bigcse\b|\ba[- ]levels?\b/i,american:/\bamerican\b|\bus curriculum\b/i,indian:/\bindian\b|\bcbse\b|\bicse\b/i,ib:/\bib\b|international baccalaureate/i,australian:/\baustralian\b/i,french:/\bfrench\b/i,german:/\bgerman\b/i,moe:/\bmoe\b|ministry of education|emirati curriculum|uae (?:national )?curriculum/i,pakistani:/\bpakistani\b/i,filipino:/\bfilipino\b|\bpilipinas\b/i,sabis:/\bsabis\b/i};
+export function curriculumIn(text){for(const [k,re] of Object.entries(CURR_RE))if(re.test(String(text||'')))return k;return ''}
+const ACCEPT=/^\s*(?:yes|yeah|yep|yup|sure|please|ok|okay|go ahead|do it|go on|find them|look them up|that would be great)\b/i;
+const TOPIC_RE={school:/\bschools?\b|curricul/i,nursery:/\bnurser(?:y|ies)\b/i,university:/\buni(?:versit(?:y|ies))?\b|\bcolleges?\b/i,bank:/\bbanks?\b|\baccounts?\b/i,clinic:/\bclinics?\b/i,hospital:/\bhospitals?\b/i};
+/** Curriculum and year: explicit in the latest message, or carried from an active task (or earlier turns) only when the
+ * latest message continues it. A fresh "find" inherits nothing. Organisation names are removed first ("Sharjah American…"). */
+export function resolveConstraints({users,intent,task,names=[]}){
+ const strip=t=>{let x=String(t||'');for(const n of names)if(n)x=x.split(n).join(' ');return x.replace(/\b(?:[A-Z][\w'.&-]*\s+){0,6}(?:School|Academy|College|Nursery)\b/g,' ')};
+ const latest=strip(users.at(-1)||''),continuing=intent!=='find'||ACCEPT.test(users.at(-1)||'');
+ const lastIn=(fn)=>{for(let i=users.length-2;i>=0;i--){const v=fn(strip(users[i]));if(v)return v}return ''};
+ const yearOf=t=>{const m=String(t).match(/\byear\s*(\d{1,2})\b/i);return m&&+m[1]>=1&&+m[1]<=13?+m[1]:null};
+ const curriculum=curriculumIn(latest)||(continuing?(task?.constraints?.curriculum||lastIn(curriculumIn)):'');
+ const year=yearOf(latest)||(continuing?(task?.constraints?.year||lastIn(yearOf)||null):null);
+ return {curriculum,year};
+}
 const clean=s=>String(s||'').replace(/[’‘]/g,"'").replace(/\s+/g,' ').trim();
 const lower=s=>clean(s).toLowerCase();
 
@@ -36,7 +52,8 @@ export function validateUnderstanding(raw,{messages,profile={},task=null}){
  if(!d||typeof d!=='object')return null;
  const said=userText(messages),saidLower=lower(said),latest=String(messages.filter(m=>m.role==='user').at(-1)?.content||'');
  const intent=INTENTS.includes(d.intent)?d.intent:null;if(!intent)return null;
- const topic=TOPICS.includes(d.topic)?d.topic:(task?.topic&&TOPICS.includes(task.topic)?task.topic:'other');
+ const evidenced=t=>TOPIC_RE[t]?.test(said)||t===task?.topic;
+ const topic=TOPICS.includes(d.topic)&&(evidenced(d.topic)||!TOPIC_RE[d.topic])?d.topic:(task?.topic&&TOPICS.includes(task.topic)?task.topic:'other');
  // Location must appear in the chat, the shared profile or the active task.
  let location={country:null,city:''};const known=lower(said+' '+(profile.city||'')+' '+(profile.movingTo||'')+' '+(task?.location?.city||''));
  const lc=clean(d.location?.city);if(lc&&known.includes(lc.toLowerCase())){const p=placeIn(lc);location={country:p.country||(d.location?.country==='uk'?'uk':d.location?.country==='uae'?'uae':null),city:p.city||''}}
@@ -52,14 +69,12 @@ export function validateUnderstanding(raw,{messages,profile={},task=null}){
   if(okName||okUrl)orgs.push({name:okName?name:'',url:okUrl});
  }
  for(const u of urlsIn(latest))if(!orgs.some(o=>o.url===u))orgs.push({name:'',url:u}); // a link in the latest message is always kept
- const c=d.constraints&&typeof d.constraints==='object'?d.constraints:{};
- const curriculum=CURRICULA.includes(lower(c.curriculum))&&saidLower.includes(lower(c.curriculum)==='moe'?'m':lower(c.curriculum).slice(0,4))?lower(c.curriculum):(task?.constraints?.curriculum||'');
- const year=Number.isInteger(c.year)&&c.year>=1&&c.year<=13&&new RegExp('\\b(year|grade)\\s*'+c.year+'\\b','i').test(said)?c.year:(task?.constraints?.year||null);
- const searches=(Array.isArray(d.searches)?d.searches:[]).map(safeQuery).filter(q=>q.length>=6).slice(0,3);
+ const users=messages.filter(m=>m.role==='user').map(m=>String(m.content||''));
+ const {curriculum,year}=resolveConstraints({users,intent,task,names:orgs.map(o=>o.name)}); // the model's curriculum/year proposal is ignored
  const needsOrg=['check','contacts','compare'].includes(intent);
  const resolvedOrgs=orgs.length?orgs:needsOrg&&task?.focus?[{name:task.focus,url:''}]:[];
  return {source:'model',research:d.research!==false&&intent!=='other',intent,topic,location,constraints:{curriculum,year},organisations:resolvedOrgs,
-  correction:clean(d.correction).slice(0,160),question:clean(d.question).slice(0,200)||clean(latest).slice(0,200),searches};
+  correction:clean(d.correction).slice(0,160),question:clean(d.question).slice(0,200)||clean(latest).slice(0,200)};
 }
 
 /* ---------- Rule-based reading: used when the model is unavailable or its output is invalid ---------- */
@@ -88,19 +103,19 @@ export function ruleUnderstanding({messages,profile={},task=null}){
  const yr=latest.match(/\b(?:year|grade)\s*(\d{1,2})\b/i);
  const organisations=named?[{name:named[1].trim(),url}]:loose?[{name:loose[1].trim(),url}]:url?[{name:'',url}]:(['check','contacts','compare'].includes(intent)&&task?.focus?[{name:task.focus,url:''}]:[]);
  return {source:'rules',research:true,intent,topic,location:location.country?location:{country:null,city:''},
-  constraints:{curriculum:cur||(intent==='find'&&!correction?'':task?.constraints?.curriculum||''),year:yr?+yr[1]:(task?.constraints?.year||null)},
-  organisations,correction:correction?clean(latest).slice(0,160):'',question:clean(latest).slice(0,200),searches:[]};
+  constraints:resolveConstraints({users,intent,task,names:organisations.map(o=>o.name)}),
+  organisations,correction:correction?clean(latest).slice(0,160):'',question:clean(latest).slice(0,200)};
 }
 
 const SYSTEM=`You read a conversation between a newcomer and Orivia and describe what research the LATEST user message needs.
 Return ONLY JSON with this shape:
 {"research":true|false,"intent":"find|more|all|check|compare|contacts|rules|other","topic":"school|nursery|university|bank|clinic|hospital|government-service|housing|transport|other",
  "location":{"country":"uae|uk|null","city":""},"constraints":{"curriculum":"british|american|indian|ib|moe|...|","year":null},
- "organisations":[{"name":"exact name as the user wrote it or as Orivia listed it","url":""}],"correction":"","question":"the question to answer, one sentence","searches":["up to 3 short web searches"]}
+ "organisations":[{"name":"exact name as the user wrote it or as Orivia listed it","url":""}],"correction":"","question":"the question to answer, one sentence"}
 Rules: find = new options; more = additional options beyond those shown; all = every/full list; check = about a named organisation or a link;
 compare = two or more named; contacts = phone/email/website; rules = official requirements or process. Resolve "them", "it", "that school" from context.
 A correction ("no, I meant X") replaces the earlier name. Keep filters (curriculum, year, place) from earlier turns unless changed.
-Never invent names, links or places that are not in the conversation. Searches must not contain personal details.`;
+Never invent names, links or places that are not in the conversation.`;
 
 /** Understand the latest request. ai: env.AI (optional). Returns a validated reading. */
 export async function understandRequest({messages,profile={},task=null},{ai=null}={}){

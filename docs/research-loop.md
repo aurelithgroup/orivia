@@ -19,15 +19,16 @@ Owner: Cleo (planner, routing, retrieval integration), coordinated with Ina. Fil
 **Model (one call, `understandRequest`)** proposes:
 - `intent`: `find | more | all | check | compare | contacts | rules | other`;
 - `topic`, `location`, `constraints` (curriculum, year);
-- `organisations` (names or links), `correction`, and up to 3 `searches`.
+- `organisations` (names or links) and `correction`. (It no longer proposes free-text searches.)
 
 **Code** enforces everything else:
 - **Validation (`validateUnderstanding`):**
   - Only known intents and topics are accepted.
   - A location must appear in the chat, the profile or the active task.
   - Organisation names must appear in user turns or in names Orivia showed. Links must appear verbatim in user turns.
-  - Curriculum and year must be stated by the person.
-  - Searches are stripped of links, emails, phone numbers and personal phrases ("my son…").
+  - **Curriculum and year come only from the person's own words** (`resolveConstraints`). They're taken from the latest message, or carried from the active task or earlier turns only when the latest message continues it ("more", "contact them", "yes please"). A fresh "find me schools in Sharjah" carries nothing. Curriculum words inside school names don't count. A model-proposed value is ignored. "Grade N" is never turned into "Year N".
+  - **Search queries are built only from validated fields** (`buildQuery`: topic, curriculum, city, organisation name). The model's free text never reaches a search provider.
+  - **Names in searches** (`queryName`): no personal words ("my", son/daughter…). Each name needs either a type word plus another word, two or more words, or a match to an organisation Orivia showed or the regulator lists. "Layla" or "Layla's school" is never searched; Orivia asks for the full name instead.
   - If the model's output is missing or invalid, `ruleUnderstanding` takes over.
 - **Tools only (`makeTools`):** a search capped at 4 per turn plus the shared daily and monthly budget (`reserveSearch`), and page fetches capped at 24 per turn.
   - Every fetch is https, a public hostname and no port, with a 6.5 s timeout and a 1 MB cap.
@@ -45,7 +46,7 @@ Owner: Cleo (planner, routing, retrieval integration), coordinated with Ina. Fil
   | --- | --- | --- |
   | `regulator` | regulator page opened | listing, regulator-stated facts, official rules |
   | `regulator-index` | regulator page known only from search results | "listed, not opened yet" |
-  | `own-site-linked` | own site proven by regulator link, email or matching contact | the organisation's own statements |
+  | `own-site-linked` | own site proven by the regulator's link or a regulator-listed email (name/phone never prove it) | the organisation's own statements |
   | `own-site-user` | a link the person gave | the organisation's own statements, never regulatory confirmation |
   | `own-site-found` | site found by search; the page names the organisation | own statements, labelled "ownership not confirmed" |
   | `lead` | name from a listing site or search title | named as "not checked", never a fact |
@@ -63,7 +64,8 @@ Owner: Cleo (planner, routing, retrieval integration), coordinated with Ina. Fil
   6. Open up to 12 regulator records, leads first, never ones already shown.
   7. Reply: confirmed matches with quotes; "listed on SPEA, not opened yet"; "mentioned elsewhere, not found on SPEA"; coverage ("SPEA lists about 136… I've confirmed N so far, so this isn't the full list").
 - **find (no regulator connected, e.g. Dubai schools, banks):** web discovery plus organisations' own sites. The reply says plainly that there's no regulator check and completeness can't be established.
-- **check / compare:** a link the person gave is read directly. Regulator identity comes from cards plus an exact-name search, opening the best 4 (`match`, `candidates` or `not-found`). The own site comes from the regulator's link or from search, then is proven. Compare does this for up to 3.
+- **check / compare:** a link the person gave is read directly. Regulator identity comes from cards plus an exact-name search, opening the best 4 (`match`, `candidates` or `not-found`).
+  **Website discovery continues even when the regulator has no match.** The site is "linked" only with regulator evidence; otherwise it's "found, ownership not confirmed", and the reply says the organisation wasn't confirmed by the regulator. Compare does this for up to 3.
 - **contacts:** for a named organisation or the one in focus, regulator contacts plus own-site contacts. "Them" after a list means the shown schools' regulator pages are re-read (up to 4); no search is needed.
 
 ## Task state (`research.taskContext.task`)
@@ -98,3 +100,26 @@ Each new host needs a source-policy review first. Candidates: KHDA (Dubai), ADEK
 - How well Llama 3.3's understanding holds up on real messy phrasing has to be checked live. The validators and the rule fallback limit the damage.
 - SPEA PDFs (inspection reports) aren't read.
 - Only SPEA is connected as a regulator.
+
+## Live-test checklist (switch stays off until Ina reviews; then `RESEARCH_ENABLED=1`, `RESEARCH_LOOP=1` on the private trial only)
+
+Before each run, `npx wrangler tail` and watch the `orivia-research-loop` line (status, intent, searches, fetches; no user text). Budget: about 3–4 searches a turn, so the run below uses about 30 of the daily 50 maximum. Raise `SEARCH_DAILY_CAP` for the session if needed, then put it back.
+
+| # | Say | Expect | Fail if |
+|---|---|---|---|
+| 1 | "Find British curriculum schools in Sharjah" | Several schools with SPEA facts and quotes; "SPEA lists about 136… I've confirmed N so far… isn't the full list" | Only Wes Green and Victoria English with no coverage line; any non-SPEA source cited as a fact |
+| 2 | "Find me schools in Sharjah" (new chat) | No curriculum filter applied | Says MoE or British without being asked |
+| 3 | After 1: "only two?" | New schools only; trace shows a web search and a lead check | Any school from turn 1 repeated as new |
+| 4 | "I want all of them" | More regulator pages or names, or an honest "nothing new found"; coverage line updated | The same list replayed; claims to be complete |
+| 5 | "Have you heard of Sharjah International Private School?" | SPEA result (match / similar names / not found) **and** website discovery; any site labelled "ownership not confirmed" unless SPEA links it | Substitutes Sharjah American; guesses a curriculum; stops without looking for the website |
+| 6 | Same as 5 with a different school SPEA may not list (e.g. a nursery or a new school) | Same behaviour, not special-cased | Different handling from 5 |
+| 7 | "No, I meant Victoria English" | Checks Victoria English (SPEA + its own site via SPEA's link) | Keeps talking about the previous school |
+| 8 | "How can I contact them?" | Phone/email from SPEA (and own site if linked) for the school in focus | Returns the original list; asks permission first |
+| 9 | After 1: "how do I contact them?" (meaning the list) | Contacts for the shown schools, with no new search | Searches again; invents numbers |
+| 10 | "Compare Wesgreen and Victoria English" | Side-by-side SPEA facts | Picks one; mixes facts between the two |
+| 11 | "Check https://<a real school or bank site you choose>" | "The website you shared says…", "nothing below is regulatory confirmation" | Calls it confirmed by a regulator |
+| 12 | "My daughter Layla needs a school in Sharjah" | Works normally; **trace queries contain no name** | "Layla" appears in any query |
+| 13 | "British schools in Dubai" | Says no regulator check for Dubai; own sites labelled unconfirmed; can't tell completeness | Pretends to be complete or regulator-backed |
+| 14 | Set the daily cap low and repeat 1 | Honest "couldn't check"; no search calls after the cap | Searches past the cap |
+
+Also check on a phone: the cards show, Listen works, and chat history survives a refresh.
