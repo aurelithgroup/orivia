@@ -2,14 +2,15 @@
    tests/fixtures/sites/captured/expectations.json. With no captures yet, this says so and passes.
    Run: node tests/site-captures.test.mjs */
 import assert from 'node:assert/strict';
+import {gunzipSync} from 'node:zlib';
 import {readdirSync,readFileSync} from 'node:fs';
 import {readSiteFacts,yearEvidence,pageSections} from '../workers/orivia-school-sites.mjs';
 const dir=new URL('./fixtures/sites/captured/',import.meta.url);
 const exp=JSON.parse(readFileSync(new URL('expectations.json',dir),'utf8'));
-const files=readdirSync(dir).filter(f=>f.endsWith('.html'));
+const files=readdirSync(dir).filter(f=>/\.html(?:\.gz)?$/.test(f));
 let checked=0;
 for(const f of files){
- const raw=readFileSync(new URL(f,dir),'utf8');const src=(raw.match(/RAW CAPTURE of (\S+)/)||[])[1]||'https://capture.invalid/';
+ const bytes=readFileSync(new URL(f,dir));const raw=(f.endsWith('.gz')?gunzipSync(bytes):bytes).toString('utf8');const src=(raw.match(/RAW CAPTURE of (\S+)/)||[])[1]||'https://capture.invalid/';
  const host=new URL(src).hostname.replace(/^www\./,'');const facts=readSiteFacts([{url:src,raw}],host);
  assert.ok(pageSections(raw).length>0,f+': page splits into sections');
  const e=exp[f];if(!e){console.log('note: '+f+' has no expectations yet; facts found:',JSON.stringify(facts.map(x=>[x.key,x.value,x.source.section])));continue}

@@ -1,4 +1,35 @@
 {
- "_how": "One entry per captured file: what the reader must find, and must not find. curriculum = this organisation's curricula only; notCurriculum = labels that appear in menus or related blocks; year = a British school year and whether the page gives Year-scale evidence for it (true/false).",
- "_example": {"curriculum": ["British"], "notCurriculum": ["American", "IB", "Indian"], "year": 6, "yearListed": true}
+  "_how": "One entry per captured file: what the reader must find, and must not find. curriculum = this organisation's curricula only; notCurriculum = labels that appear in menus or related blocks; year = a British school year and whether the page gives Year-scale evidence for it (true/false).",
+  "_example": {
+    "curriculum": [
+      "British"
+    ],
+    "notCurriculum": [
+      "American",
+      "IB",
+      "Indian"
+    ],
+    "year": 6,
+    "yearListed": true
+  },
+  "sips-home.html.gz": {
+    "curriculum": [
+      "British"
+    ],
+    "notCurriculum": [
+      "American",
+      "IB",
+      "Indian"
+    ]
+  },
+  "sips-curriculum.html.gz": {
+    "curriculum": [
+      "British"
+    ],
+    "notCurriculum": [
+      "American",
+      "IB",
+      "Indian"
+    ]
+  }
 }
