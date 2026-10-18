@@ -70,7 +70,8 @@ r=await worker.fetch(req('All British schools in Sharjah',consent),{...pilotEnv,
 // Consent but rates not confirmed → fail closed (no OpenAI request, no money reserved)
 r=await worker.fetch(req('All British schools in Sharjah',consent),{...pilotEnv,OPENAI_INPUT_USD_PER_M:undefined},ctx);assert.equal(r.status,200);assert.equal(openaiCalls.length,0);
 
-// Consent + switch + rates + limits → OpenAI plans AND understands; Workers AI not used for research
+// Consent + switch + rates + limits, and the assistant can't use the model's reply (not its JSON) → the fallback research path
+// still uses OpenAI to understand and plan; Workers AI not used for research
 aiCalls.length=0;r=await worker.fetch(req('All British schools in Sharjah',consent),pilotEnv,ctx);let d=await r.json();
 assert.equal(r.status,200);assert.ok(openaiCalls.length>=2,'understanding + planning went to the pilot');assert.ok(openaiCalls.every(c=>c.store===false&&c.auth==='Bearer sk-test-not-real'));
 assert.ok(!aiCalls.includes('understand')&&!aiCalls.includes('plan'),'existing provider not used for this tester’s research');
@@ -79,16 +80,26 @@ const spent=sql.prepare("SELECT day_amount FROM spend_meter WHERE id='openai'").
 assert.ok(!JSON.stringify(sql.prepare('SELECT * FROM spend_ticket').all()).match(/British|Sharjah|sk-test/),'ledger stores amounts only');
 
 
-// Privacy: the consent says saved About me details aren't sent. A city that exists only in the profile never reaches OpenAI.
-{openaiCalls.length=0;const res=await worker.fetch(req('All British curriculum schools near me',{...consent,profile:{city:'Sharjah',name:'Test Person'}}),pilotEnv,ctx);assert.equal(res.status,200);
- assert.ok(openaiCalls.length>=1);const u=JSON.parse(openaiCalls[0].user);
- assert.ok(!('profileCity' in u),'no profile city in the understanding request');assert.ok(!openaiCalls.some(c=>/Test Person/.test(c.user)),'no profile name');
- assert.ok(openaiCalls.slice(1).some(c=>JSON.parse(c.user).goal),'planning ran on the profile-located request');
- for(const c of openaiCalls.slice(1)){const v=JSON.parse(c.user);if(v.goal)assert.equal(v.goal.place,'','planning view leaves out a place the person never wrote')}
- // …and when the person does write the place, it is part of their request and may be sent
- openaiCalls.length=0;await worker.fetch(req('All British curriculum schools in Sharjah',consent),pilotEnv,ctx);
- assert.ok(openaiCalls.slice(1).some(c=>JSON.parse(c.user).goal?.place==='Sharjah'));}
-assert.match(cfg.providerPilot.text,/About me details, including your city/,'consent wording matches what is (not) sent');
+// Consent v3: the assistant handles the whole conversation (ordinary chat too); Workers AI isn't used for this tester.
+{const asked=[];const quiet=console.log;console.log=()=>{};
+ const assistantFetch=async(url,init)=>{const body=JSON.parse(init.body);asked.push({user:body.input[1].content,json:body.text?.format?.type,max:body.max_output_tokens});
+  return Response.json({status:'completed',usage:{input_tokens:1500,output_tokens:200},output:[{type:'message',role:'assistant',content:[{type:'output_text',text:JSON.stringify({action:'reply',sentences:[{text:'Welcome! Tell me what you need help with and I’ll look into it.',kind:'general'}],memory:{goal:'say hello'}})}]}]})};
+ const v3=createPilotWorker({launchBrowser,fetcher:assistantFetch});
+ aiCalls.length=0;let res=await v3.fetch(req('hello',{...consent,profile:{city:'Sharjah',name:'Test Person'}}),pilotEnv,ctx);let out=await res.json();
+ assert.equal(res.status,200);assert.equal(out.research.assistant,true);assert.match(out.reply,/Welcome/);assert.equal(aiCalls.length,0,'Workers AI not used');
+ assert.equal(asked[0].json,'json_object');const st=JSON.parse(asked[0].user);
+ // About me is shared by default (the UI sends it only while "Use About me in chats" is on); the name is never part of it.
+ assert.equal(st.aboutMe.livesIn,'Sharjah');assert.ok(!asked.some(a=>/Test Person/.test(a.user)),'no profile name');
+ assert.equal(out.research.taskContext.task.assistant.goal,'say hello','memory travels back to the device');
+ // A v2 tick (research-only wording) doesn't count as v3 consent
+ asked.length=0;res=await v3.fetch(req('hello',{providerConsent:{openai:'openai-research-pilot-v2'}}),pilotEnv,ctx);assert.equal(asked.length,0);
+ // Switch off → never the assistant
+ res=await v3.fetch(req('hello',consent),{...pilotEnv,OPENAI_PILOT:'0'},ctx);assert.equal(asked.length,0);
+ // Daily caps still come first: a full day refuses before any model call
+ const capped=createPilotWorker({launchBrowser,fetcher:assistantFetch});sql.exec("INSERT INTO trial_usage (day,calls) VALUES ('"+new Date().toISOString().slice(0,10)+"',100000) ON CONFLICT(day) DO UPDATE SET calls=100000");
+ res=await capped.fetch(req('hello',consent),{...pilotEnv,DAILY_CAP:'5'},ctx);assert.equal(res.status,429);assert.equal(asked.length,0);
+ sql.exec("DELETE FROM trial_usage");console.log=quiet;}
+assert.match(cfg.providerPilot.text,/About me details \(unless/,'consent wording matches what is sent');assert.equal(cfg.providerPilot.consent,'openai-assistant-pilot-v3');
 // A failing provider is tried once per turn, not on every step (the 18 Oct live test made six failing attempts in one turn).
 {let attempts=0;aiCalls.length=0;const failing=createPilotWorker({launchBrowser,fetcher:async()=>{attempts++;return Response.json({error:{type:'invalid_request_error',code:'model_not_found'}},{status:404})}});
  const origLog=console.log;console.log=()=>{};

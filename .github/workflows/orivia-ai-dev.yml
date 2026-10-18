@@ -24,6 +24,8 @@ jobs:
         run: node tests/spea-directory-feed.test.mjs
       - name: OpenAI private pilot transport (offline only)
         run: node tests/openai-pilot.test.mjs
+      - name: Pilot assistant (consent v3, scripted model)
+        run: node tests/assistant.test.mjs
       - name: Buddy rule and conversation regression tests
         run: node tests/buddy-smoke.js
       - name: Secure AI bridge tests

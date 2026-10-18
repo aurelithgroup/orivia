@@ -661,13 +661,13 @@ function resources(items){let holder=$('journey-actions');if(!holder){holder=doc
    "Official source" / "Organisation source" (later "Community experiences"); "Opened" = retrieved, not
    comprehensively verified; claims are "Source-backed" (an exact quote, not proof of interpretation). */
 /* A listing site is cited for names to check, never as proof. */
-const SOURCE_KIND={official:'Official source',government:'Official source',organisation:'Organisation source',institution:'Organisation source',operator:'Organisation source',business:'Organisation source',transport:'Organisation source',directory:'Listing site'};
+const SOURCE_KIND={official:'Official source',government:'Official source',organisation:'Organisation source',institution:'Organisation source',operator:'Organisation source',business:'Organisation source',transport:'Organisation source',directory:'Listing site',community:'People’s experiences'};
 function safeSources(list){
  if(!Array.isArray(list))return [];
  const out=[];
  for(const x of list.slice(0,20)){
   try{const u=new URL(String(x&&x.url));if(u.protocol!=='https:'||u.username||u.password)continue;
-   const kind=SOURCE_KIND[x.category];if(!kind)continue; // unknown or community categories are not shown yet
+   const kind=SOURCE_KIND[x.category];if(!kind)continue; // unknown categories are not shown; community pages are labelled as experiences
    out.push({id:typeof x.id==='string'?x.id.slice(0,8):'',url:u.href,host:u.hostname.replace(/^www\./,''),title:String(x.title||u.hostname).slice(0,140),kind,category:String(x.category),checkedAt:typeof x.checkedAt==='string'?x.checkedAt:''});
   }catch(_){}
  }

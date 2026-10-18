@@ -4,7 +4,9 @@
  */
 const ENDPOINT='https://api.openai.com/v1/responses';
 const MODEL='gpt-6.1-sol';
-const LIMITS=Object.freeze({calls:6,inputBytes:24000,outputTokens:1024,responseBytes:256000});
+// 12 calls a turn (founder-approved 18 Oct, inside the shared money limits). Input up to 40 KB so the assistant can see the
+// pages it read; output 1,024 tokens by default, up to 2,500 for a written reply (reasoning tokens count inside it).
+const LIMITS=Object.freeze({calls:12,inputBytes:40000,outputTokens:1024,maxOutputTokens:2500,responseBytes:256000});
 export class PilotError extends Error {
  constructor(code){super(code);this.name='PilotError';this.code=code}
 }
@@ -44,10 +46,11 @@ export function createOpenAIPilot(env,{consented=false,budget,fetcher=fetch,time
   if(!Array.isArray(messages)||!messages.length||messages.some(m=>!['system','user','assistant'].includes(m?.role)||typeof m.content!=='string'))throw new PilotError('invalid-messages');
   const input=messages.map(m=>({role:m.role==='system'?'developer':m.role,content:m.content}));
   const inputBytes=new TextEncoder().encode(JSON.stringify(input)).length;
+  const maxOut=Math.max(256,Math.min(LIMITS.maxOutputTokens,Math.floor(Number(options.maxOutputTokens)||LIMITS.outputTokens)));
   if(inputBytes>LIMITS.inputBytes)throw new PilotError('input-too-large');
   // Reserve before dispatch. No retries; one uncertain request must not become two charges.
   calls++;
-  const ticket=await budget.reserve({model:MODEL,inputBytes,maxOutputTokens:LIMITS.outputTokens});
+  const ticket=await budget.reserve({model:MODEL,inputBytes,maxOutputTokens:maxOut});
   if(!ticket){blocked=true;logCall({call:calls,outcome:'budget-exhausted'});throw new PilotError('budget-exhausted')}
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),Math.max(1,Math.min(20000,timeoutMs)));
   const started=Date.now();
@@ -57,7 +60,7 @@ export function createOpenAIPilot(env,{consented=false,budget,fetcher=fetch,time
    // so a 3xx is treated as a failure rather than followed.
    const response=await fetcher(ENDPOINT,{method:'POST',redirect:'manual',signal:controller.signal,
     headers:{Authorization:'Bearer '+env.OPENAI_API_KEY.trim(),'Content-Type':'application/json'},
-    body:JSON.stringify({model:MODEL,input,store:false,max_output_tokens:LIMITS.outputTokens,reasoning:{effort:'low'}})});
+    body:JSON.stringify({model:MODEL,input,store:false,max_output_tokens:maxOut,reasoning:{effort:'low'},...(options.json?{text:{format:{type:'json_object'}}}:{})})});
    log.http=response.status;
    if(response.status>=300&&response.status<400){usage.status='http-'+response.status;await response.body?.cancel();throw new PilotError('provider-redirect')}
    if(!response.ok){usage.status='http-'+response.status;Object.assign(log,await providerErrorCodes(response));throw new PilotError(response.status===429?'provider-limit':'provider-error')}

@@ -15,9 +15,11 @@ let s = safeSources(F['evidence-found'].liveSources);
 assert.deepEqual(s.map(x => x.kind), ['Official source', 'Organisation source']);
 assert.doesNotMatch(js.slice(js.indexOf('/* ===== Research display'), js.indexOf('/* ===== Settings')), /['"]Verified|['"]Confirmed/, 'no "verified"/"confirmed" labels');
 assert.match(js, /Source-backed/); assert.match(js, /Couldn’t confirm/); assert.match(js, /doesn’t mean every requirement has been verified/);
-/* Only vetted https sources, never community yet, never scripts or plain http */
+/* Only vetted https sources, never scripts or plain http. Community pages are shown, labelled as people's experiences
+   (founder's brief, 18 Oct: experiences may be used when labelled, never as an official requirement). */
 s = safeSources(F.hostile.liveSources);
-assert.deepEqual(s.map(x => x.url), ['https://www.gov.uk/fixture']);
+assert.deepEqual(s.map(x => x.url), ['https://www.gov.uk/fixture', 'https://www.reddit.com/r/dubai']);
+assert.equal(s[1].kind, 'People’s experiences');
 /* Citations: numbers kept, linked only to vetted sources, the plain reference list replaced by cards */
 let seg = citeSegments(F['evidence-found'].reply, safeSources(F['evidence-found'].liveSources));
 assert.deepEqual(seg.filter(x => x.n).map(x => [x.n, x.src.id]), [['1', 'S1'], ['2', 'S2']]);

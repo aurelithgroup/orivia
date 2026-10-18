@@ -12,8 +12,8 @@ const body=JSON.parse(requests[0].init.body);
 assert.equal(body.store,false);assert.equal(body.model,'gpt-6.1-sol');assert.equal(body.input[0].role,'developer');assert.equal(requests[0].init.redirect,'manual'); // Workers reject redirect:'error' before sending anything
 assert.deepEqual(records[0][1],{status:'completed',inputTokens:123,outputTokens:45});
 assert(!JSON.stringify([reservations,records]).includes('private question'));
-for(let i=1;i<6;i++)await ai.run('legacy',{messages});
-await assert.rejects(()=>ai.run('legacy',{messages}),{code:'turn-call-limit'});assert.equal(requests.length,6);
+for(let i=1;i<12;i++)await ai.run('legacy',{messages});
+await assert.rejects(()=>ai.run('legacy',{messages}),{code:'turn-call-limit'});assert.equal(requests.length,12);
 let called=false;
 const exhausted=createOpenAIPilot(env,{consented:true,budget:{...budget,reserve:async()=>null},fetcher:async()=>{called=true}});
 await assert.rejects(()=>exhausted.run('',{messages}),{code:'budget-exhausted'});assert.equal(called,false);
@@ -41,5 +41,5 @@ const failedRecording=createOpenAIPilot(env,{consented:true,budget:{...budget,re
 await assert.rejects(()=>failedRecording.run('',{messages}),{code:'usage-record-failed'});
 await assert.rejects(()=>failedRecording.run('',{messages}),{code:'pilot-stopped'});
 const huge=createOpenAIPilot(env,{consented:true,budget,fetcher});
-await assert.rejects(()=>huge.run('',{messages:[{role:'user',content:'x'.repeat(24001)}]}),{code:'input-too-large'});
+await assert.rejects(()=>huge.run('',{messages:[{role:'user',content:'x'.repeat(40001)}]}),{code:'input-too-large'});
 console.log('OpenAI pilot gates, no retries, bounded calls, private usage accounting and error handling pass.');
