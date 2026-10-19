@@ -1,8 +1,8 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1C2733"><title>Orivia private AI trial</title>
 <style>
-:root{color-scheme:light;--okSoft:#DDF0E6;--wait:#2C4A86;--waitSoft:#E3E8F3;--focusSoft:#E4ECFD;--ink:#18222D;--muted:#56616C;--line:#D6DBD4;--ground:#E9ECE7;--surface:#FFFFFF;--surface2:#F3F5F1;--sign:#1C2733;--signInk:#F4F6F7;--amber:#F2B90F;--amberSoft:#FFF3C9;--ok:#1D7F55;--warn:#A8480A;--focus:#2F6FEB;--navH:64px}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--okSoft:#15342A;--wait:#9DB8F2;--waitSoft:#1D2A44;--focusSoft:#18284A;--ink:#E6EAEE;--muted:#9AA5B0;--line:#29333E;--ground:#0B1015;--surface:#141B23;--surface2:#1A232D;--sign:#080C10;--amberSoft:#3A3110;--ok:#46C08A;--warn:#F2914A;--focus:#7AA5FF;color-scheme:dark}}
-:root[data-theme="dark"]{--okSoft:#15342A;--wait:#9DB8F2;--waitSoft:#1D2A44;--focusSoft:#18284A;--ink:#E6EAEE;--muted:#9AA5B0;--line:#29333E;--ground:#0B1015;--surface:#141B23;--surface2:#1A232D;--sign:#080C10;--amberSoft:#3A3110;--ok:#46C08A;--warn:#F2914A;--focus:#7AA5FF;color-scheme:dark}
+:root{color-scheme:light;--okSoft:#DDF0E6;--wait:#2C4A86;--waitSoft:#E3E8F3;--focusSoft:#E4ECFD;--ink:#18222D;--muted:#56616C;--line:#D6DBD4;--ground:#E9ECE7;--surface:#FFFFFF;--surface2:#F3F5F1;--sign:#1C2733;--signInk:#F4F6F7;--amber:#F2B90F;--amberSoft:#FFF3C9;--ok:#1D7F55;--warn:#A8480A;--danger:#B3261E;--onDanger:#FFFFFF;--focus:#2F6FEB;--navH:64px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--okSoft:#15342A;--wait:#9DB8F2;--waitSoft:#1D2A44;--focusSoft:#18284A;--ink:#E6EAEE;--muted:#9AA5B0;--line:#29333E;--ground:#0B1015;--surface:#141B23;--surface2:#1A232D;--sign:#080C10;--amberSoft:#3A3110;--ok:#46C08A;--warn:#F2914A;--danger:#FF8A80;--onDanger:#1A0000;--focus:#7AA5FF;color-scheme:dark}}
+:root[data-theme="dark"]{--okSoft:#15342A;--wait:#9DB8F2;--waitSoft:#1D2A44;--focusSoft:#18284A;--ink:#E6EAEE;--muted:#9AA5B0;--line:#29333E;--ground:#0B1015;--surface:#141B23;--surface2:#1A232D;--sign:#080C10;--amberSoft:#3A3110;--ok:#46C08A;--warn:#F2914A;--danger:#FF8A80;--onDanger:#1A0000;--focus:#7AA5FF;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{height:100%}
@@ -221,6 +221,17 @@ a.cite:hover,a.cite:focus-visible{background:var(--focusSoft)}
 .rnote.warn{background:var(--surface);border:1px solid var(--line)}
 .rnote.partial{background:var(--amberSoft)}
 .sources-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.source-buttons{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.source-buttons li{min-width:0;max-width:100%}
+a.source-button{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:36px;box-sizing:border-box;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-size:12px;line-height:1.3;text-decoration:none;white-space:normal}
+.source-button-n{font-weight:800;color:var(--focus);flex:none}
+.source-button-host{overflow-wrap:anywhere;min-width:0}
+.source-button-arrow{color:var(--muted);flex:none}
+a.source-button:hover{background:var(--focusSoft)}
+a.source-button:focus-visible,.research-evidence>summary:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+.research-evidence{min-width:0}
+.research-evidence>summary{cursor:pointer;font-size:12px;color:var(--muted);padding:4px 0;width:fit-content}
+.research-evidence[open]{display:flex;flex-direction:column;gap:8px}
 a.src{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:12px;padding:9px 11px;background:var(--surface);color:var(--ink);text-decoration:none}
 a.src strong{font-size:14px;overflow-wrap:anywhere}
 .src-top{display:flex;align-items:center;gap:8px}
@@ -366,6 +377,38 @@ nav.bottom .help-tab{color:var(--ink)}
 .staff hr{border:0;border-top:1px solid #3A4652;margin:0;width:100%}
 .staff .x{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));inset-inline-end:16px;width:48px;height:48px;border-radius:50%;border:2px solid var(--amber);background:none;color:var(--signInk);font-size:28px;line-height:1}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
+.danger{color:var(--danger)!important;border-color:var(--danger)!important}
+.btn.danger{background:var(--danger)!important;color:var(--onDanger)!important;border-color:var(--danger)!important}
+.btn.text.danger,.danger.text{background:none!important;color:var(--danger)!important}
+
+/* Lists of places: compact numbered rows that open in place */
+.pl-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px}
+.pl-list{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}
+.pl-item+.pl-item{border-top:1px solid var(--line)}
+.pl-item.open{background:var(--surface2)}
+.pl-row{display:flex;align-items:flex-start;gap:4px;padding:10px 8px 10px 10px}
+.pl-main{flex:1;min-width:0;display:flex;align-items:flex-start;gap:10px;border:0;background:none;color:var(--ink);text-align:start;padding:0;font:inherit;cursor:pointer}
+.pl-num{flex:none;width:26px;height:26px;border-radius:999px;background:var(--amberSoft);color:var(--ink);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.pl-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+.pl-name{font-size:15px;line-height:1.25}
+.pl-sub{font-size:13px;color:var(--muted);line-height:1.35}
+.pl-tags{display:flex;flex-wrap:wrap;gap:6px}
+.pl-src{font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;border:1px solid var(--line);color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-src.official{background:var(--okSoft);color:var(--ok);border-color:transparent}
+.pl-src.org{background:var(--waitSoft);color:var(--wait);border-color:transparent}
+.pl-src.listing{background:var(--amberSoft);color:var(--ink);border-color:transparent}
+.pl-src.people{background:var(--surface2)}
+.pl-quick{display:flex;gap:4px;flex:none}
+.pl-icon{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none;font-size:18px;line-height:1}
+.pl-icon .ico{width:18px;height:18px}
+.pl-star.on{background:var(--amber);border-color:var(--amber);color:#18222D}
+.pl-details{display:flex;flex-direction:column;gap:10px;padding:0 12px 12px 46px}
+.pl-facts{display:grid;grid-template-columns:max-content 1fr;gap:4px 12px;margin:0;font-size:14px}
+.pl-facts dt{color:var(--muted)}
+.pl-facts dd{margin:0;font-weight:700}
+.pl-details .org-evidence{margin:0;padding:0;border:0}
+.pl-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--amber);border-radius:14px;background:var(--amberSoft);color:var(--ink);font-weight:700}
+@media (max-width:380px){.pl-details{padding-left:12px}}
 </style></head>
 <body><div class="app">
 <header class="top"><button type="button" id="open-chats" class="gear menu-btn" aria-label="Chats" aria-haspopup="dialog" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button><span class="brand" role="img" aria-label="Orivia"><svg class="brand-mark" viewBox="0 0 306 310" aria-hidden="true"><path fill="currentColor" d="M0 0 L0 168 C0 248 60 302 136 308 L136 160 C136 70 78 4 0 0 Z"/><path fill="var(--amber)" d="M160 308 L160 190 C160 108 222 44 306 40 L306 172 C306 254 240 302 160 308 Z"/></svg><span class="wordmark" aria-hidden="true">ORIVIA</span></span><span class="chip" data-public="Beta">Private AI trial</span><span class="top-title" id="view-title"></span><button type="button" id="open-settings" class="gear" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>
@@ -406,7 +449,7 @@ nav.bottom .help-tab{color:var(--ink)}
   </section>
   <p id="cal-flash" class="banner" role="status" hidden></p>
   <div id="events" class="agenda"></div>
-  <p class="tiny">Orivia’s calendar doesn’t send alerts by itself. For a phone alert, tap “Add to phone calendar”, then press Save or Add in your calendar app (Apple Calendar, Samsung Calendar, Outlook or Google Calendar). Google Calendar also works directly.</p>
+  <p class="tiny">Orivia’s calendar doesn’t send alerts by itself. For a phone alert, add the reminder to your calendar with the button under it (iPhone Calendar on an iPhone, Google Calendar elsewhere), then press Save or Add there.</p>
  </div></section>
  <section id="journeys" class="view" hidden><div class="pad section" style="overflow:auto">
   <div class="jhead"><div><h2>Journeys</h2><p class="notice">Everything you’re working through, in one place.</p></div><button id="back-chat" type="button" class="chip-btn" aria-label="Return to Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Chat</button></div>
@@ -475,8 +518,8 @@ nav.bottom .help-tab{color:var(--ink)}
    <p class="tiny">Your chats, calendar, journeys, About me and settings are saved in this browser on this device. They aren’t in an account and don’t sync, and anyone using this device can open them. Messages are sent to Cloudflare Workers AI to get a reply. Orivia never needs passport, visa or ID numbers.</p>
    <button id="end-session" type="button" class="btn quiet">End session</button>
    <p class="tiny">Goes back to the welcome screen. Your saved chats, journeys, calendar and My Life stay on this device. This isn’t an account log-out and doesn’t protect them: Orivia doesn’t have accounts yet, so anyone using this device can still open them. To remove them, use Clear saved data.</p>
-   <button id="clear" type="button" class="btn quiet">Delete this chat</button>
-   <button id="forget" type="button" class="btn quiet">Clear saved data</button>
+   <button id="clear" type="button" class="btn quiet danger">Delete this chat</button>
+   <button id="forget" type="button" class="btn quiet danger">Clear saved data</button>
    <p class="tiny">Deletes all saved chats, About me, your calendar and your journeys from this device. This can’t be undone.</p>
   </section>
   <section class="set-group"><h3>Help &amp; safety</h3>

@@ -15,7 +15,7 @@ assert.match(js,/localStorage\.setItem\(eventKey/);
 assert.match(js,/calendar\.google\.com\/calendar\/render/);
 assert.match(js,/Confirm Save in Google Calendar/);
 assert.match(js,/\/reminder\.ics\?/); // the phone calendar file is the main export; Google Calendar stays optional
-assert.match(js,/only in your phone calendar after you tap Add or Save/);
+assert.match(js,/Tap “Add to phone calendar” to get an alert on your phone/);
 assert.match(js,/events=events\.filter/);
 const fn=js.match(/function googleEvent\(e\)\{[\s\S]*?\n\}/)[0];
 const eventUrl=new Function('URLSearchParams',fn+';return googleEvent')(

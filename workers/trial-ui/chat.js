@@ -96,7 +96,7 @@ function chatRow(c){
  }));
  menu.append(button(c.pinned?'Unpin':'Pin','btn quiet small',()=>{c.pinned=!c.pinned;persist();renderChats()}));
  menu.append(button(c.archived?'Unarchive':'Archive','btn quiet small',()=>{c.archived=!c.archived;if(c.archived&&c.id===store.active){store.active=null;turns=[];clearChatCards();draw()}persist();renderChats()}));
- const del=button('Delete','btn text small',()=>{
+ const del=button('Delete','btn text small danger',()=>{
   if(del.dataset.sure!=='1'){del.dataset.sure='1';del.textContent='Tap again to delete this chat for good';return}
   store.chats=store.chats.filter(x=>x!==c);if(c.id===store.active){store.active=null;turns=[];clearChatCards();draw()}persist();renderChats();
  });
@@ -181,6 +181,29 @@ function orgIcon(name){const ns='http://www.w3.org/2000/svg',s=document.createEl
  for(const d of ORG_ICON[name].split(' M').map((x,i)=>i?'M'+x:x)){const p=document.createElementNS(ns,'path');p.setAttribute('d',d);s.append(p)}return s}
 function actLink(label,href,ic,cls){const a=el('a',cls||'org-act');a.href=href;if(/^https:/.test(href)){a.target='_blank';a.rel='noopener noreferrer'}a.append(orgIcon(ic),el('span','',label));return a}
 function actBtn(label,ic,fn,cls){const b=button('',cls||'org-act',fn);b.append(orgIcon(ic),el('span','',label));return b}
+/* List helpers: a count with the right word, a labelled summary (never a bare number), a source tag, and the details panel. */
+function kindPlural(orgs){const k=new Set(orgs.map(o=>o.kind));const one=k.size===1?[...k][0]:'';
+ const w={school:['school','schools'],bank:['bank','banks'],clinic:['clinic','clinics'],office:['office','offices']}[one]||['place','places'];return orgs.length===1?w[0]:w[1]}
+function summaryLine(o){
+ // Labelled facts ("Fees from AED 73,595"); a value that names a place or type reads fine alone. At most two, kept short.
+ const bare=/^(area|location|address|curriculum|type|district|neighbourhood|emirate|city)$/i;
+ return o.facts.slice(0,2).map(f=>bare.test(f.label)||/[a-z]{3,}/i.test(f.value)&&f.value.length>18?f.value:f.label+' '+f.value).join(' · ').slice(0,110);
+}
+function srcTag(src){const k={'Official source':'official','Organisation source':'org','Listing site':'listing','People’s experiences':'people'}[src.kind]||'org';
+ const t=el('span','pl-src '+k,{official:'Official',org:'Their website',listing:'Listing site',people:'Experiences'}[k]+' · '+src.host.replace(/^www\./,''));t.title=src.kind;return t}
+function placeDetails(o,ui,repaint){
+ const box=el('div','pl-details');
+ if(o.facts.length){const dl=el('dl','pl-facts');for(const f of o.facts){dl.append(el('dt','',f.label),el('dd','',f.value))}box.append(dl)}
+ const acts=[];
+ if(o.contacts.phone)acts.push(actLink('Call',telHref(o.contacts.phone.value),'phone'));
+ if(o.contacts.email)acts.push(actLink('Email',mailHref(o),'mail'));
+ acts.push(o.contacts.website?actLink('Website',o.contacts.website.url,'web'):actLink('Source page',o.src.url,'doc'));
+ if(o.contacts.directions)acts.push(actLink('Directions',o.contacts.directions.url,'go'));
+ const grid=el('div','org-acts');grid.style.setProperty('--n',String(Math.min(acts.length,4)));grid.append(...acts);box.append(grid);
+ if(ui.reach===o.id)box.append(reachOut(o,o.contacts.email&&!o.contacts.phone?'email':'phone',()=>{ui.reach=null;repaint()}));
+ else box.append(button(o.contacts.phone||o.contacts.email?'Help me with what to say':'What should I ask?','btn text small',()=>{ui.reach=o.id;repaint()}));
+ box.append(orgEvidence(o));return box;
+}
 function factLine(o){const pick=k=>o.facts.find(f=>f.key===k)?.value;return [pick('curriculum'),pick('grades'),pick('area'),pick('rating')].filter(Boolean).join(' · ')||o.facts.slice(0,3).map(f=>f.value).join(' · ')}
 function orgEvidence(o){
  const d=document.createElement('details');d.className='org-evidence';d.append(el('summary','','Sources and evidence'));
@@ -232,7 +255,8 @@ function orgCard(o,ui,{back,onDismiss}={}){
  const badge=el('span','org-badge '+(o.src.kind==='Official source'?'official':'org'));badge.append(el('span','',o.src.kind+' · '+o.src.host.replace(/^www\./,'')));head.append(badge);
  if(o.fixture)head.append(el('span','org-fixture','Sample data'));
  const h=el('h3','org-name',o.name);card.append(head,h);
- if(o.facts.length){const chips=el('div','org-chips');for(const f of o.facts)chips.append(el('span','org-chip'+(f.key==='rating'?' good':''),f.key==='rating'?f.label+': '+f.value:f.value));card.append(chips)}
+ // Every chip says what it is unless the value already does ("British curriculum" vs "Fees from: AED 73,595").
+ if(o.facts.length){const chips=el('div','org-chips');for(const f of o.facts){const plain=/^(area|location|address|curriculum|type|district|neighbourhood|emirate|city)$/i.test(f.label)||(/[a-z]{3,}/i.test(f.value)&&f.value.length>18);chips.append(el('span','org-chip'+(f.key==='rating'?' good':''),plain?f.value:f.label+': '+f.value))}card.append(chips)}
  const acts=[];
  if(o.contacts.phone)acts.push(actLink('Call',telHref(o.contacts.phone.value),'phone'));
  if(o.contacts.email)acts.push(actLink('Email',mailHref(o),'mail'));
@@ -270,25 +294,29 @@ function orgCards(t,srcs){
     if(ui.pager&&ui.pager.length>1){const i=ui.pager.indexOf(o.id);back.append(el('span','tiny',(i+1)+' of '+ui.pager.length),actBtn('Next','next',()=>{ui.sel=ui.pager[(i+1)%ui.pager.length];paint()},'btn text small'))}}
    wrap.append(orgCard(o,ui,{back,onDismiss:dismiss}));return;
   }
-  wrap.append(el('p','org-hint','Tap + to shortlist the ones you like.'));
-  for(const o of orgs){
-   const row=el('article','org-mini');const top=el('div','org-mini-top');
-   const name=button('','org-mini-name',()=>{ui.sel=o.id;ui.view='';paint()});name.append(el('strong','',o.name),el('span','',factLine(o)));
-   const on=shortlist.has(o.id);
-   const pin=button('','org-pin'+(on?' on':''),()=>{on?shortlist.delete(o.id):shortlist.add(o.id);t.meta.shortlist=[...shortlist];saveMeta();paint()});
-   pin.append(orgIcon(on?'check':'plus'));pin.setAttribute('aria-pressed',String(on));pin.setAttribute('aria-label',(on?'Remove from shortlist: ':'Add to shortlist: ')+o.name);
-   if(o.fixture)name.append(el('span','org-fixture','Sample data'));
-   top.append(name,pin);row.append(top);
-   const acts=el('div','org-acts small');
-   if(o.contacts.phone)acts.append(actLink('Call',telHref(o.contacts.phone.value),'phone'));
-   acts.append(actBtn('Details','doc',()=>{ui.sel=o.id;ui.view='';paint()}));
-   if(o.contacts.directions)acts.append(actLink('Go',o.contacts.directions.url,'go'));
-   acts.style.setProperty('--n',String(acts.children.length));row.append(acts);wrap.append(row);
-  }
-  const bar=el('div','org-bar');
-  if(shortlist.size){bar.append(el('span','',shortlist.size+' shortlisted.'),button('Help me contact them','btn org-primary',()=>{ui.pager=orgs.filter(o=>shortlist.has(o.id)).map(o=>o.id);ui.sel=ui.pager[0];ui.view='choose';paint()}))}
-  else bar.append(el('span','tiny','Nothing shortlisted yet.'));
-  bar.append(button('Not now','btn text small',dismiss));wrap.append(bar);
+  // D (several): a compact numbered list. Each row: name, a labelled one-line summary, where it comes from, and only the
+  // quick actions its sources support. Tapping a row opens its details in place, so places can be compared without leaving.
+  const head=el('div','pl-head');head.append(el('strong','',orgs.length+' '+kindPlural(orgs)),button('Hide','btn text small',dismiss));wrap.append(head);
+  const list=el('ol','pl-list');
+  orgs.forEach((o,i)=>{
+   const open=ui.open===o.id,on=shortlist.has(o.id);
+   const li=el('li','pl-item'+(open?' open':'')+(on?' starred':''));const row=el('div','pl-row');
+   const main=button('','pl-main',()=>{ui.open=open?null:o.id;ui.reach=null;paint()});main.setAttribute('aria-expanded',String(open));
+   const text=el('span','pl-text');text.append(el('strong','pl-name',o.name));
+   const sum=summaryLine(o);if(sum)text.append(el('span','pl-sub',sum));
+   const tags=el('span','pl-tags');tags.append(srcTag(o.src));if(o.fixture)tags.append(el('span','org-fixture','Sample data'));text.append(tags);
+   main.append(el('span','pl-num',String(i+1)),text);
+   const quick=el('div','pl-quick');
+   if(o.contacts.phone){const c=el('a','pl-icon');c.href=telHref(o.contacts.phone.value);c.setAttribute('aria-label','Call '+o.name);c.append(orgIcon('phone'));quick.append(c)}
+   const star=button('','pl-icon pl-star'+(on?' on':''),()=>{on?shortlist.delete(o.id):shortlist.add(o.id);t.meta.shortlist=[...shortlist];saveMeta();paint()});
+   star.append(el('span','',on?'★':'☆'));star.setAttribute('aria-pressed',String(on));star.setAttribute('aria-label',(on?'Remove from shortlist: ':'Add to shortlist: ')+o.name);
+   quick.append(star);row.append(main,quick);li.append(row);
+   if(open)li.append(placeDetails(o,ui,paint));
+   list.append(li);
+  });
+  wrap.append(list);
+  // The shortlist bar appears only once something is starred.
+  if(shortlist.size){const bar=el('div','pl-bar');bar.append(el('span','','★ '+shortlist.size+' shortlisted'),button('Help me contact them','btn org-primary',()=>{ui.pager=orgs.filter(o=>shortlist.has(o.id)).map(o=>o.id);ui.sel=ui.pager[0];ui.view='choose';paint()}));wrap.append(bar)}
  };
  paint();return wrap;
 }
@@ -304,9 +332,10 @@ function draw(){
   const cards=t.role==='assistant'&&t.meta&&t.meta.organisations?orgCards(t,srcs):null;
   if(cards){p.append(cards);p.classList.add('has-cards')}
   if(t.role==='assistant'&&t.meta&&safeDraft(t.meta.draft))p.append(draftBox(t));
+  if(t.role==='assistant'&&t.meta&&t.meta.reminder&&typeof t.meta.reminder.id==='string')p.append(reminderBox(t));
   if(t.role==='assistant'&&(srcs.length||(t.meta&&t.meta.research))){
    const rb=researchBlock(srcs,t.meta.research);
-   if(cards){const d=document.createElement('details'),sm=document.createElement('summary');d.className='sources-fold';sm.textContent='All sources for this reply ('+srcs.length+')';d.append(sm,rb);p.append(d)}else p.append(rb);
+   p.append(rb);
   }
   if(t.role==='assistant'&&'speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent='▶ Listen';lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label','Listen to this reply');lb.onclick=()=>listen(spokenText(t.content),lb);p.append(document.createElement('br'),lb)}
   el.append(p)}
@@ -339,12 +368,10 @@ function eventRow(e,past){
  const b=el('div','b');b.append(el('strong','',e.title),el('span','tiny',d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})+' · saved in Orivia'));
  const acts=el('div','acts');
  if(!past){
-  const dev=el('a','dev','Add to phone calendar');dev.href=deviceCalendarUrl(e);dev.setAttribute('aria-label','Add '+e.title+' to your phone calendar');
-  dev.addEventListener('click',()=>{setTimeout(()=>{note.hidden=false;note.textContent='Your calendar app should ask you to add it. It’s only in your phone calendar after you tap Add or Save there. On some Android phones the file downloads first: open it from your notifications or Downloads.'},300)});
-  const g=el('a','','Google Calendar ↗');g.href=googleEvent(e);g.target='_blank';g.rel='noopener noreferrer';g.setAttribute('aria-label','Add '+e.title+' to Google Calendar');
-  acts.append(dev,g);
+  // The right button for this device (no surprise file download on Android or computers); see calendarLinks.
+  for(const a of calendarLinks(e)){a.addEventListener('click',()=>{setTimeout(()=>{note.hidden=false;note.textContent='It’s only in your calendar after you tap Save or Add there.'},300)});acts.append(a)}
  }
- const rm=button('Remove','',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent='Tap again to remove';return}removeEvent(e.id)});
+ const rm=button('Remove','danger',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent='Tap again to remove';return}removeEvent(e.id)});
  acts.append(rm);
  const note=el('p','hint');note.hidden=true;note.setAttribute('role','status');
  if(!past&&typeof e.alarm==='number')b.append(el('span','tiny','Alert: '+(ALARMS.find(([m])=>m===e.alarm)||[,'30 minutes before'])[1].toLowerCase()));
@@ -727,8 +754,20 @@ function researchBlock(srcs,research){
  const box=document.createElement('section');box.className='research';box.setAttribute('aria-label','Sources for this reply');
  const r=research||{};
  if(RESEARCH_NOTE[r.status]){const n=el('p','rnote '+(r.status==='partial'?'partial':'warn'),RESEARCH_NOTE[r.status]);box.append(n)}
+ const evidence=document.createElement('details');evidence.className='research-evidence';
+ evidence.append(el('summary','','Sources and evidence'+(srcs.length?' ('+srcs.length+')':'')));
  if(srcs.length){
-  box.append(el('p','rhead','Sources'));
+  const links=el('ol','source-buttons');links.setAttribute('aria-label','Open source websites');
+  srcs.forEach((s,i)=>{
+   const li=document.createElement('li'),a=el('a','source-button');
+   a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';
+   a.setAttribute('aria-label','Source '+(i+1)+': '+s.kind+' — '+s.title+' (opens '+s.host+' in a new tab)');
+   a.title=s.kind+' — '+s.title;
+   a.append(el('span','source-button-n',String(i+1)),el('span','source-button-host',s.host),el('span','source-button-arrow','↗'));
+   li.append(a);links.append(li);
+  });
+  box.append(links);
+  evidence.append(el('p','rhead','Sources'));
   const ol=document.createElement('ol');ol.className='sources-list';
   srcs.forEach((s,i)=>{
    const li=document.createElement('li');const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.className='src';
@@ -737,7 +776,7 @@ function researchBlock(srcs,research){
    a.append(top,el('strong','',s.title),el('span','src-meta',s.host+(when?' · Opened by Orivia '+when:'')+' ↗'));
    li.append(a);ol.append(li);
   });
-  box.append(ol,el('p','tiny','“Opened” means Orivia read this page for your question. It doesn’t mean every requirement has been verified.'));
+  evidence.append(ol,el('p','tiny','“Opened” means Orivia read this page for your question. It doesn’t mean every requirement has been verified.'));
  }
  const claims=(r.claims||[]).filter(c=>srcs.some(s=>s.id&&s.id===c.sourceId));
  if(claims.length){
@@ -753,14 +792,15 @@ function researchBlock(srcs,research){
    }
    det.append(d);
   }
-  box.append(det);
+  evidence.append(det);
  }
  if((r.unresolved||[]).some(x=>TOPIC_LABEL[x])){ // unknown codes are never shown as a vague placeholder
   const u=el('div','unresolved');u.append(el('p','rhead','Couldn’t confirm'));const ul=document.createElement('ul');
   for(const x of [...new Set(r.unresolved)])if(TOPIC_LABEL[x])ul.append(el('li','',TOPIC_LABEL[x]));
   u.append(ul);box.append(u);
  }
- if(r.applicability==='needs-review'&&srcs.length)box.append(el('p','tiny','Check it applies to you: rules can differ by institution, age, visa type or emirate.'));
+ if(r.applicability==='needs-review'&&srcs.length)evidence.append(el('p','tiny','Check it applies to you: rules can differ by institution, age, visa type or emirate.'));
+ if(srcs.length||claims.length)box.append(evidence);
  return box;
 }
 
@@ -896,7 +936,7 @@ function journeyCard(o,ctx,extra={}){
   if(status==='paused')menu.append(button('Resume journey','btn quiet small',()=>setJourney(o.id,{status:'active'})));
   if(status==='saved')menu.append(button('Start following','btn quiet small',()=>setJourney(o.id,{status:'active'})));
   if(status!=='done')menu.append(button('Mark completed','btn quiet small',()=>setJourney(o.id,{status:'done'})));
-  const rm=button('Remove','btn text small',()=>{
+  const rm=button('Remove','btn text small danger',()=>{
    const hasProgress=Object.keys(mine.stepStatus||{}).length>0||status==='done';
    if(hasProgress&&rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent='Tap again: removes it and its progress from this device';return}
    removeJourney(o.id);
@@ -1114,7 +1154,8 @@ function setupPilot(d){
  pilotOffer=p.consent;row.hidden=false;$('pilot-text').textContent=String(p.text||'').slice(0,600);
  let saved='';try{saved=localStorage.getItem(pilotKey)||''}catch(_){}
  $('set-pilot').checked=saved===pilotOffer;
- $('set-pilot').onchange=e=>{try{if(e.target.checked)localStorage.setItem(pilotKey,pilotOffer);else localStorage.removeItem(pilotKey)}catch(_){}};
+ $('set-pilot').onchange=e=>{try{if(e.target.checked)localStorage.setItem(pilotKey,pilotOffer);else localStorage.removeItem(pilotKey)}catch(_){}researchNotice()};
+ researchNotice();
 }
 function pilotConsent(){if(!pilotOffer)return null;try{return localStorage.getItem(pilotKey)===pilotOffer?{openai:pilotOffer}:null}catch(_){return null}}
 async function loadMode(){
@@ -1136,6 +1177,46 @@ $('clear').onclick=()=>{
  if(busy)return;const b=$('clear');
  if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete this chat';setTimeout(()=>{b.dataset.sure='';b.textContent='Delete this chat'},4000);return}
  store.chats=store.chats.filter(c=>c.id!==store.active);store.active=null;persist();turns=[];clearChatCards();draw();renderChats();b.dataset.sure='';b.textContent='Delete this chat';tab('chat')};
+/* The person's own clock: "tomorrow" and "at 5" mean their day and time zone, not the server's. */
+function localNow(){const d=new Date(),p=n=>String(n).padStart(2,'0');let tz='';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||''}catch(_){}
+ return {date:d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()),time:p(d.getHours())+':'+p(d.getMinutes()),weekday:d.toLocaleDateString('en-GB',{weekday:'long'}),tz:tz.slice(0,40)}}
+/* Calendar buttons that do the right thing on each device: iPhone/iPad open the Calendar app from the .ics file; Android opens
+   Google Calendar (an .ics there only downloads); computers get Google Calendar plus the file for Outlook/Apple Calendar. */
+function calendarLinks(e){
+ const ua=navigator.userAgent||'',ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),android=/Android/i.test(ua);
+ const ics=label=>{const a=el('a','dev',label);a.href=deviceCalendarUrl(e);a.setAttribute('aria-label',label+': '+e.title);return a};
+ const g=label=>{const a=el('a','dev',label);a.href=googleEvent(e);a.target='_blank';a.rel='noopener noreferrer';a.setAttribute('aria-label',label+': '+e.title);return a};
+ return ios?[ics('Add to iPhone Calendar'),g('Google Calendar ↗')]:android?[g('Add to Google Calendar')]:[g('Add to Google Calendar ↗'),ics('Download for Outlook or Apple Calendar')];
+}
+/* A reminder Orivia set from the conversation: saved on this device straight away, shown with exactly what was saved,
+   Undo, and the phone-calendar buttons. */
+function saveChatReminder(r){
+ // The assistant sends a date and time on this device's own clock (YYYY-MM-DD, HH:MM); built here as local time.
+ if(!r||typeof r.title!=='string')return null;const at=typeof r.at==='string'?new Date(r.at):/^\d{4}-\d{2}-\d{2}$/.test(String(r.date||''))?new Date(r.date+'T'+(/^\d{2}:\d{2}$/.test(String(r.time||''))?r.time:'09:00')):new Date(NaN);
+ if(!r.title.trim()||!Number.isFinite(at.getTime())||at.getTime()<Date.now()+60000||at.getTime()>Date.now()+366*86400000)return null;
+ const saved={id:'evt-'+Date.now()+'-'+Math.random().toString(36).slice(2),title:r.title.trim().slice(0,100),at:at.toISOString(),alarm:ALARMS.some(([m])=>m===r.alarm)?r.alarm:30};
+ events.push(saved);storeEvents();renderEvents();renderUpcoming();return saved;
+}
+function reminderBox(t){
+ const r=t.meta.reminder,box=el('div','event');box.style.cssText='margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px';
+ const live=events.some(e=>e.id===r.id),when=new Date(r.at).toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+ if(!live){box.append(el('p','tiny','Reminder removed: '+r.title));return box}
+ box.append(el('strong','','✓ Reminder saved: '+r.title),el('p','tiny',when+' · saved in Orivia on this device. For an alert on your phone, add it to your calendar too.'));
+ const acts=el('div','acts');acts.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-top:6px';
+ for(const a of calendarLinks(r))acts.append(a);
+ acts.append(button('Undo','btn text small danger',()=>{removeEvent(r.id);draw()}));box.append(acts);return box;
+}
+/* When this private test offers the OpenAI research mode but it's off on this device, say so in the chat itself (once per
+   chat view), with a button that shows what is shared before turning it on. */
+function researchNotice(){
+ $('research-off')?.remove();if(!pilotOffer||pilotConsent())return;
+ const n=el('section','remember');n.id='research-off';n.setAttribute('role','note');
+ n.append(el('strong','','Research is off on this device'),el('p','notice','Orivia can’t search the web or check sources until you turn on the research test.'));
+ const row=el('div','row');
+ row.append(button('Turn on research','btn small',()=>{n.replaceChildren(el('p','notice',$('pilot-text').textContent),(()=>{const r2=el('div','row');r2.append(button('I agree, turn it on','btn small',()=>{try{localStorage.setItem(pilotKey,pilotOffer)}catch(_){}$('set-pilot').checked=true;n.replaceChildren(el('p','notice','Research is on for this device. You can turn it off in Settings.'))}),button('Not now','btn text small',()=>n.remove()));return r2})())}),
+  button('Not now','btn text small',()=>n.remove()));
+ n.append(row);$('history').after(n);const sc=$('chat-scroll');if(sc)sc.scrollTop=sc.scrollHeight;
+}
 /* A drafted message: editable here, copied by the person and sent by them. Orivia never sends anything. Edits are kept with
    the chat on this device. */
 function safeDraft(x){
@@ -1187,9 +1268,9 @@ $('form').onsubmit=async e=>{
  const text=$('msg').value.trim();if(!text)return;
  $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});save();draw();
  const chatId=store.active,sentTurns=turns.slice();
- busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';
+ busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';working('Thinking…');window.oriviaResearchMode=!!pilotConsent();
  try{
-  const res=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{researchContext:currentResearchContext(sentTurns),language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
+  const res=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{now:localNow(),researchContext:currentResearchContext(sentTurns),language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
   const {r,d}=await readReply(res,chatId);
   if(!r.ok){
    const why=d&&d.error;
@@ -1206,6 +1287,8 @@ $('form').onsubmit=async e=>{
   const meta={};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
   if(vetted.length&&Array.isArray(d.organisations)){const orgs=d.organisations.slice(0,8);if(safeOrgs(orgs,vetted).length){meta.organisations=JSON.parse(JSON.stringify(orgs));if(['list','single','choose'].includes(d.cardMode))meta.cardMode=d.cardMode}}
   const dr=safeDraft(d.draft);if(dr)meta.draft=dr;
+  // A reminder Orivia set from the conversation: saved now (the reply says so), with Undo under the reply.
+  if(d.reminder&&store.active===chatId){const ev=saveChatReminder(d.reminder);if(ev)meta.reminder={id:ev.id,title:ev.title,at:ev.at,alarm:ev.alarm}}
   const answer={role:'assistant',content:d.reply.slice(0,4000),...(Object.keys(meta).length?{meta}:{})};
   if(store.active!==chatId){ // they switched chats while Orivia was replying: file the answer in its own chat
    const c=store.chats.find(x=>x.id===chatId);if(c){c.turns=[...c.turns,answer];c.updated=Date.now();persist();renderChats()}

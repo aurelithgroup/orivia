@@ -59,4 +59,29 @@ assert.equal(spoken(F['evidence-found'].reply).includes('https'), false); assert
   assert.match(block, /c\.quotes&&c\.quotes\.length>1/); assert.match(block, /'q-label',q\.label/);
   assert.match(block, /Each part of this point is quoted from source/);
 }
-console.log('Research display (fixtures): labels, vetted sources only, linked citations, source-backed claims, gaps and failure states: passed');
+/* Render the real research block: compact links keep their destinations and accessible names;
+   metadata/quotes remain available in a closed native disclosure, warnings stay visible. */
+{
+ class Element {
+  constructor(tag){this.tag=tag;this.children=[];this.attrs={};this.className='';this.textContent=''}
+  append(...nodes){this.children.push(...nodes)}
+  setAttribute(k,v){this.attrs[k]=v}
+ }
+ const document={createElement:tag=>new Element(tag)};
+ const el=(tag,cls='',text='')=>{const n=document.createElement(tag);n.className=cls;n.textContent=text;return n};
+ const constants=js.slice(js.indexOf('const RESEARCH_NOTE='),js.indexOf('function researchBlock('));
+ const render=new Function('document','el',constants+grab('researchBlock')+';return researchBlock')(document,el);
+ const find=(root,p)=>[...(p(root)?[root]:[]),...root.children.flatMap(n=>find(n,p))];
+ const sources=safeSources(F['school-list'].liveSources),research=safeResearch(F['school-list'].research);
+ const block=render(sources,research),pills=find(block,n=>n.className==='source-button');
+ assert.deepEqual(pills.map(n=>n.href),sources.map(s=>s.url));
+ assert(pills.every(n=>n.rel==='noopener noreferrer'&&n.target==='_blank'&&n.attrs['aria-label'].includes('in a new tab')));
+ const evidence=find(block,n=>n.className==='research-evidence')[0];
+ assert(evidence&&!evidence.open,'full evidence is collapsed initially');
+ assert(find(evidence,n=>n.tag==='blockquote').length>=3,'per-fact evidence is preserved');
+ assert.deepEqual(find(evidence,n=>n.className==='src').map(n=>n.href),sources.map(s=>s.url));
+ const unavailable=render([],safeResearch(F['not-configured'].research));
+ assert(unavailable.children.some(n=>n.className.startsWith('rnote')),'failure remains visible without opening sources');
+ assert.equal(find(unavailable,n=>n.className==='research-evidence').length,0,'no empty evidence control');
+}
+console.log('Research display (fixtures): compact links, accessible names, retained evidence, vetted citations and visible failures: passed');

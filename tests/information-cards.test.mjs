@@ -56,7 +56,7 @@ const generic = A.emailDraft({ kind: 'organisation', src: { host: 'example.gov.a
 /* Wiring */
 assert.match(js, /meta\.organisations=JSON\.parse\(JSON\.stringify\(orgs\)\)/, 'organisations are saved with the reply');
 assert.match(js, /if\(vetted\.length&&Array\.isArray\(d\.organisations\)\)/, 'only alongside vetted sources');
-assert.match(js, /d.className='sources-fold'/, 'full source list folds away under cards');
+assert.match(grab('researchBlock'), /evidence.className='research-evidence'/, 'full source list folds away for every reply');
 assert.match(js, /orgEvidence\(o\)/); assert.match(grab('orgEvidence'), /'Sources and evidence'/);
 const card = js.slice(js.indexOf('function orgCard('), js.indexOf('function orgCards('));
 assert.match(card, /if\(o\.contacts\.directions\)\{foot\.append\(actLink\('Take me there'/, 'Take me there only with a sourced destination');
