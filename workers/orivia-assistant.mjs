@@ -10,6 +10,7 @@
  * Search providers receive general search terms only (safeQuery); page text is untrusted data, never instructions.
  * Documented in docs/assistant.md.
  */
+import {assistantTiming} from './orivia-assistant-timing.mjs';
 import {makeTools} from './orivia-research-loop.mjs';
 import {readSpeaDirectoryFeed} from './orivia-spea-directory-feed.mjs';
 import {safeQuery} from './orivia-research-understand.mjs';
@@ -274,6 +275,7 @@ Any topic is in scope: health, documents, visas, housing, banking, transport, wo
 - Urgent health or safety: first say what to do now (emergency numbers from an official page), then help with the rest.
 - Writing help ("write me a message", "what should I say/ask them?", "draft an email"): write it straight away from this conversation: who it is to (the person or organisation already being discussed), what the person needs, the facts they gave. No research and no questions unless a fact the message cannot do without is truly missing; use [placeholders] such as [your name] or [the address] for details you don't have. Put it in "draft" and keep "sentences" to one or two short lines introducing it (for example what the message asks for and why).
 - Use the person's place in searches (the emirate or city, sometimes the area). If the first search or page doesn't answer, search again with different words or open a more specific page; don't stop at a general page.
+Batch independent searches and page reads in the same tools step (up to 4); wait between steps only when a result is needed to choose the next action. Once the evidence answers this request, reply rather than searching for optional extras. Keep tool notes brief; do not repeat evidence in memory. Never skip a required source check for speed.
 Research like a careful person: decide what would count as answering; prefer an official directory or government page when one exists; treat search results and listing sites as leads, then open the pages that can prove the point; if a link is broken, a page is unreadable or a search is thin, change approach. Check each candidate against the person's criteria (place, curriculum, year group...). Distinguish similarly named organisations and branches. "No new matches this round" is not "none exist". Reuse evidence already in the ledger instead of reading it again.
 
 Writing the reply (only from the evidence ledger; search snippets are not evidence):
@@ -388,7 +390,8 @@ export async function runAssistantTurn({messages,profile=null,context=null},env,
  const started=Date.now();
  const memory=cleanMemory(context?.task?.assistant);
  const msgs=(Array.isArray(messages)?messages:[]).filter(m=>m&&['user','assistant'].includes(m.role)).slice(-12).map(m=>({role:m.role,content:clip(m.content,1200)}));
- const tools=makeTools({env,fetcher,reserve});
+ const timing=assistantTiming(makeTools({env,fetcher,reserve}));
+ const tools=timing.tools;
  const ledger=[];let nextE=1;const leads=[];let nextL=1;const steps=[];const failures=[];
  const addEvidence=(e)=>{const kind=sourceKind(e.url);if(kind==='unknown')return null;
   // One page = one source: a second read of the same address adds its new passages to the same evidence item.
@@ -454,7 +457,7 @@ export async function runAssistantTurn({messages,profile=null,context=null},env,
   }
   report(call===0?'Working out what to check':state.instruction?'Writing the answer':(done.pages||done.searches?doneLabel(done)+' · deciding what to check next':'Deciding what to check next'));
   let out;
-  try{out=await ai.run(MODEL,{messages:[{role:'system',content:SYSTEM},{role:'user',content:JSON.stringify(state)}],json:true,maxOutputTokens:1800})}
+  try{out=await timing.measure('modelMs',()=>ai.run(MODEL,{messages:[{role:'system',content:SYSTEM},{role:'user',content:JSON.stringify(state)}],json:true,maxOutputTokens:1800}))}
   catch(e){failures.push('model:'+(e?.code||'error'));if(e?.code==='budget-exhausted')budgetOut=true;break}
   const p=normaliseStep(parseJSON(out?.response??out));
   if(!p.action){failures.push('unreadable-step');steps.push({action:'invalid',codes:[p.why==='no-json'?'no-json:'+shapeOf(out?.response??out):p.why]});
@@ -463,7 +466,7 @@ export async function runAssistantTurn({messages,profile=null,context=null},env,
    const calls=(Array.isArray(p.calls)?p.calls:[]).slice(0,ASSISTANT_LIMITS.toolsPerStep);
    if(!calls.length){failures.push('empty-tools');steps.push({action:'tools',results:[]});continue}
    report(progressLabel(calls));
-   const results=await Promise.all(calls.map(c=>runTool(c).catch(()=>({tool:clip(c?.tool,30),status:'tool-error'}))));
+   const results=await timing.measure('toolWallMs',()=>Promise.all(calls.map(c=>runTool(c).catch(()=>({tool:clip(c?.tool,30),status:'tool-error'})))));
    for(const x of results){if(x.tool==='web_search'&&x.status==='searched')done.searches++;if(x.tool==='read_page'&&x.status==='read')done.pages++;if(x.tool==='official_directory'&&x.evidence)done.pages++}
    steps.push({action:'tools',note:clip(p.note,60),results});continue;
   }
@@ -484,7 +487,7 @@ export async function runAssistantTurn({messages,profile=null,context=null},env,
   steps.push({action:'reply',verified:true});result={kind:'reply',checked,mem};
  }
  const elapsedMs=Date.now()-started;
- const metrics={modelCalls:steps.length+failures.filter(f=>f.startsWith('model:')).length,searches:tools.used.searches,fetches:tools.used.fetches,evidence:ledger.length,elapsedMs};
+ const metrics={...timing.timings,modelCalls:steps.length+failures.filter(f=>f.startsWith('model:')).length,searches:tools.used.searches,fetches:tools.used.fetches,evidence:ledger.length,elapsedMs};
  try{console.log(JSON.stringify({event:'orivia-assistant',outcome:result?result.kind:budgetOut?'limit':steps.length?'incomplete':'fallback',steps:steps.map(s=>s.action+(s.verified?':verified':s.rejected?':rejected':'')),
   tools:steps.flatMap(s=>(s.results||[]).map(r=>r.tool+':'+r.status)),failures,rejectedFor:steps.flatMap(s=>s.codes||[]).slice(0,16),...metrics}))}catch(_){}
  // Out of money: an honest reply that keeps the conversation's memory, never a hand-over to a path that may answer off-topic.
