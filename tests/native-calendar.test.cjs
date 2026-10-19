@@ -11,7 +11,7 @@ assert.match(html,/id="calendar-panel"/);
 assert.match(html,/Save in Orivia calendar/);
 assert.doesNotMatch(html,/Add to my calendar ↓/);
 assert.match(html,/save the event|press Save/i);
-assert.match(js,/localStorage\.setItem\(eventKey/);
+assert.match(js,/\.setItem\(eventKey/);
 assert.match(js,/calendar\.google\.com\/calendar\/render/);
 assert.match(js,/Confirm Save in Google Calendar/);
 assert.match(js,/\/reminder\.ics\?/); // the phone calendar file is the main export; Google Calendar stays optional

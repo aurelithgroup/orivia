@@ -36,7 +36,7 @@ for (const label of ["'Rename'", "'Pin'", "'Unpin'", "'Archive'", "'Unarchive'",
 assert.doesNotMatch(js.slice(js.indexOf('function chatRow'), js.indexOf('function renderChats')), /Share|Report/, 'no non-working menu items');
 assert.match(js, /function chatMessages\(turns\)\{return turns\.slice\(-12\)/, 'only the latest messages of the active chat go to the AI');
 assert.match(js, /if\(store\.active!==chatId\)/, 'a reply that arrives after switching chats is filed in its own chat');
-assert.match(js, /localStorage\.removeItem\(chatsKey\)/, 'Clear saved data includes chat history');
+assert.match(js, /\.removeItem\(chatsKey\)/, 'Clear saved data includes chat history');
 const end = js.slice(js.indexOf("$('end-session').onclick"), js.indexOf('/* ===== Listen'));
 assert.doesNotMatch(end, /removeItem\(chatsKey\)/, 'End session keeps saved chats'); assert.match(end, /store\.active=null/);
 assert.match(html, /doesn’t protect them/); assert.match(html, /Saved on this device only, not in an account/);
@@ -134,6 +134,6 @@ const savedChats = local => JSON.parse(local['orivia-private-chats-v1']).chats;
 /* 6. No automatic deletion or truncation code remains; the warning is wired */
 assert.doesNotMatch(block, /MAX_TURNS|MAX_CHATS|drop the oldest|\.slice\(-\d/, 'no eviction or silent truncation');
 assert.match(html, /id="storage-warn"[^>]*role="alert"/); assert.match(html, /id="storage-manage"/); assert.match(js, /\$\('storage-manage'\)\.onclick=openChats/);
-assert.match(js, /localStorage\.removeItem\(chatsBackupKey\)/, 'Clear saved data also removes the backup copy');
+assert.match(js, /\.removeItem\(chatsBackupKey\)/, 'Clear saved data also removes the backup copy');
 console.log('Chat storage failure paths: full device, failed and silent migration, long and many chats, unreadable data: passed');
 console.log('Chat history and origin: migration, new chat, refresh, menus, active-only to AI, end session vs clear, origin field: passed');

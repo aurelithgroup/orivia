@@ -1426,5 +1426,233 @@
   "Photo: Unsplash": {
     "fr": "Photo : Unsplash",
     "ar": "الصورة: Unsplash"
+  },
+  "Welcome to Orivia": {
+    "fr": "Bienvenue chez Orivia",
+    "ar": "مرحباً بك في أوريفيا"
+  },
+  "Find your way, get answers and take your next step.": {
+    "fr": "Trouvez votre chemin, obtenez des réponses et avancez.",
+    "ar": "اعرف طريقك، واحصل على إجابات، واتخذ خطوتك التالية."
+  },
+  "A new place. A little more familiar.": {
+    "fr": "Un nouveau lieu. Un peu plus familier.",
+    "ar": "مكان جديد. وألفة أكبر."
+  },
+  "Get started": {
+    "fr": "Commencer",
+    "ar": "ابدأ"
+  },
+  "I already have an account": {
+    "fr": "J’ai déjà un compte",
+    "ar": "لدي حساب بالفعل"
+  },
+  "Continue as a guest": {
+    "fr": "Continuer sans compte",
+    "ar": "المتابعة كضيف"
+  },
+  "Basic help is available without an account.": {
+    "fr": "L’aide de base est disponible sans compte.",
+    "ar": "المساعدة الأساسية متاحة دون حساب."
+  },
+  "Accounts are being connected for this private test.": {
+    "fr": "Les comptes sont en cours de connexion pour cet essai privé.",
+    "ar": "جارٍ إعداد الحسابات لهذا الاختبار الخاص."
+  },
+  "Good to see you.": {
+    "fr": "Ravi de vous retrouver.",
+    "ar": "سعداء بعودتك."
+  },
+  "Sign in to keep your Orivia with you.": {
+    "fr": "Connectez-vous pour retrouver votre Orivia partout.",
+    "ar": "سجّل الدخول لتبقى أوريفيا معك."
+  },
+  "Continue with Google": {
+    "fr": "Continuer avec Google",
+    "ar": "المتابعة باستخدام Google"
+  },
+  "Continue with Apple": {
+    "fr": "Continuer avec Apple",
+    "ar": "المتابعة باستخدام Apple"
+  },
+  "Email address": {
+    "fr": "Adresse e-mail",
+    "ar": "البريد الإلكتروني"
+  },
+  "Continue with email": {
+    "fr": "Continuer par e-mail",
+    "ar": "المتابعة بالبريد الإلكتروني"
+  },
+  "Check your email": {
+    "fr": "Consultez vos e-mails",
+    "ar": "تحقق من بريدك الإلكتروني"
+  },
+  "Enter the six-digit code we sent you.": {
+    "fr": "Saisissez le code à six chiffres que nous vous avons envoyé.",
+    "ar": "أدخل الرمز المكوّن من ستة أرقام الذي أرسلناه إليك."
+  },
+  "Sign-in code": {
+    "fr": "Code de connexion",
+    "ar": "رمز تسجيل الدخول"
+  },
+  "Continue": {
+    "fr": "Continuer",
+    "ar": "متابعة"
+  },
+  "Send a new code": {
+    "fr": "Envoyer un nouveau code",
+    "ar": "إرسال رمز جديد"
+  },
+  "A new code has been sent.": {
+    "fr": "Un nouveau code a été envoyé.",
+    "ar": "تم إرسال رمز جديد."
+  },
+  "What should we call you?": {
+    "fr": "Comment souhaitez-vous être appelé ?",
+    "ar": "بماذا نناديك؟"
+  },
+  "Set up your space.": {
+    "fr": "Configurez votre espace.",
+    "ar": "جهّز مساحتك."
+  },
+  "Preferred name": {
+    "fr": "Prénom d’usage",
+    "ar": "الاسم المفضّل"
+  },
+  "Your saved things": {
+    "fr": "Vos éléments enregistrés",
+    "ar": "أشياؤك المحفوظة"
+  },
+  "Choose what to bring from this device. Nothing is added automatically.": {
+    "fr": "Choisissez ce que vous souhaitez importer de cet appareil. Rien n’est ajouté automatiquement.",
+    "ar": "اختر ما تريد نقله من هذا الجهاز. لا يُضاف شيء تلقائياً."
+  },
+  "Reminders": {
+    "fr": "Rappels",
+    "ar": "التذكيرات"
+  },
+  "Leave these unchecked to start fresh. Your original device data is kept.": {
+    "fr": "Ne cochez rien pour repartir de zéro. Les données d’origine restent sur cet appareil.",
+    "ar": "اتركها دون تحديد للبدء من جديد. ستبقى بيانات الجهاز الأصلية محفوظة."
+  },
+  "Do this later": {
+    "fr": "Faire cela plus tard",
+    "ar": "القيام بذلك لاحقاً"
+  },
+  "Your personal chats are not shared with your institution.": {
+    "fr": "Vos discussions personnelles ne sont pas partagées avec votre établissement.",
+    "ar": "لا تُشارك محادثاتك الشخصية مع مؤسستك."
+  },
+  "Private account": {
+    "fr": "Compte privé",
+    "ar": "حساب خاص"
+  },
+  "Your account": {
+    "fr": "Votre compte",
+    "ar": "حسابك"
+  },
+  "Sign in or create an account": {
+    "fr": "Se connecter ou créer un compte",
+    "ar": "تسجيل الدخول أو إنشاء حساب"
+  },
+  "Saved to your account.": {
+    "fr": "Enregistré dans votre compte.",
+    "ar": "حُفظ في حسابك."
+  },
+  "Your chats and plans are saved to your private account.": {
+    "fr": "Vos discussions et projets sont enregistrés dans votre compte privé.",
+    "ar": "تُحفظ محادثاتك وخططك في حسابك الخاص."
+  },
+  "Another device saved a newer version. Sync is paused; your device copy is kept.": {
+    "fr": "Un autre appareil a enregistré une version plus récente. La synchronisation est en pause ; votre copie locale est conservée.",
+    "ar": "حفظ جهاز آخر نسخة أحدث. توقفت المزامنة مؤقتاً؛ نسختك على الجهاز محفوظة."
+  },
+  "Not synced yet. Your device copy is kept.": {
+    "fr": "Pas encore synchronisé. Votre copie locale est conservée.",
+    "ar": "لم تتم المزامنة بعد. نسختك على الجهاز محفوظة."
+  },
+  "Sync is paused. Your device copy is kept.": {
+    "fr": "La synchronisation est en pause. Votre copie locale est conservée.",
+    "ar": "المزامنة متوقفة مؤقتاً. نسختك على الجهاز محفوظة."
+  },
+  "Sync now": {
+    "fr": "Synchroniser maintenant",
+    "ar": "المزامنة الآن"
+  },
+  "Review account": {
+    "fr": "Consulter le compte",
+    "ar": "مراجعة الحساب"
+  },
+  "Review the account version": {
+    "fr": "Consulter la version du compte",
+    "ar": "مراجعة نسخة الحساب"
+  },
+  "Sync is paused. Review the account version first.": {
+    "fr": "La synchronisation est en pause. Consultez d’abord la version du compte.",
+    "ar": "المزامنة متوقفة مؤقتاً. راجع نسخة الحساب أولاً."
+  },
+  "Loading the account version replaces this device’s account copy. A backup is kept on this device.": {
+    "fr": "Charger la version du compte remplace sa copie locale. Une sauvegarde reste sur cet appareil.",
+    "ar": "سيحل تحميل نسخة الحساب محل نسخة الحساب على هذا الجهاز. ستُحفظ نسخة احتياطية هنا."
+  },
+  "Load account version": {
+    "fr": "Charger la version du compte",
+    "ar": "تحميل نسخة الحساب"
+  },
+  "Keep this device copy": {
+    "fr": "Garder la copie de cet appareil",
+    "ar": "الاحتفاظ بنسخة هذا الجهاز"
+  },
+  "Log out": {
+    "fr": "Se déconnecter",
+    "ar": "تسجيل الخروج"
+  },
+  "Sync your changes before logging out. Your unsynced copy is kept on this device.": {
+    "fr": "Synchronisez vos modifications avant de vous déconnecter. La copie non synchronisée reste sur cet appareil.",
+    "ar": "زامن تغييراتك قبل تسجيل الخروج. النسخة غير المتزامنة محفوظة على هذا الجهاز."
+  },
+  "Delete account": {
+    "fr": "Supprimer le compte",
+    "ar": "حذف الحساب"
+  },
+  "This permanently deletes your account and its saved chats and plans. You may need to sign in again first.": {
+    "fr": "Cela supprime définitivement votre compte, ses discussions et ses projets. Une nouvelle connexion peut être nécessaire.",
+    "ar": "سيؤدي هذا إلى حذف حسابك ومحادثاته وخططه نهائياً. قد تحتاج لتسجيل الدخول مجدداً أولاً."
+  },
+  "Delete my account permanently": {
+    "fr": "Supprimer définitivement mon compte",
+    "ar": "حذف حسابي نهائياً"
+  },
+  "Please wait before trying again.": {
+    "fr": "Patientez avant de réessayer.",
+    "ar": "انتظر قليلاً قبل المحاولة مجدداً."
+  },
+  "That didn’t work. Check the details and try again.": {
+    "fr": "Cela n’a pas fonctionné. Vérifiez les informations et réessayez.",
+    "ar": "لم ينجح ذلك. تحقق من المعلومات وحاول مجدداً."
+  },
+  "Your account could not be opened": {
+    "fr": "Impossible d’ouvrir votre compte",
+    "ar": "تعذّر فتح حسابك"
+  },
+  "Your saved data has not been changed.": {
+    "fr": "Vos données enregistrées n’ont pas été modifiées.",
+    "ar": "لم تتغير بياناتك المحفوظة."
+  },
+  "Device data could not be read. It has not been changed.": {
+    "fr": "Impossible de lire les données de l’appareil. Elles n’ont pas été modifiées.",
+    "ar": "تعذّر قراءة بيانات الجهاز. لم تتغير بياناتك."
+  },
+  "Saved to your private account. Guest chats on this device are kept separately.": {
+    "fr": "Enregistré dans votre compte privé. Les discussions sans compte restent séparées sur cet appareil.",
+    "ar": "محفوظ في حسابك الخاص. محادثات الضيف على هذا الجهاز محفوظة بشكل منفصل."
+  },
+  "Open Your account to sync, review your data or log out.": {
+    "fr": "Ouvrez votre compte pour synchroniser, consulter vos données ou vous déconnecter.",
+    "ar": "افتح حسابك للمزامنة أو مراجعة بياناتك أو تسجيل الخروج."
+  },
+  "Saved to your private account. Never enter passport, visa or ID numbers.": {
+    "fr": "Enregistré dans votre compte privé. Ne saisissez jamais de numéro de passeport, de visa ou d’identité.",
+    "ar": "محفوظ في حسابك الخاص. لا تُدخل أرقام جواز السفر أو التأشيرة أو الهوية."
   }
 }

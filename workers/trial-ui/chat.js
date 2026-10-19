@@ -1,7 +1,7 @@
 'use strict';
 /* Orivia private AI trial: chat-first mobile app with Calendar, Journeys and My Life behind it. */
 const key='orivia-ai-private-turns',ck='orivia-ai-private-consent',eventKey='orivia-private-events-v1',profileKey='orivia-private-profile-v1';
-let turns=[],busy=false,events=[];
+let turns=[],busy=false,events=[],activeChatRequest=null;
 const $=id=>document.getElementById(id);
 function uiText(value){return window.OriviaI18n?.text(value)??value}
 function uiLanguage(){return window.OriviaI18n?.language()||'en'}
@@ -36,30 +36,30 @@ function storageWarn(msg){
 function persist(){
  store.chats=store.chats.filter(c=>c.turns.length||c.id===store.active); // empty new chats aren't data
  if(storeLocked){storageWarn('Your saved chats on this device couldn’t be read, so Orivia isn’t saving new messages over them. This chat will be lost when you close the page.');return false}
- try{localStorage.setItem(chatsKey,JSON.stringify(store));storageWarn('');return true}
+ try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(chatsKey,JSON.stringify(store));storageWarn('');return true}
  catch(_){
   storageWarn('This device is out of space, so your latest messages aren’t saved yet. Nothing has been deleted. Delete chats you no longer need, and Orivia will save this one again.');
   return false;
  }
 }
 function savedHas(c){
- try{const d=JSON.parse(localStorage.getItem(chatsKey)||'null');const x=d&&Array.isArray(d.chats)&&d.chats.find(y=>y&&y.id===c.id);return !!x&&Array.isArray(x.turns)&&x.turns.length===c.turns.length}catch(_){return false}
+ try{const d=JSON.parse((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(chatsKey)||'null');const x=d&&Array.isArray(d.chats)&&d.chats.find(y=>y&&y.id===c.id);return !!x&&Array.isArray(x.turns)&&x.turns.length===c.turns.length}catch(_){return false}
 }
 function legacyId(ts){let h=0;for(const ch of JSON.stringify(ts.map(t=>[t.role,t.content])))h=(h*31+ch.charCodeAt(0))|0;return 'clegacy'+(h>>>0).toString(36)}
 function loadChats(){
  storeLocked=false;store={chats:[],active:null};
- let raw=null;try{raw=localStorage.getItem(chatsKey)}catch(_){}
+ let raw=null;try{raw=(globalThis.OriviaAccountStorage?.storage||localStorage).getItem(chatsKey)}catch(_){}
  if(raw){
   let d=null;try{d=JSON.parse(raw)}catch(_){}
   if(d&&Array.isArray(d.chats))store={chats:d.chats.map(normChat).filter(Boolean),active:typeof d.active==='string'?d.active:null};
   else{ // unreadable: keep an untouched copy before anything new is written; if that fails, don't write at all
-   try{if(localStorage.getItem(chatsBackupKey)===null)localStorage.setItem(chatsBackupKey,raw)}catch(_){storeLocked=true}
+   try{if((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(chatsBackupKey)===null)(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(chatsBackupKey,raw)}catch(_){storeLocked=true}
    if(!storeLocked)storageWarn('Your earlier saved chats couldn’t be read. A copy has been kept on this device, and new chats will be saved separately.');
   }
  }
  // Migration: the conversation that used to live only in this tab becomes a saved chat.
  // The old copy is removed only after the new one is confirmed saved; otherwise it stays for next time.
- try{const old=JSON.parse(sessionStorage.getItem(key)||'null');
+ try{const old=JSON.parse((globalThis.OriviaAccounts?.user?null:sessionStorage.getItem(key))||'null');
   if(Array.isArray(old)&&old.some(validTurn)){
    const ts=old.filter(validTurn);const id=legacyId(ts);
    let c=store.chats.find(x=>x.id===id);
@@ -452,8 +452,8 @@ function draw({newReply=null,scroll=false}={}){
  $('empty').hidden=turns.length>0;
  sc.scrollTop=follow?sc.scrollHeight:previousTop;
 }
-function loadEvents(){try{const data=JSON.parse(localStorage.getItem(eventKey)||'[]');events=Array.isArray(data)?data.filter(e=>e&&typeof e.title==='string'&&typeof e.at==='string'&&typeof e.id==='string').slice(-100):[]}catch(_){events=[]}}
-function storeEvents(){try{localStorage.setItem(eventKey,JSON.stringify(events.slice(-100)))}catch(_){$('reminder-status').textContent='Unable to save calendar in this browser.'}}
+function loadEvents(){try{const data=JSON.parse((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(eventKey)||'[]');events=Array.isArray(data)?data.filter(e=>e&&typeof e.title==='string'&&typeof e.at==='string'&&typeof e.id==='string').slice(-100):[]}catch(_){events=[]}}
+function storeEvents(){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(eventKey,JSON.stringify(events.slice(-100)))}catch(_){$('reminder-status').textContent='Unable to save calendar in this browser.'}}
 function googleEvent(e){
  const start=new Date(e.at);
  const end=new Date(start.getTime()+30*60000);
@@ -573,6 +573,7 @@ function dashboardCard(title,subtitle,action,symbol='›'){
 function renderHome(){
  const root=$('home');if(!root)return;
  const hour=new Date().getHours();$('home-greeting').textContent=uiText(hour<12?'Good morning':hour<18?'Good afternoon':'Good evening');
+ const accountName=globalThis.OriviaAccounts?.user?.name;if(accountName)$('home-greeting').textContent+=', '+accountName;
  renderHomeDestination(migrateProfile(readProfile()||{}));
  const data=dashboardRecords(),coming=$('home-coming'),journey=$('home-journey'),recent=$('home-recent');coming.replaceChildren();journey.replaceChildren();recent.replaceChildren();
  for(const e of data.upcoming){
@@ -625,7 +626,7 @@ function tab(which){
  if(which==='calendar')renderEvents();
  if(which==='settings')renderSettings();
  if(which==='journeys')renderJourneys();
- if(which==='mylife'){renderUpcoming();loadProfile();renderJourneys();renderSavedPlaces();renderLifeSummary()}
+ if(which==='mylife'){renderUpcoming();loadProfile();renderJourneys();renderSavedPlaces();renderLifeSummary();window.OriviaAccounts?.copy()}
  if(which==='chat'){const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight}
 }
 window.oriviaGo=tab;
@@ -646,10 +647,10 @@ const OFFICIAL=[
  ['ICP','https://icp.gov.ae','Emirates ID and federal residency services'],
  ['KHDA','https://web.khda.gov.ae','Private schools and universities in Dubai']];
 /* My Life: About me, only shared with the AI when the user ticks the box */
-function readProfile(){try{const p=JSON.parse(localStorage.getItem(profileKey)||'null');return p&&typeof p==='object'?p:null}catch(_){return null}}
+function readProfile(){try{const p=JSON.parse((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(profileKey)||'null');return p&&typeof p==='object'?p:null}catch(_){return null}}
 /* About me is used by default; only an explicit 'off' stops it */
 function aboutMeOn(){const p=readProfile();return !(p&&p.use===false)}
-function setAboutMe(on){const p=readProfile()||{};try{localStorage.setItem(profileKey,JSON.stringify({...p,use:on}))}catch(_){}}
+function setAboutMe(on){const p=readProfile()||{};try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(profileKey,JSON.stringify({...p,use:on}))}catch(_){}}
 /* About you: tap to pick, saves as you go. Where you live now and where you're moving to are kept apart. */
 const WHO=[['study','Study'],['work','Work'],['join or bring my family','Family'],['something else','Something else']];
 const EMIRATES_ALL=['Abu Dhabi','Dubai','Sharjah','Ajman','Umm Al Quwain','Ras Al Khaimah','Fujairah'];
@@ -696,7 +697,7 @@ function saveProfile(patch){
  if(typeof n.place==='string')n.place=clip(n.place,80);
  n.city=n.here==='uae'||n.here==='uk'?placeText(n.here,n.region,n.town):''; // used by trip planning and the AI
  n.movingTo=n.here==='away'&&(n.dest==='uae'||n.dest==='uk')?placeText(n.dest,n.destRegion,n.destTown):'';
- try{localStorage.setItem(profileKey,JSON.stringify(n))}catch(_){}
+ try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(profileKey,JSON.stringify(n))}catch(_){}
  loadProfile();
 }
 /* The emirate or UK nation + town fields for one place (where you live, or where you're moving to) */
@@ -785,9 +786,10 @@ $('about-done').onclick=()=>{aboutEditing=false;aboutSkipped=true;loadProfile();
 $('place-form').addEventListener('submit',e=>{e.preventDefault();saveProfile({place:$('p-place').value.trim()})});
 $('p-place').addEventListener('change',e=>saveProfile({place:e.target.value.trim()}));
 function profileForAI(){const p=readProfile();if(!p||p.use===false)return undefined;const out={};for(const k of ['city','movingTo','movedFrom','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
-$('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent=uiText('Tap again to delete');setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('Clear saved data')},4000);return}try{localStorage.removeItem(profileKey);localStorage.removeItem(eventKey);localStorage.removeItem(journeysKey);localStorage.removeItem(chatsKey);localStorage.removeItem(chatsBackupKey)}catch(_){}storeLocked=false;storageWarn('');store={chats:[],active:null};turns=[];clearChatCards();draw();renderChats();events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent=uiText('Cleared')};
+$('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent=uiText('Tap again to delete');setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('Clear saved data')},4000);return}try{(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(profileKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(eventKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(journeysKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(chatsKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(chatsBackupKey)}catch(_){}storeLocked=false;storageWarn('');store={chats:[],active:null};turns=[];clearChatCards();draw();renderChats();events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent=uiText('Cleared')};
 /* End session: back to the welcome screen. Clears this conversation and the human check; keeps journeys, calendar and My Life. */
 $('end-session').onclick=async()=>{
+ if(globalThis.OriviaAccounts?.user){globalThis.OriviaAccounts.open();return}
  const b=$('end-session');
  if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to end this session';setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('End session')},4000);return}
  stopSpeaking();stopDictation(false);
@@ -849,8 +851,8 @@ function stopDictation(keep){
 function startDictation(){
  if(!Recog||recog)return;
  closeMicLanguageMenu();
- let seen=false;try{seen=localStorage.getItem(micNoteKey)==='1'}catch(_){}
- if(!seen){$('status').textContent=uiText('Your browser may send audio to its speech provider, such as Google or Apple, to turn it into text. Orivia receives the text only when you press Send. Tap the microphone again to start.');try{localStorage.setItem(micNoteKey,'1')}catch(_){}return}
+ let seen=false;try{seen=(globalThis.OriviaAccountStorage?.storage||localStorage).getItem(micNoteKey)==='1'}catch(_){}
+ if(!seen){$('status').textContent=uiText('Your browser may send audio to its speech provider, such as Google or Apple, to turn it into text. Orivia receives the text only when you press Send. Tap the microphone again to start.');try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(micNoteKey,'1')}catch(_){}return}
  stopSpeaking();
  let r;try{r=new Recog()}catch(_){$('status').textContent=uiText('Speech to text couldn’t start. You can keep typing.');return}
  recog=r;const base=$('msg').value;dictBase=base;
@@ -889,7 +891,7 @@ function setupDictation(){
  const picker=$('dict-language'),shortcut=$('dict-language-shortcut'),mic=$('mic'),menu=$('mic-language-menu');
  for(const [id,label]of DICT_LANGS)for(const select of [picker,shortcut]){const o=document.createElement('option');o.value=id;o.textContent=label;select.append(o)}
  const saved=readSettings().dictationLanguage;picker.value=shortcut.value=DICT_LANGS.some(([id])=>id===saved)?saved:'app';
- const choose=source=>{picker.value=shortcut.value=source.value;try{localStorage.setItem(settingsKey,JSON.stringify({...readSettings(),dictationLanguage:source.value}))}catch(_){}};
+ const choose=source=>{picker.value=shortcut.value=source.value;try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(settingsKey,JSON.stringify({...readSettings(),dictationLanguage:source.value}))}catch(_){}};
  picker.onchange=()=>choose(picker);shortcut.onchange=()=>{choose(shortcut);closeMicLanguageMenu(true)};
  const open=focus=>{if(recog)return;menu.hidden=false;mic.setAttribute('aria-expanded','true');if(focus)shortcut.focus()};
  let hold=null,hover=null,leave=null,down=null,held=false,suppressUntil=0;
@@ -1049,8 +1051,8 @@ function researchBlock(srcs,research){
 const settingsKey='orivia-private-settings-v1';
 const SET_DEFAULT={theme:'system',size:'standard',tone:'friendly',suggest:true};
 setupDictation();
-function readSettings(){try{const d=JSON.parse(localStorage.getItem(settingsKey)||'{}');return {...SET_DEFAULT,...(d&&typeof d==='object'?d:{})}}catch(_){return {...SET_DEFAULT}}}
-function writeSettings(patch){const n={...readSettings(),...patch};try{localStorage.setItem(settingsKey,JSON.stringify(n))}catch(_){}applySettings();renderSettings()}
+function readSettings(){try{const d=JSON.parse((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(settingsKey)||'{}');return {...SET_DEFAULT,...(d&&typeof d==='object'?d:{})}}catch(_){return {...SET_DEFAULT}}}
+function writeSettings(patch){const n={...readSettings(),...patch};try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(settingsKey,JSON.stringify(n))}catch(_){}applySettings();renderSettings()}
 function applySettings(){
  const s=readSettings(),root=document.documentElement;
  if(s.theme==='light'||s.theme==='dark')root.dataset.theme=s.theme;else delete root.dataset.theme;
@@ -1082,6 +1084,7 @@ $('set-aboutme-use').addEventListener('change',e=>{setAboutMe(e.target.checked);
 $('open-settings').onclick=()=>tab('settings');
 $('settings-back').onclick=()=>tab(lastTab||'chat');
 $('life-settings').onclick=()=>tab('settings');
+$('account-open').onclick=()=>window.OriviaAccounts?.open();
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',applySettings);
 applySettings();
 
@@ -1097,7 +1100,7 @@ const STATE_ORDER={active:0,paused:1,saved:2,done:3};
 const STEP_LABEL={not_started:'Not started',in_progress:'In progress',waiting:'Waiting',done:'Done',unsure:'Not sure'};
 const STEP_MARK={not_started:'',in_progress:'•',waiting:'◷',done:'✓',unsure:'?'};
 function readJourneys(){
- try{const d=JSON.parse(localStorage.getItem(journeysKey)||'{}');if(!d||typeof d!=='object'||Array.isArray(d))return {};
+ try{const d=JSON.parse((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(journeysKey)||'{}');if(!d||typeof d!=='object'||Array.isArray(d))return {};
   for(const v of Object.values(d)){
    if(!v||typeof v!=='object')continue;
    if(v.status==='following')v.status='active';
@@ -1106,7 +1109,7 @@ function readJourneys(){
   }
   return d}catch(_){return {}}
 }
-function writeJourneys(d){try{localStorage.setItem(journeysKey,JSON.stringify(d))}catch(_){}}
+function writeJourneys(d){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(journeysKey,JSON.stringify(d))}catch(_){}}
 function setJourney(id,patch){if(!JID.test(id))return;const d=readJourneys();d[id]={stepStatus:{},step:0,...(d[id]||{}),...patch,updated:new Date().toISOString()};writeJourneys(d);renderJourneys()}
 function removeJourney(id){const d=readJourneys();delete d[id];writeJourneys(d);renderJourneys()}
 function offered(){try{const d=JSON.parse(sessionStorage.getItem(offeredKey)||'[]');return Array.isArray(d)?d.filter(x=>typeof x==='string'&&JID.test(x)):[]}catch(_){return []}}
@@ -1397,12 +1400,12 @@ function setupPilot(d){
  const row=$('pilot-row');if(!row)return;
  if(!p||p.provider!=='OpenAI'||typeof p.consent!=='string'||!/^[a-z0-9-]{4,60}$/.test(p.consent)){pilotOffer=null;row.hidden=true;return}
  pilotOffer=p.consent;row.hidden=false;$('pilot-text').textContent=String(p.text||'').slice(0,600);
- let saved='';try{saved=localStorage.getItem(pilotKey)||''}catch(_){}
+ let saved='';try{saved=(globalThis.OriviaAccountStorage?.storage||localStorage).getItem(pilotKey)||''}catch(_){}
  $('set-pilot').checked=saved===pilotOffer;
- $('set-pilot').onchange=e=>{try{if(e.target.checked)localStorage.setItem(pilotKey,pilotOffer);else localStorage.removeItem(pilotKey)}catch(_){}researchNotice()};
+ $('set-pilot').onchange=e=>{try{if(e.target.checked)(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(pilotKey,pilotOffer);else (globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(pilotKey)}catch(_){}researchNotice()};
  researchNotice();
 }
-function pilotConsent(){if(!pilotOffer)return null;try{return localStorage.getItem(pilotKey)===pilotOffer?{openai:pilotOffer}:null}catch(_){return null}}
+function pilotConsent(){if(!pilotOffer)return null;try{return (globalThis.OriviaAccountStorage?.storage||localStorage).getItem(pilotKey)===pilotOffer?{openai:pilotOffer}:null}catch(_){return null}}
 async function loadMode(){
  try{const r=await fetch('/v1/config',{credentials:'same-origin',cache:'no-store'});const d=await r.json();
   setupPilot(d);
@@ -1410,7 +1413,14 @@ async function loadMode(){
  }catch(_){}
 }
 loadMode();
-if(sessionStorage.getItem(ck)==='yes')show();
+queueMicrotask(()=>{
+ if(!window.OriviaAccounts){if(sessionStorage.getItem(ck)==='yes')show();return}
+ window.OriviaAccounts.boot({photos:()=>DESTINATION_PHOTOS,
+  leave(){stopSpeaking();stopDictation(false);closeHandoff()},
+  cancelReply(){activeChatRequest?.abort()},
+  reload(){turns=[];storeLocked=false;$('msg').value='';$('home-question').value='';clearChatCards();loadEvents();show();window.OriviaAccounts.copy()}
+ });
+});
 $('start').onclick=()=>{
  if(!$('consent').checked)return;
  if(!humanOk){
@@ -1435,15 +1445,15 @@ function safeCalendarChange(v){
 /* Calendar changes are proposals: match, review and commit on this device, never in the model. */
 function calendarSnapshot(e){return JSON.stringify({id:e.id,title:e.title,at:e.at,alarm:e.alarm})}
 function calendarForChanges(){
- const raw=localStorage.getItem(eventKey);if(raw===null)return [];
+ const raw=(globalThis.OriviaAccountStorage?.storage||localStorage).getItem(eventKey);if(raw===null)return [];
  const list=JSON.parse(raw);
  if(!Array.isArray(list)||list.some(e=>!e||typeof e.id!=='string'||typeof e.title!=='string'||!Number.isFinite(Date.parse(e.at))))throw Error('unreadable');
  if(new Set(list.map(e=>e.id)).size!==list.length)throw Error('duplicate ids');
  return list;
 }
 function commitCalendarChanges(next){
- const raw=JSON.stringify(next);localStorage.setItem(eventKey,raw);
- if(localStorage.getItem(eventKey)!==raw)throw Error('save not confirmed');
+ const raw=JSON.stringify(next);(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(eventKey,raw);
+ if((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(eventKey)!==raw)throw Error('save not confirmed');
  events=next;renderEvents();renderUpcoming();
 }
 function calendarCandidates(proposal,list,previous){
@@ -1559,7 +1569,7 @@ function researchNotice(){
  const n=el('section','remember');n.id='research-off';n.setAttribute('role','note');
  n.append(el('strong','',uiText('Research is off on this device')),el('p','notice',uiText('Orivia can’t search the web or check sources until you turn on the research test.')));
  const row=el('div','row');
- row.append(button('Turn on research','btn small',()=>{n.replaceChildren(el('p','notice',$('pilot-text').textContent),(()=>{const r2=el('div','row');r2.append(button('I agree, turn it on','btn small',()=>{try{localStorage.setItem(pilotKey,pilotOffer)}catch(_){}$('set-pilot').checked=true;n.replaceChildren(el('p','notice',uiText('Research is on for this device. You can turn it off in Settings.')))}),button('Not now','btn text small',()=>n.remove()));return r2})())}),
+ row.append(button('Turn on research','btn small',()=>{n.replaceChildren(el('p','notice',$('pilot-text').textContent),(()=>{const r2=el('div','row');r2.append(button('I agree, turn it on','btn small',()=>{try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(pilotKey,pilotOffer)}catch(_){}$('set-pilot').checked=true;n.replaceChildren(el('p','notice',uiText('Research is on for this device. You can turn it off in Settings.')))}),button('Not now','btn text small',()=>n.remove()));return r2})())}),
   button('Not now','btn text small',()=>n.remove()));
  n.append(row);$('history').after(n);const sc=$('chat-scroll');if(sc)sc.scrollTop=sc.scrollHeight;
 }
@@ -1614,11 +1624,13 @@ $('form').onsubmit=async e=>{
  stopDictation(true);stopSpeaking();
  const text=$('msg').value.trim();if(!text)return;
  $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});save();draw({scroll:true});
- const chatId=store.active,sentTurns=turns.slice();
+ const chatId=store.active,sentTurns=turns.slice(),accountAtSend=globalThis.OriviaAccounts?.epoch||'';
+ const controller=new AbortController();activeChatRequest=controller;
  busy=true;$('send').disabled=true;$('status').textContent=uiText('Orivia is thinking…');working('Thinking…');window.oriviaResearchMode=!!pilotConsent();
  try{
-  const res=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),researchContext:currentResearchContext(sentTurns),language:uiLanguage(),style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
+  const res=await fetch('/v1/chat',{method:'POST',signal:controller.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),researchContext:currentResearchContext(sentTurns),language:uiLanguage(),style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
   const {r,d}=await readReply(res,chatId);
+  if((globalThis.OriviaAccounts?.epoch||'')!==accountAtSend)return;
   if(!r.ok){
    const why=d&&d.error;
    if(r.status===401&&why==='human_check'){sessionStorage.removeItem(ck);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false;if(window.__siteKey)loadTurnstile(window.__siteKey);$('status').textContent='';return}
@@ -1656,5 +1668,5 @@ $('form').onsubmit=async e=>{
    :pilotOffer&&!pilotConsent()?'Basic mode · the OpenAI research test is off on this device (turn it on in Settings).'
    :d.liveSources?.length?'Opened approved source page(s) for this reply. Routes and schedules are not checked.':d.verifiedSources?.length?'Reviewed campus references attached; live pages unavailable.':'AI reply • No approved live sources checked.';
  }catch(_){$('status').textContent=uiText('Could not reach the private AI. Please try again.')}
- finally{busy=false;$('send').disabled=Date.now()<coolUntil;working('')}
+ finally{if(activeChatRequest===controller)activeChatRequest=null;busy=false;$('send').disabled=Date.now()<coolUntil;working('')}
 };

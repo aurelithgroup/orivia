@@ -498,15 +498,24 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
 .home-photo-caption{position:absolute;inset-block-start:17px;inset-inline-end:20px;font-size:10px;color:#fff;background:#101c30a8;border:1px solid #ffffff40;border-radius:99px;padding:5px 9px;max-width:calc(100% - 40px);text-align:end}
 .home-photo-credit{font-size:10px;color:var(--muted);text-align:end;margin-top:-14px}.home-photo-credit a{color:inherit}
 
+
+.auth-entry{padding:22px 24px 32px;display:flex;flex-direction:column;gap:22px;overflow:auto;background:var(--surface)}
+.auth-brand{align-self:center;background:#132237;padding:12px 18px;border-radius:99px;flex-shrink:0}.auth-brand .wordmark{color:#fff}
+.auth-content{display:flex;flex-direction:column;gap:20px;max-width:480px;width:100%;margin:0 auto}.auth-content h1{font-family:Georgia,serif;font-size:32px;line-height:1.2;font-weight:500}.auth-content>.notice{font-size:15px}.auth-content>#account-flow-status:empty{display:none}.auth-content .btn{min-height:52px;width:100%}.auth-content h2{font-family:Georgia,serif;font-size:24px}.auth-form{display:grid;gap:18px}.auth-form input{background:var(--surface);min-height:52px}.auth-content .tiny{line-height:1.6}.auth-choices{display:grid;gap:12px}.auth-choice{display:flex;align-items:center;gap:12px;padding:16px;border:1px solid var(--line);border-radius:12px}.auth-choice input{width:22px;height:22px;flex-shrink:0}
+.auth-cover{margin:-22px -24px 0;min-height:280px;position:relative;background:#132237;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;padding:26px}.auth-cover img{position:absolute;inset:0;height:100%;width:100%;object-fit:cover;opacity:.75}.auth-cover:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#102037e8,transparent)}.auth-cover h2{position:relative;z-index:1;font:32px/1.2 Georgia,serif;color:#fff;max-width:350px}
+
+.account-sync-banner{padding:10px 16px;background:var(--amberSoft);font-size:13px;display:flex;gap:12px;align-items:center}.account-sync-banner span{flex:1}.auth-entry{position:relative}body[data-account-flow="on"] header.top{display:none}.auth-entry:has(.auth-cover)>.auth-brand{position:absolute;z-index:3;top:18px;inset-inline-start:16px;background:transparent}
 </style></head>
 <body><div class="app">
 <header class="top"><button type="button" id="open-chats" class="gear menu-btn" aria-label="Chats" aria-haspopup="dialog" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button><span class="brand" role="img" aria-label="Orivia"><svg class="brand-mark" viewBox="0 0 306 310" aria-hidden="true"><path fill="currentColor" d="M0 0 L0 168 C0 248 60 302 136 308 L136 160 C136 70 78 4 0 0 Z"/><path fill="var(--amber)" d="M160 308 L160 190 C160 108 222 44 306 40 L306 172 C306 254 240 302 160 308 Z"/></svg><span class="wordmark" aria-hidden="true">ORIVIA</span></span><span class="chip" data-public="Beta">Private AI trial</span><span class="top-title" id="view-title"></span><button type="button" id="open-settings" class="gear" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>
+<aside id="account-sync-banner" class="account-sync-banner" hidden><span id="account-sync-note" role="status"></span><button type="button" class="ask" id="account-sync-review">Review account</button></aside>
 <main>
+<section id="account-entry" class="auth-entry" hidden></section>
 <section id="intro" class="pad">
  <label for="welcome-language">App language</label><select id="welcome-language" aria-label="App language"><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option></select>
  <h1>Hi, I’m Orivia.</h1>
  <p>Talk to me about real life here: settling in, getting around, plans and reminders. I’ll help you work out what comes next.</p>
- <div class="card"><p>I agree to send my messages and recent conversation to Cloudflare Workers AI. Your chats are saved in this browser on this device so you can come back to them. They aren’t stored in Orivia’s database. For web research, general search terms are sent to Brave Search, not your full conversation or ID numbers.</p>
+ <div class="card"><p data-device-copy="I agree to send my messages and recent conversation to Cloudflare Workers AI. Your chats are saved in this browser on this device so you can come back to them. They aren’t stored in Orivia’s database. For web research, general search terms are sent to Brave Search, not your full conversation or ID numbers." data-account-copy="I agree to send my messages and recent conversation to Cloudflare Workers AI. Signed-in chats and plans are saved to my private Orivia account. For web research, general search terms are sent to Brave Search, not my full conversation or ID numbers.">I agree to send my messages and recent conversation to Cloudflare Workers AI. Your chats are saved in this browser on this device so you can come back to them. They aren’t stored in Orivia’s database. For web research, general search terms are sent to Brave Search, not your full conversation or ID numbers.</p>
  <label><input type="checkbox" id="consent"> <span data-public="I agree to start using Orivia (beta)">I agree to start my private AI trial</span></label>
  <div id="human-check" hidden></div><p id="human-note" class="tiny" hidden>A quick check that you’re a person, so Orivia stays free for everyone.</p>
  <button id="start" class="btn" type="button" data-public="Start">Start trial</button></div>
@@ -540,7 +549,7 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
   <section class="dashboard-section" aria-labelledby="home-coming-title"><div class="dashboard-head"><h2 id="home-coming-title">Coming up</h2><button type="button" class="ask" id="home-calendar">View calendar →</button></div><div id="home-coming" class="list"></div></section>
   <section class="dashboard-section" aria-labelledby="home-next-title"><div class="dashboard-head"><h2 id="home-next-title">Your next step</h2></div><div id="home-journey"></div></section>
   <section class="dashboard-section" aria-labelledby="home-recent-title"><div class="dashboard-head"><h2 id="home-recent-title">Pick up where you left off</h2><button type="button" class="ask" id="home-all-chats">All chats →</button></div><div id="home-recent" class="list"></div></section>
-  <p class="life-bottom-note">Saved on this device. Accounts and sync are coming later.</p>
+  <p class="life-bottom-note" data-device-copy="Saved on this device. Accounts and sync are coming later." data-account-copy="Your chats and plans are saved to your private account.">Saved on this device. Accounts and sync are coming later.</p>
  </div></section>
  <section id="calendar-panel" class="view" hidden><div class="pad section" style="overflow:auto">
   <div class="jhead"><div><h2>Calendar</h2><p class="notice">Your reminders and important dates. Saved on this device.</p></div><button id="cal-add" type="button" class="btn small">+ Add</button></div>
@@ -568,7 +577,7 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
  </div></section>
  <section id="mylife" class="view" hidden><div class="section life-scroll">
   <div class="life-heading"><h1>My Life</h1><p>Your details, in your control.</p></div>
-  <div class="life-person"><span class="life-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-10 16-10 16 0"/></svg></span><div><strong>Your personal space</strong><small>Saved on this device</small></div></div>
+  <div class="life-person"><span class="life-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-10 16-10 16 0"/></svg></span><div><strong id="life-display-name">Your personal space</strong><small data-device-copy="Saved on this device" data-account-copy="Private account">Saved on this device</small></div></div>
   <section class="life-group" aria-labelledby="about-h"><div class="life-group-head"><h2 id="about-h">About you</h2><button type="button" class="ask" id="about-edit">Edit</button></div>
    <div id="life-profile-rows" class="life-rows"></div><p id="about-summary" class="about-summary" hidden></p><div class="life-editor" id="life-editor" hidden>
    <div id="about-pick" class="about-pick">
@@ -601,14 +610,16 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
    <button type="button" class="link-card life-saved" id="life-journeys-open"><span><strong>Journeys</strong><small id="life-journey-count"></small></span>›</button>
   </section>
   <div id="life-journeys" hidden></div><div id="upcoming" hidden></div>
+  <button type="button" class="link-card" id="account-open">Sign in or create an account</button>
   <button type="button" class="link-card" id="life-settings"><span><strong>Settings and your data</strong><small>Language, appearance and privacy</small></span>›</button>
   <button type="button" class="ask life-help" id="tab-help" aria-haspopup="dialog">Help and support</button>
-  <p class="life-bottom-note">Saved only in this browser. Never enter passport, visa or ID numbers.</p>
+  <p class="life-bottom-note" data-device-copy="Saved only in this browser. Never enter passport, visa or ID numbers." data-account-copy="Saved to your private account. Never enter passport, visa or ID numbers.">Saved only in this browser. Never enter passport, visa or ID numbers.</p>
  </div></section>
  <datalist id="uk-towns"><option>London</option><option>Edinburgh</option><option>Glasgow</option><option>Manchester</option><option>Birmingham</option><option>Leeds</option><option>Liverpool</option><option>Bristol</option><option>Sheffield</option><option>Newcastle upon Tyne</option><option>Nottingham</option><option>Leicester</option><option>Coventry</option><option>Cardiff</option><option>Swansea</option><option>Belfast</option><option>Aberdeen</option><option>Dundee</option><option>Oxford</option><option>Cambridge</option></datalist>
  <section id="settings-view" class="view" hidden><div class="pad section" style="overflow:auto">
   <div class="jhead"><button type="button" class="ask" id="settings-back">← Back</button></div>
   <h2>Settings</h2>
+  <button type="button" class="link-card" id="account-open-settings" hidden>Your account</button>
   <button type="button" class="link-card" id="settings-help">Help and support <span aria-hidden="true">›</span></button>
   <section class="set-group"><h3>App language</h3><label for="app-language">App language</label><select id="app-language" aria-label="App language"><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option></select></section>
   <section class="set-group"><h3>Appearance</h3>
@@ -624,12 +635,12 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
    <label class="set-row toggle" id="pilot-row" hidden><span>Research test: use OpenAI<small class="tiny" id="pilot-text"></small></span><input type="checkbox" id="set-pilot" role="switch"></label>
   </section>
   <section class="set-group"><h3>Privacy &amp; data</h3>
-   <p class="tiny">Your chats, calendar, journeys, About me and settings are saved in this browser on this device. They aren’t in an account and don’t sync, and anyone using this device can open them. Messages are sent to Cloudflare Workers AI to get a reply. Orivia never needs passport, visa or ID numbers.</p>
+   <p class="tiny" data-device-copy="Your chats, calendar, journeys, About me and settings are saved in this browser on this device. They aren’t in an account and don’t sync, and anyone using this device can open them. Messages are sent to Cloudflare Workers AI to get a reply. Orivia never needs passport, visa or ID numbers." data-account-copy="Your chats, reminders, journeys and About you are saved to your private account. Display and research-consent settings stay on this device. Orivia never needs passport, visa or ID numbers.">Your chats, calendar, journeys, About me and settings are saved in this browser on this device. They aren’t in an account and don’t sync, and anyone using this device can open them. Messages are sent to Cloudflare Workers AI to get a reply. Orivia never needs passport, visa or ID numbers.</p>
    <button id="end-session" type="button" class="btn quiet">End session</button>
-   <p class="tiny">Goes back to the welcome screen. Your saved chats, journeys, calendar and My Life stay on this device. This isn’t an account log-out and doesn’t protect them: Orivia doesn’t have accounts yet, so anyone using this device can still open them. To remove them, use Clear saved data.</p>
+   <p class="tiny" data-device-copy="Goes back to the welcome screen. Your saved chats, journeys, calendar and My Life stay on this device. This isn’t an account log-out and doesn’t protect them: Orivia doesn’t have accounts yet, so anyone using this device can still open them. To remove them, use Clear saved data." data-account-copy="Open Your account to sync, review your data or log out.">Goes back to the welcome screen. Your saved chats, journeys, calendar and My Life stay on this device. This isn’t an account log-out and doesn’t protect them: Orivia doesn’t have accounts yet, so anyone using this device can still open them. To remove them, use Clear saved data.</p>
    <button id="clear" type="button" class="btn quiet danger">Delete this chat</button>
    <button id="forget" type="button" class="btn quiet danger">Clear saved data</button>
-   <p class="tiny">Deletes all saved chats, About me, your calendar and your journeys from this device. This can’t be undone.</p>
+   <p class="tiny" data-device-copy="Deletes all saved chats, About me, your calendar and your journeys from this device. This can’t be undone." data-account-copy="Deletes chats, About you, reminders and journeys from this account when synced. Your separate guest copy is kept. This can’t be undone.">Deletes all saved chats, About me, your calendar and your journeys from this device. This can’t be undone.</p>
   </section>
   <section class="set-group"><h3>Help &amp; safety</h3>
    <p class="tiny">In an emergency in the UAE, call:</p>
@@ -651,7 +662,7 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
 <div id="chats-drawer" class="drawer-scrim" hidden><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="chats-title">
  <div class="drawer-head"><h2 id="chats-title">Chats</h2><button type="button" id="close-chats" class="icon-btn" aria-label="Close chats">×</button></div>
  <button type="button" id="new-chat" class="btn">+ New chat</button>
- <p class="tiny">Saved on this device only, not in an account, and they don’t sync. Anyone using this device can open them.</p>
+ <p class="tiny" data-device-copy="Saved on this device only, not in an account, and they don’t sync. Anyone using this device can open them." data-account-copy="Saved to your private account. Guest chats on this device are kept separately.">Saved on this device only, not in an account, and they don’t sync. Anyone using this device can open them.</p>
  <div id="chats-list" class="chats-list"></div>
  <details id="archived-wrap" class="archived"><summary>Archived (<span id="archived-count">0</span>)</summary><div id="archived-list" class="chats-list"></div></details>
 </aside></div>
