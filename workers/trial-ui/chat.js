@@ -5,12 +5,12 @@ let turns=[],busy=false,events=[];
 const $=id=>document.getElementById(id);
 function uiText(value){return window.OriviaI18n?.text(value)??value}
 function uiLanguage(){return window.OriviaI18n?.language()||'en'}
-const TITLES={chat:'',calendar:'Calendar',journeys:'Journeys',mylife:'My Life',guide:'Journeys',settings:'Settings'};
+const TITLES={home:'',chat:'',calendar:'Calendar',journeys:'Journeys',mylife:'My Life',guide:'Journeys',settings:'Settings'};
 function show(){
  $('intro').hidden=true;$('workspace').hidden=false;$('nav').hidden=false;$('open-settings').hidden=false;$('open-chats').hidden=false;
  loadChats();const c=activeChat();turns=c?c.turns.slice():[];
 
- draw();tab('chat');
+ draw();tab('home');
 }
 /* ===== Chat history: saved on this device (localStorage), no account, no sync =====
    store = {chats:[{id,title,titled,created,updated,pinned,archived,turns}], active}
@@ -544,19 +544,69 @@ function renderUpcoming(){
  for(const e of next){const b=button('','now-item',()=>tab('calendar'));b.append(icon('M3.5 5h17v15h-17zM3.5 10h17M8 3v4M16 3v4'));const sp=el('span');sp.append(el('strong','',e.title),el('small','',when(e)));b.append(sp,document.createTextNode('›'));root.append(b)}
  if(!next.length)root.append(button('+ Add a reminder','ask',()=>{tab('calendar');openAdd()}));
 }
+/* Dashboard reads the same local records as Calendar, Journeys and Chats. No sample data or new requests. */
+function dashboardRecords(now=Date.now()){
+ loadEvents();
+ const upcoming=events.filter(e=>Number.isFinite(Date.parse(e.at))&&Date.parse(e.at)>now).sort((a,b)=>Date.parse(a.at)-Date.parse(b.at)).slice(0,2);
+ const journeys=Object.entries(readJourneys()).filter(([id,v])=>JID.test(id)&&v&&typeof v.title==='string');
+ const active=journeys.filter(([,v])=>v.status==='active'||v.status==='paused').sort((a,b)=>String(b[1].updated).localeCompare(String(a[1].updated)))[0]||null;
+ const recent=store.chats.filter(c=>!c.archived&&c.turns.some(t=>t.role==='user')).sort((a,b)=>b.updated-a.updated).slice(0,2);
+ return {upcoming,journeys,active,recent};
+}
+function dashboardEmpty(root,text,label,action){const box=el('div','dashboard-empty');box.append(el('p','',uiText(text)),button(label,'btn quiet small',action));root.append(box)}
+function dashboardCard(title,subtitle,action,symbol='›'){
+ const b=button('','dashboard-card',action),copy=el('span','dashboard-copy');copy.append(el('strong','',title));if(subtitle)copy.append(el('small','',subtitle));
+ b.append(copy,el('span','dashboard-arrow',symbol));return b;
+}
+function renderHome(){
+ const root=$('home');if(!root)return;
+ const hour=new Date().getHours();$('home-greeting').textContent=uiText(hour<12?'Good morning':hour<18?'Good afternoon':'Good evening');
+ const data=dashboardRecords(),coming=$('home-coming'),journey=$('home-journey'),recent=$('home-recent');coming.replaceChildren();journey.replaceChildren();recent.replaceChildren();
+ for(const e of data.upcoming){
+  const date=new Date(e.at),b=dashboardCard(e.title,when(e),()=>{tab('calendar');selectedDay=dayKey(date);renderEvents()}),tile=el('span','dashboard-date');
+  tile.append(el('b','',date.toLocaleDateString(uiLanguage(),{day:'numeric'})),el('small','',date.toLocaleDateString(uiLanguage(),{month:'short'})));b.prepend(tile);coming.append(b);
+ }
+ if(!data.upcoming.length)dashboardEmpty(coming,'A little breathing room. No upcoming reminders.','Add a reminder',()=>{tab('calendar');openAdd()});
+ if(data.active){const [id,v]=data.active,b=dashboardCard(v.title,'',()=>openGuide(id,{from:'home'}));
+  const copy=b.querySelector('.dashboard-copy');copy.prepend(el('span','dashboard-kicker',uiText(v.status==='paused'?'Paused journey':'Journey')));
+  const total=Math.max(0,Number(v.steps)||0),done=Math.min(total,doneCount(v));
+  copy.append(el('small','',uiText('Steps completed')+': '+done+' / '+total));if(total){const p=el('div','dashboard-progress');p.append(bar(done,total,uiText('Steps completed')));copy.append(p)}
+  copy.append(el('small','',uiText('Continue your journey →')));const symbol=el('span','dashboard-symbol');symbol.append(icon('M6 18a2.5 2.5 0 1 0 0-.1M18 6a2.5 2.5 0 1 0 0-.1M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5'));b.prepend(symbol);journey.append(b);
+ }else dashboardEmpty(journey,'Take things one step at a time. Find a guide when you need one.','Explore journeys',()=>tab('journeys'));
+ for(const chat of data.recent){const b=dashboardCard(chat.title,whenShort(chat.updated),()=>openChat(chat.id)),symbol=el('span','dashboard-symbol');symbol.append(icon('M4 5h16v11H9l-5 4z'));b.prepend(symbol);recent.append(b)}
+ if(!data.recent.length)dashboardEmpty(recent,'Your conversations will be here when you want to return.','Start a conversation',()=>newChat());
+}
+function renderLifeSummary(){
+ const root=$('life-profile-rows');if(!root)return;root.replaceChildren();const p=migrateProfile(readProfile()||{});
+ const rows=[['Living in',p.here==='away'?uiText('Not there yet'):placeText(p.here,p.region,p.town)||clip(p.city)],['Moved from',originText(p)],['Here for',uiText(WHO.find(([value])=>value===p.who)?.[1]||'Not added')]];
+ if(p.here==='away')rows.push(['Moving to',placeText(p.dest,p.destRegion,p.destTown)]);
+ for(const [label,value]of rows){const row=el('div','life-row');row.append(el('span','',uiText(label)),el('strong','',value||uiText('Not added')));root.append(row)}
+ $('life-institution-name').textContent=clip(p.place,80)||uiText('Add your school, college or organisation');
+ $('life-institution-note').textContent=uiText(p.place?'Added by you · not linked':'Optional. You can add this later.');
+ const places=new Set();for(const chat of store.chats)for(const t of chat.turns){if(!Array.isArray(t.meta?.savedPlaces))continue;for(const d of safeDestinations(t.meta.destinations,safeSources(t.meta.sources)))if(t.meta.savedPlaces.includes(placeIdentity(d)))places.add(placeIdentity(d))}
+ $('life-place-count').textContent=String(places.size)+' · '+uiText('Saved on this device');
+ const journeys=Object.entries(readJourneys()).filter(([id,v])=>JID.test(id)&&v&&typeof v.title==='string');$('life-journey-count').textContent=String(journeys.length)+' · '+uiText('Saved on this device');
+}
+$('home-ask-form').addEventListener('submit',e=>{e.preventDefault();const input=$('home-question'),text=input.value.trim();if(text)ask(text,false);else{tab('chat');$('msg').focus()}input.value=''});
+$('home-calendar').onclick=()=>tab('calendar');
+$('home-all-chats').onclick=()=>{tab('chat');openChats()};
+$('life-journeys-open').onclick=()=>tab('journeys');
+$('life-places-open').onclick=()=>{const box=$('saved-places-section');box.hidden=!box.hidden;$('life-places-open').setAttribute('aria-expanded',String(!box.hidden));if(!box.hidden)renderSavedPlaces()};
+
 /* Switching sections: the bottom bar, and Orivia herself (window.oriviaGo) */
 function tab(which){
- const views={chat:'chat',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view',settings:'settings-view'};
+ const views={home:'home',chat:'chat',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view',settings:'settings-view'};
  if(!views[which])return;
  if(which!=='settings')lastTab=which;
  if(which!=='chat'){try{stopSpeaking();stopDictation(true);closeMicLanguageMenu()}catch(_){}}
  const navKey=which==='guide'?'journeys':which; // a guide opens inside Journeys; Settings has no tab of its own
  for(const [k,id] of Object.entries(views)){$(id).hidden=k!==which;const b=$('tab-'+k);if(b){b.classList.toggle('active',k===navKey);b.setAttribute('aria-current',k===navKey?'page':'false')}}
  $('view-title').textContent=uiText(TITLES[which]);
+ if(which==='home')renderHome();
  if(which==='calendar')renderEvents();
  if(which==='settings')renderSettings();
  if(which==='journeys')renderJourneys();
- if(which==='mylife'){renderUpcoming();loadProfile();renderJourneys();renderSavedPlaces()}
+ if(which==='mylife'){renderUpcoming();loadProfile();renderJourneys();renderSavedPlaces();renderLifeSummary()}
  if(which==='chat'){const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight}
 }
 window.oriviaGo=tab;
@@ -593,7 +643,7 @@ function countryName(code){try{return (regionNames&&regionNames.of(code))||code}
 let countryOptions=null;
 function fillCountries(sel,current){
  if(!countryOptions)countryOptions=COUNTRY_CODES.map(c=>[c,countryName(c)]).sort((a,b)=>a[1].localeCompare(b[1]));
- if(sel.options.length!==countryOptions.length+1){sel.replaceChildren(new Option('Choose (optional)',''));for(const [c,n] of countryOptions)sel.append(new Option(n,c))}
+ if(sel.options.length!==countryOptions.length+1){sel.replaceChildren(new Option(uiText('Choose (optional)'),''));for(const [c,n] of countryOptions)sel.append(new Option(n,c))}
  sel.value=COUNTRY_CODES.includes(current)?current:'';
 }
 const originText=p=>[clip(p.originTown),p.originCountry?countryName(p.originCountry):''].filter(Boolean).join(', ');
@@ -634,12 +684,12 @@ function saveProfile(patch){
 function placeFields(root,country,keys,p){
  root.replaceChildren();if(country!=='uae'&&country!=='uk')return;
  const id=keys.region+'-sel',tid=keys.town+'-in';
- const lab=el('label','field');lab.htmlFor=id;lab.append(country==='uae'?'Emirate':'Nation');
+ const lab=el('label','field');lab.htmlFor=id;lab.append(uiText(country==='uae'?'Emirate':'Nation'));
  const sel=document.createElement('select');sel.id=id;
  const opts=country==='uae'?EMIRATES_ALL:UK_NATIONS;
- sel.append(new Option('Choose',''));for(const o of opts)sel.append(new Option(o,o));
+ sel.append(new Option(uiText('Choose'),''));for(const o of opts)sel.append(new Option(o,o));
  sel.value=opts.includes(p[keys.region])?p[keys.region]:'';sel.onchange=()=>saveProfile({[keys.region]:sel.value});lab.append(sel);
- const tl=el('label','field');tl.htmlFor=tid;tl.append(country==='uae'?'Area':'City or town');tl.append(el('small','',country==='uae'?' Optional':' Type it if it isn’t listed'));
+ const tl=el('label','field');tl.htmlFor=tid;tl.append(uiText(country==='uae'?'Area':'City or town'));tl.append(el('small','',' '+uiText(country==='uae'?'Optional':'Type it if it isn’t listed')));
  const tin=document.createElement('input');tin.id=tid;tin.maxLength=60;tin.value=p[keys.town]||'';tin.placeholder=country==='uae'?'e.g. Al Nahda, JLT, Muwaileh':'e.g. Edinburgh';
  if(country==='uk')tin.setAttribute('list','uk-towns');
  tin.onchange=()=>saveProfile({[keys.town]:tin.value});tl.append(tin);
@@ -665,25 +715,27 @@ function loadProfile(){
  $('away-fields').hidden=p.here!=='away';
  fillCountries($('origin-country'),p.originCountry);
  if(document.activeElement!==$('origin-town'))$('origin-town').value=p.originTown||'';
- $('origin-q').firstChild.textContent=p.here==='away'?'Where are you moving from? ':'Where did you move from? ';
+ $('origin-q').firstChild.textContent=uiText(p.here==='away'?'Where are you moving from?':'Where did you move from?')+' ';
  $('origin-clear').hidden=!(p.originCountry||p.originTown);
  seg('pick-dest',[['uae','UAE'],['uk','UK'],['unsure','Not sure yet']],p.dest||'',v=>saveProfile({dest:p.dest===v?'':v,...(p.dest!==v?{destRegion:'',destTown:''}:{})}));
  placeFields($('dest-fields'),p.here==='away'?p.dest:'',{region:'destRegion',town:'destTown'},p);
  seg('pick-who',WHO,p.who||'',v=>saveProfile({who:p.who===v?'':v}));
  const showPlace=p.who==='study'||p.who==='work';
- $('pick-place-row').hidden=!showPlace;
- $('pick-place-q').textContent=p.who==='work'?'Where you work':'Your institution';
- $('p-place').placeholder=p.who==='work'?'Company or organisation':'School, college, university or training centre';
+ $('pick-place-row').hidden=false;
+ $('pick-place-q').textContent=uiText(p.who==='work'?'Where you work':'Your institution');
+ $('p-place').placeholder=uiText(p.who==='work'?'Company or organisation':'School, college, university or training centre');
  if(document.activeElement!==$('p-place'))$('p-place').value=p.place||'';
- $('place-note').textContent=p.place?'Saved as you typed it. Orivia hasn’t checked it yet.':'Type its name as you know it. Orivia hasn’t checked it yet.';
+ $('place-note').textContent=uiText(p.place?'Saved as you typed it. Orivia hasn’t checked it yet.':'Type its name as you know it. Orivia hasn’t checked it yet.');
  $('about-summary').textContent=filled?aboutSentence(p):'';
  const whereDone=p.here==='uae'?!!p.region:p.here==='uk'?!!(p.region||p.town):p.here==='away'?!!p.dest:false;
  const complete=!!(whereDone&&p.who&&(!showPlace||p.place)); // collapses once everything that applies is answered
- const open=(!complete&&!aboutSkipped)||aboutEditing;
+ const open=aboutEditing;
  $('about-pick').hidden=!open;
+ $('life-editor').hidden=!open;
  $('about-edit').hidden=open;
- $('about-done').hidden=!(open&&filled);
- $('about-use').textContent=aboutMeOn()?'Orivia uses this so you don’t have to repeat yourself. You can switch that off in Settings.':'Orivia isn’t using this right now. You can switch it on in Settings.';
+ $('about-done').hidden=!open;
+ renderLifeSummary();
+ $('about-use').textContent=uiText(aboutMeOn()?'Orivia uses this so you don’t have to repeat yourself. You can switch that off in Settings.':'Orivia isn’t using this right now. You can switch it on in Settings.');
 }
 $('origin-country').addEventListener('change',e=>saveProfile({originCountry:e.target.value}));
 $('origin-town').addEventListener('change',e=>saveProfile({originTown:e.target.value}));
@@ -709,8 +761,8 @@ function rememberCard(t){
  card.append(row);($('journey-actions')||$('history')).after(card);
  const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight;
 }
-$('about-edit').onclick=()=>{aboutEditing=true;aboutSkipped=false;loadProfile()};
-$('about-done').onclick=()=>{aboutEditing=false;aboutSkipped=true;loadProfile()}; // Done closes it even if some questions are skipped
+$('about-edit').onclick=()=>{aboutEditing=true;aboutSkipped=false;loadProfile();$('pick-here').querySelector('button')?.focus()};
+$('about-done').onclick=()=>{aboutEditing=false;aboutSkipped=true;loadProfile();$('about-edit').focus()}; // Done closes it even if some questions are skipped
 $('place-form').addEventListener('submit',e=>{e.preventDefault();saveProfile({place:$('p-place').value.trim()})});
 $('p-place').addEventListener('change',e=>saveProfile({place:e.target.value.trim()}));
 function profileForAI(){const p=readProfile();if(!p||p.use===false)return undefined;const out={};for(const k of ['city','movingTo','movedFrom','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
@@ -841,15 +893,16 @@ function setupDictation(){
 $('dict-stop').onclick=()=>stopDictation(true);
 $('dict-cancel').onclick=()=>stopDictation(false);
 
-/* Help: always one tap away in the middle of the bar */
-function openHelp(){$('help-sheet').hidden=false;$('help-wrong').focus()}
-function closeHelp(){$('help-sheet').hidden=true;$('tab-help').focus()}
-$('tab-help').onclick=openHelp;$('help-close').onclick=closeHelp;
+/* Help remains available in My Life and Settings. */
+let helpReturnFocus=null;
+function openHelp(){helpReturnFocus=document.activeElement;$('help-sheet').hidden=false;$('help-wrong').focus()}
+function closeHelp(){$('help-sheet').hidden=true;helpReturnFocus?.focus()}
+$('tab-help').onclick=openHelp;$('settings-help').onclick=openHelp;$('help-close').onclick=closeHelp;
 $('help-sheet').addEventListener('click',e=>{if(e.target.id==='help-sheet')closeHelp()});
 $('help-wrong').onclick=()=>{closeHelp();ask('Something went wrong: ',false)};
 $('help-journeys').onclick=()=>{closeHelp();tab('journeys')};
 $('help-staff').onclick=()=>{$('help-sheet').hidden=true;$('staff-card').hidden=false;$('staff-close').focus()};
-$('staff-close').onclick=()=>{$('staff-card').hidden=true;$('tab-help').focus()};
+$('staff-close').onclick=()=>{$('staff-card').hidden=true;helpReturnFocus?.focus()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('staff-card').hidden)$('staff-close').click();else if(!$('add-sheet').hidden)closeAdd();else if(!$('help-sheet').hidden)closeHelp()}});
 /* Links Orivia attaches to a reply */
 function resources(items){let holder=$('journey-actions');if(!holder){holder=document.createElement('div');holder.id='journey-actions';holder.style.cssText='display:grid;gap:8px;font-size:13px';$('history').after(holder)}holder.replaceChildren();if(!Array.isArray(items))return;for(const x of items.slice(0,7)){try{const url=new URL(x.url);const deviceGeo=url.protocol==='geo:'&&x.handoff==='geo'&&url.href.startsWith('geo:0,0?q=');const approvedHttps=url.protocol==='https:'&&['www.google.com','maps.apple.com','rta.ae','www.rta.ae','www.uowdubai.ac.ae','www.hw.ac.uk','hw.ac.uk'].includes(url.hostname);if(!deviceGeo&&!approvedHttps)continue;const link=document.createElement('a');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.textContent=String(x.title||'Open source');link.style.cssText='display:block;padding:10px;border:1px solid var(--line);border-radius:12px;color:var(--focus)';holder.append(link)}catch(_){}}}
@@ -1002,7 +1055,7 @@ function renderSettings(){
  const on=aboutMeOn(),p=readProfile(),filled=!!(p&&(p.city||p.who||p.place));$('set-aboutme-use').checked=on;
  $('aboutme-state').textContent=on?(filled?'On: Orivia uses what you saved in My Life':'On, but nothing saved yet. Add details in My Life'):'Off: Orivia doesn’t use My Life details';
 }
-function changeAppLanguage(e){window.OriviaI18n?.setLanguage(e.target.value);writeSettings({language:uiLanguage()});regionNames=makeRegionNames();countryOptions=null;draw();renderEvents();renderUpcoming();renderChats();renderJourneys();loadProfile();$('view-title').textContent=uiText(TITLES[lastTab||'chat'])}
+function changeAppLanguage(e){window.OriviaI18n?.setLanguage(e.target.value);writeSettings({language:uiLanguage()});regionNames=makeRegionNames();countryOptions=null;draw();renderEvents();renderUpcoming();renderChats();renderJourneys();loadProfile();renderHome();$('view-title').textContent=uiText(TITLES[lastTab||'chat'])}
 $('app-language').addEventListener('change',changeAppLanguage);$('welcome-language').addEventListener('change',changeAppLanguage);$('app-language').value=$('welcome-language').value=uiLanguage();
 $('set-suggest').addEventListener('change',e=>writeSettings({suggest:e.target.checked}));
 $('set-aboutme').onclick=()=>tab('mylife');

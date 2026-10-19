@@ -122,3 +122,5 @@ jobs:
         run: node tests/ai-preview.test.mjs
       - name: Read-only journey tool regression tests
         run: node tests/ai-journey-tools.test.mjs
+      - name: Home dashboard shared records and navigation
+        run: node tests/home-dashboard.test.mjs

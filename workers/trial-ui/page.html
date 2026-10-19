@@ -457,6 +457,37 @@ nav.bottom .help-tab{color:var(--ink)}
 .place-map-choice{padding:13px 0 0;display:flex;flex-wrap:wrap;gap:8px}.place-map-choice p{flex-basis:100%;margin:0}.place-map-note{font-size:11px;line-height:1.5;margin:10px 0;color:var(--muted)}
 .place-evidence{border-top:1px solid var(--line);padding-top:10px;font-size:11px;color:var(--muted)}.place-evidence summary{cursor:pointer;font-weight:650}.place-evidence a{display:inline-block;margin-top:9px;overflow-wrap:anywhere}.place-evidence blockquote{margin:8px 0;padding-inline-start:10px;border-inline-start:2px solid var(--amber);font-size:11px;line-height:1.5}
 @media(max-width:380px){.place-body{padding:14px}.place-save{padding-inline:10px}.place-go{font-size:14px}}
+
+/* Home and My Life: calm personal dashboard, using device records only. */
+#home,#mylife{background:var(--surface2)}
+.home-scroll>*,.life-scroll>*{flex-shrink:0}
+.top-title{white-space:nowrap;font-size:12px}
+.home-scroll,.life-scroll{overflow:auto;padding:0 20px 28px;gap:24px}
+.home-welcome{margin:0 -20px;padding:30px 24px 52px;background:#132237;color:#fff;position:relative;overflow:hidden}
+.home-welcome:after{content:"";position:absolute;width:105px;height:180px;border-radius:100% 0 100% 0;background:#ffffff08;inset-inline-end:-12px;bottom:-25px;transform:rotate(-20deg);pointer-events:none}
+.home-welcome h1,.life-heading h1{font-family:Georgia,"Times New Roman",serif;font-weight:500;font-size:32px;line-height:1.2;position:relative}
+.home-welcome p{color:#c7d0db;margin-top:10px;font-size:14px}
+.home-ask{margin-top:-48px;position:relative;background:var(--surface);border:1px solid var(--line);box-shadow:0 7px 20px #14213710;border-radius:20px;padding:10px;display:flex;align-items:center;gap:8px}
+.home-ask input{border:0;background:transparent;flex:1;padding:10px 4px;width:0;outline-offset:0}
+.home-ask .btn{width:44px;min-width:44px;padding:8px;border-radius:50%;font-size:20px}
+.home-spark{color:#aa7400;font-size:25px;padding-inline-start:8px}
+.dashboard-section{display:grid;gap:12px}.dashboard-head{display:flex;gap:8px;align-items:center;justify-content:space-between}.dashboard-head h2,.life-group h2{font-family:Georgia,"Times New Roman",serif;font-size:22px;font-weight:600}
+.dashboard-head .ask{font-size:12px;color:var(--ink)}
+.dashboard-card{width:100%;display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:18px;background:var(--surface);padding:18px;text-align:start;color:var(--ink);min-width:0;box-shadow:0 2px 8px #14213704}
+.dashboard-card>.dashboard-copy{flex:1;min-width:0;display:grid;gap:5px}.dashboard-copy strong{overflow-wrap:anywhere;font-size:16px;line-height:1.4}.dashboard-copy small{font-size:13px;display:block}.dashboard-arrow{color:var(--muted);font-size:23px;flex:none}
+.dashboard-date{background:#f2c45a;color:#18222d;border-radius:12px;min-width:56px;padding:8px;text-align:center;display:grid;line-height:1.2}.dashboard-date b{font-size:26px;font-weight:500}.dashboard-date small{color:#18222d;font-size:11px;margin-top:3px}
+.dashboard-symbol{height:54px;width:54px;flex:none;display:grid;place-items:center;border-radius:14px;background:var(--amberSoft);color:var(--ink);font-size:25px}.dashboard-symbol svg{height:27px;width:27px}
+.dashboard-empty{border:1px dashed var(--line);border-radius:18px;padding:18px;display:grid;gap:12px;color:var(--muted);font-size:14px}.dashboard-empty .btn{justify-self:start;font-size:13px}
+.dashboard-progress{margin-top:5px}.dashboard-progress .progress{height:6px}.dashboard-progress .progress i{background:var(--amber)}.dashboard-kicker{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.life-heading{padding-top:26px;display:grid;gap:8px}.life-heading p{font-size:14px;color:var(--muted)}.life-person{display:flex;align-items:center;gap:14px}.life-avatar{width:58px;height:58px;border-radius:50%;background:var(--amberSoft);display:grid;place-items:center;color:var(--ink)}.life-avatar svg{width:27px;height:27px}.life-person strong{display:block;font-family:Georgia,serif;font-size:21px}.life-person small{display:block;margin-top:3px}
+.life-group{border:1px solid var(--line);border-radius:18px;background:var(--surface);overflow:hidden}.life-group-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line);gap:10px}.life-group-head h2{font-size:19px}.life-rows{padding:0 18px}.life-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);font-size:14px}.life-row:last-child{border-bottom:0}.life-row span{flex:1}.life-row strong{font-weight:500;color:var(--muted);text-align:end;max-width:60%;overflow-wrap:anywhere}.life-editor{padding:18px;display:grid;gap:16px}.life-editor .about-summary{display:none}.life-editor .about-pick{margin:0}.life-group>.tiny{padding:0 18px 16px}.life-institution{padding:18px;display:grid;gap:8px}.life-institution strong{overflow-wrap:anywhere}.life-institution details>summary{cursor:pointer;color:var(--ink);font-size:13px;font-weight:650;min-height:44px;padding-top:10px}.life-institution .pick{margin-top:12px}.life-institution #pick-place-row[hidden]{display:block!important}
+.life-saved{border:0;width:100%;border-radius:0;box-shadow:none;min-height:56px;padding:16px 18px}.life-saved+.life-saved{border-top:1px solid var(--line)}.life-saved small{margin-top:3px}
+#saved-places-section{padding:16px 18px;border-top:1px solid var(--line)}#life-journeys,#upcoming{display:none}.life-bottom-note{font-size:12px;color:var(--muted);line-height:1.6}.life-help{font-size:14px}
+nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
+@media(max-width:360px){.home-scroll,.life-scroll{padding-inline:14px}.home-welcome{margin-inline:-14px}.home-welcome h1,.life-heading h1{font-size:28px}.dashboard-head h2{font-size:20px}.dashboard-card{padding:14px;gap:10px}nav.bottom button{font-size:10px}}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
 </style></head>
 <body><div class="app">
 <header class="top"><button type="button" id="open-chats" class="gear menu-btn" aria-label="Chats" aria-haspopup="dialog" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button><span class="brand" role="img" aria-label="Orivia"><svg class="brand-mark" viewBox="0 0 306 310" aria-hidden="true"><path fill="currentColor" d="M0 0 L0 168 C0 248 60 302 136 308 L136 160 C136 70 78 4 0 0 Z"/><path fill="var(--amber)" d="M160 308 L160 190 C160 108 222 44 306 40 L306 172 C306 254 240 302 160 308 Z"/></svg><span class="wordmark" aria-hidden="true">ORIVIA</span></span><span class="chip" data-public="Beta">Private AI trial</span><span class="top-title" id="view-title"></span><button type="button" id="open-settings" class="gear" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>
@@ -491,6 +522,14 @@ nav.bottom .help-tab{color:var(--ink)}
    <div id="storage-warn" class="storage-warn" role="alert" hidden><p id="storage-warn-text"></p><button type="button" id="storage-manage" class="btn small">Manage chats</button></div>
   </div>
  </section>
+ <section id="home" class="view" hidden><div class="section home-scroll">
+  <div class="home-welcome"><h1 id="home-greeting">Welcome home</h1><p>A little more settled, every day.</p></div>
+  <form id="home-ask-form" class="home-ask"><span class="home-spark" aria-hidden="true">✦</span><label for="home-question" class="sr-only">Ask Orivia</label><input id="home-question" placeholder="What can I help you with?" maxlength="2000" autocomplete="off"><button type="submit" class="btn" aria-label="Open in chat">→</button></form>
+  <section class="dashboard-section" aria-labelledby="home-coming-title"><div class="dashboard-head"><h2 id="home-coming-title">Coming up</h2><button type="button" class="ask" id="home-calendar">View calendar →</button></div><div id="home-coming" class="list"></div></section>
+  <section class="dashboard-section" aria-labelledby="home-next-title"><div class="dashboard-head"><h2 id="home-next-title">Your next step</h2></div><div id="home-journey"></div></section>
+  <section class="dashboard-section" aria-labelledby="home-recent-title"><div class="dashboard-head"><h2 id="home-recent-title">Pick up where you left off</h2><button type="button" class="ask" id="home-all-chats">All chats →</button></div><div id="home-recent" class="list"></div></section>
+  <p class="life-bottom-note">Saved on this device. Accounts and sync are coming later.</p>
+ </div></section>
  <section id="calendar-panel" class="view" hidden><div class="pad section" style="overflow:auto">
   <div class="jhead"><div><h2>Calendar</h2><p class="notice">Your reminders and important dates. Saved on this device.</p></div><button id="cal-add" type="button" class="btn small">+ Add</button></div>
   <section class="week" aria-label="Week">
@@ -515,11 +554,11 @@ nav.bottom .help-tab{color:var(--ink)}
   <h3>Official sources</h3>
   <div class="list" id="officials"></div>
  </div></section>
- <section id="mylife" class="view" hidden><div class="pad section" style="overflow:auto">
-  <div class="jhead"><div><h2>My Life</h2><p class="notice">What Orivia knows about you, and what’s coming up.</p></div></div>
-  <section class="card life-about" aria-labelledby="about-h">
-   <div class="jtop"><h3 id="about-h">About you</h3><button type="button" class="ask" id="about-edit" hidden>Change</button></div>
-   <p id="about-summary" class="about-summary"></p>
+ <section id="mylife" class="view" hidden><div class="section life-scroll">
+  <div class="life-heading"><h1>My Life</h1><p>Your details, in your control.</p></div>
+  <div class="life-person"><span class="life-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-10 16-10 16 0"/></svg></span><div><strong>Your personal space</strong><small>Saved on this device</small></div></div>
+  <section class="life-group" aria-labelledby="about-h"><div class="life-group-head"><h2 id="about-h">About you</h2><button type="button" class="ask" id="about-edit">Edit</button></div>
+   <div id="life-profile-rows" class="life-rows"></div><p id="about-summary" class="about-summary" hidden></p><div class="life-editor" id="life-editor" hidden>
    <div id="about-pick" class="about-pick">
     <p class="tiny">Tap what fits, skip anything. It saves straight away.</p>
     <div class="pick"><span class="pick-q" id="here-q">Where do you live?</span><div class="seg" id="pick-here" role="radiogroup" aria-labelledby="here-q"></div>
@@ -533,27 +572,32 @@ nav.bottom .help-tab{color:var(--ink)}
      <p class="tiny" id="origin-note">Only used to tailor tips. It doesn’t tell Orivia your nationality or visa status.</p>
      <button type="button" class="ask" id="origin-clear" hidden>Clear this</button></div>
     <div class="pick"><span class="pick-q">What brings you here?</span><div class="seg" id="pick-who" role="radiogroup" aria-label="What brings you here?"></div></div>
+    <button type="button" class="btn quiet small" id="about-done" hidden>Done</button>
+   </div>
+   </div><p class="tiny" id="about-use"></p>
+  </section>
+  <section class="life-group" aria-labelledby="life-institution-title"><div class="life-group-head"><h2 id="life-institution-title">Your institution</h2></div><div class="life-institution"><strong id="life-institution-name"></strong><p class="tiny" id="life-institution-note">Added by you · not linked</p><details id="institution-editor"><summary>Manage institution</summary>
     <div class="pick" id="pick-place-row"><label class="pick-q" id="pick-place-q" for="p-place">Your institution</label>
      <form id="place-form" class="row"><input id="p-place" maxlength="80" autocomplete="organization" placeholder="School, college, university or training centre"><button class="btn small" type="submit">Save</button></form>
      <p class="tiny" id="place-note">Type its name as you know it. Orivia hasn’t checked it yet.</p>
      <div id="inst-confirm" hidden></div><!-- reserved: confirming a matched institution and campus (research connection comes later) -->
     </div>
-    <button type="button" class="btn quiet small" id="about-done" hidden>Done</button>
-   </div>
-   <p class="tiny" id="about-use"></p>
+  </details></div></section>
+  <section class="life-group" aria-labelledby="life-saved-title"><div class="life-group-head"><h2 id="life-saved-title">Saved for later</h2></div>
+   <button type="button" class="link-card life-saved" id="life-places-open" aria-expanded="false" aria-controls="saved-places-section"><span><strong>Places</strong><small id="life-place-count"></small></span>›</button>
+   <div id="saved-places-section" hidden><p class="tiny">Saved with your chats on this device.</p><div id="saved-places" class="list"></div></div>
+   <button type="button" class="link-card life-saved" id="life-journeys-open"><span><strong>Journeys</strong><small id="life-journey-count"></small></span>›</button>
   </section>
-  <section class="card" aria-labelledby="now-h"><h3 id="now-h">Right now</h3>
-   <div id="life-journeys" class="list"></div>
-   <div id="upcoming" class="list"></div>
-  </section>
-  <section class="card" aria-labelledby="saved-places-title"><h3 id="saved-places-title">Saved places</h3><p class="tiny">Saved with your chats on this device.</p><div id="saved-places" class="list"></div></section>
-  <button type="button" class="link-card" id="life-settings"><span><strong>Settings and your data</strong><small class="tiny">Theme, how Orivia talks to you, clear or delete what’s saved</small></span>›</button>
-  <p class="tiny">Saved only in this browser. Never enter passport, visa or ID numbers.</p>
+  <div id="life-journeys" hidden></div><div id="upcoming" hidden></div>
+  <button type="button" class="link-card" id="life-settings"><span><strong>Settings and your data</strong><small>Language, appearance and privacy</small></span>›</button>
+  <button type="button" class="ask life-help" id="tab-help" aria-haspopup="dialog">Help and support</button>
+  <p class="life-bottom-note">Saved only in this browser. Never enter passport, visa or ID numbers.</p>
  </div></section>
  <datalist id="uk-towns"><option>London</option><option>Edinburgh</option><option>Glasgow</option><option>Manchester</option><option>Birmingham</option><option>Leeds</option><option>Liverpool</option><option>Bristol</option><option>Sheffield</option><option>Newcastle upon Tyne</option><option>Nottingham</option><option>Leicester</option><option>Coventry</option><option>Cardiff</option><option>Swansea</option><option>Belfast</option><option>Aberdeen</option><option>Dundee</option><option>Oxford</option><option>Cambridge</option></datalist>
  <section id="settings-view" class="view" hidden><div class="pad section" style="overflow:auto">
   <div class="jhead"><button type="button" class="ask" id="settings-back">← Back</button></div>
   <h2>Settings</h2>
+  <button type="button" class="link-card" id="settings-help">Help and support <span aria-hidden="true">›</span></button>
   <section class="set-group"><h3>App language</h3><label for="app-language">App language</label><select id="app-language" aria-label="App language"><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option></select></section>
   <section class="set-group"><h3>Appearance</h3>
    <div class="set-row"><span>Theme</span><div class="seg" id="set-theme" role="radiogroup" aria-label="Theme"></div></div>
@@ -586,11 +630,11 @@ nav.bottom .help-tab{color:var(--ink)}
 </section>
 </main>
 <nav class="bottom" id="nav" aria-label="Main" hidden>
- <button id="tab-chat" type="button" class="active" data-tab="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Chat</span></button>
- <button id="tab-calendar" type="button" data-tab="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Calendar</span></button>
- <button id="tab-help" type="button" class="help-tab" aria-haspopup="dialog"><span class="bub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/></svg></span>Help</button>
- <button id="tab-journeys" type="button" data-tab="journeys"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg><span>Journeys</span></button>
+ <button id="tab-home" type="button" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-7 9 7v11h-6v-7H9v7H3z"/></svg><span>Home</span></button>
+ <button id="tab-chat" type="button" data-tab="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Chat</span></button>
  <button id="tab-mylife" type="button" data-tab="mylife"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>My Life</span></button>
+ <button id="tab-journeys" type="button" data-tab="journeys"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg><span>Journeys</span></button>
+ <button id="tab-calendar" type="button" data-tab="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Calendar</span></button>
 </nav>
 <div id="chats-drawer" class="drawer-scrim" hidden><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="chats-title">
  <div class="drawer-head"><h2 id="chats-title">Chats</h2><button type="button" id="close-chats" class="icon-btn" aria-label="Close chats">×</button></div>

@@ -5,7 +5,7 @@ const js=fs.readFileSync('workers/trial-ui/chat.js','utf8');
 const html=fs.readFileSync('workers/trial-ui/page.html','utf8');
 assert.ok(html.indexOf('id="dict-options"')>html.indexOf('id="settings-view"'),'language field belongs in Settings');
 assert.ok(!html.slice(html.indexOf('class="composer-wrap"'),html.indexOf('id="calendar-panel"')).includes('id="dict-options"'),'no permanent language row over composer');
-const block=js.slice(js.indexOf('/* ===== Dictation:'),js.indexOf('/* Help: always'));
+const block=js.slice(js.indexOf('/* ===== Dictation:'),js.indexOf('/* Help remains'));
 function harness({supported=true,saved='auto',storageError=false}={}){
  const nodes=new Map();const $=id=>{if(!nodes.has(id))nodes.set(id,{value:'',textContent:'',hidden:true,disabled:false,readOnly:false,children:[],listeners:{},addEventListener(k,f){this.listeners[k]=f},contains(n){return this===n},focus(){},setAttribute(k,v){this[k]=v},append(o){this.children.push(o)}});return nodes.get(id)};
  const instances=[];class Recognition{constructor(){instances.push(this)}start(){if(this.fail)throw Error('fixture')}stop(){this.stopped=true}abort(){this.aborted=true}}

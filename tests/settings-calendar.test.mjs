@@ -58,7 +58,7 @@ const end = js.slice(js.indexOf("$('end-session').onclick"), js.indexOf('/* ====
 assert.doesNotMatch(end, /localStorage\.removeItem/, 'ending a session keeps journeys, calendar and My Life');
 /* Listen and dictation: stop controls, and dictation never sends by itself */
 assert.match(js, /■ Stop/); assert.match(html, /id="dict-stop"/); assert.match(html, /id="dict-cancel"/);
-const dict = js.slice(js.indexOf('/* ===== Dictation'), js.indexOf('/* Help: always'));
+const dict = js.slice(js.indexOf('/* ===== Dictation'), js.indexOf('/* Help remains'));
 assert.doesNotMatch(dict, /requestSubmit|\.submit\(/, 'dictated text is edited and sent by the person');
 assert.match(dict, /Orivia receives the text only when you press Send/);
 console.log('Settings and Calendar: tone, guide suggestions, theme override, safe reminders: passed');

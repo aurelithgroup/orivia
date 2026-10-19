@@ -412,7 +412,7 @@
     "ar": "من أين انتقلت؟"
   },
   "Where are you moving from?": {
-    "fr": "D’où partez-vous ?",
+    "fr": "D’où déménagez-vous ?",
     "ar": "من أين ستنتقل؟"
   },
   "What brings you here?": {
@@ -525,7 +525,7 @@
   },
   "Type its name as you know it. Orivia hasn’t checked it yet.": {
     "fr": "Saisissez le nom que vous connaissez. Orivia ne l’a pas encore vérifié.",
-    "ar": "اكتب الاسم كما تعرفه. لم تتحقّق منه أوريفيا بعد."
+    "ar": "اكتب الاسم كما تعرفه. لم تتحقق منه أوريفيا بعد."
   },
   "Settings and your data": {
     "fr": "Paramètres et données",
@@ -1202,5 +1202,193 @@
   "Cycling": {
     "fr": "À vélo",
     "ar": "بالدراجة"
+  },
+  "Home": {
+    "fr": "Accueil",
+    "ar": "الرئيسية"
+  },
+  "Welcome home": {
+    "fr": "Bienvenue",
+    "ar": "مرحباً بك"
+  },
+  "Good morning": {
+    "fr": "Bonjour",
+    "ar": "صباح الخير"
+  },
+  "Good afternoon": {
+    "fr": "Bon après-midi",
+    "ar": "طاب يومك"
+  },
+  "Good evening": {
+    "fr": "Bonsoir",
+    "ar": "مساء الخير"
+  },
+  "A little more settled, every day.": {
+    "fr": "Un peu plus chez vous, chaque jour.",
+    "ar": "نحو استقرار أكبر، كل يوم."
+  },
+  "Ask Orivia": {
+    "fr": "Demander à Orivia",
+    "ar": "اسأل أوريفيا"
+  },
+  "Open in chat": {
+    "fr": "Ouvrir dans le chat",
+    "ar": "فتح في المحادثة"
+  },
+  "Coming up": {
+    "fr": "À venir",
+    "ar": "قريباً"
+  },
+  "View calendar →": {
+    "fr": "Voir le calendrier →",
+    "ar": "عرض التقويم ←"
+  },
+  "Your next step": {
+    "fr": "Votre prochaine étape",
+    "ar": "خطوتك التالية"
+  },
+  "Pick up where you left off": {
+    "fr": "Reprendre là où vous en étiez",
+    "ar": "تابع من حيث توقفت"
+  },
+  "All chats →": {
+    "fr": "Toutes les discussions →",
+    "ar": "كل المحادثات ←"
+  },
+  "Saved on this device. Accounts and sync are coming later.": {
+    "fr": "Enregistré sur cet appareil. Les comptes et la synchronisation viendront plus tard.",
+    "ar": "محفوظ على هذا الجهاز. الحسابات والمزامنة ستتوفر لاحقاً."
+  },
+  "Your details, in your control.": {
+    "fr": "Vos informations, sous votre contrôle.",
+    "ar": "معلوماتك تحت سيطرتك."
+  },
+  "Your personal space": {
+    "fr": "Votre espace personnel",
+    "ar": "مساحتك الشخصية"
+  },
+  "Saved on this device": {
+    "fr": "Enregistré sur cet appareil",
+    "ar": "محفوظ على هذا الجهاز"
+  },
+  "Edit": {
+    "fr": "Modifier",
+    "ar": "تعديل"
+  },
+  "Living in": {
+    "fr": "Lieu de vie",
+    "ar": "مكان الإقامة"
+  },
+  "Moved from": {
+    "fr": "Lieu de départ",
+    "ar": "انتقلت من"
+  },
+  "Here for": {
+    "fr": "Motif du séjour",
+    "ar": "سبب الإقامة"
+  },
+  "Moving to": {
+    "fr": "Destination",
+    "ar": "تنتقل إلى"
+  },
+  "Not added": {
+    "fr": "Non renseigné",
+    "ar": "لم تتم الإضافة"
+  },
+  "Added by you · not linked": {
+    "fr": "Ajouté par vous · non connecté",
+    "ar": "أضفته بنفسك · غير مرتبط"
+  },
+  "Manage institution": {
+    "fr": "Gérer l’établissement",
+    "ar": "إدارة المؤسسة"
+  },
+  "Saved for later": {
+    "fr": "Gardé pour plus tard",
+    "ar": "محفوظ لوقت لاحق"
+  },
+  "Places": {
+    "fr": "Lieux",
+    "ar": "الأماكن"
+  },
+  "Language, appearance and privacy": {
+    "fr": "Langue, apparence et confidentialité",
+    "ar": "اللغة والمظهر والخصوصية"
+  },
+  "Help and support": {
+    "fr": "Aide et assistance",
+    "ar": "المساعدة والدعم"
+  },
+  "A little breathing room. No upcoming reminders.": {
+    "fr": "Un peu de répit. Aucun rappel à venir.",
+    "ar": "مساحة لالتقاط الأنفاس. لا توجد تذكيرات قادمة."
+  },
+  "Add a reminder": {
+    "fr": "Ajouter un rappel",
+    "ar": "إضافة تذكير"
+  },
+  "Take things one step at a time. Find a guide when you need one.": {
+    "fr": "Avancez à votre rythme. Trouvez un guide quand vous en avez besoin.",
+    "ar": "خطوة بخطوة. ابحث عن دليل عندما تحتاج إليه."
+  },
+  "Explore journeys": {
+    "fr": "Explorer les parcours",
+    "ar": "استكشاف الرحلات"
+  },
+  "Your conversations will be here when you want to return.": {
+    "fr": "Vos discussions vous attendront ici.",
+    "ar": "ستجد محادثاتك هنا عندما ترغب في العودة."
+  },
+  "Start a conversation": {
+    "fr": "Commencer une discussion",
+    "ar": "ابدأ محادثة"
+  },
+  "Paused journey": {
+    "fr": "Parcours en pause",
+    "ar": "رحلة متوقفة مؤقتاً"
+  },
+  "Journey": {
+    "fr": "Parcours",
+    "ar": "رحلة"
+  },
+  "Steps completed": {
+    "fr": "Étapes terminées",
+    "ar": "الخطوات المكتملة"
+  },
+  "Continue your journey →": {
+    "fr": "Continuer votre parcours →",
+    "ar": "تابع رحلتك ←"
+  },
+  "Add your school, college or organisation": {
+    "fr": "Ajoutez votre école ou votre organisme",
+    "ar": "أضف مدرستك أو مؤسستك"
+  },
+  "Optional. You can add this later.": {
+    "fr": "Facultatif. Vous pourrez l’ajouter plus tard.",
+    "ar": "اختياري. يمكنك إضافته لاحقاً."
+  },
+  "Orivia uses this so you don’t have to repeat yourself. You can switch that off in Settings.": {
+    "fr": "Orivia utilise ces détails pour vous éviter de les répéter. Vous pouvez désactiver cela dans les paramètres.",
+    "ar": "تستخدم أوريفيا هذه المعلومات حتى لا تضطر لتكرارها. يمكنك إيقاف ذلك في الإعدادات."
+  },
+  "Orivia isn’t using this right now. You can switch it on in Settings.": {
+    "fr": "Orivia n’utilise pas ces détails actuellement. Vous pouvez activer cela dans les paramètres.",
+    "ar": "لا تستخدم أوريفيا هذه المعلومات حالياً. يمكنك تفعيل ذلك في الإعدادات."
+  },
+  "Saved as you typed it. Orivia hasn’t checked it yet.": {
+    "fr": "Enregistré tel que vous l’avez saisi. Orivia ne l’a pas encore vérifié.",
+    "ar": "حُفظ كما كتبته. لم تتحقق منه أوريفيا بعد."
+  },
+  "Company or organisation": {
+    "fr": "Entreprise ou organisme",
+    "ar": "الشركة أو المؤسسة"
+  },
+  "Choose (optional)": {
+    "fr": "Choisir (facultatif)",
+    "ar": "اختر (اختياري)"
+  },
+  "Type it if it isn’t listed": {
+    "fr": "Saisissez le lieu s’il n’est pas proposé",
+    "ar": "اكتبه إذا لم يكن ضمن القائمة"
   }
 }
