@@ -11,6 +11,9 @@ const swap=(path,content)=>{
 };
 swap('/',fs.readFileSync('workers/trial-ui/page.html','utf8').trim());
 const i18n=fs.readFileSync('workers/trial-ui/i18n.js','utf8').replace('/*__TRANSLATIONS__*/{}',JSON.stringify(JSON.parse(fs.readFileSync('workers/trial-ui/translations.json','utf8'))));
-swap('/chat.js',i18n+'\n'+fs.readFileSync('workers/trial-ui/chat.js','utf8'));
+const photos=JSON.parse(fs.readFileSync('workers/trial-ui/destination-photos.json','utf8'));
+for(const photo of Object.values(photos)){photo.image='data:image/jpeg;base64,'+fs.readFileSync(photo.file).toString('base64');delete photo.file;}
+const chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace('/*__DESTINATION_PHOTOS__*/{}',()=>JSON.stringify(photos));
+swap('/chat.js',i18n+'\n'+chat);
 fs.writeFileSync(W,src);
 console.log('Embedded trial UI into',W);

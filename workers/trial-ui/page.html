@@ -467,7 +467,7 @@ nav.bottom .help-tab{color:var(--ink)}
 .home-welcome:after{content:"";position:absolute;width:105px;height:180px;border-radius:100% 0 100% 0;background:#ffffff08;inset-inline-end:-12px;bottom:-25px;transform:rotate(-20deg);pointer-events:none}
 .home-welcome h1,.life-heading h1{font-family:Georgia,"Times New Roman",serif;font-weight:500;font-size:32px;line-height:1.2;position:relative}
 .home-welcome p{color:#c7d0db;margin-top:10px;font-size:14px}
-.home-ask{margin-top:-48px;position:relative;background:var(--surface);border:1px solid var(--line);box-shadow:0 7px 20px #14213710;border-radius:20px;padding:10px;display:flex;align-items:center;gap:8px}
+.home-ask{z-index:3;margin-top:-48px;position:relative;background:var(--surface);border:1px solid var(--line);box-shadow:0 7px 20px #14213710;border-radius:20px;padding:10px;display:flex;align-items:center;gap:8px}
 .home-ask input{border:0;background:transparent;flex:1;padding:10px 4px;width:0;outline-offset:0}
 .home-ask .btn{width:44px;min-width:44px;padding:8px;border-radius:50%;font-size:20px}
 .home-spark{color:#aa7400;font-size:25px;padding-inline-start:8px}
@@ -487,6 +487,16 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
 @media(max-width:360px){.home-scroll,.life-scroll{padding-inline:14px}.home-welcome{margin-inline:-14px}.home-welcome h1,.life-heading h1{font-size:28px}.dashboard-head h2{font-size:20px}.dashboard-card{padding:14px;gap:10px}nav.bottom button{font-size:10px}}
 
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+
+/* Decorative country photography is bundled; no location or image request leaves the browser. */
+.home-welcome.has-destination{min-height:230px;display:flex;flex-direction:column;justify-content:flex-end;padding-top:70px}
+.home-welcome>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 50%;z-index:0}
+.home-welcome.has-destination:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,24,42,.68),rgba(10,24,42,.18)),linear-gradient(0deg,rgba(10,24,42,.62),rgba(10,24,42,.08));z-index:1}
+.home-welcome.has-destination:after{display:none}
+.home-welcome h1,.home-welcome p,.home-photo-caption{position:relative;z-index:2}.home-welcome p{color:#e4e9f0}
+.home-photo-caption{position:absolute;inset-block-start:17px;inset-inline-end:20px;font-size:10px;color:#fff;background:#101c30a8;border:1px solid #ffffff40;border-radius:99px;padding:5px 9px;max-width:calc(100% - 40px);text-align:end}
+.home-photo-credit{font-size:10px;color:var(--muted);text-align:end;margin-top:-14px}.home-photo-credit a{color:inherit}
 
 </style></head>
 <body><div class="app">
@@ -523,8 +533,9 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
   </div>
  </section>
  <section id="home" class="view" hidden><div class="section home-scroll">
-  <div class="home-welcome"><h1 id="home-greeting">Welcome home</h1><p>A little more settled, every day.</p></div>
+  <div class="home-welcome" id="home-welcome"><img id="home-destination-photo" alt="" decoding="async" hidden><span id="home-destination-caption" class="home-photo-caption" hidden></span><h1 id="home-greeting">Welcome home</h1><p>A little more settled, every day.</p></div>
   <form id="home-ask-form" class="home-ask"><span class="home-spark" aria-hidden="true">✦</span><label for="home-question" class="sr-only">Ask Orivia</label><input id="home-question" placeholder="What can I help you with?" maxlength="2000" autocomplete="off"><button type="submit" class="btn" aria-label="Send in a new chat">→</button></form>
+  <p class="home-photo-credit" id="home-photo-credit" hidden><a href="https://unsplash.com/license" target="_blank" rel="noopener noreferrer">Photo: Unsplash</a></p>
   <p id="home-question-status" class="tiny" role="status" hidden></p>
   <section class="dashboard-section" aria-labelledby="home-coming-title"><div class="dashboard-head"><h2 id="home-coming-title">Coming up</h2><button type="button" class="ask" id="home-calendar">View calendar →</button></div><div id="home-coming" class="list"></div></section>
   <section class="dashboard-section" aria-labelledby="home-next-title"><div class="dashboard-head"><h2 id="home-next-title">Your next step</h2></div><div id="home-journey"></div></section>

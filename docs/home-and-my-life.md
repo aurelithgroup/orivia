@@ -30,3 +30,11 @@ The new dashboard labels have English, French and Arabic translations. User-auth
 ## Rollout
 
 Private research pilot only. Replace its embedded UI after matching the deployed UI against the expected base. Retain its current backend, bindings, secrets, service switches and limits; the public beta is not deployed.
+
+## Destination greeting photography
+
+The first photo set is country-level: Dubai for the UAE and London for the UK, explicitly captioned with the photographed city. It does not claim to depict every saved city. For a person who has not moved yet, the saved destination is used, never their origin. Unknown destinations retain the navy artwork. The moving greeting says “Your next chapter” plus the country.
+
+The two JPEGs are bundled into the existing chat script at build time by `tools/embed-trial-ui.mjs`. There is no external image request, search, geolocation, API key or additional paid service. They total about 178 KB before base64 encoding. Image errors restore the navy background. More exact city photography can be added later.
+
+Asset sources and license are recorded in `workers/trial-ui/destination-photos.json`; images are from Unsplash under https://unsplash.com/license (checked 19 October 2026). The downloaded images were resized and recompressed, with metadata removed, for this greeting. A Photo: Unsplash credit is shown. No photographer identity is guessed.

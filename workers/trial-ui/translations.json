@@ -1402,5 +1402,29 @@
   "Please wait a moment, then send again. Your message is still here.": {
     "fr": "Patientez un instant, puis réessayez. Votre message est conservé ici.",
     "ar": "انتظر قليلاً ثم أرسل مجدداً. رسالتك ما زالت هنا."
+  },
+  "Your next chapter": {
+    "fr": "Votre prochain chapitre",
+    "ar": "فصلك القادم"
+  },
+  "United Arab Emirates": {
+    "fr": "Émirats arabes unis",
+    "ar": "الإمارات العربية المتحدة"
+  },
+  "United Kingdom": {
+    "fr": "Royaume-Uni",
+    "ar": "المملكة المتحدة"
+  },
+  "Dubai · United Arab Emirates": {
+    "fr": "Dubaï · Émirats arabes unis",
+    "ar": "دبي · الإمارات العربية المتحدة"
+  },
+  "London · United Kingdom": {
+    "fr": "Londres · Royaume-Uni",
+    "ar": "لندن · المملكة المتحدة"
+  },
+  "Photo: Unsplash": {
+    "fr": "Photo : Unsplash",
+    "ar": "الصورة: Unsplash"
   }
 }

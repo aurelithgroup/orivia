@@ -544,6 +544,18 @@ function renderUpcoming(){
  for(const e of next){const b=button('','now-item',()=>tab('calendar'));b.append(icon('M3.5 5h17v15h-17zM3.5 10h17M8 3v4M16 3v4'));const sp=el('span');sp.append(el('strong','',e.title),el('small','',when(e)));b.append(sp,document.createTextNode('›'));root.append(b)}
  if(!next.length)root.append(button('+ Add a reminder','ask',()=>{tab('calendar');openAdd()}));
 }
+/* Build-time country photos. Saved location stays on this device; no photo search or geolocation. */
+const DESTINATION_PHOTOS=/*__DESTINATION_PHOTOS__*/{};
+function homeCountry(profile){return profile?.here==='away'?(['uae','uk'].includes(profile.dest)?profile.dest:null):(['uae','uk'].includes(profile?.here)?profile.here:null)}
+function renderHomeDestination(profile){
+ const key=homeCountry(profile),photo=key?DESTINATION_PHOTOS[key]:null,hero=$('home-welcome'),img=$('home-destination-photo'),caption=$('home-destination-caption');
+ if(!photo){img.hidden=true;img.removeAttribute('src');hero.classList.remove('has-destination');caption.hidden=true;$('home-photo-credit').hidden=true;return}
+ img.onerror=()=>{img.hidden=true;hero.classList.remove('has-destination');caption.hidden=true;$('home-photo-credit').hidden=true};
+ if(img.getAttribute('src')!==photo.image)img.src=photo.image;
+ img.hidden=false;hero.classList.add('has-destination');caption.textContent=uiText(photo.caption);caption.hidden=false;$('home-photo-credit').hidden=false;
+ if(profile.here==='away')$('home-greeting').textContent=uiText('Your next chapter')+': '+uiText(photo.country);
+}
+
 /* Dashboard reads the same local records as Calendar, Journeys and Chats. No sample data or new requests. */
 function dashboardRecords(now=Date.now()){
  loadEvents();
@@ -561,6 +573,7 @@ function dashboardCard(title,subtitle,action,symbol='›'){
 function renderHome(){
  const root=$('home');if(!root)return;
  const hour=new Date().getHours();$('home-greeting').textContent=uiText(hour<12?'Good morning':hour<18?'Good afternoon':'Good evening');
+ renderHomeDestination(migrateProfile(readProfile()||{}));
  const data=dashboardRecords(),coming=$('home-coming'),journey=$('home-journey'),recent=$('home-recent');coming.replaceChildren();journey.replaceChildren();recent.replaceChildren();
  for(const e of data.upcoming){
   const date=new Date(e.at),b=dashboardCard(e.title,when(e),()=>{tab('calendar');selectedDay=dayKey(date);renderEvents()}),tile=el('span','dashboard-date');
