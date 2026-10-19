@@ -8,8 +8,8 @@ export function calendarChangeProposal(v){
  if(time&&!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time))return null;
  return {kind:v.kind,target:str(v.target,100),date:date||null,time:time||null,title:str(v.title,100)||null,question:str(v.question,180),needsTime:v.needsTime===true,needsDate:v.needsDate===true};
 }
-export function calendarChangeReply(proposal,memory){
- return {reply:'Review the saved reminder below before confirming the change.',calendarChange:proposal,
+export function calendarChangeReply(proposal,memory,{supported=true}={}){
+ return {reply:supported?'Review the saved reminder below before confirming the change.':'This tab needs refreshing to show the reminder editor. Refresh the page, then ask for the change again. Nothing has been changed.',...(supported?{calendarChange:proposal}:{}),
  verifiedSources:[],liveSources:[],actions:[],liveInformation:false,liveJourneyData:false,
  research:{assistant:true,status:'answered',claims:[],unresolved:[],taskContext:{task:{assistant:memory}}}};
 }

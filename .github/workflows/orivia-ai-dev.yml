@@ -34,6 +34,8 @@ jobs:
         run: node tests/dictation.test.mjs
       - name: Conversational calendar changes
         run: node tests/calendar-changes.test.mjs
+      - name: Legacy calendar routing
+        run: node tests/inline-calendar-routing.test.mjs
       - name: Buddy rule and conversation regression tests
         run: node tests/buddy-smoke.js
       - name: Secure AI bridge tests

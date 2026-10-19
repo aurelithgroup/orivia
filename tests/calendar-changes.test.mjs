@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {calendarChangeProposal} from '../workers/orivia-calendar-change.mjs';
+import {calendarChangeProposal,calendarChangeReply} from '../workers/orivia-calendar-change.mjs';
 import {runAssistantTurn} from '../workers/orivia-assistant.mjs';
 assert.equal(calendarChangeProposal({kind:'update',date:'2027-02-30'}),null);
 assert.equal(calendarChangeProposal({kind:'update',time:'25:00'}),null);
 assert.equal(calendarChangeProposal({kind:'create'}),null);
 assert.equal(calendarChangeProposal({kind:'delete'}).kind,'delete');
+const stale=calendarChangeReply({kind:'update'},{},{supported:false});assert.equal(stale.calendarChange,undefined);assert.match(stale.reply,/needs refreshing/);
 const js=fs.readFileSync('workers/trial-ui/chat.js','utf8');
 const code=js.slice(js.indexOf('// A proposal only.'),js.indexOf('/* The person\'s own clock:'));
 class Node{constructor(tag){this.tag=tag;this.children=[];this.value='';this.textContent=''}append(...n){this.children.push(...n)}replaceChildren(){this.children=[]}setAttribute(){} }
@@ -35,7 +36,7 @@ const bad=setup();bad.raw('{unreadable');const b=bad.card(proposal);assert.ok(!f
 const no=setup(),n=no.card(proposal);find(n.node,x=>x.textContent==='Not now').onclick();assert.equal(n.t.meta.calendarChange.status,'cancelled');assert.equal(no.read()[0].at,first.at);
 // The model gets only conversation and existing allowed research context, never the saved calendar list.
 const prompts=[];const log=console.log;console.log=()=>{};let reply;
-try{reply=await runAssistantTurn({messages:[{role:'user',content:'Move my medical appointment to Friday at 3pm.'}]},{},{ai:{run:async(_m,o)=>{prompts.push(JSON.parse(o.messages[1].content));return {response:JSON.stringify({action:'reply',calendarChange:{kind:'update',target:'medical',time:'15:00'}})}}},fetcher:()=>{throw Error('no search')}})}finally{console.log=log}
+try{reply=await runAssistantTurn({calendarChangeUI:true,messages:[{role:'user',content:'Move my medical appointment to Friday at 3pm.'}]},{},{ai:{run:async(_m,o)=>{prompts.push(JSON.parse(o.messages[1].content));return {response:JSON.stringify({action:'reply',calendarChange:{kind:'update',target:'medical',time:'15:00'}})}}},fetcher:()=>{throw Error('no search')}})}finally{console.log=log}
 assert.equal(reply.calendarChange.time,'15:00');assert.equal(reply.reminder,undefined);assert.match(reply.reply,/Review/);assert.ok(!JSON.stringify(prompts).includes('Bank appointment'));assert.equal(reply.research.assistant,true);
 // An applied edit survives a chat reload, and Undo refuses a subsequent edit.
 const reload=setup(),x=reload.card(proposal);find(x.node,n=>n.textContent==='Save changes').onclick();

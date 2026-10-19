@@ -15,3 +15,9 @@ Deploy as a minimal patch onto the existing live bundle. Its reminder and time-z
 # Deferred Listen work
 
 Founder agreed to test natural AI-generated voices later, not on 19 October. Up to 10 AED/month is allocated within the existing overall budget. Generate a small sample for review before enabling ongoing speech. No speech provider, charge or subscription was enabled as part of this calendar task.
+
+## Follow-up: stale tab and legacy add form
+
+The user saw the review instruction without an edit card, followed by the older add form. The live bundle still contained a separate capture-phase calendar listener. It read the previous request's research-mode flag and treated the word “reminder” as a creation request. The fix reads current consent, removes stale add forms on each submission and excludes edit/delete wording.
+
+New clients advertise calendarChangeUI:1. The assistant hook forwards that capability; a client without it gets an explicit refresh instruction and no invisible editor proposal. A scripted test covers this compatibility path. The missing card in the reported tab could be a client loaded before the new UI; this has not been observed directly in that browser.

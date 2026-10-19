@@ -1354,6 +1354,7 @@ function reminderBox(t){
 }
 /* When this private test offers the OpenAI research mode but it's off on this device, say so in the chat itself (once per
    chat view), with a button that shows what is shared before turning it on. */
+window.oriviaResearchEnabled=()=>!!pilotConsent();
 function researchNotice(){
  $('research-off')?.remove();if(!pilotOffer||pilotConsent())return;
  const n=el('section','remember');n.id='research-off';n.setAttribute('role','note');
@@ -1417,7 +1418,7 @@ $('form').onsubmit=async e=>{
  const chatId=store.active,sentTurns=turns.slice();
  busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';working('Thinking…');window.oriviaResearchMode=!!pilotConsent();
  try{
-  const res=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{now:localNow(),researchContext:currentResearchContext(sentTurns),language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
+  const res=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),researchContext:currentResearchContext(sentTurns),language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
   const {r,d}=await readReply(res,chatId);
   if(!r.ok){
    const why=d&&d.error;

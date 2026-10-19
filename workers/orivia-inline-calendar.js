@@ -33,7 +33,10 @@ export default String.raw`'use strict';
   }
  }
  $('form')?.addEventListener('submit',()=>{
+  $('inline-calendar')?.remove();
+  if(typeof window.oriviaResearchEnabled==='function'?window.oriviaResearchEnabled():window.oriviaResearchMode)return;
   const msg=$('msg')?.value?.trim()||'';
+  if(/\b(change|move|reschedule|cancel|delete|remove|update|instead)\b/i.test(msg))return;
   if(/\b(remind me|reminder|set an? alarm|put .{1,50} on my calendar)\b/i.test(msg))propose(msg);
  },true);
  $('clear')?.addEventListener('click',()=>$('inline-calendar')?.remove());
