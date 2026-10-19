@@ -1182,5 +1182,25 @@
   "Image preview supplied by the source page.": {
     "fr": "Image d’aperçu fournie par la page source.",
     "ar": "صورة المعاينة مأخوذة من صفحة المصدر."
+  },
+  "From": {
+    "fr": "Départ",
+    "ar": "من"
+  },
+  "Driving": {
+    "fr": "En voiture",
+    "ar": "بالسيارة"
+  },
+  "Public transport": {
+    "fr": "Transports en commun",
+    "ar": "المواصلات العامة"
+  },
+  "Walking": {
+    "fr": "À pied",
+    "ar": "سيراً على الأقدام"
+  },
+  "Cycling": {
+    "fr": "À vélo",
+    "ar": "بالدراجة"
   }
 }

@@ -11,6 +11,7 @@
  * Documented in docs/assistant.md.
  */
 import {calendarChangeProposal,calendarChangeReply,currentCalendarRequest} from './orivia-calendar-change.mjs';
+import {planTrip} from './orivia-transport.mjs';
 import {placeImageFromPage,loadPlacePhoto} from './orivia-place-card.mjs';
 import {assistantTiming} from './orivia-assistant-timing.mjs';
 import {makeTools} from './orivia-research-loop.mjs';
@@ -158,7 +159,10 @@ export function checkedHandoff(reply,ledger,conversation='',replyLanguage='en'){
   if(!ev||!name)continue;
   let identityHost='';try{identityHost=new URL(ev.url).hostname.split('.').slice(0,-1).join(' ')}catch(_){}
   const tiedToName=words(name).filter(w=>w.length>=3&&!GENERIC.has(w)).some(w=>identityHost.includes(w));
-  if(!['government','regulator'].includes(ev.kind)&&!(ownSite(ev,name)&&tiedToName))continue;
+  const registered=planTrip([{role:'user',content:'directions to '+name}]).dest;
+  const placeKey=v=>norm(v).replace(/[^\p{L}\p{N}]/gu,'');
+  let registeredHost=false;try{registeredHost=!!registered?.checked&&placeKey(name).includes(placeKey(registered.name))&&new URL(ev.url).hostname.replace(/^www\./,'')===new URL(registered.checked).hostname.replace(/^www\./,'')}catch(_){}
+  if(!['government','regulator'].includes(ev.kind)&&!registeredHost&&!(ownSite(ev,name)&&tiedToName))continue;
   if(!norm(ev.excerpt+' '+ev.title).includes(norm(name)))continue;
   // Address must be a real contiguous passage; a name-only card is a search, never a fabricated pin.
   if(address&&!norm(ev.excerpt).includes(norm(address)))continue;
@@ -336,6 +340,7 @@ Writing the reply (only from the evidence ledger; search snippets are not eviden
 - organisations: cards for the organisations your reply is about (max 8): {"name":"...","kind":"school|bank|clinic|office|organisation","evidence":["E2"],"facts":[{"label":"Curriculum","value":"British","evidence":"E2"}],"contacts":{"phone":{"value":"...","evidence":"E3"},"email":{"value":"...","evidence":"E3"},"website":{"url":"https://...","evidence":"E3"}}}  only values that appear on that evidence page.
 - draft (only when they asked for something written): {"to":"the landlord","channel":"message|email|letter|call script","subject":"<email only>","text":"<the full message, ready to edit and send>"}. Every phone number, email, link, amount or figure in it must come from the conversation or the evidence. Orivia never sends it; the person edits and sends it themselves.
 - showMessage: when the user asks for an in-person message, or you suggest showing a message to a person (shopkeeper, reception, staff, driver...), ALWAYS provide {"texts":{"en":"...","ar":"...","<reply_language if different>":"..."}}. Each is the same short, polite first-person request in that language, ready to show someone in person. This is optional for ordinary chat or email drafts. Use ONLY details the user volunteered in this conversation and verified public facts needed for this request. Never include saved profile data, identifiers, health details, or extra private information unless the user explicitly asks to include it. Keep names/addresses exactly as provided, translate only surrounding words. No new facts, no URLs, no invented locations, no claim that it has been shown or spoken. The user reviews it, chooses a language and taps Listen; nothing is sent.
+- Directions and travel time: preserve the travel mode the USER chose ("by car" means driving, not transit). Do not ask time/cost/reliability when they already chose a mode. You have no live routing or traffic tool: never invent a duration, distance or turn-by-turn route. Say briefly that the map app will show the driving time, then provide a destinations card from a checked destination page. Code will carry the user's stated origin/mode into its map buttons. Do not ask them whether to open Apple or Google Maps; the card lets them choose. Only refer to map buttons if you return a destinations card in this reply.
 - destinations: when you help someone reach a named place, provide up to 3 {"name":"exact name from evidence","address":"exact address passage from that same page, or empty if unavailable","evidence":"E1","description":"optional short exact passage from this page","details":[{"label":"a short label","value":"exact useful detail from this page"}]}. Include only relevant available facts; never invent a rent, travel time, rating or facility to fill the design. Use an official record or the place's own page, not a search snippet/listing. No generated coordinates or map pins; code builds a labelled map search from the sourced name/address. A map search is not a confirmed entrance or walking route. If the destination is ambiguous, explain that and ask which branch; do not pick one silently. Do not research merely to fill optional cards.
 - memory: what to remember for the next turn: {"goal":"...","criteria":[{"name":"curriculum","value":"British"}],"corrections":["..."],"shown":["names already shown"],"shortlist":["..."],"open":["what is still unresolved"],"keep_evidence":["E ids worth keeping for follow-ups"]}
 
@@ -557,6 +562,8 @@ export async function runAssistantTurn({messages,profile=null,context=null,calen
  if(result.kind==='ask')return {reply:result.text,verifiedSources:[],liveSources:[],actions:[],liveInformation:false,liveJourneyData:false,
   research:{status:'needs-context',applicability:'needs-review',claims:[],unresolved:[],assistant:true,progress,taskContext,process:{metrics}}};
  const view=render(result.checked,{region});
+ const plannedTrip=planTrip(msgs);
+ for(const destination of view.destinations||[]){if(plannedTrip.active&&plannedTrip.dest&&norm(destination.name).replace(/[^\p{L}\p{N}]/gu,'').includes(norm(plannedTrip.dest.name).replace(/[^\p{L}\p{N}]/gu,''))){destination.route={origin:plannedTrip.origin||'',mode:plannedTrip.mode||null}}}
  const claims=result.checked.sentences.filter(s=>s.evs.length&&s.kind!=='general').slice(0,6).map(s=>{
   // The cited page whose passage best matches the sentence; a fact (number, contact) is quoted around where it appears.
   const f=factsIn(s.text)[0]?.value;let ev=s.evs[0],quote='';

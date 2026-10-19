@@ -37,14 +37,24 @@ const isOurs=(m,part)=>m?.role==='assistant'&&String(m.content).toLowerCase().in
 export function topicOf(text,answeringTransport=false){
  const t=clean(text);
  if(TRANSPORT.test(t))return 'transport';
- if(MODE.test(t)&&!VISA.test(t))return null;
+ if((MODE.test(t)||travelModeIn(t))&&!VISA.test(t))return null;
  if(VISA.test(t))return 'visa';
+ if(/\bhow (?:long|far)\b/i.test(t))return null;
  if(answeringTransport||CONFUSED.test(t))return null;
  const p=placesIn(t);if(p.origin||p.dest)return null; // "actually I live in Muwaileh" carries on the trip
  if(/\b(time|cost|reliab\w*|fast\w*|quick\w*|cheap\w*)\b/i.test(t)&&t.split(' ').length<=5)return null;
  return t.split(' ').length>=4?'other':null;
 }
 
+export function travelModeIn(text){
+ const s=String(text||'');let selected=null;
+ const pattern=/\b(?:by car|in (?:a|my|the) car|taking (?:a |my |the )?car|driv(?:e|ing)|by taxi|taking (?:a |the )?taxi|by (?:metro|bus|tram|train|public transport)|tak(?:e|ing) (?:the |a )?(?:metro|bus|tram|train)|public transport|on foot|walking|by (?:bike|bicycle)|cycling)\b/gi;
+ for(const m of s.matchAll(pattern)){
+  if(/(?:not|never|don.t|won.t|instead of)\s+(?:go(?:ing)?\s+)?$/.test(s.slice(Math.max(0,m.index-25),m.index).toLowerCase()))continue;
+  selected=/car|driv|taxi/i.test(m[0])?'driving':/foot|walk/i.test(m[0])?'walking':/bike|bicycle|cycling/i.test(m[0])?'bicycling':'transit';
+ }
+ return selected;
+}
 function preferenceIn(text){
  const t=clean(text).toLowerCase();
  if(/\b(reliab\w*|predictab\w*|consistent|on time|dependab\w*)\b/.test(t))return 'reliability';
@@ -105,7 +115,7 @@ export function planTrip(messages,profile){
   if(t&&t!=='transport')break;
   if(t==='transport')start=i;
  }
- const s={origin:'',dest:null,pref:null,asked:{dest:0,origin:0,area:0,pref:0}};
+ const s={origin:'',dest:null,pref:null,mode:null,asked:{dest:0,origin:0,area:0,pref:0}};
  const prof=profile&&typeof profile==='object'?profile:{};
  if(typeof prof.city==='string'&&!/not in the uae|somewhere else/i.test(prof.city)&&prof.city.trim())s.origin=clean(prof.city).slice(0,40),s.originFromProfile=true;
  if(typeof prof.place==='string'&&prof.place.trim()){const u=university(prof.place);s.dest=u?{name:u.name,address:u.address,checked:u.url}:{name:clean(prof.place).slice(0,60)};s.destFromProfile=true}
@@ -121,6 +131,7 @@ export function planTrip(messages,profile){
   if(found.dest){s.dest=found.dest;s.destFromProfile=false}
   if(found.origin){s.origin=found.origin;s.originFromProfile=false;s.areaGiven=!broad(found.origin)}
   if(pref)s.pref=pref;
+  const mode=travelModeIn(text);if(mode)s.mode=mode;
   /* A short answer to the question Orivia just asked */
   const q=lastQuestion||{};lastQuestion=null;
   const question=/\?$/.test(text)||/^(why|what|how|which|who|can|could|do|does|is|are)\b/i.test(text);
@@ -146,7 +157,7 @@ export function planTrip(messages,profile){
  if(!s.dest&&s.asked.dest<2)need.push('dest');
  if(!s.origin&&!s.originUnknown&&!s.asked.origin)need.push('origin');
  if(s.origin&&broad(s.origin)&&!s.areaGiven&&!s.areaSettled&&!s.asked.area)need.push('area');
- if(!s.pref&&!s.asked.pref&&!need.includes('dest'))need.push('pref');
+ if(!s.mode&&!s.pref&&!s.asked.pref&&!need.includes('dest'))need.push('pref');
  const latest=clean(msgs[lastUser].content);
  const confused=CONFUSED.test(latest);
  const offScript=confused||/\?$/.test(latest)&&!TRANSPORT.test(latest); // e.g. "why do you need that?": let the AI answer

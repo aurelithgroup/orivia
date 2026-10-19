@@ -338,11 +338,18 @@ function safeDestinations(value,sources){
   const details=(Array.isArray(d.details)?d.details:[]).slice(0,3).filter(x=>typeof x?.label==='string'&&typeof x.value==='string'&&typeof x.quote==='string'&&x.quote.trim()).map(x=>({label:x.label.slice(0,30),value:x.value.slice(0,100),quote:x.quote.slice(0,120)}));
   const description=typeof d.description==='string'?d.description.slice(0,220):'';
   const image=typeof d.image?.data==='string'&&d.image.data.length<=160100&&/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(d.image.data)&&d.image.sourceUrl===proof.src.url?{data:d.image.data,sourceUrl:d.image.sourceUrl}:null;
-  return name?[{name,address,sourceId:d.sourceId,quote:proof.quote,description,details,image,src:proof.src}]:[];
+  const route=d.route&&typeof d.route.origin==='string'&&['driving','transit','walking','bicycling',null].includes(d.route.mode)?{origin:d.route.origin.slice(0,180),mode:d.route.mode}:null;
+  return name?[{name,address,sourceId:d.sourceId,quote:proof.quote,description,details,image,route,src:proof.src}]:[];
  });
 }
 function mapSearchLinks(destination){
  const query=destination.name+(destination.address?', '+destination.address:'');
+ if(destination.route){
+  const r=destination.route,google=new URLSearchParams({api:'1',destination:query}),apple=new URLSearchParams({daddr:query});
+  if(r.origin){google.set('origin',r.origin);apple.set('saddr',r.origin)}
+  if(r.mode){google.set('travelmode',r.mode);const flag={driving:'d',transit:'r',walking:'w'}[r.mode];if(flag)apple.set('dirflg',flag)}
+  return {google:'https://www.google.com/maps/dir/?'+google,apple:r.mode==='bicycling'?'':'https://maps.apple.com/?'+apple};
+ }
  return {google:'https://www.google.com/maps/search/?'+new URLSearchParams({api:'1',query}),apple:'https://maps.apple.com/?'+new URLSearchParams({q:query})};
 }
 function placeIdentity(d){return d.sourceId+'|'+d.name}
@@ -356,12 +363,14 @@ function destinationCards(items,sources,turn=null){
   const badge=el('span','place-badge',uiText(d.src.category==='official'?'Official source':'Organisation source'));hero.append(badge);
   const body=el('div','place-body');body.append(el('small','place-eyebrow',uiText('Your destination')),el('h3','place-name',d.name));
   if(d.address){const address=el('p','place-address',d.address);address.dir='auto';body.append(address)}
+  if(d.route?.origin)body.append(el('p','place-address',uiText('From')+': '+d.route.origin));
+  if(d.route?.mode)body.append(el('p','tiny',uiText({driving:'Driving',transit:'Public transport',walking:'Walking',bicycling:'Cycling'}[d.route.mode])));
   if(d.description)body.append(el('p','place-description',d.description));
   if(d.details.length){const tags=el('div','place-facts');for(const detail of d.details){const tag=el('div','place-fact');tag.append(el('small','',uiText(detail.label)),el('strong','',detail.value));tags.append(tag)}body.append(tags)}
   const actions=el('div','place-actions'),maps=el('div','place-map-choice');maps.hidden=true;maps.setAttribute('role','group');maps.setAttribute('aria-label',uiText('Choose your map app'));
   const go=button('Take me there →','btn place-go',()=>{maps.hidden=!maps.hidden;go.setAttribute('aria-expanded',String(!maps.hidden))});go.setAttribute('aria-expanded','false');
   maps.append(el('p','tiny',uiText('Choose your map app')));
-  for(const [label,url]of [['Google Maps',links.google],['Apple Maps',links.apple]]){const a=el('a','btn quiet small',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';maps.append(a)}
+  for(const [label,url]of [['Google Maps',links.google],['Apple Maps',links.apple]]){if(!url)continue;const a=el('a','btn quiet small',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';maps.append(a)}
   const saved=()=>Array.isArray(turn?.meta?.savedPlaces)&&turn.meta.savedPlaces.includes(placeIdentity(d));
   const pin=button(saved()?'♥ Saved':'♡ Save','btn place-save',()=>{
    if(!turn)return;turn.meta=turn.meta||{};const ids=new Set(Array.isArray(turn.meta.savedPlaces)?turn.meta.savedPlaces:[]);ids.has(placeIdentity(d))?ids.delete(placeIdentity(d)):ids.add(placeIdentity(d));turn.meta.savedPlaces=[...ids];

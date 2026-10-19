@@ -24,6 +24,8 @@ jobs:
         run: node tests/spea-directory-feed.test.mjs
       - name: OpenAI private pilot transport (offline only)
         run: node tests/openai-pilot.test.mjs
+      - name: Trips through assistant destination cards (scripted)
+        run: node tests/transport-assistant-card.test.mjs
       - name: Visual destination cards (offline)
         run: node tests/place-card.test.mjs
       - name: In-person messages and maps (scripted)
