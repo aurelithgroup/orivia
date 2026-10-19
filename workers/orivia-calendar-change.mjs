@@ -13,3 +13,14 @@ export function calendarChangeReply(proposal,memory,{supported=true}={}){
  verifiedSources:[],liveSources:[],actions:[],liveInformation:false,liveJourneyData:false,
  research:{assistant:true,status:'answered',claims:[],unresolved:[],taskContext:{task:{assistant:memory}}}};
 }
+
+// A calendar proposal must be grounded in this turn, never just an old request in memory.
+export function currentCalendarRequest(value,messages){
+ const latest=[...(messages||[])].reverse().find(m=>m.role==='user')?.content||'';
+ const normal=s=>String(s).normalize('NFKC').toLowerCase().replace(/[’']/g,' ').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+ const now=normal(latest),quote=normal(value?.requestQuote||'');
+ if(!quote||!now.includes(quote))return false;
+ // These are feedback or requests for help, not consent to revive an old edit.
+ const feedback=/^(?:what|what do you mean|huh|i (?:am|m) (?:lost|confused)|i need help|help|quoi|comment|hein|je (?:suis (?:perdu|perdue|perdus|perdues)|ne comprends pas)|j ai besoin d aide|aide moi|aidez moi|ماذا|ماذا تقصد|لم أفهم|لا أفهم|انا ضائع|أنا ضائع|أنا تائه|انا تائه|احتاج مساعدة|أحتاج مساعدة)$/u;
+ return !feedback.test(now);
+}
