@@ -32,6 +32,13 @@ button:focus-visible,a:focus-visible,textarea:focus-visible,input:focus-visible,
 #intro input{width:22px;height:22px;margin-top:2px}
 #workspace{flex:1;min-height:0;display:flex;flex-direction:column}
 .view{flex:1;min-height:0;display:flex;flex-direction:column}
+/* Arabic UI: logical alignment; numbers, URLs and editable content keep their own direction. */
+[dir="rtl"] .bubble{border-radius:18px 18px 6px 18px}
+[dir="rtl"] .bubble.user{border-radius:18px 18px 18px 6px}
+[dir="rtl"] .drawer{inset-inline-start:0;inset-inline-end:auto}
+[dir="rtl"] input[type="date"],[dir="rtl"] input[type="time"],a[href^="tel:"],a[href^="mailto:"],.source-button-host{direction:ltr;unicode-bidi:isolate}
+.bubble>span{unicode-bidi:plaintext}
+#app-language,#welcome-language{min-height:44px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px;font:inherit}
 /* Chat */
 #chat{min-height:0}
 .chat-scroll{flex:1;min-height:0;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
@@ -424,6 +431,7 @@ nav.bottom .help-tab{color:var(--ink)}
 <header class="top"><button type="button" id="open-chats" class="gear menu-btn" aria-label="Chats" aria-haspopup="dialog" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button><span class="brand" role="img" aria-label="Orivia"><svg class="brand-mark" viewBox="0 0 306 310" aria-hidden="true"><path fill="currentColor" d="M0 0 L0 168 C0 248 60 302 136 308 L136 160 C136 70 78 4 0 0 Z"/><path fill="var(--amber)" d="M160 308 L160 190 C160 108 222 44 306 40 L306 172 C306 254 240 302 160 308 Z"/></svg><span class="wordmark" aria-hidden="true">ORIVIA</span></span><span class="chip" data-public="Beta">Private AI trial</span><span class="top-title" id="view-title"></span><button type="button" id="open-settings" class="gear" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>
 <main>
 <section id="intro" class="pad">
+ <label for="welcome-language">App language</label><select id="welcome-language" aria-label="App language"><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option></select>
  <h1>Hi, I’m Orivia.</h1>
  <p>Talk to me about real life here: settling in, getting around, plans and reminders. I’ll help you work out what comes next.</p>
  <div class="card"><p>I agree to send my messages and recent conversation to Cloudflare Workers AI. Your chats are saved in this browser on this device so you can come back to them. They aren’t stored in Orivia’s database. For web research, general search terms are sent to Brave Search, not your full conversation or ID numbers.</p>
@@ -447,7 +455,7 @@ nav.bottom .help-tab{color:var(--ink)}
   <div class="composer-wrap">
    <div id="mic-language-menu" class="mic-language-menu" role="dialog" aria-label="Voice typing language" hidden><div class="row"><label for="dict-language-shortcut">Voice typing language</label><button type="button" id="mic-language-close" class="btn text small" aria-label="Close voice language menu">✕</button></div><select id="dict-language-shortcut" class="dict-language-select"></select></div>
    <div id="listening" class="listening" hidden role="status"><span class="dot" aria-hidden="true"></span><span id="listening-text">Listening… speak now</span><button type="button" class="btn small" id="dict-stop">Stop</button><button type="button" class="btn text small" id="dict-cancel">Cancel</button></div>
-   <form id="form"><label for="msg">Your message</label><textarea id="msg" rows="1" maxlength="900" required placeholder="Message Orivia…"></textarea><button id="mic" type="button" aria-label="Speak your message" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button id="send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
+   <form id="form"><label for="msg">Your message</label><textarea dir="auto" id="msg" rows="1" maxlength="900" required placeholder="Message Orivia…"></textarea><button id="mic" type="button" aria-label="Speak your message" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button id="send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
    <p id="status" role="status"></p>
    <div id="storage-warn" class="storage-warn" role="alert" hidden><p id="storage-warn-text"></p><button type="button" id="storage-manage" class="btn small">Manage chats</button></div>
   </div>
@@ -514,6 +522,7 @@ nav.bottom .help-tab{color:var(--ink)}
  <section id="settings-view" class="view" hidden><div class="pad section" style="overflow:auto">
   <div class="jhead"><button type="button" class="ask" id="settings-back">← Back</button></div>
   <h2>Settings</h2>
+  <section class="set-group"><h3>App language</h3><label for="app-language">App language</label><select id="app-language" aria-label="App language"><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option></select></section>
   <section class="set-group"><h3>Appearance</h3>
    <div class="set-row"><span>Theme</span><div class="seg" id="set-theme" role="radiogroup" aria-label="Theme"></div></div>
    <div class="set-row"><span>Text size</span><div class="seg" id="set-size" role="radiogroup" aria-label="Text size"></div></div>

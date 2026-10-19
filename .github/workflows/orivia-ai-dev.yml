@@ -36,6 +36,8 @@ jobs:
         run: node tests/calendar-changes.test.mjs
       - name: Legacy calendar routing
         run: node tests/inline-calendar-routing.test.mjs
+      - name: French and Arabic UI
+        run: node tests/i18n.test.mjs
       - name: Buddy rule and conversation regression tests
         run: node tests/buddy-smoke.js
       - name: Secure AI bridge tests

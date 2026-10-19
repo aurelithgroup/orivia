@@ -70,7 +70,7 @@ assert.equal(spoken(F['evidence-found'].reply).includes('https'), false); assert
  const document={createElement:tag=>new Element(tag)};
  const el=(tag,cls='',text='')=>{const n=document.createElement(tag);n.className=cls;n.textContent=text;return n};
  const constants=js.slice(js.indexOf('const RESEARCH_NOTE='),js.indexOf('function researchBlock('));
- const render=new Function('document','el',constants+grab('researchBlock')+';return researchBlock')(document,el);
+ const render=new Function('document','el','uiText','uiLanguage',constants+grab('researchBlock')+';return researchBlock')(document,el,v=>v,()=> 'en');
  const find=(root,p)=>[...(p(root)?[root]:[]),...root.children.flatMap(n=>find(n,p))];
  const sources=safeSources(F['school-list'].liveSources),research=safeResearch(F['school-list'].research);
  const block=render(sources,research),pills=find(block,n=>n.className==='source-button');

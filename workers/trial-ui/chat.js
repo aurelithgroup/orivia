@@ -3,6 +3,8 @@
 const key='orivia-ai-private-turns',ck='orivia-ai-private-consent',eventKey='orivia-private-events-v1',profileKey='orivia-private-profile-v1';
 let turns=[],busy=false,events=[];
 const $=id=>document.getElementById(id);
+function uiText(value){return window.OriviaI18n?.text(value)??value}
+function uiLanguage(){return window.OriviaI18n?.language()||'en'}
 const TITLES={chat:'',calendar:'Calendar',journeys:'Journeys',mylife:'My Life',guide:'Journeys',settings:'Settings'};
 function show(){
  $('intro').hidden=true;$('workspace').hidden=false;$('nav').hidden=false;$('open-settings').hidden=false;$('open-chats').hidden=false;
@@ -79,7 +81,7 @@ function clearChatCards(){resources([]);for(const id of ['guide-offer','remember
 function openChat(id){stopSpeaking();stopDictation(false);store.active=id;persist();const c=activeChat();turns=c?c.turns.slice():[];clearChatCards();draw();closeChats();tab('chat')}
 function newChat(){stopSpeaking();stopDictation(false);store.active=null;persist();turns=[];clearChatCards();draw();closeChats();tab('chat');$('msg').focus()}
 function whenShort(t){const d=new Date(t),now=new Date();const same=d.toDateString()===now.toDateString();const y=new Date(now);y.setDate(now.getDate()-1);
- return same?d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):d.toDateString()===y.toDateString()?'Yesterday':d.toLocaleDateString(undefined,{day:'numeric',month:'short'})}
+ return same?d.toLocaleTimeString(uiLanguage(),{hour:'numeric',minute:'2-digit'}):d.toDateString()===y.toDateString()?'Yesterday':d.toLocaleDateString(uiLanguage(),{day:'numeric',month:'short'})}
 function chatRow(c){
  const row=el('div','chat-row'+(c.id===store.active?' active':''));
  const line=el('div','chat-line');
@@ -90,14 +92,14 @@ function chatRow(c){
  const menu=el('div','row menu');menu.hidden=true;
  menu.append(button('Rename','btn quiet small',()=>{
   const f=document.createElement('form');f.className='chat-rename';const inp=document.createElement('input');inp.value=c.title;inp.maxLength=80;inp.setAttribute('aria-label','Chat name');
-  const ok=el('button','btn small','Save');ok.type='submit';f.append(inp,ok,button('Cancel','btn text small',()=>renderChats()));
+  const ok=el('button','btn small',uiText('Save'));ok.type='submit';f.append(inp,ok,button('Cancel','btn text small',()=>renderChats()));
   f.onsubmit=e=>{e.preventDefault();const v=inp.value.replace(/\s+/g,' ').trim();if(v){c.title=v.slice(0,80);c.titled=true;persist()}renderChats()};
   row.replaceChildren(f);inp.focus();inp.select();
  }));
  menu.append(button(c.pinned?'Unpin':'Pin','btn quiet small',()=>{c.pinned=!c.pinned;persist();renderChats()}));
  menu.append(button(c.archived?'Unarchive':'Archive','btn quiet small',()=>{c.archived=!c.archived;if(c.archived&&c.id===store.active){store.active=null;turns=[];clearChatCards();draw()}persist();renderChats()}));
  const del=button('Delete','btn text small danger',()=>{
-  if(del.dataset.sure!=='1'){del.dataset.sure='1';del.textContent='Tap again to delete this chat for good';return}
+  if(del.dataset.sure!=='1'){del.dataset.sure='1';del.textContent=uiText('Tap again to delete this chat for good');return}
   store.chats=store.chats.filter(x=>x!==c);if(c.id===store.active){store.active=null;turns=[];clearChatCards();draw()}persist();renderChats();
  });
  menu.append(del);row.append(menu);return row;
@@ -107,11 +109,11 @@ function renderChats(){
  const by=(a,b)=>b.updated-a.updated;
  const live=store.chats.filter(c=>!c.archived&&c.turns.length),pinned=live.filter(c=>c.pinned).sort(by),recent=live.filter(c=>!c.pinned).sort(by),archived=store.chats.filter(c=>c.archived&&c.turns.length).sort(by);
  list.replaceChildren();
- if(pinned.length){list.append(el('p','chat-group','Pinned'));for(const c of pinned)list.append(chatRow(c))}
- if(recent.length){list.append(el('p','chat-group','Recent'));for(const c of recent)list.append(chatRow(c))}
- if(!live.length)list.append(el('p','notice','No saved chats yet. Start one and it will appear here.'));
+ if(pinned.length){list.append(el('p','chat-group',uiText('Pinned')));for(const c of pinned)list.append(chatRow(c))}
+ if(recent.length){list.append(el('p','chat-group',uiText('Recent')));for(const c of recent)list.append(chatRow(c))}
+ if(!live.length)list.append(el('p','notice',uiText('No saved chats yet. Start one and it will appear here.')));
  arch.replaceChildren();for(const c of archived)arch.append(chatRow(c));
- if(!archived.length)arch.append(el('p','tiny','Archived chats are kept here until you delete them.'));
+ if(!archived.length)arch.append(el('p','tiny',uiText('Archived chats are kept here until you delete them.')));
  $('archived-count').textContent=String(archived.length);
 }
 let chatsReturnFocus=null;
@@ -206,11 +208,11 @@ function placeDetails(o,ui,repaint){
 }
 function factLine(o){const pick=k=>o.facts.find(f=>f.key===k)?.value;return [pick('curriculum'),pick('grades'),pick('area'),pick('rating')].filter(Boolean).join(' · ')||o.facts.slice(0,3).map(f=>f.value).join(' · ')}
 function orgEvidence(o){
- const d=document.createElement('details');d.className='org-evidence';d.append(el('summary','','Sources and evidence'));
+ const d=document.createElement('details');d.className='org-evidence';d.append(el('summary','',uiText('Sources and evidence')));
  const items=[...o.facts.map(f=>[f.label,f.value,f]),...['phone','email','website','directions'].filter(k=>o.contacts[k]).map(k=>[{phone:'Phone',email:'Email',website:'Website',directions:'Location'}[k],o.contacts[k].value||o.contacts[k].label||o.contacts[k].url,o.contacts[k]])];
  const ul=el('ul','org-quotes');
  for(const [label,value,x] of items){const li=el('li');li.append(el('span','q-label',label+': '+value),el('blockquote','','“'+x.quote+'”'));const a=el('a','src-mini',x.src.title+' · '+x.src.host+' ↗');a.href=x.src.url;a.target='_blank';a.rel='noopener noreferrer';li.append(a);ul.append(li)}
- d.append(ul,el('p','tiny','Quotes are copied from the page Orivia opened. They support each detail but don’t guarantee it applies to you.'));
+ d.append(ul,el('p','tiny',uiText('Quotes are copied from the page Orivia opened. They support each detail but don’t guarantee it applies to you.')));
  return d;
 }
 // B: help getting in touch. Only the channels the data supports appear as tabs.
@@ -222,13 +224,13 @@ function reachOut(o,mode,onClose){
   for(const b of tabs.children){const on=b.dataset.mode===m;b.setAttribute('aria-selected',String(on));b.classList.toggle('on',on)}
   panel.replaceChildren();
   if(m==='email'){const d=emailDraft(o);
-   panel.append(el('p','tiny','Orivia drafts it. You check it and send it from your own email app.'));
+   panel.append(el('p','tiny',uiText('Orivia drafts it. You check it and send it from your own email app.')));
    const pre=el('div','org-draft');pre.append(el('div','org-subject','Subject: '+d.subject),el('div','org-body',d.body));panel.append(pre);
-   const row=el('div','org-row');row.append(actLink('Open draft in my email app',mailHref(o),'mail','btn org-primary'),button('Copy','btn quiet small',async e=>{try{await navigator.clipboard.writeText('Subject: '+d.subject+'\n\n'+d.body);e.target.textContent='Copied'}catch(_){e.target.textContent='Couldn’t copy'}}));panel.append(row);
+   const row=el('div','org-row');row.append(actLink('Open draft in my email app',mailHref(o),'mail','btn org-primary'),button('Copy','btn quiet small',async e=>{try{await navigator.clipboard.writeText('Subject: '+d.subject+'\n\n'+d.body);e.target.textContent=uiText('Copied')}catch(_){e.target.textContent='Couldn’t copy'}}));panel.append(row);
   }else{
    const ol=el('ol','org-script');for(const line of phoneScript(o))ol.append(el('li','','“'+line+'”'));panel.append(ol);
    if(o.contacts.phone){const row=el('div','org-row');row.append(actLink('Call '+o.contacts.phone.value,telHref(o.contacts.phone.value),'phone','btn org-primary'));panel.append(row)}
-   else panel.append(el('p','tiny','I couldn’t confirm a phone number from the source, so there’s no call button.'));
+   else panel.append(el('p','tiny',uiText('I couldn’t confirm a phone number from the source, so there’s no call button.')));
   }
  };
  for(const [m,label] of modes){const b=button(label,'org-tab',()=>show(m));b.dataset.mode=m;b.setAttribute('role','tab');tabs.append(b)}
@@ -237,7 +239,7 @@ function reachOut(o,mode,onClose){
 }
 // C: help deciding. Offers only actions the data supports.
 function chooseNext(o,open){
- const box=el('div','org-choose');box.append(el('p','org-q','What would you like to do next?'),el('p','tiny','Pick one and I’ll help you through it.'));
+ const box=el('div','org-choose');box.append(el('p','org-q',uiText('What would you like to do next?')),el('p','tiny',uiText('Pick one and I’ll help you through it.')));
  const list=el('div','org-choices');
  const choice=(title,sub,ic,node)=>{node.classList.add('org-choice');node.replaceChildren(el('span','org-choice-ic'),el('span','org-choice-t'));node.firstChild.append(orgIcon(ic));node.lastChild.append(el('strong','',title),el('span','',sub));node.append(orgIcon('next'));list.append(node)};
  if(o.contacts.phone)choice('Call them','I’ll give you what to say first','phone',button('','',()=>open('phone')));
@@ -253,7 +255,7 @@ function orgCard(o,ui,{back,onDismiss}={}){
  if(back)card.append(back);
  const head=el('div','org-head');
  const badge=el('span','org-badge '+(o.src.kind==='Official source'?'official':'org'));badge.append(el('span','',o.src.kind+' · '+o.src.host.replace(/^www\./,'')));head.append(badge);
- if(o.fixture)head.append(el('span','org-fixture','Sample data'));
+ if(o.fixture)head.append(el('span','org-fixture',uiText('Sample data')));
  const h=el('h3','org-name',o.name);card.append(head,h);
  // Every chip says what it is unless the value already does ("British curriculum" vs "Fees from: AED 73,595").
  if(o.facts.length){const chips=el('div','org-chips');for(const f of o.facts){const plain=/^(area|location|address|curriculum|type|district|neighbourhood|emirate|city)$/i.test(f.label)||(/[a-z]{3,}/i.test(f.value)&&f.value.length>18);chips.append(el('span','org-chip'+(f.key==='rating'?' good':''),plain?f.value:f.label+': '+f.value))}card.append(chips)}
@@ -304,7 +306,7 @@ function orgCards(t,srcs){
    const main=button('','pl-main',()=>{ui.open=open?null:o.id;ui.reach=null;paint()});main.setAttribute('aria-expanded',String(open));
    const text=el('span','pl-text');text.append(el('strong','pl-name',o.name));
    const sum=summaryLine(o);if(sum)text.append(el('span','pl-sub',sum));
-   const tags=el('span','pl-tags');tags.append(srcTag(o.src));if(o.fixture)tags.append(el('span','org-fixture','Sample data'));text.append(tags);
+   const tags=el('span','pl-tags');tags.append(srcTag(o.src));if(o.fixture)tags.append(el('span','org-fixture',uiText('Sample data')));text.append(tags);
    main.append(el('span','pl-num',String(i+1)),text);
    const quick=el('div','pl-quick');
    if(o.contacts.phone){const c=el('a','pl-icon');c.href=telHref(o.contacts.phone.value);c.setAttribute('aria-label','Call '+o.name);c.append(orgIcon('phone'));quick.append(c)}
@@ -332,7 +334,7 @@ function draw({newReply=null,scroll=false}={}){
  const follow=scroll||renderedChat!==store.active||nearChatBottom(sc);
  renderedChat=store.active;
  const el=$('history');el.replaceChildren();
- for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant')+(t===newReply?' reply-arriving':'');const b=document.createElement('b');b.textContent=t.role==='user'?'You':'Orivia';const txt=document.createElement('span');
+ for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant')+(t===newReply?' reply-arriving':'');const b=document.createElement('b');b.textContent=uiText(t.role==='user'?'You':'Orivia');const txt=document.createElement('span');
   const srcs=t.role==='assistant'?safeSources(t.meta&&t.meta.sources):[];
   if(srcs.length)txt.append(...citedText(t.content,srcs));else txt.textContent=t.content;p.append(b,txt);
   const cards=t.role==='assistant'&&t.meta&&t.meta.organisations?orgCards(t,srcs):null;
@@ -344,7 +346,7 @@ function draw({newReply=null,scroll=false}={}){
    const rb=researchBlock(srcs,t.meta.research);
    p.append(rb);
   }
-  if(t.role==='assistant'&&'speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent='▶ Listen';lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label','Listen to this reply');lb.onclick=()=>listen(spokenText(t.content),lb);p.append(document.createElement('br'),lb)}
+  if(t.role==='assistant'&&'speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent=uiText('▶ Listen');lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label','Listen to this reply');lb.onclick=()=>listen(spokenText(t.content),lb);p.append(document.createElement('br'),lb)}
   el.append(p)}
  $('empty').hidden=turns.length>0;
  sc.scrollTop=follow?sc.scrollHeight:previousTop;
@@ -362,7 +364,7 @@ function googleEvent(e){
    It is only in their calendar once they confirm there: Orivia never assumes it was accepted. */
 const ALARMS=[[0,'At the time'],[10,'10 minutes before'],[30,'30 minutes before'],[60,'1 hour before'],[1440,'1 day before']];
 function deviceCalendarUrl(e){const alarm=ALARMS.some(([m])=>m===e.alarm)?e.alarm:30;return '/reminder.ics?'+new URLSearchParams({title:e.title,when:new Date(e.at).toISOString(),alarm:String(alarm)}).toString()}
-const when=e=>new Date(e.at).toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+const when=e=>new Date(e.at).toLocaleString(uiLanguage(),{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
 /* Calendar: a week strip (dots on days with something) and an agenda grouped by when */
 let weekOffset=0,selectedDay=null;
 const dayKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -370,15 +372,15 @@ const startOfDay=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x};
 function removeEvent(id){events=events.filter(x=>x.id!==id);storeEvents();renderEvents();renderUpcoming()}
 function eventRow(e,past){
  const d=new Date(e.at),row=el('article','ev'+(past?' past':''));
- const t=el('div','t');const time=d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});const m=time.match(/^(.*?)\s*([AaPp]\.?[Mm]\.?)$/);
- t.append(el('b','',m?m[1]:time),el('small','',m?m[2]:d.toLocaleDateString(undefined,{weekday:'short'})));
- const b=el('div','b');b.append(el('strong','',e.title),el('span','tiny',d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})+' · saved in Orivia'));
+ const t=el('div','t');const time=d.toLocaleTimeString(uiLanguage(),{hour:'numeric',minute:'2-digit'});const m=time.match(/^(.*?)\s*([AaPp]\.?[Mm]\.?)$/);
+ t.append(el('b','',m?m[1]:time),el('small','',m?m[2]:d.toLocaleDateString(uiLanguage(),{weekday:'short'})));
+ const b=el('div','b');b.append(el('strong','',e.title),el('span','tiny',d.toLocaleDateString(uiLanguage(),{weekday:'short',day:'numeric',month:'short'})+' · saved in Orivia'));
  const acts=el('div','acts');
  if(!past){
   // The right button for this device (no surprise file download on Android or computers); see calendarLinks.
   for(const a of calendarLinks(e)){a.addEventListener('click',()=>{setTimeout(()=>{note.hidden=false;note.textContent='It’s only in your calendar after you tap Save or Add there.'},300)});acts.append(a)}
  }
- const rm=button('Remove','danger',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent='Tap again to remove';return}removeEvent(e.id)});
+ const rm=button('Remove','danger',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=uiText('Tap again to remove');return}removeEvent(e.id)});
  acts.append(rm);
  const note=el('p','hint');note.hidden=true;note.setAttribute('role','status');
  if(!past&&typeof e.alarm==='number')b.append(el('span','tiny','Alert: '+(ALARMS.find(([m])=>m===e.alarm)||[,'30 minutes before'])[1].toLowerCase()));
@@ -393,24 +395,24 @@ function renderEvents(){
  for(let k=0;k<7;k++){
   const d=new Date(monday);d.setDate(monday.getDate()+k);const key=dayKey(d);
   const b=button('','day'+(key===dayKey(today)?' today':'')+(selectedDay===key?' sel':'')+(has.has(key)?' has':''),()=>{selectedDay=selectedDay===key?null:key;renderEvents()});
-  b.append(el('small','',d.toLocaleDateString(undefined,{weekday:'short'}).slice(0,3)),el('b','',String(d.getDate())),el('i'));
-  b.setAttribute('aria-pressed',String(selectedDay===key));b.setAttribute('aria-label',d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'})+(has.has(key)?', has reminders':''));
+  b.append(el('small','',d.toLocaleDateString(uiLanguage(),{weekday:'short'}).slice(0,3)),el('b','',String(d.getDate())),el('i'));
+  b.setAttribute('aria-pressed',String(selectedDay===key));b.setAttribute('aria-label',d.toLocaleDateString(uiLanguage(),{weekday:'long',day:'numeric',month:'long'})+(has.has(key)?', has reminders':''));
   days.append(b);
  }
  const sun=new Date(monday);sun.setDate(monday.getDate()+6);
- $('wk-label').textContent=weekOffset===0?'This week':monday.toLocaleDateString(undefined,{day:'numeric',month:'short'})+' – '+sun.toLocaleDateString(undefined,{day:'numeric',month:'short'});
+ $('wk-label').textContent=weekOffset===0?'This week':monday.toLocaleDateString(uiLanguage(),{day:'numeric',month:'short'})+' – '+sun.toLocaleDateString(uiLanguage(),{day:'numeric',month:'short'});
  const root=$('events');root.replaceChildren();
  const sorted=events.slice().sort((a,b)=>a.at.localeCompare(b.at)),now=Date.now();
  if(selectedDay){
   const list=sorted.filter(e=>dayKey(new Date(e.at))===selectedDay);
-  const g=el('section','agroup');g.append(el('h3','',new Date(selectedDay+'T12:00').toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'})));
-  if(!list.length)g.append(el('p','empty','Nothing on this day.'));
+  const g=el('section','agroup');g.append(el('h3','',new Date(selectedDay+'T12:00').toLocaleDateString(uiLanguage(),{weekday:'long',day:'numeric',month:'long'})));
+  if(!list.length)g.append(el('p','empty',uiText('Nothing on this day.')));
   for(const e of list)g.append(eventRow(e,new Date(e.at).getTime()<now));
   g.append(button('+ Add a reminder for this day','ask',()=>openAdd(selectedDay)),button('Show everything coming up','ask',()=>{selectedDay=null;renderEvents()}));
   root.append(g);return;
  }
  const upcoming=sorted.filter(e=>new Date(e.at).getTime()>=now),past=sorted.filter(e=>new Date(e.at).getTime()<now);
- if(!upcoming.length){const p=el('div','empty');p.append(el('p','','Nothing coming up. Add a reminder, or just tell Orivia in Chat: “remind me to call the bank on Sunday”.'));root.append(p)}
+ if(!upcoming.length){const p=el('div','empty');p.append(el('p','',uiText('Nothing coming up. Add a reminder, or just tell Orivia in Chat: “remind me to call the bank on Sunday”.')));root.append(p)}
  const tomorrow=new Date(today);tomorrow.setDate(today.getDate()+1);const weekEnd=new Date(today);weekEnd.setDate(today.getDate()+7);
  const groups=[['Today',e=>dayKey(new Date(e.at))===dayKey(today)],['Tomorrow',e=>dayKey(new Date(e.at))===dayKey(tomorrow)],['This week',e=>new Date(e.at)<weekEnd],['Later',()=>true]];
  const left=upcoming.slice();
@@ -423,7 +425,7 @@ function openAdd(day){
  const today=startOfDay(new Date());$('reminder-date').min=dayKey(today);
  $('reminder-date').value=day||dayKey(new Date(Date.now()+86400000));
  const picks=[['Tomorrow',1],['In 3 days',3],['Next week',7]],q=$('when-quick');q.replaceChildren();
- for(const [label,n] of picks){const d=new Date(today);d.setDate(today.getDate()+n);q.append(button(label,'seg-btn'+($('reminder-date').value===dayKey(d)?' on':''),()=>{$('reminder-date').value=dayKey(d);for(const x of q.children)x.classList.toggle('on',x.textContent===label)}))}
+ for(const [label,n] of picks){const d=new Date(today);d.setDate(today.getDate()+n);q.append(button(label,'seg-btn'+($('reminder-date').value===dayKey(d)?' on':''),()=>{$('reminder-date').value=dayKey(d);for(const x of q.children)x.classList.toggle('on',x.textContent===uiText(label))}))}
  $('reminder-alarm').value='30';
  $('add-sheet').hidden=false;$('reminder-title').focus();
 }
@@ -449,7 +451,7 @@ function tab(which){
  if(which!=='chat'){try{stopSpeaking();stopDictation(true);closeMicLanguageMenu()}catch(_){}}
  const navKey=which==='guide'?'journeys':which; // a guide opens inside Journeys; Settings has no tab of its own
  for(const [k,id] of Object.entries(views)){$(id).hidden=k!==which;const b=$('tab-'+k);if(b){b.classList.toggle('active',k===navKey);b.setAttribute('aria-current',k===navKey?'page':'false')}}
- $('view-title').textContent=TITLES[which];
+ $('view-title').textContent=uiText(TITLES[which]);
  if(which==='calendar')renderEvents();
  if(which==='settings')renderSettings();
  if(which==='journeys')renderJourneys();
@@ -465,7 +467,7 @@ function ask(text,send){
  tab('chat');const m=$('msg');m.value=text;grow();m.focus();
  if(send)$('form').requestSubmit();
 }
-document.addEventListener('click',e=>{const b=e.target.closest('[data-ask]');if(b){e.preventDefault();ask(b.dataset.ask,b.closest('#empty')!==null)}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-ask]');if(b){e.preventDefault();ask(uiText(b.dataset.ask),b.closest('#empty')!==null)}});
 /* Official sources (shown in Journeys) */
 const OFFICIAL=[
  ['RTA (Dubai roads and transport)','https://www.rta.ae','Metro, buses, nol cards, taxis'],
@@ -485,7 +487,7 @@ const UK_NATIONS=['England','Scotland','Wales','Northern Ireland'];
 let aboutEditing=false,aboutSkipped=false;
 /* Countries for "Where did you move from?": ISO codes, named by the browser in the person's language */
 const COUNTRY_CODES='AF AL DZ AD AO AG AR AM AU AT AZ BS BH BD BB BY BE BZ BJ BT BO BA BW BR BN BG BF BI CV KH CM CA CF TD CL CN CO KM CG CD CR CI HR CU CY CZ DK DJ DM DO EC EG SV GQ ER EE SZ ET FJ FI FR GA GM GE DE GH GR GD GT GN GW GY HT HN HK HU IS IN ID IR IQ IE IL IT JM JP JO KZ KE KI KW KG LA LV LB LS LR LY LI LT LU MO MG MW MY MV ML MT MH MR MU MX FM MD MC MN ME MA MZ MM NA NR NP NL NZ NI NE NG KP MK NO OM PK PW PS PA PG PY PE PH PL PT QA RO RU RW KN LC VC WS SM ST SA SN RS SC SL SG SK SI SB SO ZA KR SS ES LK SD SR SE CH SY TW TJ TZ TH TL TG TO TT TN TR TM TV UG UA AE GB US UY UZ VU VA VE VN YE ZM ZW'.split(' ');
-const regionNames=(()=>{for(const l of [String(navigator.language||'').replace(/[@_].*$/,''),'en']){try{if(l)return new Intl.DisplayNames([l],{type:'region'})}catch(_){}}return null})(); // tolerate odd language codes like en-US@posix
+function makeRegionNames(){for(const l of [uiLanguage(),String(navigator.language||'').replace(/[@_].*$/,''),'en']){try{if(l)return new Intl.DisplayNames([l],{type:'region'})}catch(_){}}return null};let regionNames=makeRegionNames(); // tolerate odd language codes like en-US@posix
 function countryName(code){try{return (regionNames&&regionNames.of(code))||code}catch(_){return code}}
 let countryOptions=null;
 function fillCountries(sel,current){
@@ -599,9 +601,9 @@ function rememberCard(t){
  let no=[];try{no=JSON.parse(sessionStorage.getItem(noKey)||'[]')}catch(_){}
  const sig=JSON.stringify(patch);if(no.includes(sig))return;
  const card=el('section','remember');card.id='remember-card';card.setAttribute('aria-label','Remember in My Life');
- card.append(el('strong','','Remember this for next time?'),el('p','notice',lines.join(' · ')+'. Then you won’t need to say it again.'));
+ card.append(el('strong','',uiText('Remember this for next time?')),el('p','notice',lines.join(' · ')+'. Then you won’t need to say it again.'));
  const row=el('div','row');
- row.append(button('Remember','btn small',()=>{saveProfile(patch);card.replaceChildren(el('p','','Saved to My Life. You can change it any time.'))}),
+ row.append(button('Remember','btn small',()=>{saveProfile(patch);card.replaceChildren(el('p','',uiText('Saved to My Life. You can change it any time.')))}),
   button('No thanks','btn text small',()=>{no.push(sig);try{sessionStorage.setItem(noKey,JSON.stringify(no.slice(-20)))}catch(_){}card.remove()}));
  card.append(row);($('journey-actions')||$('history')).after(card);
  const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight;
@@ -611,11 +613,11 @@ $('about-done').onclick=()=>{aboutEditing=false;aboutSkipped=true;loadProfile()}
 $('place-form').addEventListener('submit',e=>{e.preventDefault();saveProfile({place:$('p-place').value.trim()})});
 $('p-place').addEventListener('change',e=>saveProfile({place:e.target.value.trim()}));
 function profileForAI(){const p=readProfile();if(!p||p.use===false)return undefined;const out={};for(const k of ['city','movingTo','movedFrom','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
-$('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.sure='';b.textContent='Clear saved data'},4000);return}try{localStorage.removeItem(profileKey);localStorage.removeItem(eventKey);localStorage.removeItem(journeysKey);localStorage.removeItem(chatsKey);localStorage.removeItem(chatsBackupKey)}catch(_){}storeLocked=false;storageWarn('');store={chats:[],active:null};turns=[];clearChatCards();draw();renderChats();events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent='Cleared'};
+$('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent=uiText('Tap again to delete');setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('Clear saved data')},4000);return}try{localStorage.removeItem(profileKey);localStorage.removeItem(eventKey);localStorage.removeItem(journeysKey);localStorage.removeItem(chatsKey);localStorage.removeItem(chatsBackupKey)}catch(_){}storeLocked=false;storageWarn('');store={chats:[],active:null};turns=[];clearChatCards();draw();renderChats();events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent=uiText('Cleared')};
 /* End session: back to the welcome screen. Clears this conversation and the human check; keeps journeys, calendar and My Life. */
 $('end-session').onclick=async()=>{
  const b=$('end-session');
- if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to end this session';setTimeout(()=>{b.dataset.sure='';b.textContent='End session'},4000);return}
+ if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to end this session';setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('End session')},4000);return}
  stopSpeaking();stopDictation(false);
  try{await fetch('/v1/end',{method:'POST',credentials:'same-origin'})}catch(_){}
  store.active=null;persist(); // saved chats stay; the welcome screen opens to a new chat
@@ -630,7 +632,7 @@ const VOICE_BAD=/^(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jes
 function textLang(t){ // the language of the reply, from its script
  if(/[؀-ۿ]/.test(t))return /[ٹڈڑںھہے]/.test(t)?'ur':'ar';
  if(/[ഀ-ൿ]/.test(t))return 'ml';if(/[ঀ-৿]/.test(t))return 'bn';if(/[ऀ-ॿ]/.test(t))return 'hi';
- if(/[一-鿿]/.test(t))return 'zh';if(/[Ѐ-ӿ]/.test(t))return 'ru';return 'en';
+ if(/[一-鿿]/.test(t))return 'zh';if(/[Ѐ-ӿ]/.test(t))return 'ru';return ['fr','fil'].includes(uiLanguage())?uiLanguage():'en';
 }
 function bestVoice(l){
  const want=VOICE_LOC[l].toLowerCase(),pre=l==='zh'?['zh','cmn']:l==='fil'?['fil','tl']:[l];
@@ -639,13 +641,13 @@ function bestVoice(l){
 }
 function voicesReady(){return new Promise(res=>{const now=speechSynthesis.getVoices();if(now.length)return res();let done=false;const fin=()=>{if(!done){done=true;res()}};speechSynthesis.addEventListener('voiceschanged',fin,{once:true});setTimeout(fin,1200)})}
 let speakingBtn=null,speakRun=0;
-function stopSpeaking(){if(!canSpeak)return;speakRun++;speechSynthesis.cancel();if(speakingBtn){speakingBtn.setAttribute('aria-pressed','false');speakingBtn.textContent='▶ Listen';speakingBtn=null}}
+function stopSpeaking(){if(!canSpeak)return;speakRun++;speechSynthesis.cancel();if(speakingBtn){speakingBtn.setAttribute('aria-pressed','false');speakingBtn.textContent=uiText('▶ Listen');speakingBtn=null}}
 async function listen(text,btn){
  if(speakingBtn===btn){stopSpeaking();return}
  stopSpeaking();stopDictation(false);
  const l=textLang(text);await voicesReady();const v=bestVoice(l);
  if(!v&&l!=='en'){$('status').textContent='This phone has no voice for this language yet. You can add one in your phone’s text-to-speech settings.';return}
- const run=++speakRun;speakingBtn=btn;btn.setAttribute('aria-pressed','true');btn.textContent='■ Stop';
+ const run=++speakRun;speakingBtn=btn;btn.setAttribute('aria-pressed','true');btn.textContent=uiText('■ Stop');
  const clean=text.replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu,'').replace(/\s+/g,' ').trim();
  const parts=clean.split(/(?<=[.!?。！？।۔])\s+/).flatMap(x=>x.length>220?x.match(/.{1,200}(\s|$)/g):[x]).filter(Boolean);
  parts.forEach((c,i)=>{const u=new SpeechSynthesisUtterance(c);u.lang=v?v.lang:VOICE_LOC[l];if(v)u.voice=v;u.rate=v&&/natural|neural|online|enhanced|premium/i.test(v.name)?1:.95;
@@ -655,10 +657,10 @@ if(canSpeak)setInterval(()=>{try{if(speechSynthesis.speaking&&!speechSynthesis.p
 /* ===== Dictation: speak instead of typing, then check and edit before sending ===== */
 const Recog=window.SpeechRecognition||window.webkitSpeechRecognition;
 const micNoteKey='orivia-private-mic-note-v2';
-const DICT_LANGS=[['auto','Device language'],['en-GB','English (UK)'],['ar-AE','العربية'],['fr-FR','Français'],['fil-PH','Filipino'],['hi-IN','हिन्दी'],['ur-PK','اردو'],['zh-CN','中文'],['bn-BD','বাংলা'],['ml-IN','മലയാളം'],['ru-RU','Русский']];
+const DICT_LANGS=[['app','App language'],['auto','Device language'],['en-GB','English (UK)'],['ar-AE','العربية'],['fr-FR','Français'],['fil-PH','Filipino'],['hi-IN','हिन्दी'],['ur-PK','اردو'],['zh-CN','中文'],['bn-BD','বাংলা'],['ml-IN','മലയാളം'],['ru-RU','Русский']];
 let recog=null,dictBase='';
 function dictationLanguage(){
- const choice=$('dict-language').value;
+ const choice=$('dict-language').value;if(choice==='app')return VOICE_LOC[uiLanguage()]||'en-GB';
  return DICT_LANGS.some(([id])=>id===choice)&&choice!=='auto'?choice:(navigator.language||'en-GB');
 }
 function dictationIdle(){
@@ -676,12 +678,12 @@ function startDictation(){
  if(!Recog||recog)return;
  closeMicLanguageMenu();
  let seen=false;try{seen=localStorage.getItem(micNoteKey)==='1'}catch(_){}
- if(!seen){$('status').textContent='Your browser may send audio to its speech provider, such as Google or Apple, to turn it into text. Orivia receives the text only when you press Send. Tap the microphone again to start.';try{localStorage.setItem(micNoteKey,'1')}catch(_){}return}
+ if(!seen){$('status').textContent=uiText('Your browser may send audio to its speech provider, such as Google or Apple, to turn it into text. Orivia receives the text only when you press Send. Tap the microphone again to start.');try{localStorage.setItem(micNoteKey,'1')}catch(_){}return}
  stopSpeaking();
- let r;try{r=new Recog()}catch(_){$('status').textContent='Speech to text couldn’t start. You can keep typing.';return}
+ let r;try{r=new Recog()}catch(_){$('status').textContent=uiText('Speech to text couldn’t start. You can keep typing.');return}
  recog=r;const base=$('msg').value;dictBase=base;
  r.lang=dictationLanguage();r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
- $('listening').hidden=false;$('listening-text').textContent='Starting microphone…';$('mic').setAttribute('aria-pressed','true');
+ $('listening').hidden=false;$('listening-text').textContent=uiText('Starting microphone…');$('mic').setAttribute('aria-pressed','true');
  $('dict-language').disabled=true;$('dict-language-shortcut').disabled=true;$('msg').readOnly=true;$('status').textContent='';
  r.onstart=()=>{if(recog!==r)return;$('listening-text').textContent='Listening · '+(DICT_LANGS.find(([id])=>id===r.lang)?.[1]||r.lang)+' · Stop to edit'};
  r.onresult=e=>{
@@ -689,7 +691,7 @@ function startDictation(){
   let t='';for(const x of e.results)t+=x[0].transcript;
   const text=(base?base.replace(/\s*$/,' '):'')+t.trim();
   $('msg').value=text.slice(0,900);grow();
-  if(text.length>900)$('listening-text').textContent='Message limit reached · Stop to edit';
+  if(text.length>900)$('listening-text').textContent=uiText('Message limit reached · Stop to edit');
  };
  r.onerror=e=>{
   if(recog!==r)return;recog=null;dictationIdle();try{r.abort()}catch(_){}
@@ -705,7 +707,7 @@ function startDictation(){
   if(recog!==r)return;recog=null;dictationIdle();
   $('status').textContent=$('msg').value.trim()!==base.trim()?'Check the text, edit anything, then press Send.':'No new speech was captured. Try the microphone again or keep typing.';
  };
- try{r.start()}catch(_){if(recog===r){recog=null;dictationIdle();$('status').textContent='Speech to text couldn’t start. You can keep typing.'}}
+ try{r.start()}catch(_){if(recog===r){recog=null;dictationIdle();$('status').textContent=uiText('Speech to text couldn’t start. You can keep typing.')}}
 }
 function closeMicLanguageMenu(focus=false){
  $('mic-language-menu').hidden=true;$('mic').setAttribute('aria-expanded','false');if(focus)$('mic').focus();
@@ -714,7 +716,7 @@ function setupDictation(){
  if(!Recog)return;
  const picker=$('dict-language'),shortcut=$('dict-language-shortcut'),mic=$('mic'),menu=$('mic-language-menu');
  for(const [id,label]of DICT_LANGS)for(const select of [picker,shortcut]){const o=document.createElement('option');o.value=id;o.textContent=label;select.append(o)}
- const saved=readSettings().dictationLanguage;picker.value=shortcut.value=DICT_LANGS.some(([id])=>id===saved)?saved:'auto';
+ const saved=readSettings().dictationLanguage;picker.value=shortcut.value=DICT_LANGS.some(([id])=>id===saved)?saved:'app';
  const choose=source=>{picker.value=shortcut.value=source.value;try{localStorage.setItem(settingsKey,JSON.stringify({...readSettings(),dictationLanguage:source.value}))}catch(_){}};
  picker.onchange=()=>choose(picker);shortcut.onchange=()=>{choose(shortcut);closeMicLanguageMenu(true)};
  const open=focus=>{if(recog)return;menu.hidden=false;mic.setAttribute('aria-expanded','true');if(focus)shortcut.focus()};
@@ -833,20 +835,20 @@ function researchBlock(srcs,research){
    li.append(a);links.append(li);
   });
   box.append(links);
-  evidence.append(el('p','rhead','Sources'));
+  evidence.append(el('p','rhead',uiText('Sources')));
   const ol=document.createElement('ol');ol.className='sources-list';
   srcs.forEach((s,i)=>{
    const li=document.createElement('li');const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.className='src';
-   const top=el('span','src-top');top.append(el('span','src-n',String(i+1)),el('span','src-kind '+(s.kind==='Official source'?'official':s.kind==='Listing site'?'listing':'org'),s.kind));
-   const when=s.checkedAt&&Number.isFinite(Date.parse(s.checkedAt))?new Date(s.checkedAt).toLocaleString(undefined,{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'';
+   const top=el('span','src-top');top.append(el('span','src-n',String(i+1)),el('span','src-kind '+(s.kind==='Official source'?'official':s.kind==='Listing site'?'listing':'org'),uiText(s.kind)));
+   const when=s.checkedAt&&Number.isFinite(Date.parse(s.checkedAt))?new Date(s.checkedAt).toLocaleString(uiLanguage(),{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'';
    a.append(top,el('strong','',s.title),el('span','src-meta',s.host+(when?' · Opened by Orivia '+when:'')+' ↗'));
    li.append(a);ol.append(li);
   });
-  evidence.append(ol,el('p','tiny','“Opened” means Orivia read this page for your question. It doesn’t mean every requirement has been verified.'));
+  evidence.append(ol,el('p','tiny',uiText('“Opened” means Orivia read this page for your question. It doesn’t mean every requirement has been verified.')));
  }
  const claims=(r.claims||[]).filter(c=>srcs.some(s=>s.id&&s.id===c.sourceId));
  if(claims.length){
-  const det=document.createElement('details');det.className='claims';det.append(el('summary','','Source-backed: see the quotes'));
+  const det=document.createElement('details');det.className='claims';det.append(el('summary','',uiText('Source-backed: see the quotes')));
   for(const c of claims){
    const n=srcs.findIndex(s=>s.id===c.sourceId)+1;const d=el('div','claim');d.append(el('p','',c.text));
    if(c.quotes&&c.quotes.length>1){ // one quote per fact in the claim, each labelled
@@ -861,11 +863,11 @@ function researchBlock(srcs,research){
   evidence.append(det);
  }
  if((r.unresolved||[]).some(x=>TOPIC_LABEL[x])){ // unknown codes are never shown as a vague placeholder
-  const u=el('div','unresolved');u.append(el('p','rhead','Couldn’t confirm'));const ul=document.createElement('ul');
+  const u=el('div','unresolved');u.append(el('p','rhead',uiText('Couldn’t confirm')));const ul=document.createElement('ul');
   for(const x of [...new Set(r.unresolved)])if(TOPIC_LABEL[x])ul.append(el('li','',TOPIC_LABEL[x]));
   u.append(ul);box.append(u);
  }
- if(r.applicability==='needs-review'&&srcs.length)evidence.append(el('p','tiny','Check it applies to you: rules can differ by institution, age, visa type or emirate.'));
+ if(r.applicability==='needs-review'&&srcs.length)evidence.append(el('p','tiny',uiText('Check it applies to you: rules can differ by institution, age, visa type or emirate.')));
  if(srcs.length||claims.length)box.append(evidence);
  return box;
 }
@@ -894,10 +896,13 @@ function renderSettings(){
  seg('set-size',[['standard','Standard'],['large','Larger']],s.size,v=>writeSettings({size:v}));
  seg('set-tone',[['friendly','Friendly'],['simple','Simple words'],['brief','Short answers']],s.tone,v=>writeSettings({tone:v}));
  $('tone-note').textContent=TONE_NOTE[s.tone]||'';
+ $('app-language').value=$('welcome-language').value=uiLanguage();
  $('set-suggest').checked=s.suggest!==false;
  const on=aboutMeOn(),p=readProfile(),filled=!!(p&&(p.city||p.who||p.place));$('set-aboutme-use').checked=on;
  $('aboutme-state').textContent=on?(filled?'On: Orivia uses what you saved in My Life':'On, but nothing saved yet. Add details in My Life'):'Off: Orivia doesn’t use My Life details';
 }
+function changeAppLanguage(e){window.OriviaI18n?.setLanguage(e.target.value);writeSettings({language:uiLanguage()});regionNames=makeRegionNames();countryOptions=null;draw();renderEvents();renderUpcoming();renderChats();renderJourneys();loadProfile();$('view-title').textContent=uiText(TITLES[lastTab||'chat'])}
+$('app-language').addEventListener('change',changeAppLanguage);$('welcome-language').addEventListener('change',changeAppLanguage);$('app-language').value=$('welcome-language').value=uiLanguage();
 $('set-suggest').addEventListener('change',e=>writeSettings({suggest:e.target.checked}));
 $('set-aboutme').onclick=()=>tab('mylife');
 $('set-aboutme-use').addEventListener('change',e=>{setAboutMe(e.target.checked);renderSettings()});
@@ -942,9 +947,9 @@ function guidesForAI(){
  const progress={};for(const k of ids)if((d[k].status==='active'||d[k].status==='paused')&&Object.keys(d[k].stepStatus).length)progress[k]=d[k].stepStatus;
  return {following:of('active'),paused:of('paused'),saved:of('saved'),done:of('done'),offered:offered(),progress};
 }
-const reviewed=iso=>{const t=Date.parse(iso);return Number.isFinite(t)?new Date(t).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}):''};
+const reviewed=iso=>{const t=Date.parse(iso);return Number.isFinite(t)?new Date(t).toLocaleDateString(uiLanguage(),{day:'numeric',month:'short',year:'numeric'}):''};
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
-function button(label,cls,fn){const b=el('button',cls,label);b.type='button';b.onclick=fn;return b}
+function button(label,cls,fn){const b=el('button',cls,uiText(label));b.type='button';b.onclick=fn;return b}
 function bar(n,of,label){const p=el('div','progress');const i=el('i');i.style.width=Math.round(n/Math.max(1,of)*100)+'%';p.append(i);p.setAttribute('role','progressbar');p.setAttribute('aria-valuemin','0');p.setAttribute('aria-valuemax',String(of));p.setAttribute('aria-valuenow',String(n));p.setAttribute('aria-label',label||(n+' of '+of+' steps done'));return p}
 function pill(state){return el('span','state '+state,STATE_LABEL[state]||state)}
 function progressLine(v){
@@ -1046,7 +1051,7 @@ function renderJourneys(){
  const root=$('my-journeys');
  if(root){
   root.replaceChildren();$('j-count').textContent=items.length?items.length+(items.length===1?' journey':' journeys'):'';
-  if(!items.length)root.append(el('p','empty','No journeys yet. Explore below, or ask Orivia what you need help with.'));
+  if(!items.length)root.append(el('p','empty',uiText('No journeys yet. Explore below, or ask Orivia what you need help with.')));
   for(const [id,v] of items)root.append(journeyCard({id,title:v.title,steps:v.steps},'mine'));
  }
  const life=$('life-journeys');
@@ -1070,7 +1075,7 @@ const CAT_ICON={transport:'M7 17h10M6 4h12a2 2 0 0 1 2 2v8a3 3 0 0 1-3 3H7a3 3 0
 function icon(path){const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 24 24');s.setAttribute('aria-hidden','true');s.setAttribute('fill','none');s.setAttribute('stroke','currentColor');s.setAttribute('stroke-width','1.8');s.setAttribute('stroke-linecap','round');s.setAttribute('stroke-linejoin','round');const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d',path);s.append(p);return s}
 async function renderLibrary(){
  const cats=$('j-cats'),list=$('j-library');
- let all;try{all=await loadLibrary()}catch(_){list.replaceChildren(el('p','notice','Couldn’t load the guide library just now. Please try again.'));return}
+ let all;try{all=await loadLibrary()}catch(_){list.replaceChildren(el('p','notice',uiText('Couldn’t load the guide library just now. Please try again.')));return}
  const q=($('j-search').value||'').trim().toLowerCase();
  const groups=[];for(const g of all)if(!groups.some(x=>x[0]===g.category))groups.push([g.category,g.categoryName]);
  cats.replaceChildren();
@@ -1083,7 +1088,7 @@ async function renderLibrary(){
  if(!libraryCat&&!q){list.append(button('Browse all '+all.length+' guides','btn quiet wide',()=>{libraryCat='all';renderLibrary()}));return}
  const shown=all.filter(g=>(libraryCat==='all'||!libraryCat||g.category===libraryCat)&&(!q||(g.title+' '+g.summary).toLowerCase().includes(q))).sort((a,b)=>(b.suggested-a.suggested));
  const head=el('div','sechead');head.append(el('h4','',q?'Results for “'+q+'”':libraryCat==='all'?'All guides':(groups.find(x=>x[0]===libraryCat)||[,''])[1]),button('Close','ask',()=>{libraryCat=null;$('j-search').value='';renderLibrary()}));list.append(head);
- if(!shown.length)list.append(el('p','notice','No guides match that yet. Try another word, or ask Orivia.'));
+ if(!shown.length)list.append(el('p','notice',uiText('No guides match that yet. Try another word, or ask Orivia.')));
  for(const g of shown){const c=journeyCard(g,'library');const st=readJourneys()[g.id];c.querySelector('.kicker').textContent=(st?STATE_LABEL[shownState(st)]+' · ':'')+'Dubai · Reviewed '+reviewed(g.checkedAt)+' · '+g.categoryName;list.append(c)}
 }
 
@@ -1099,8 +1104,8 @@ function block(kind,title,...nodes){nodes=nodes.filter(Boolean);if(!nodes.length
 function list(items,ordered,cls){if(!items||!items.length)return null;const l=el(ordered?'ol':'ul',cls||'');for(const x of items)l.append(el('li','',x));return l}
 async function openGuide(id,opts={}){
  if(!JID.test(id))return;
- tab('guide');const body=$('guide-body');body.replaceChildren(el('p','notice','Opening your guide…'));
- let g;try{g=await loadGuide(id)}catch(_){body.replaceChildren(el('p','notice','I couldn’t open this guide just now. Please try again.'),button('← Journeys','ask',()=>tab('journeys')));return}
+ tab('guide');const body=$('guide-body');body.replaceChildren(el('p','notice',uiText('Opening your guide…')));
+ let g;try{g=await loadGuide(id)}catch(_){body.replaceChildren(el('p','notice',uiText('I couldn’t open this guide just now. Please try again.')),button('← Journeys','ask',()=>tab('journeys')));return}
  const titles=Object.fromEntries(g.steps.map(s=>[s.id,s.title]));
  let i=Math.min(Math.max(0,Number(readJourneys()[id]?.step)||0),g.steps.length-1);
  const store=patch=>{if(readJourneys()[id])setJourney(id,{steps:g.steps.length,titles,...patch})};
@@ -1111,11 +1116,11 @@ async function openGuide(id,opts={}){
   const head=el('div','jhead');head.append(button('← Journeys','ask',()=>tab('journeys')),button('Chat','chip-btn',()=>tab('chat')));body.append(head);
   const meta=el('div','row');if(status)meta.append(pill(shownState(mine)));meta.append(el('span','kicker','Checked guide · Reviewed '+reviewed(g.checkedAt)+(g.fresh?'':' · due for review: confirm with the official source')));body.append(meta);
   body.append(el('h2','',g.title));
-  if(!mine){const f=el('div','row');f.append(button('Follow this guide','btn small',()=>{setJourney(id,{status:'active',step:i,stepTitle:s.title,stepStatus:{},title:g.title,steps:g.steps.length,titles});draw()}),button('Save for later','btn quiet small',()=>{setJourney(id,{status:'saved',step:0,stepStatus:{},title:g.title,steps:g.steps.length,titles});draw()}));body.append(f,el('p','tiny','You’re previewing. Follow it to keep track of each step; progress is saved on this device.'))}
-  if(status==='paused'){const p=el('div','banner');p.append(el('span','','This journey is paused. Your progress is kept.'),button('Resume','btn small',()=>{setJourney(id,{status:'active'});draw()}));body.append(p)}
+  if(!mine){const f=el('div','row');f.append(button('Follow this guide','btn small',()=>{setJourney(id,{status:'active',step:i,stepTitle:s.title,stepStatus:{},title:g.title,steps:g.steps.length,titles});draw()}),button('Save for later','btn quiet small',()=>{setJourney(id,{status:'saved',step:0,stepStatus:{},title:g.title,steps:g.steps.length,titles});draw()}));body.append(f,el('p','tiny',uiText('You’re previewing. Follow it to keep track of each step; progress is saved on this device.')))}
+  if(status==='paused'){const p=el('div','banner');p.append(el('span','',uiText('This journey is paused. Your progress is kept.')),button('Resume','btn small',()=>{setJourney(id,{status:'active'});draw()}));body.append(p)}
   body.append(el('p','tiny','Step '+(i+1)+' of '+g.steps.length+(mine?' · '+n+' done':'')),bar(mine?n:i+1,g.steps.length,mine?undefined:'Step '+(i+1)+' of '+g.steps.length));
   /* All steps, with the person's own statuses; tap one to read it */
-  const all=el('details','steps');all.append(el('summary','','All steps'));const ol=el('ol');
+  const all=el('details','steps');all.append(el('summary','',uiText('All steps')));const ol=el('ol');
   g.steps.forEach((x,k)=>{const st=ss[x.id]||'not_started';const li=el('li');const b=button('','linkish'+(k===i?' here':''),()=>go(k));
    b.append(el('span','mark '+st,STEP_MARK[st]),el('span','',x.title));if(mine&&st!=='not_started')b.append(el('span','tiny',' · '+STEP_LABEL[st]));if(k===i)b.setAttribute('aria-current','step');li.append(b);ol.append(li)});
   all.append(ol);body.append(all);
@@ -1123,7 +1128,7 @@ async function openGuide(id,opts={}){
   const card=el('section','step');
   const sh=el('div','jtop');sh.append(el('p','kicker','Step '+(i+1)));if(mine)sh.append(el('span','sstate '+cur,STEP_LABEL[cur]));card.append(sh,el('h3','',s.title));
   const about=s.info.slice(0,2).map(p=>el('p','',p));
-  if(s.info.length>2){const more=el('details','more-text');more.append(el('summary','','Read more'),...s.info.slice(2).map(p=>el('p','',p)));about.push(more)}
+  if(s.info.length>2){const more=el('details','more-text');more.append(el('summary','',uiText('Read more')),...s.info.slice(2).map(p=>el('p','',p)));about.push(more)}
   card.append(...[
    block('about','About this step',...about),
    block('do','Do this',list(s.doThis,true)),
@@ -1136,25 +1141,25 @@ async function openGuide(id,opts={}){
   body.append(card);
   /* Where are you with this step? Recording a status never moves you on */
   if(mine&&status!=='paused'){
-   const box=el('section','statusbox');box.append(el('h4','','Where are you with this step?'));
+   const box=el('section','statusbox');box.append(el('h4','',uiText('Where are you with this step?')));
    const opts2=el('div','seg');opts2.setAttribute('role','radiogroup');opts2.setAttribute('aria-label','Status of '+s.title);
    for(const st of s.statuses){const b=button(STEP_LABEL[st],'seg-btn'+(cur===st?' on':''),()=>{store({stepStatus:{...ss,[s.id]:st},stepTitle:s.title,step:i});opts.keepScroll=true;draw()});b.setAttribute('role','radio');b.setAttribute('aria-checked',String(cur===st));opts2.append(b)}
    box.append(opts2);
    if(cur==='unsure'){box.append(el('p','hint','That’s okay. It won’t count as done.'+(s.confirm?' How to check: '+s.confirm:'')));const a=button('Ask Orivia to help me check','ask',()=>{});a.dataset.ask='I’m not sure about this step of “'+g.title+'”: '+s.title;box.append(a)}
    if(cur==='waiting')box.append(el('p','hint',s.waitingFor?'Waiting for: '+s.waitingFor:'Marked as waiting. You can come back to it any time.'));
-   if(cur==='done'&&i<g.steps.length-1)box.append(el('p','hint','Nice. Go to the next step when you’re ready.'));
+   if(cur==='done'&&i<g.steps.length-1)box.append(el('p','hint',uiText('Nice. Go to the next step when you’re ready.')));
    body.append(box);
   }
   const nav=el('div','row spread');
   nav.append(i>0?button('← Previous','btn quiet small',()=>go(i-1)):el('span'));
   nav.append(i<g.steps.length-1?button('Next step →','btn small',()=>go(i+1)):button('Back to Journeys','btn quiet small',()=>tab('journeys')));
   body.append(nav);
-  if(status==='active'&&n===g.steps.length){const fin=el('div','banner');fin.append(el('span','','Every step is marked done. Finished with this guide?'),button('Mark journey completed','btn small',()=>{setJourney(id,{status:'done'});draw()}));body.append(fin)}
-  if(status==='done')body.append(el('p','tiny','You marked this journey completed. That’s your own record, not official confirmation of any outcome.'));
-  if(g.problems.length){body.append(el('h3','','Things that might go wrong'));for(const p of g.problems){const det=el('details','problem');det.append(el('summary','',p.question));if(p.answer)det.append(el('p','',p.answer));
+  if(status==='active'&&n===g.steps.length){const fin=el('div','banner');fin.append(el('span','',uiText('Every step is marked done. Finished with this guide?')),button('Mark journey completed','btn small',()=>{setJourney(id,{status:'done'});draw()}));body.append(fin)}
+  if(status==='done')body.append(el('p','tiny',uiText('You marked this journey completed. That’s your own record, not official confirmation of any outcome.')));
+  if(g.problems.length){body.append(el('h3','',uiText('Things that might go wrong')));for(const p of g.problems){const det=el('details','problem');det.append(el('summary','',p.question));if(p.answer)det.append(el('p','',p.answer));
    if(p.steps.length){const ol2=el('ol');for(const x of p.steps){const li=el('li');li.append(el('strong','',x.title));if(x.body)li.append(el('p','',x.body));const sub=list(x.list);if(sub)li.append(sub);if(x.tip)li.append(el('p','tiny',x.tip));ol2.append(li)}det.append(ol2)}
    if(opts.problem===p.id){det.open=true;setTimeout(()=>det.scrollIntoView({block:'center'}),0)}body.append(det)}}
-  body.append(el('h3','','Official sources'));
+  body.append(el('h3','',uiText('Official sources')));
   const src=el('ul','sources');for(const x of g.sources){const li=el('li');const a=el('a','',x.name+' ↗');a.href=x.url;a.target='_blank';a.rel='noopener noreferrer';li.append(a);src.append(li)}
   body.append(src,el('p','tiny','Guide reviewed '+reviewed(g.checkedAt)+'. That’s a review of the whole guide, not a live check of every detail.'));
   if(!opts.problem&&!opts.keepScroll)body.parentElement.scrollTop=0;
@@ -1242,8 +1247,8 @@ $('start').onclick=()=>{
  enterApp()};
 $('clear').onclick=()=>{
  if(busy)return;const b=$('clear');
- if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete this chat';setTimeout(()=>{b.dataset.sure='';b.textContent='Delete this chat'},4000);return}
- store.chats=store.chats.filter(c=>c.id!==store.active);store.active=null;persist();turns=[];clearChatCards();draw();renderChats();b.dataset.sure='';b.textContent='Delete this chat';tab('chat')};
+ if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete this chat';setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('Delete this chat')},4000);return}
+ store.chats=store.chats.filter(c=>c.id!==store.active);store.active=null;persist();turns=[];clearChatCards();draw();renderChats();b.dataset.sure='';b.textContent=uiText('Delete this chat');tab('chat')};
 // A proposal only. Saved events are never sent to the model and never changed by this module.
 function safeCalendarChange(v){
  if(!v||typeof v!=='object'||!['update','delete'].includes(v.kind))return null;
@@ -1280,11 +1285,11 @@ function calendarChangeBox(t){
  const state=t.meta.calendarChange,proposal=safeCalendarChange(state?.proposal);
  if(!proposal)return null;
  const box=el('section','event');box.setAttribute('aria-label','Review calendar change');
- const note=el('p','tiny','Only Orivia’s calendar on this device changes. If you copied this event to another calendar, update it there too.');
+ const note=el('p','tiny',uiText('Only Orivia’s calendar on this device changes. If you copied this event to another calendar, update it there too.'));
  const fail=el('p','tiny');fail.setAttribute('role','status');
  if(state.status==='applied'||state.status==='undone'){
   const event=state.after||state.before;
-  box.append(el('strong','',state.status==='undone'?'Change undone':proposal.kind==='delete'?'Reminder deleted':'Reminder updated'),el('p','',String(event?.title||'')),note,fail);
+  box.append(el('strong','',uiText(state.status==='undone'?'Change undone':proposal.kind==='delete'?'Reminder deleted':'Reminder updated')),el('p','',String(event?.title||'')),note,fail);
   if(state.status==='applied')box.append(button('Undo','btn quiet small',()=>{
    try{
     const list=calendarForChanges(),current=list.find(e=>e.id===state.before.id);
@@ -1295,21 +1300,21 @@ function calendarChangeBox(t){
      if(!current||calendarSnapshot(current)!==calendarSnapshot(state.after)){fail.textContent='This reminder changed again, so Undo won’t overwrite it. Open My calendar to review it.';return}
      list[list.indexOf(current)]={...state.before};
     }
-    commitCalendarChanges(list);state.status='undone';t.content='Undid that change in Orivia’s calendar on this device.';save();draw();
-   }catch(_){fail.textContent='I couldn’t confirm the calendar was saved. Please check My calendar before retrying.'}
+    commitCalendarChanges(list);state.status='undone';t.content=uiText('Undid that change in Orivia’s calendar on this device.');save();draw();
+   }catch(_){fail.textContent=uiText('I couldn’t confirm the calendar was saved. Please check My calendar before retrying.')}
   }));
   return box;
  }
- if(state.status==='cancelled'){box.append(el('p','tiny','Change dismissed. No reminder was changed.'));return box}
- let list;try{list=calendarForChanges()}catch(_){box.append(el('p','tiny','I couldn’t read your saved calendar safely. Nothing has been changed.'));return box}
- if(!list.length){box.append(el('p','tiny','There are no saved reminders on this device to change.'));return box}
+ if(state.status==='cancelled'){box.append(el('p','tiny',uiText('Change dismissed. No reminder was changed.')));return box}
+ let list;try{list=calendarForChanges()}catch(_){box.append(el('p','tiny',uiText('I couldn’t read your saved calendar safely. Nothing has been changed.')));return box}
+ if(!list.length){box.append(el('p','tiny',uiText('There are no saved reminders on this device to change.')));return box}
  const index=turns.indexOf(t),matched=calendarCandidates(proposal,list,turns.slice(0,index<0?0:index));
- box.append(el('strong','',proposal.kind==='delete'?'Which reminder should I delete?':'Review the reminder to change'));
- if(!matched.exact)box.append(el('p','tiny','Choose the saved reminder you mean.'));
+ box.append(el('strong','',uiText(proposal.kind==='delete'?'Which reminder should I delete?':'Review the reminder to change')));
+ if(!matched.exact)box.append(el('p','tiny',uiText('Choose the saved reminder you mean.')));
  if(proposal.question)box.append(el('p','',proposal.question));
- const label=el('label','','Saved reminder'),select=document.createElement('select');label.append(select);box.append(label);
+ const label=el('label','',uiText('Saved reminder')),select=document.createElement('select');label.append(select);box.append(label);
  select.setAttribute('aria-label','Saved reminder');
- const blank=document.createElement('option');blank.value='';blank.textContent='Choose a reminder';select.append(blank);
+ const blank=document.createElement('option');blank.value='';blank.textContent=uiText('Choose a reminder');select.append(blank);
  for(const e of matched.items){const o=document.createElement('option');o.value=e.id;o.textContent=e.title+' · '+when(e);select.append(o)}
  const editor=el('div','calendar-change-editor');box.append(editor,note,fail);
  const update=()=>{
@@ -1317,7 +1322,7 @@ function calendarChangeBox(t){
   const original=calendarSnapshot(before),expected={...before};
   let title,date,time;
   if(proposal.kind==='update'){
-   const field=(text,type,value)=>{const l=el('label','',text),input=document.createElement('input');input.type=type;input.value=value;l.append(input);editor.append(l);return input};
+   const field=(text,type,value)=>{const l=el('label','',uiText(text)),input=document.createElement('input');input.type=type;input.value=value;l.append(input);editor.append(l);return input};
    const d=new Date(before.at);
    title=field('Reminder title','text',proposal.title||before.title);title.maxLength=100;
    date=field('New date','date',proposal.needsDate?'':proposal.date||dayKey(d));
@@ -1326,16 +1331,16 @@ function calendarChangeBox(t){
   editor.append(button(proposal.kind==='delete'?'Delete this reminder':'Save changes',proposal.kind==='delete'?'btn small danger':'btn small',()=>{
    try{
     const fresh=calendarForChanges(),current=fresh.find(e=>e.id===expected.id);
-    if(!current||calendarSnapshot(current)!==original){fail.textContent='This reminder changed or was removed. Choose it again to review the latest version.';return}
+    if(!current||calendarSnapshot(current)!==original){fail.textContent=uiText('This reminder changed or was removed. Choose it again to review the latest version.');return}
     let after=null;
     if(proposal.kind==='update'){
      const at=new Date(date.value+'T'+time.value);
-     if(!title.value.trim()||!date.value||!time.value||!Number.isFinite(at.getTime())||dayKey(at)!==date.value||at.getTime()<Date.now()+60000||at.getTime()>Date.now()+366*86400000){fail.textContent='Choose a title and a future date and time within the next year.';return}
+     if(!title.value.trim()||!date.value||!time.value||!Number.isFinite(at.getTime())||dayKey(at)!==date.value||at.getTime()<Date.now()+60000||at.getTime()>Date.now()+366*86400000){fail.textContent=uiText('Choose a title and a future date and time within the next year.');return}
      const pad=n=>String(n).padStart(2,'0');if(pad(at.getHours())+':'+pad(at.getMinutes())!==time.value){fail.textContent='That local time is unavailable on this date. Choose another time.';return}
      after={...current,title:title.value.trim().slice(0,100),at:at.toISOString()};fresh[fresh.indexOf(current)]=after;
     }else fresh.splice(fresh.indexOf(current),1);
-    commitCalendarChanges(fresh);state.before={...current};state.after=after;state.status='applied';t.content=proposal.kind==='delete'?'Deleted the selected reminder from Orivia’s calendar on this device.':'Updated the selected reminder in Orivia’s calendar on this device.';save();draw();
-   }catch(_){fail.textContent='I couldn’t confirm the calendar was saved. Please check My calendar before retrying.'}
+    commitCalendarChanges(fresh);state.before={...current};state.after=after;state.status='applied';t.content=uiText(proposal.kind==='delete'?'Deleted the selected reminder from Orivia’s calendar on this device.':'Updated the selected reminder in Orivia’s calendar on this device.');save();draw();
+   }catch(_){fail.textContent=uiText('I couldn’t confirm the calendar was saved. Please check My calendar before retrying.')}
   }));
  };
  select.onchange=update;if(matched.items.length===1){select.value=matched.items[0].id;update()}
@@ -1365,7 +1370,7 @@ function saveChatReminder(r){
 }
 function reminderBox(t){
  const saved=t.meta.reminder,live=events.find(e=>e.id===saved.id),r=live||saved,box=el('div','event');box.style.cssText='margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px';
- const when=new Date(r.at).toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+ const when=new Date(r.at).toLocaleString(uiLanguage(),{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
  if(!live){box.append(el('p','tiny','Reminder removed: '+r.title));return box}
  box.append(el('strong','','✓ Reminder saved: '+r.title),el('p','tiny',when+' · saved in Orivia on this device. For an alert on your phone, add it to your calendar too.'));
  const acts=el('div','acts');acts.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-top:6px';
@@ -1379,9 +1384,9 @@ window.oriviaResearchEnabled=()=>!!pilotConsent();
 function researchNotice(){
  $('research-off')?.remove();if(!pilotOffer||pilotConsent())return;
  const n=el('section','remember');n.id='research-off';n.setAttribute('role','note');
- n.append(el('strong','','Research is off on this device'),el('p','notice','Orivia can’t search the web or check sources until you turn on the research test.'));
+ n.append(el('strong','',uiText('Research is off on this device')),el('p','notice',uiText('Orivia can’t search the web or check sources until you turn on the research test.')));
  const row=el('div','row');
- row.append(button('Turn on research','btn small',()=>{n.replaceChildren(el('p','notice',$('pilot-text').textContent),(()=>{const r2=el('div','row');r2.append(button('I agree, turn it on','btn small',()=>{try{localStorage.setItem(pilotKey,pilotOffer)}catch(_){}$('set-pilot').checked=true;n.replaceChildren(el('p','notice','Research is on for this device. You can turn it off in Settings.'))}),button('Not now','btn text small',()=>n.remove()));return r2})())}),
+ row.append(button('Turn on research','btn small',()=>{n.replaceChildren(el('p','notice',$('pilot-text').textContent),(()=>{const r2=el('div','row');r2.append(button('I agree, turn it on','btn small',()=>{try{localStorage.setItem(pilotKey,pilotOffer)}catch(_){}$('set-pilot').checked=true;n.replaceChildren(el('p','notice',uiText('Research is on for this device. You can turn it off in Settings.')))}),button('Not now','btn text small',()=>n.remove()));return r2})())}),
   button('Not now','btn text small',()=>n.remove()));
  n.append(row);$('history').after(n);const sc=$('chat-scroll');if(sc)sc.scrollTop=sc.scrollHeight;
 }
@@ -1400,8 +1405,8 @@ function draftBox(t){
  const area=document.createElement('textarea');area.value=d.text;area.rows=Math.min(14,Math.max(5,d.text.split('\n').length+1));area.setAttribute('aria-label','Drafted message, editable');
  area.style.cssText='width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;resize:vertical';
  area.oninput=()=>{d.text=area.value.slice(0,2000);save()};
- const copy=document.createElement('button');copy.type='button';copy.className='btn small';copy.textContent='Copy';
- copy.onclick=async()=>{const v=(subj&&subj.value?'Subject: '+subj.value+'\n\n':'')+area.value;let ok=false;try{await navigator.clipboard.writeText(v);ok=true}catch(_){try{area.select();ok=document.execCommand('copy')}catch(__){}}copy.textContent=ok?'Copied':'Select the text and copy it';setTimeout(()=>{copy.textContent='Copy'},2500)};
+ const copy=document.createElement('button');copy.type='button';copy.className='btn small';copy.textContent=uiText('Copy');
+ copy.onclick=async()=>{const v=(subj&&subj.value?'Subject: '+subj.value+'\n\n':'')+area.value;let ok=false;try{await navigator.clipboard.writeText(v);ok=true}catch(_){try{area.select();ok=document.execCommand('copy')}catch(__){}}copy.textContent=ok?'Copied':'Select the text and copy it';setTimeout(()=>{copy.textContent=uiText('Copy')},2500)};
  box.append(label,...(subj?[subj]:[]),area,copy);return box;
 }
 /* After a rate limit: the Send button waits, counting down, so repeated taps can't keep the limit going. */
@@ -1417,7 +1422,7 @@ function working(text){
  if(!text){$('working')?.remove();return}
  const sc=$('chat-scroll'),follow=nearChatBottom(sc);
  let w=$('working');
- if(!w){w=document.createElement('div');w.id='working';w.className='bubble assistant';const b=document.createElement('b');b.textContent='Orivia';const s=document.createElement('span');s.setAttribute('aria-live','polite');s.style.opacity='0.75';s.style.fontStyle='italic';w.append(b,s);$('history').append(w)}
+ if(!w){w=document.createElement('div');w.id='working';w.className='bubble assistant';const b=document.createElement('b');b.textContent=uiText('Orivia');const s=document.createElement('span');s.setAttribute('aria-live','polite');s.style.opacity='0.75';s.style.fontStyle='italic';w.append(b,s);$('history').append(w)}
  w.querySelector('span').textContent=String(text).slice(0,140);if(follow)sc.scrollTop=sc.scrollHeight;
 }
 async function readReply(res,chatId){
@@ -1437,9 +1442,9 @@ $('form').onsubmit=async e=>{
  const text=$('msg').value.trim();if(!text)return;
  $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});save();draw({scroll:true});
  const chatId=store.active,sentTurns=turns.slice();
- busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';working('Thinking…');window.oriviaResearchMode=!!pilotConsent();
+ busy=true;$('send').disabled=true;$('status').textContent=uiText('Orivia is thinking…');working('Thinking…');window.oriviaResearchMode=!!pilotConsent();
  try{
-  const res=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),researchContext:currentResearchContext(sentTurns),language:'en',style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
+  const res=await fetch('/v1/chat',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),researchContext:currentResearchContext(sentTurns),language:uiLanguage(),style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
   const {r,d}=await readReply(res,chatId);
   if(!r.ok){
    const why=d&&d.error;
@@ -1458,7 +1463,7 @@ $('form').onsubmit=async e=>{
   const dr=safeDraft(d.draft);if(dr)meta.draft=dr;
   // A reminder Orivia set from the conversation: saved now (the reply says so), with Undo under the reply.
   if(!change&&d.reminder&&store.active===chatId){const ev=saveChatReminder(d.reminder);if(ev)meta.reminder={id:ev.id,title:ev.title,at:ev.at,alarm:ev.alarm}}
-  const answer={role:'assistant',content:d.reply.slice(0,4000),...(Object.keys(meta).length?{meta}:{})};
+  const answer={role:'assistant',content:(change?uiText(d.reply):d.reply).slice(0,4000),...(Object.keys(meta).length?{meta}:{})};
   if(store.active!==chatId){ // they switched chats while Orivia was replying: file the answer in its own chat
    const c=store.chats.find(x=>x.id===chatId);if(c){c.turns=[...c.turns,answer];c.updated=Date.now();persist();renderChats()}
    $('status').textContent='Orivia replied in “'+(c?c.title:'another chat')+'”.';return;
@@ -1475,6 +1480,6 @@ $('form').onsubmit=async e=>{
   $('status').textContent=viaTest?(d.liveSources?.length?'Research test (OpenAI) · facts checked against the sources shown.':'Research test (OpenAI).')
    :pilotOffer&&!pilotConsent()?'Basic mode · the OpenAI research test is off on this device (turn it on in Settings).'
    :d.liveSources?.length?'Opened approved source page(s) for this reply. Routes and schedules are not checked.':d.verifiedSources?.length?'Reviewed campus references attached; live pages unavailable.':'AI reply • No approved live sources checked.';
- }catch(_){$('status').textContent='Could not reach the private AI. Please try again.'}
+ }catch(_){$('status').textContent=uiText('Could not reach the private AI. Please try again.')}
  finally{busy=false;$('send').disabled=Date.now()<coolUntil;working('')}
 };

@@ -5,7 +5,7 @@ const js=fs.readFileSync('workers/trial-ui/chat.js','utf8'),html=fs.readFileSync
 class Node { constructor(){this.children=[];this.style={};this.className='';this.textContent='';this.hidden=false} append(...n){this.children.push(...n)} replaceChildren(){this.children=[]} setAttribute(){} }
 const history=new Node(),empty=new Node(),sc={scrollTop:0,scrollHeight:2000,clientHeight:500};
 const user={role:'user',content:'A question'},answer={role:'assistant',content:'A full checked answer, immediately available.'};
-const ctx={document:{createElement:()=>new Node()},window:{},store:{active:'one'},turns:[user],$:(id)=>({history,empty,'chat-scroll':sc})[id],safeSources:()=>[],orgCards:()=>null};
+const ctx={uiText:v=>v,uiLanguage:()=>'en',document:{createElement:()=>new Node()},window:{},store:{active:'one'},turns:[user],$:(id)=>({history,empty,'chat-scroll':sc})[id],safeSources:()=>[],orgCards:()=>null};
 vm.createContext(ctx);
 const start=js.indexOf('let renderedChat;'),end=js.indexOf('function loadEvents',start);
 vm.runInContext(js.slice(start,end),ctx);

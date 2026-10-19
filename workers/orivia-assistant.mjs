@@ -281,7 +281,7 @@ Batch independent searches and page reads in the same tools step (up to 4); wait
 Research like a careful person: decide what would count as answering; prefer an official directory or government page when one exists; treat search results and listing sites as leads, then open the pages that can prove the point; if a link is broken, a page is unreadable or a search is thin, change approach. Check each candidate against the person's criteria (place, curriculum, year group...). Distinguish similarly named organisations and branches. "No new matches this round" is not "none exist". Reuse evidence already in the ledger instead of reading it again.
 
 Writing the reply (only from the evidence ledger; search snippets are not evidence):
-- Answer the question actually asked, in the language of the person's latest message. Keep it to about 250 words (more only for a list they asked for); for contacts give the one or two numbers or emails that fit their need, not every number on the page. Short paragraphs; plain text, no markdown; list lines start with "• ".
+- Answer the question actually asked, in reply_language (en = English, fr = French, ar = Arabic), unless the person explicitly requests a different language. Keep source quotes, organisation names, phone numbers and evidence IDs unchanged. Keep it to about 250 words (more only for a list they asked for); for contacts give the one or two numbers or emails that fit their need, not every number on the page. Short paragraphs; plain text, no markdown; list lines start with "• ".
 - When they ask for contacts, give contacts (do not repeat the earlier list). When they compare, compare sourced details and name the unknowns. When they ask for "all" or "are those the only ones?", state the scope and whether the list is complete and why; if it isn't, say where a complete list would come from (an official register or directory for that place and type, if one exists) and offer to work through it; show long lists 8 at a time and offer the rest.
 - Never invent a name, number, fee, date, link, phone number or email. If something could not be established, say exactly what, and what they can do instead.
 - person_region (when given) says which country's rules apply. An official page from the other country is general information only: use kind "general" with evidence and say whose guidance it is (for example "NHS (UK) advice").
@@ -385,7 +385,7 @@ export function incompleteReply(done,memory,ledger,{metrics}={}){
   research:{status:'incomplete',applicability:'needs-review',claims:[],unresolved:[],assistant:true,progress:[],taskContext:{task:{assistant:cleanMemory({...memory,evidence:keep.length?keep:memory?.evidence})}},process:{metrics}}};
 }
 /** Run one assistant turn. ai: the pilot transport (json mode). Returns the chat reply object, or null (caller falls back). */
-export async function runAssistantTurn({messages,profile=null,context=null,calendarChangeUI=false},env,{ai,fetcher=fetch,reserve,now=()=>new Date(),maxCalls=12,onProgress=null}={}){
+export async function runAssistantTurn({messages,profile=null,context=null,calendarChangeUI=false,replyLanguage='en'},env,{ai,fetcher=fetch,reserve,now=()=>new Date(),maxCalls=12,onProgress=null}={}){
  // Progress for the chat: written by code from what is actually happening (never the model's private reasoning).
  const report=t=>{try{onProgress&&onProgress(t)}catch(_){}};
  if(!ai?.run)return null;
@@ -440,7 +440,7 @@ export async function runAssistantTurn({messages,profile=null,context=null,calen
  let rejection=null,result=null,budgetOut=false,lastCodes='';const done={searches:0,pages:0};
  for(let call=0;call<maxCalls&&!result;call++){
   const left=maxCalls-call,mustReply=left<=2||Date.now()-started>ASSISTANT_LIMITS.wallMs;
-  const state={today:now().toISOString().slice(0,10),...(profileFacts(profile)?{aboutMe:profileFacts(profile)}:{}),memory:{...memory,evidence:undefined},
+  const state={reply_language:['en','fr','ar'].includes(replyLanguage)?replyLanguage:'en',today:now().toISOString().slice(0,10),...(profileFacts(profile)?{aboutMe:profileFacts(profile)}:{}),memory:{...memory,evidence:undefined},
    conversation:msgs,
    evidence:evidenceView(ledger),
    leads:leads.slice(-ASSISTANT_LIMITS.leadsShown).map(l=>({id:l.id,kind:l.kind,url:l.url,title:clip(l.title,100),snippet:clip(l.snippet,160)})),

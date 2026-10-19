@@ -10,6 +10,7 @@ const swap=(path,content)=>{
  src=src.slice(0,start)+JSON.stringify(content)+src.slice(end);
 };
 swap('/',fs.readFileSync('workers/trial-ui/page.html','utf8').trim());
-swap('/chat.js',fs.readFileSync('workers/trial-ui/chat.js','utf8'));
+const i18n=fs.readFileSync('workers/trial-ui/i18n.js','utf8').replace('/*__TRANSLATIONS__*/{}',JSON.stringify(JSON.parse(fs.readFileSync('workers/trial-ui/translations.json','utf8'))));
+swap('/chat.js',i18n+'\n'+fs.readFileSync('workers/trial-ui/chat.js','utf8'));
 fs.writeFileSync(W,src);
 console.log('Embedded trial UI into',W);
