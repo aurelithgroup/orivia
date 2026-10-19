@@ -324,9 +324,15 @@ function orgCards(t,srcs){
 // Keep the full answer and source cards on screen, but respect the chat API's
 // per-message limit and never send browser-only evidence metadata back.
 function chatMessages(turns){return turns.slice(-12).map(({role,content})=>({role,content:content.slice(0,1200)}))} // only the active chat, latest 12 messages
-function draw(){
+// Animate only the newly delivered reply. History redraws stay still and keep the reader's place.
+let renderedChat;
+function nearChatBottom(sc){return sc.scrollHeight-sc.clientHeight-sc.scrollTop<96}
+function draw({newReply=null,scroll=false}={}){
+ const sc=$('chat-scroll'),previousTop=sc.scrollTop;
+ const follow=scroll||renderedChat!==store.active||nearChatBottom(sc);
+ renderedChat=store.active;
  const el=$('history');el.replaceChildren();
- for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant');const b=document.createElement('b');b.textContent=t.role==='user'?'You':'Orivia';const txt=document.createElement('span');
+ for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant')+(t===newReply?' reply-arriving':'');const b=document.createElement('b');b.textContent=t.role==='user'?'You':'Orivia';const txt=document.createElement('span');
   const srcs=t.role==='assistant'?safeSources(t.meta&&t.meta.sources):[];
   if(srcs.length)txt.append(...citedText(t.content,srcs));else txt.textContent=t.content;p.append(b,txt);
   const cards=t.role==='assistant'&&t.meta&&t.meta.organisations?orgCards(t,srcs):null;
@@ -340,7 +346,7 @@ function draw(){
   if(t.role==='assistant'&&'speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent='▶ Listen';lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label','Listen to this reply');lb.onclick=()=>listen(spokenText(t.content),lb);p.append(document.createElement('br'),lb)}
   el.append(p)}
  $('empty').hidden=turns.length>0;
- const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight;
+ sc.scrollTop=follow?sc.scrollHeight:previousTop;
 }
 function loadEvents(){try{const data=JSON.parse(localStorage.getItem(eventKey)||'[]');events=Array.isArray(data)?data.filter(e=>e&&typeof e.title==='string'&&typeof e.at==='string'&&typeof e.id==='string').slice(-100):[]}catch(_){events=[]}}
 function storeEvents(){try{localStorage.setItem(eventKey,JSON.stringify(events.slice(-100)))}catch(_){$('reminder-status').textContent='Unable to save calendar in this browser.'}}
@@ -1247,9 +1253,10 @@ function cooldown(secs){
    one line at a time, then the reply. Plain JSON replies (every other path) work as before. */
 function working(text){
  if(!text){$('working')?.remove();return}
+ const sc=$('chat-scroll'),follow=nearChatBottom(sc);
  let w=$('working');
  if(!w){w=document.createElement('div');w.id='working';w.className='bubble assistant';const b=document.createElement('b');b.textContent='Orivia';const s=document.createElement('span');s.setAttribute('aria-live','polite');s.style.opacity='0.75';s.style.fontStyle='italic';w.append(b,s);$('history').append(w)}
- w.querySelector('span').textContent=String(text).slice(0,140);const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight;
+ w.querySelector('span').textContent=String(text).slice(0,140);if(follow)sc.scrollTop=sc.scrollHeight;
 }
 async function readReply(res,chatId){
  if(!/ndjson/i.test(res.headers.get('content-type')||''))return {r:res,d:await res.json().catch(()=>({}))};
@@ -1266,7 +1273,7 @@ $('form').onsubmit=async e=>{
  e.preventDefault();if(busy||sessionStorage.getItem(ck)!=='yes'||Date.now()<coolUntil)return;
  stopDictation(true);stopSpeaking();
  const text=$('msg').value.trim();if(!text)return;
- $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});save();draw();
+ $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});save();draw({scroll:true});
  const chatId=store.active,sentTurns=turns.slice();
  busy=true;$('send').disabled=true;$('status').textContent='Orivia is thinking…';working('Thinking…');window.oriviaResearchMode=!!pilotConsent();
  try{
@@ -1294,7 +1301,7 @@ $('form').onsubmit=async e=>{
    const c=store.chats.find(x=>x.id===chatId);if(c){c.turns=[...c.turns,answer];c.updated=Date.now();persist();renderChats()}
    $('status').textContent='Orivia replied in “'+(c?c.title:'another chat')+'”.';return;
   }
-  turns.push(answer);save();draw();
+  turns.push(answer);save();draw({newReply:answer});
   $('guide-offer')?.remove();
   resources(d.actions||[]); // sources now show under the reply itself
   guideCard(d.guideOffer);

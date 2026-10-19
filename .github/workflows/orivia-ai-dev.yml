@@ -28,6 +28,8 @@ jobs:
         run: node tests/assistant.test.mjs
       - name: Assistant timing and same-turn page reuse
         run: node tests/assistant-timing.test.mjs
+      - name: Reply arrival and reading position
+        run: node tests/reply-arrival.test.mjs
       - name: Buddy rule and conversation regression tests
         run: node tests/buddy-smoke.js
       - name: Secure AI bridge tests

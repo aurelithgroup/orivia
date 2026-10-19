@@ -63,7 +63,7 @@ assert.match(card, /if\(o\.contacts\.directions\)\{foot\.append\(actLink\('Take 
 assert.match(card, /if\(o\.contacts\.phone\)acts\.push/); assert.match(card, /if\(o\.contacts\.email\)acts\.push/); assert.match(card, /if\(o\.contacts\.website\)acts\.push/);
 assert.match(grab('orgCards'), /t\.meta\.shortlist=\[\.\.\.shortlist\];saveMeta\(\)/, 'shortlist is saved with the chat');
 assert.match(grab('orgCards'), /t\.meta\.cardsHidden=true;saveMeta\(\)/, 'Not now is remembered');
-assert.match(grab('draw'), /listen\(spokenText\(t\.content\),lb\)/, 'Listen still reads the reply');
+assert.match(js.slice(js.indexOf('function draw('),js.indexOf('function loadEvents(')), /listen\(spokenText\(t\.content\),lb\)/, 'Listen still reads the reply');
 for (const k of ['.org-card', '.org-mini', '.org-bar', '.org-choice', '.org-tab.on']) assert.ok(html.includes(k + '{'), k);
 assert.doesNotMatch(html.slice(html.indexOf('/* Information cards */'), html.indexOf('/* Chat history drawer */')), /#fff\b|#FFFFFF|#000\b/i, 'card colours come from the light/dark tokens');
 console.log('Information cards: sourced facts and contacts only, safe links, drafts without assumptions, shortlist saved: passed');
