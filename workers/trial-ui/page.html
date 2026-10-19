@@ -210,6 +210,9 @@ button.link-card{font:inherit;width:100%;text-align:start;cursor:pointer}
 #mic{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--surface2);color:var(--ink);display:grid;place-items:center;flex:none}
 #mic svg{width:20px;height:20px}
 #mic[aria-pressed="true"]{background:#B3261E;color:#fff;border-color:#B3261E}
+.dict-options{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.dict-options label{font-size:12px;color:var(--muted)}
+.dict-options select{max-width:100%;min-height:36px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--ink);font:inherit;font-size:13px}
 .listening{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;margin-bottom:8px;border-radius:12px;background:var(--amberSoft);font-weight:700;font-size:14px}
 .listening .dot{width:12px;height:12px;border-radius:50%;background:#B3261E;flex:none}
 @media (prefers-reduced-motion:no-preference){.listening .dot{animation:pulse 1.2s ease-in-out infinite}@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}}
@@ -437,6 +440,7 @@ nav.bottom .help-tab{color:var(--ink)}
    <div id="history" role="log" aria-live="polite"></div>
   </div>
   <div class="composer-wrap">
+   <div id="dict-options" class="dict-options" hidden><label for="dict-language">Voice typing language</label><select id="dict-language" aria-describedby="dict-help"></select><span id="dict-help" class="tiny">Speak, then stop to edit before sending.</span></div>
    <div id="listening" class="listening" hidden role="status"><span class="dot" aria-hidden="true"></span><span id="listening-text">Listening… speak now</span><button type="button" class="btn small" id="dict-stop">Stop</button><button type="button" class="btn text small" id="dict-cancel">Cancel</button></div>
    <form id="form"><label for="msg">Your message</label><textarea id="msg" rows="1" maxlength="900" required placeholder="Message Orivia…"></textarea><button id="mic" type="button" aria-label="Speak your message" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button id="send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
    <p id="status" role="status"></p>

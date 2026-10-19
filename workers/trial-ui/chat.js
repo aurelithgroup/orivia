@@ -653,28 +653,66 @@ async function listen(text,btn){
 if(canSpeak)setInterval(()=>{try{if(speechSynthesis.speaking&&!speechSynthesis.paused){speechSynthesis.pause();speechSynthesis.resume()}}catch(_){}},10000); // keeps Chrome on Android from stopping long replies
 /* ===== Dictation: speak instead of typing, then check and edit before sending ===== */
 const Recog=window.SpeechRecognition||window.webkitSpeechRecognition;
-const micNoteKey='orivia-private-mic-note';
+const micNoteKey='orivia-private-mic-note-v2';
+const DICT_LANGS=[['auto','Device language'],['en-GB','English (UK)'],['ar-AE','العربية'],['fr-FR','Français'],['fil-PH','Filipino'],['hi-IN','हिन्दी'],['ur-PK','اردو'],['zh-CN','中文'],['bn-BD','বাংলা'],['ml-IN','മലയാളം'],['ru-RU','Русский']];
 let recog=null,dictBase='';
+function dictationLanguage(){
+ const choice=$('dict-language').value;
+ return DICT_LANGS.some(([id])=>id===choice)&&choice!=='auto'?choice:(navigator.language||'en-GB');
+}
+function dictationIdle(){
+ $('listening').hidden=true;$('mic').setAttribute('aria-pressed','false');
+ $('dict-language').disabled=false;$('msg').readOnly=false;grow();
+}
 function stopDictation(keep){
- if(!recog)return;const r=recog;recog=null;
+ if(!recog)return;const r=recog;recog=null; // retire before stop/abort: late callbacks must not touch this draft or another chat
  if(!keep)$('msg').value=dictBase;
+ dictationIdle();
  try{keep?r.stop():r.abort()}catch(_){}
- $('listening').hidden=true;$('mic').setAttribute('aria-pressed','false');grow();
+ $('status').textContent=keep?'Check the text, edit anything, then press Send.':'Dictation cancelled. Your earlier text is kept.';
 }
 function startDictation(){
+ if(!Recog||recog)return;
  let seen=false;try{seen=localStorage.getItem(micNoteKey)==='1'}catch(_){}
- if(!seen){$('status').textContent='Your browser turns speech into text, often using Google’s or Apple’s speech service. Nothing is sent until you press Send. Tap the microphone again to start.';try{localStorage.setItem(micNoteKey,'1')}catch(_){}return}
+ if(!seen){$('status').textContent='Your browser may send audio to its speech provider, such as Google or Apple, to turn it into text. Orivia receives the text only when you press Send. Tap the microphone again to start.';try{localStorage.setItem(micNoteKey,'1')}catch(_){}return}
  stopSpeaking();
- const r=new Recog();recog=r;dictBase=$('msg').value;
- r.lang=document.documentElement.lang&&document.documentElement.lang!=='en'?document.documentElement.lang:(navigator.language||'en-GB');
- r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
- r.onresult=e=>{let t='';for(const x of e.results)t+=x[0].transcript;$('msg').value=(dictBase?dictBase.replace(/\s*$/,' '):'')+t.trim();grow()};
- r.onerror=e=>{const m={'not-allowed':'Microphone access is off for this site. You can turn it on in your browser settings, or keep typing.','service-not-allowed':'Speech to text isn’t available in this browser. You can keep typing.','no-speech':'I didn’t catch anything. Tap the microphone and try again.','audio-capture':'No microphone was found. You can keep typing.','network':'The speech service couldn’t be reached. You can keep typing.'}[e.error];if(m)$('status').textContent=m};
- r.onend=()=>{if(recog===r){recog=null;$('listening').hidden=true;$('mic').setAttribute('aria-pressed','false')}if($('msg').value.trim()!==dictBase.trim()){$('status').textContent='Check the text, edit anything, then press Send.';$('msg').focus()}};
- try{r.start()}catch(_){recog=null;$('status').textContent='Speech to text couldn’t start. You can keep typing.';return}
- $('listening').hidden=false;$('listening-text').textContent='Listening… speak now';$('mic').setAttribute('aria-pressed','true');$('status').textContent='';
+ let r;try{r=new Recog()}catch(_){$('status').textContent='Speech to text couldn’t start. You can keep typing.';return}
+ recog=r;const base=$('msg').value;dictBase=base;
+ r.lang=dictationLanguage();r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
+ $('listening').hidden=false;$('listening-text').textContent='Starting microphone…';$('mic').setAttribute('aria-pressed','true');
+ $('dict-language').disabled=true;$('msg').readOnly=true;$('status').textContent='';
+ r.onstart=()=>{if(recog!==r)return;$('listening-text').textContent='Listening · '+(DICT_LANGS.find(([id])=>id===r.lang)?.[1]||r.lang)+' · Stop to edit'};
+ r.onresult=e=>{
+  if(recog!==r)return;
+  let t='';for(const x of e.results)t+=x[0].transcript;
+  const text=(base?base.replace(/\s*$/,' '):'')+t.trim();
+  $('msg').value=text.slice(0,900);grow();
+  if(text.length>900)$('listening-text').textContent='Message limit reached · Stop to edit';
+ };
+ r.onerror=e=>{
+  if(recog!==r)return;recog=null;dictationIdle();try{r.abort()}catch(_){}
+  $('status').textContent=({'not-allowed':'Microphone permission was blocked or dismissed. Allow it in this site’s browser permissions, then try again. You can keep typing.',
+   'service-not-allowed':'Speech to text isn’t available in this browser. You can keep typing.',
+   'language-not-supported':'This speech service doesn’t support the selected language. Choose another language or keep typing.',
+   'no-speech':'I didn’t catch anything. Tap the microphone and try again.',
+   'audio-capture':'No microphone was found. Check that one is connected and available, or keep typing.',
+   'network':'The speech service couldn’t be reached. Check your connection and try again, or keep typing.',
+   'aborted':'Dictation stopped. You can edit the text or keep typing.'})[e.error]||'Dictation stopped unexpectedly. Your text is still here; you can edit it or try again.';
+ };
+ r.onend=()=>{
+  if(recog!==r)return;recog=null;dictationIdle();
+  $('status').textContent=$('msg').value.trim()!==base.trim()?'Check the text, edit anything, then press Send.':'No new speech was captured. Try the microphone again or keep typing.';
+ };
+ try{r.start()}catch(_){if(recog===r){recog=null;dictationIdle();$('status').textContent='Speech to text couldn’t start. You can keep typing.'}}
 }
-if(Recog){$('mic').hidden=false;$('mic').onclick=()=>recog?stopDictation(true):startDictation()}
+function setupDictation(){
+ if(!Recog)return;
+ const picker=$('dict-language');
+ for(const [id,label]of DICT_LANGS){const o=document.createElement('option');o.value=id;o.textContent=label;picker.append(o)}
+ const saved=readSettings().dictationLanguage;picker.value=DICT_LANGS.some(([id])=>id===saved)?saved:'auto';
+ picker.onchange=()=>{try{localStorage.setItem(settingsKey,JSON.stringify({...readSettings(),dictationLanguage:picker.value}))}catch(_){}};
+ $('dict-options').hidden=false;$('mic').hidden=false;$('mic').onclick=()=>recog?stopDictation(true):startDictation();
+}
 $('dict-stop').onclick=()=>stopDictation(true);
 $('dict-cancel').onclick=()=>stopDictation(false);
 
@@ -813,6 +851,7 @@ function researchBlock(srcs,research){
 /* ===== Settings: saved in this browser ===== */
 const settingsKey='orivia-private-settings-v1';
 const SET_DEFAULT={theme:'system',size:'standard',tone:'friendly',suggest:true};
+setupDictation();
 function readSettings(){try{const d=JSON.parse(localStorage.getItem(settingsKey)||'{}');return {...SET_DEFAULT,...(d&&typeof d==='object'?d:{})}}catch(_){return {...SET_DEFAULT}}}
 function writeSettings(patch){const n={...readSettings(),...patch};try{localStorage.setItem(settingsKey,JSON.stringify(n))}catch(_){}applySettings();renderSettings()}
 function applySettings(){

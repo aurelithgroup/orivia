@@ -60,5 +60,5 @@ assert.doesNotMatch(end, /localStorage\.removeItem/, 'ending a session keeps jou
 assert.match(js, /■ Stop/); assert.match(html, /id="dict-stop"/); assert.match(html, /id="dict-cancel"/);
 const dict = js.slice(js.indexOf('/* ===== Dictation'), js.indexOf('/* Help: always'));
 assert.doesNotMatch(dict, /requestSubmit|\.submit\(/, 'dictated text is edited and sent by the person');
-assert.match(dict, /Nothing is sent until you press Send/);
+assert.match(dict, /Orivia receives the text only when you press Send/);
 console.log('Settings and Calendar: tone, guide suggestions, theme override, safe reminders: passed');
