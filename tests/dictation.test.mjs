@@ -2,14 +2,18 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const js=fs.readFileSync('workers/trial-ui/chat.js','utf8');
+const html=fs.readFileSync('workers/trial-ui/page.html','utf8');
+assert.ok(html.indexOf('id="dict-options"')>html.indexOf('id="settings-view"'),'language field belongs in Settings');
+assert.ok(!html.slice(html.indexOf('class="composer-wrap"'),html.indexOf('id="calendar-panel"')).includes('id="dict-options"'),'no permanent language row over composer');
 const block=js.slice(js.indexOf('/* ===== Dictation:'),js.indexOf('/* Help: always'));
 function harness({supported=true,saved='auto',storageError=false}={}){
- const nodes=new Map();const $=id=>{if(!nodes.has(id))nodes.set(id,{value:'',textContent:'',hidden:true,disabled:false,readOnly:false,children:[],setAttribute(k,v){this[k]=v},append(o){this.children.push(o)}});return nodes.get(id)};
+ const nodes=new Map();const $=id=>{if(!nodes.has(id))nodes.set(id,{value:'',textContent:'',hidden:true,disabled:false,readOnly:false,children:[],listeners:{},addEventListener(k,f){this.listeners[k]=f},contains(n){return this===n},focus(){},setAttribute(k,v){this[k]=v},append(o){this.children.push(o)}});return nodes.get(id)};
  const instances=[];class Recognition{constructor(){instances.push(this)}start(){if(this.fail)throw Error('fixture')}stop(){this.stopped=true}abort(){this.aborted=true}}
  const storage=new Map([['orivia-private-mic-note-v2','1']]);
- const ctx={window:supported?{SpeechRecognition:Recognition}:{},navigator:{language:'en-GB'},document:{createElement:()=>({})},$: $,settingsKey:'settings',readSettings:()=>({dictationLanguage:saved}),localStorage:{getItem:k=>storage.get(k),setItem(k,v){if(storageError)throw Error('full');storage.set(k,v)}},stopSpeaking(){},grow(){}};
+ const ctx={window:supported?{SpeechRecognition:Recognition}:{},navigator:{language:'en-GB'},document:{createElement:()=>({}),addEventListener(){}},$: $,settingsKey:'settings',readSettings:()=>({dictationLanguage:saved}),localStorage:{getItem:k=>storage.get(k),setItem(k,v){if(storageError)throw Error('full');storage.set(k,v)}},stopSpeaking(){},grow(){}};
+ let clock=0,serial=0;const timers=new Map();ctx.Date=class extends Date{static now(){return clock}};ctx.setTimeout=(fn,ms)=>{const id=++serial;timers.set(id,{fn,at:clock+ms});return id};ctx.clearTimeout=id=>timers.delete(id);
  vm.createContext(ctx);vm.runInContext(block+'\nsetupDictation();',ctx);
- return {ctx,$,instances,storage,start:()=>vm.runInContext('startDictation()',ctx),stop:keep=>vm.runInContext('stopDictation('+keep+')',ctx)};
+ return {ctx,$,instances,storage,advance(ms){clock+=ms;for(const [id,t]of [...timers])if(t.at<=clock){timers.delete(id);t.fn()}},start:()=>vm.runInContext('startDictation()',ctx),stop:keep=>vm.runInContext('stopDictation('+keep+')',ctx)};
 }
 const result=t=>({results:[[{transcript:t}]]});
 const h=harness({saved:'fr-FR'});h.$('msg').value='Bonjour';h.start();const r=h.instances[0];assert.equal(r.lang,'fr-FR');assert.equal(h.$('msg').readOnly,true);r.onstart();assert.match(h.$('listening-text').textContent,/Français/);
@@ -25,5 +29,12 @@ const limit=harness();limit.$('msg').value='x'.repeat(899);limit.start();limit.i
 const natural=harness();natural.start();natural.instances[0].onresult(result('hello'));natural.instances[0].onend();assert.equal(natural.$('msg').readOnly,false);assert.match(natural.$('status').textContent,/Check the text/);
 const failed=harness();failed.ctx.window.SpeechRecognition.prototype.start=()=>{throw Error('cannot start')};failed.start();assert.equal(failed.$('msg').readOnly,false);assert.equal(failed.$('listening').hidden,true);assert.match(failed.$('status').textContent,/couldn’t start/);
 const full=harness({storageError:true});full.$('dict-language').value='ar-AE';assert.doesNotThrow(()=>full.$('dict-language').onchange());
+// Compact microphone shortcut: hover and hold choose a language without starting recognition.
+const menu=harness();const mic=menu.$('mic');menu.$('mic-language-menu').hidden=true;
+mic.listeners.pointerenter({pointerType:'mouse'});menu.advance(300);assert.equal(menu.$('mic-language-menu').hidden,false);assert.equal(menu.instances.length,0);
+menu.$('dict-language-shortcut').value='ar-AE';menu.$('dict-language-shortcut').onchange();assert.equal(menu.$('dict-language').value,'ar-AE');assert.equal(menu.$('mic-language-menu').hidden,true);
+mic.listeners.pointerdown({pointerType:'touch',button:0,clientX:0,clientY:0});menu.advance(2500);mic.listeners.pointerup();mic.onclick();assert.equal(menu.instances.length,0,'long hold does not also start dictation on release');
+menu.advance(700);mic.onclick();assert.equal(menu.instances.length,1,'normal tap still starts dictation');assert.equal(menu.instances[0].lang,'ar-AE');
+const moving=harness();moving.$('mic').listeners.pointerdown({pointerType:'touch',button:0,clientX:0,clientY:0});moving.$('mic').listeners.pointermove({clientX:30,clientY:0});moving.advance(600);assert.equal(moving.$('mic-language-menu').hidden,true,'scroll gesture cancels hold');
 assert.doesNotMatch(block,/requestSubmit|\.submit\(/,'dictation never sends');
 console.log('Dictation: language choice, Cancel/Stop races, stale sessions, permissions, failures, no speech, limits, unsupported browser and no auto-send passed');

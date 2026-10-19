@@ -213,9 +213,11 @@ button.link-card{font:inherit;width:100%;text-align:start;cursor:pointer}
 #mic{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--surface2);color:var(--ink);display:grid;place-items:center;flex:none}
 #mic svg{width:20px;height:20px}
 #mic[aria-pressed="true"]{background:#B3261E;color:#fff;border-color:#B3261E}
-.dict-options{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-.dict-options label{font-size:12px;color:var(--muted)}
-.dict-options select{max-width:100%;min-height:36px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--ink);font:inherit;font-size:13px}
+.composer-wrap{position:relative}
+.mic-language-menu{position:absolute;inset-inline-end:12px;bottom:calc(100% + 6px);z-index:20;width:min(290px,calc(100% - 24px));padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:0 6px 24px #0002}
+.mic-language-menu label{font-size:13px;font-weight:700}
+.mic-language-menu .row{justify-content:space-between;align-items:center;margin-bottom:8px}
+.dict-language-select{max-width:100%;min-height:36px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--ink);font:inherit;font-size:13px}
 .listening{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;margin-bottom:8px;border-radius:12px;background:var(--amberSoft);font-weight:700;font-size:14px}
 .listening .dot{width:12px;height:12px;border-radius:50%;background:#B3261E;flex:none}
 @media (prefers-reduced-motion:no-preference){.listening .dot{animation:pulse 1.2s ease-in-out infinite}@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}}
@@ -443,7 +445,7 @@ nav.bottom .help-tab{color:var(--ink)}
    <div id="history" role="log" aria-live="polite"></div>
   </div>
   <div class="composer-wrap">
-   <div id="dict-options" class="dict-options" hidden><label for="dict-language">Voice typing language</label><select id="dict-language" aria-describedby="dict-help"></select><span id="dict-help" class="tiny">Speak, then stop to edit before sending.</span></div>
+   <div id="mic-language-menu" class="mic-language-menu" role="dialog" aria-label="Voice typing language" hidden><div class="row"><label for="dict-language-shortcut">Voice typing language</label><button type="button" id="mic-language-close" class="btn text small" aria-label="Close voice language menu">✕</button></div><select id="dict-language-shortcut" class="dict-language-select"></select></div>
    <div id="listening" class="listening" hidden role="status"><span class="dot" aria-hidden="true"></span><span id="listening-text">Listening… speak now</span><button type="button" class="btn small" id="dict-stop">Stop</button><button type="button" class="btn text small" id="dict-cancel">Cancel</button></div>
    <form id="form"><label for="msg">Your message</label><textarea id="msg" rows="1" maxlength="900" required placeholder="Message Orivia…"></textarea><button id="mic" type="button" aria-label="Speak your message" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button id="send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
    <p id="status" role="status"></p>
@@ -517,6 +519,7 @@ nav.bottom .help-tab{color:var(--ink)}
    <div class="set-row"><span>Text size</span><div class="seg" id="set-size" role="radiogroup" aria-label="Text size"></div></div>
   </section>
   <section class="set-group"><h3>Orivia</h3>
+   <div id="dict-options" class="set-row col" hidden><label for="dict-language">Voice typing language</label><select id="dict-language" class="dict-language-select" aria-describedby="dict-help"></select><p id="dict-help" class="tiny">You can also hover over the microphone, or press and hold it, to change the language.</p></div>
    <div class="set-row col"><span>How Orivia talks to you</span><div class="seg" id="set-tone" role="radiogroup" aria-label="How Orivia talks to you"></div><p class="tiny" id="tone-note"></p></div>
    <label class="set-row toggle"><span>Suggest guides in chat<small class="tiny">When a step-by-step guide could help with something you’ve decided</small></span><input type="checkbox" id="set-suggest" role="switch"></label>
    <label class="set-row toggle"><span>Use About me in chats<small class="tiny" id="aboutme-state"></small></span><input type="checkbox" id="set-aboutme-use" role="switch" checked></label>

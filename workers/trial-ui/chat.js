@@ -446,7 +446,7 @@ function tab(which){
  const views={chat:'chat',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view',settings:'settings-view'};
  if(!views[which])return;
  if(which!=='settings')lastTab=which;
- if(which!=='chat'){try{stopSpeaking();stopDictation(true)}catch(_){}}
+ if(which!=='chat'){try{stopSpeaking();stopDictation(true);closeMicLanguageMenu()}catch(_){}}
  const navKey=which==='guide'?'journeys':which; // a guide opens inside Journeys; Settings has no tab of its own
  for(const [k,id] of Object.entries(views)){$(id).hidden=k!==which;const b=$('tab-'+k);if(b){b.classList.toggle('active',k===navKey);b.setAttribute('aria-current',k===navKey?'page':'false')}}
  $('view-title').textContent=TITLES[which];
@@ -663,7 +663,7 @@ function dictationLanguage(){
 }
 function dictationIdle(){
  $('listening').hidden=true;$('mic').setAttribute('aria-pressed','false');
- $('dict-language').disabled=false;$('msg').readOnly=false;grow();
+ $('dict-language').disabled=false;$('dict-language-shortcut').disabled=false;$('msg').readOnly=false;grow();
 }
 function stopDictation(keep){
  if(!recog)return;const r=recog;recog=null; // retire before stop/abort: late callbacks must not touch this draft or another chat
@@ -674,6 +674,7 @@ function stopDictation(keep){
 }
 function startDictation(){
  if(!Recog||recog)return;
+ closeMicLanguageMenu();
  let seen=false;try{seen=localStorage.getItem(micNoteKey)==='1'}catch(_){}
  if(!seen){$('status').textContent='Your browser may send audio to its speech provider, such as Google or Apple, to turn it into text. Orivia receives the text only when you press Send. Tap the microphone again to start.';try{localStorage.setItem(micNoteKey,'1')}catch(_){}return}
  stopSpeaking();
@@ -681,7 +682,7 @@ function startDictation(){
  recog=r;const base=$('msg').value;dictBase=base;
  r.lang=dictationLanguage();r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
  $('listening').hidden=false;$('listening-text').textContent='Starting microphone…';$('mic').setAttribute('aria-pressed','true');
- $('dict-language').disabled=true;$('msg').readOnly=true;$('status').textContent='';
+ $('dict-language').disabled=true;$('dict-language-shortcut').disabled=true;$('msg').readOnly=true;$('status').textContent='';
  r.onstart=()=>{if(recog!==r)return;$('listening-text').textContent='Listening · '+(DICT_LANGS.find(([id])=>id===r.lang)?.[1]||r.lang)+' · Stop to edit'};
  r.onresult=e=>{
   if(recog!==r)return;
@@ -706,13 +707,33 @@ function startDictation(){
  };
  try{r.start()}catch(_){if(recog===r){recog=null;dictationIdle();$('status').textContent='Speech to text couldn’t start. You can keep typing.'}}
 }
+function closeMicLanguageMenu(focus=false){
+ $('mic-language-menu').hidden=true;$('mic').setAttribute('aria-expanded','false');if(focus)$('mic').focus();
+}
 function setupDictation(){
  if(!Recog)return;
- const picker=$('dict-language');
- for(const [id,label]of DICT_LANGS){const o=document.createElement('option');o.value=id;o.textContent=label;picker.append(o)}
- const saved=readSettings().dictationLanguage;picker.value=DICT_LANGS.some(([id])=>id===saved)?saved:'auto';
- picker.onchange=()=>{try{localStorage.setItem(settingsKey,JSON.stringify({...readSettings(),dictationLanguage:picker.value}))}catch(_){}};
- $('dict-options').hidden=false;$('mic').hidden=false;$('mic').onclick=()=>recog?stopDictation(true):startDictation();
+ const picker=$('dict-language'),shortcut=$('dict-language-shortcut'),mic=$('mic'),menu=$('mic-language-menu');
+ for(const [id,label]of DICT_LANGS)for(const select of [picker,shortcut]){const o=document.createElement('option');o.value=id;o.textContent=label;select.append(o)}
+ const saved=readSettings().dictationLanguage;picker.value=shortcut.value=DICT_LANGS.some(([id])=>id===saved)?saved:'auto';
+ const choose=source=>{picker.value=shortcut.value=source.value;try{localStorage.setItem(settingsKey,JSON.stringify({...readSettings(),dictationLanguage:source.value}))}catch(_){}};
+ picker.onchange=()=>choose(picker);shortcut.onchange=()=>{choose(shortcut);closeMicLanguageMenu(true)};
+ const open=focus=>{if(recog)return;menu.hidden=false;mic.setAttribute('aria-expanded','true');if(focus)shortcut.focus()};
+ let hold=null,hover=null,leave=null,down=null,held=false,suppressUntil=0;
+ const clearHold=()=>{clearTimeout(hold);hold=null};
+ mic.title='Tap to dictate. Hold or hover to choose language.';mic.setAttribute('aria-haspopup','dialog');mic.setAttribute('aria-controls','mic-language-menu');mic.setAttribute('aria-expanded','false');
+ mic.addEventListener('pointerenter',e=>{if(e.pointerType!=='mouse')return;clearTimeout(leave);hover=setTimeout(()=>open(false),300)});
+ mic.addEventListener('pointerleave',()=>{clearTimeout(hover);leave=setTimeout(()=>{if(!menu.contains(document.activeElement))closeMicLanguageMenu()},200);clearHold()});
+ menu.addEventListener('pointerenter',()=>clearTimeout(leave));menu.addEventListener('pointerleave',()=>{leave=setTimeout(()=>{if(!menu.contains(document.activeElement))closeMicLanguageMenu()},200)});
+ mic.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||e.button>0)return;down={x:e.clientX,y:e.clientY};clearHold();held=false;hold=setTimeout(()=>{held=true;open(true)},500)});
+ mic.addEventListener('pointermove',e=>{if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>10)clearHold()});
+ for(const event of ['pointerup','pointercancel'])mic.addEventListener(event,()=>{clearHold();down=null;if(held){suppressUntil=Date.now()+600;held=false}});
+ mic.addEventListener('contextmenu',e=>{e.preventDefault();held=true;suppressUntil=Date.now()+600;open(true)});
+ mic.addEventListener('keydown',e=>{if(e.key==='ArrowDown'&&e.altKey){e.preventDefault();open(true)}});
+ document.addEventListener('pointerdown',e=>{if(!menu.hidden&&!menu.contains(e.target)&&!mic.contains(e.target))closeMicLanguageMenu()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!menu.hidden){e.preventDefault();closeMicLanguageMenu(true)}});
+ $('mic-language-close').onclick=()=>closeMicLanguageMenu(true);
+ $('dict-options').hidden=false;mic.hidden=false;
+ mic.onclick=()=>{if(Date.now()<suppressUntil)return;closeMicLanguageMenu();recog?stopDictation(true):startDictation()};
 }
 $('dict-stop').onclick=()=>stopDictation(true);
 $('dict-cancel').onclick=()=>stopDictation(false);

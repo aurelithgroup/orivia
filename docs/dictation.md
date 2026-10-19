@@ -12,3 +12,7 @@ The browser speech service is used; no new paid speech provider or backend audio
 `tests/dictation.test.mjs` runs the production dictation functions with a fake recognition service. It exercises callback races, language selection, errors, restoration, length limits, privacy note and no automatic sending. Real microphone quality and permissions still need an iPhone and Android check. The automated tests do not establish recognition quality or language availability on devices.
 
 Private pilot only. Patch its existing embedded UI rather than rebuilding its newer backend from this checkout. Pre-change rollback version: c0409085-d615-45c9-9230-112f4f02601b.
+
+## Compact language controls
+
+The permanent language row is now in Settings. Hover over the microphone (mouse), hold for half a second (touch), right-click, or use Alt+ArrowDown while focusing the mic to open the compact picker. Escape, the close button, choosing a language or clicking outside dismiss it. Normal mic activation still starts/stops dictation. A hold does not start recording on release; moving a touch cancels the hold. Both pickers share the same saved language. Device gesture behaviour still needs phone testing.
