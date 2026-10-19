@@ -22,3 +22,13 @@ const log=console.log;console.log=()=>{};const prompts=[];
 try{await runAssistantTurn({replyLanguage:'fr',messages:[{role:'user',content:'How do I get started?'}]},{},{ai:{run:async(_m,o)=>{prompts.push(JSON.parse(o.messages[1].content));return {response:JSON.stringify({action:'ask',question:'Dans quelle ville êtes-vous ?'})}}}})}finally{console.log=log}
 assert.equal(prompts[0].reply_language,'fr');assert.ok(!JSON.stringify(prompts).includes('My own appointment'));
 console.log('Languages: complete dictionary pairs, selected/saved language, RTL, repeated switches, unchanged messages/quotes/values, progress and provider preference passed');
+
+for(const lang of ['fr','ar']){
+ h.api.setLanguage(lang);
+ for(const label of ['Thinking…','Working out what to check…','Writing the answer…','Checking every fact against the sources…','Rechecking the details against the sources…','Checking the official SPEA directory…','Looking things up…'])assert.notEqual(h.api.progress(label),label,lang+': '+label);
+ const mixed=h.api.progress('Searching: British schools Sharjah · Reading 3 pages: spea.shj.ae, example.ae · Checking the official SPEA directory…');
+ assert.ok(mixed.includes('British schools Sharjah'));assert.ok(mixed.includes('spea.shj.ae, example.ae'));assert.ok(!/Searching|Reading|pages:|Checking/.test(mixed));
+ for(const label of ['Read 1 page · deciding what to check next…','Read 3 pages, searched 2 times · deciding what to check next…','searched once · deciding what to check next…'])assert.ok(!/Read|searched|deciding|times|once/.test(h.api.progress(label)),label);
+}
+h.api.setLanguage('en');assert.equal(h.api.progress('Read 3 pages, searched once · deciding what to check next…'),'Read 3 pages, searched once · deciding what to check next…');
+assert.match(code,/OriviaI18n\?\.progress\(text\)/,'the real thinking bubble uses the progress translator');

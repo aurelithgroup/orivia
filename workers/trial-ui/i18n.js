@@ -13,6 +13,25 @@
   for(const [prefix,translations]of Object.entries(prefixes))if(s.startsWith(prefix))return translations[language==='fr'?0:1]+s.slice(prefix.length);
   return s; // explicit fallback; never invent a translation of a fact or quote
  }
+ // Only server-authored progress labels are translated here; names and queries stay verbatim.
+ function progress(value){
+  const s=String(value??'');if(language==='en')return s;
+  if(dictionary[s]?.[language])return dictionary[s][language];
+  const end=s.endsWith('…')?'…':'',body=end?s.slice(0,-1):s;
+  return body.split(' · ').map(part=>{
+   if(part==='deciding what to check next')return text('Deciding what to check next');
+   const read=part.match(/^Reading (?:(\d+) pages: )?(.+)$/);
+   if(read)return language==='fr'?(read[1]?'Lecture de '+read[1]+' pages : ':'Lecture de ')+read[2]:(read[1]?'جارٍ قراءة '+read[1]+' صفحات: ':'جارٍ قراءة ')+read[2];
+   const done=part.match(/^(?:Read (\d+) pages?)?(?:, )?(?:searched (once|\d+ times))?$/);
+   if(done&&(done[1]||done[2])){
+    const parts=[];
+    if(done[1])parts.push(language==='fr'?(done[1]==='1'?'1 page lue':done[1]+' pages lues'):'تمت قراءة '+done[1]+' من الصفحات');
+    if(done[2]){const n=done[2]==='once'?'1':done[2].split(' ')[0];parts.push(language==='fr'?(n==='1'?'1 recherche effectuée':n+' recherches effectuées'):'تم إجراء '+n+' من عمليات البحث')}
+    return parts.join(language==='fr'?', ':'، ');
+   }
+   return text(part);
+  }).join(' · ')+end;
+ }
  function trackInitial(){
   const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
   while(n=walker.nextNode()){
@@ -33,7 +52,7 @@
   let state=dynamic.get(node);if(!state||node.textContent!==state.last)state={source:node.textContent,last:null};
   const value=text(state.source);state.last=value;dynamic.set(node,state);if(node.textContent!==value)node.textContent=value;
  }
- window.OriviaI18n={text,language:()=>language,setLanguage(value){language=supported.includes(value)?value:'en';apply()},dictionary};
+ window.OriviaI18n={text,progress,language:()=>language,setLanguage(value){language=supported.includes(value)?value:'en';apply()},dictionary};
  trackInitial();apply();
  for(const id of ['status','listening-text','tone-note','pilot-text','aboutme-state','reminder-status','view-title']){const node=document.getElementById(id);if(node)new MutationObserver(()=>localizeDynamic(node)).observe(node,{childList:true,characterData:true,subtree:true})}
 })();

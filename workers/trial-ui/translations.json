@@ -1082,5 +1082,13 @@
   "I’ve just arrived in the UAE. What should I do this week?": {
     "fr": "Je viens d’arriver aux Émirats arabes unis. Que dois-je faire cette semaine ?",
     "ar": "وصلت للتو إلى الإمارات. ماذا ينبغي أن أفعل هذا الأسبوع؟"
+  },
+  "Checking the official SPEA directory": {
+    "fr": "Vérification du répertoire officiel de la SPEA",
+    "ar": "جارٍ التحقّق من دليل هيئة الشارقة للتعليم الخاص الرسمي"
+  },
+  "Looking things up": {
+    "fr": "Recherche d’informations",
+    "ar": "جارٍ البحث عن المعلومات"
   }
 }

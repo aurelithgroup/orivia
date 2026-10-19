@@ -1423,7 +1423,7 @@ function working(text){
  const sc=$('chat-scroll'),follow=nearChatBottom(sc);
  let w=$('working');
  if(!w){w=document.createElement('div');w.id='working';w.className='bubble assistant';const b=document.createElement('b');b.textContent=uiText('Orivia');const s=document.createElement('span');s.setAttribute('aria-live','polite');s.style.opacity='0.75';s.style.fontStyle='italic';w.append(b,s);$('history').append(w)}
- w.querySelector('span').textContent=String(text).slice(0,140);if(follow)sc.scrollTop=sc.scrollHeight;
+ w.querySelector('span').textContent=(window.OriviaI18n?.progress(text)??String(text)).slice(0,180);if(follow)sc.scrollTop=sc.scrollHeight;
 }
 async function readReply(res,chatId){
  if(!/ndjson/i.test(res.headers.get('content-type')||''))return {r:res,d:await res.json().catch(()=>({}))};
