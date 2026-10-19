@@ -19,10 +19,24 @@ ctx.events=[];ctx.store={chats:[]};ctx.readJourneys=()=>({});const empty=ctx.das
 const nav=html.slice(html.indexOf('<nav class="bottom"'),html.indexOf('</nav>'));
 assert.deepEqual([...nav.matchAll(/data-tab="([^"]+)"/g)].map(x=>x[1]),['home','chat','mylife','journeys','calendar']);
 assert.match(html,/id="settings-help"/);assert.match(html,/id="tab-help"/);
-assert.match(js,/draw\(\);tab\('home'\)/);assert.match(js,/home-ask-form[\s\S]+?if\(text\)ask\(text,false\)/,'home transfers draft without automatically sending');
+assert.match(js,/draw\(\);tab\('home'\)/);assert.match(js,/newChat\(\);input.value='';ask\(text,true\)/,'home starts a new chat and sends through the normal handler');
 assert.match(js,/if\(which==='home'\)renderHome\(\)/);assert.match(js,/renderSavedPlaces\(\);renderLifeSummary\(\)/);
 assert.match(html,/Added by you · not linked/);assert.match(html,/Accounts and sync are coming later/);
 const dashboard=js.slice(js.indexOf('function dashboardRecords('),js.indexOf('/* Switching sections:'));
 assert.ok(!/\bfetch\(|innerHTML|localStorage\.(setItem|removeItem)|navigator\.geolocation/.test(dashboard),'dashboard does not request services, inject HTML, mutate storage or collect location');
 const dict=JSON.parse(fs.readFileSync('workers/trial-ui/translations.json','utf8'));for(const label of ['Home','Coming up','Your next step','Pick up where you left off','Your personal space','Added by you · not linked','Help and support','Good morning'])for(const lang of ['fr','ar'])assert.ok(dict[label]?.[lang],label+' translated in '+lang);
 console.log('Dashboard: shared records, chronological reminders, active journeys, archived chat exclusion, empty states, no record mutations, five-tab navigation and translations passed');
+
+// Exercise the real Home submit handler: fresh chat, normal send, one submit, and retained drafts on blocking states.
+const handler=js.slice(js.indexOf('function submitHomeQuestion('),js.indexOf("$('home-ask-form').addEventListener"));
+const nodes={'home-question':{value:' hi '},'home-question-status':{hidden:true},msg:{value:'existing draft',focus(){}}};
+const oldChat={id:'old',turns:[{role:'user',content:'previous conversation'}]},calls=[];
+let active=oldChat;
+const sendCtx=vm.createContext({$:id=>nodes[id],uiText:v=>v,busy:false,coolUntil:0,Date,tab:()=>{},newChat:()=>{calls.push('new');active={id:'fresh',turns:[]}},ask:(text,send)=>{calls.push('ask');assert.equal(send,true);active.turns.push({role:'user',content:text});nodes.msg.value=''}});
+vm.runInContext(handler,sendCtx);let prevented=0;
+sendCtx.submitHomeQuestion({preventDefault(){prevented++}});
+assert.deepEqual(calls,['new','ask']);assert.equal(active.turns[0].content,'hi');assert.equal(oldChat.turns.length,1);assert.equal(oldChat.turns[0].content,'previous conversation');assert.equal(nodes['home-question'].value,'');assert.equal(nodes.msg.value,'');assert.equal(prevented,1);
+nodes['home-question'].value='keep this';sendCtx.busy=true;sendCtx.submitHomeQuestion({preventDefault(){}});assert.equal(nodes['home-question'].value,'keep this');assert.equal(nodes['home-question-status'].hidden,false);assert.equal(calls.length,2);
+sendCtx.busy=false;sendCtx.coolUntil=Date.now()+60000;sendCtx.submitHomeQuestion({preventDefault(){}});assert.equal(nodes['home-question'].value,'keep this');assert.equal(calls.length,2);
+sendCtx.coolUntil=0;nodes['home-question'].value='  ';nodes.msg.value='existing draft';sendCtx.submitHomeQuestion({preventDefault(){}});assert.equal(nodes.msg.value,'existing draft');assert.equal(calls.length,2);
+console.log('Home submit: new conversation, automatic send, old chat retained, blocked messages retained and empty draft preserved');

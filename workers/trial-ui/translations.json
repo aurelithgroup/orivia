@@ -1390,5 +1390,17 @@
   "Type it if it isn’t listed": {
     "fr": "Saisissez le lieu s’il n’est pas proposé",
     "ar": "اكتبه إذا لم يكن ضمن القائمة"
+  },
+  "Send in a new chat": {
+    "fr": "Envoyer dans une nouvelle discussion",
+    "ar": "إرسال في محادثة جديدة"
+  },
+  "Orivia is finishing a reply. Your message is still here; try again in a moment.": {
+    "fr": "Orivia termine une réponse. Votre message est conservé ici ; réessayez dans un instant.",
+    "ar": "تُنهي أوريفيا رداً الآن. رسالتك ما زالت هنا؛ حاول مجدداً بعد قليل."
+  },
+  "Please wait a moment, then send again. Your message is still here.": {
+    "fr": "Patientez un instant, puis réessayez. Votre message est conservé ici.",
+    "ar": "انتظر قليلاً ثم أرسل مجدداً. رسالتك ما زالت هنا."
   }
 }

@@ -587,7 +587,13 @@ function renderLifeSummary(){
  $('life-place-count').textContent=String(places.size)+' · '+uiText('Saved on this device');
  const journeys=Object.entries(readJourneys()).filter(([id,v])=>JID.test(id)&&v&&typeof v.title==='string');$('life-journey-count').textContent=String(journeys.length)+' · '+uiText('Saved on this device');
 }
-$('home-ask-form').addEventListener('submit',e=>{e.preventDefault();const input=$('home-question'),text=input.value.trim();if(text)ask(text,false);else{tab('chat');$('msg').focus()}input.value=''});
+function submitHomeQuestion(e){
+ e.preventDefault();const input=$('home-question'),text=input.value.trim(),note=$('home-question-status');note.hidden=true;
+ if(!text){tab('chat');$('msg').focus();return}
+ if(busy||Date.now()<coolUntil){note.textContent=uiText(busy?'Orivia is finishing a reply. Your message is still here; try again in a moment.':'Please wait a moment, then send again. Your message is still here.');note.hidden=false;return}
+ newChat();input.value='';ask(text,true);
+}
+$('home-ask-form').addEventListener('submit',submitHomeQuestion);
 $('home-calendar').onclick=()=>tab('calendar');
 $('home-all-chats').onclick=()=>{tab('chat');openChats()};
 $('life-journeys-open').onclick=()=>tab('journeys');

@@ -9,7 +9,7 @@ Home → Chat → My Life → Journeys → Calendar. Successful entry opens Home
 ## Home
 
 - Device-time greeting; no name is invented before a name is provided.
-- Ask Orivia transfers the draft to Chat for review; it does not send automatically. An empty question opens Chat without clearing an existing draft.
+- Ask Orivia starts a fresh conversation and submits the message through the normal Chat send path. Previous conversations stay saved. An empty question opens Chat without clearing an existing draft. While a reply is running or the send cooldown is active, Home keeps the question and shows a retry note.
 - Coming up shows the nearest two future reminders, sorted by timestamp. Opens the existing calendar.
 - Your next step opens the most recently updated active or paused journey. Progress is read from its saved step statuses.
 - Recent conversations excludes archived and empty chats. Opens the actual saved conversation.
