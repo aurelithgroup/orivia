@@ -339,6 +339,7 @@ function draw({newReply=null,scroll=false}={}){
   if(cards){p.append(cards);p.classList.add('has-cards')}
   if(t.role==='assistant'&&t.meta&&safeDraft(t.meta.draft))p.append(draftBox(t));
   if(t.role==='assistant'&&t.meta&&t.meta.reminder&&typeof t.meta.reminder.id==='string')p.append(reminderBox(t));
+  if(t.role==='assistant'&&t.meta?.calendarChange){const cb=calendarChangeBox(t);if(cb)p.append(cb)}
   if(t.role==='assistant'&&(srcs.length||(t.meta&&t.meta.research))){
    const rb=researchBlock(srcs,t.meta.research);
    p.append(rb);
@@ -1222,6 +1223,105 @@ $('clear').onclick=()=>{
  if(busy)return;const b=$('clear');
  if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete this chat';setTimeout(()=>{b.dataset.sure='';b.textContent='Delete this chat'},4000);return}
  store.chats=store.chats.filter(c=>c.id!==store.active);store.active=null;persist();turns=[];clearChatCards();draw();renderChats();b.dataset.sure='';b.textContent='Delete this chat';tab('chat')};
+// A proposal only. Saved events are never sent to the model and never changed by this module.
+function safeCalendarChange(v){
+ if(!v||typeof v!=='object'||!['update','delete'].includes(v.kind))return null;
+ const str=(x,n)=>typeof x==='string'?x.replace(/[\u0000-\u001f]/g,' ').trim().slice(0,n):'';
+ const date=str(v.date,10),time=str(v.time,5);
+ if(date){if(date!==String(v.date).trim())return null;if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return null;const d=new Date(date+'T12:00:00Z');if(!Number.isFinite(d.getTime())||d.toISOString().slice(0,10)!==date)return null}
+ if(time&&time!==String(v.time).trim())return null;
+ if(time&&!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time))return null;
+ return {kind:v.kind,target:str(v.target,100),date:date||null,time:time||null,title:str(v.title,100)||null,question:str(v.question,180),needsTime:v.needsTime===true,needsDate:v.needsDate===true};
+}
+/* Calendar changes are proposals: match, review and commit on this device, never in the model. */
+function calendarSnapshot(e){return JSON.stringify({id:e.id,title:e.title,at:e.at,alarm:e.alarm})}
+function calendarForChanges(){
+ const raw=localStorage.getItem(eventKey);if(raw===null)return [];
+ const list=JSON.parse(raw);
+ if(!Array.isArray(list)||list.some(e=>!e||typeof e.id!=='string'||typeof e.title!=='string'||!Number.isFinite(Date.parse(e.at))))throw Error('unreadable');
+ if(new Set(list.map(e=>e.id)).size!==list.length)throw Error('duplicate ids');
+ return list;
+}
+function commitCalendarChanges(next){
+ const raw=JSON.stringify(next);localStorage.setItem(eventKey,raw);
+ if(localStorage.getItem(eventKey)!==raw)throw Error('save not confirmed');
+ events=next;renderEvents();renderUpcoming();
+}
+function calendarCandidates(proposal,list,previous){
+ const normal=s=>String(s||'').toLowerCase().normalize('NFKC').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+ const target=normal(proposal.target),tokens=target.split(' ').filter(w=>w.length>1&&!['my','the','reminder','appointment','event'].includes(w));
+ if(tokens.length){const matches=list.filter(e=>{const name=normal(e.title);return name===target||tokens.every(w=>name.split(' ').includes(w))});return {items:matches.length?matches:list,exact:matches.length>0}}
+ const last=[...previous].reverse().find(t=>t.role==='assistant'&&(t.meta?.reminder?.id||t.meta?.calendarChange?.after?.id));
+ const id=last?.meta?.calendarChange?.after?.id||last?.meta?.reminder?.id;
+ const match=list.find(e=>e.id===id);return {items:match?[match]:list,exact:!!match};
+}
+function calendarChangeBox(t){
+ const state=t.meta.calendarChange,proposal=safeCalendarChange(state?.proposal);
+ if(!proposal)return null;
+ const box=el('section','event');box.setAttribute('aria-label','Review calendar change');
+ const note=el('p','tiny','Only Orivia’s calendar on this device changes. If you copied this event to another calendar, update it there too.');
+ const fail=el('p','tiny');fail.setAttribute('role','status');
+ if(state.status==='applied'||state.status==='undone'){
+  const event=state.after||state.before;
+  box.append(el('strong','',state.status==='undone'?'Change undone':proposal.kind==='delete'?'Reminder deleted':'Reminder updated'),el('p','',String(event?.title||'')),note,fail);
+  if(state.status==='applied')box.append(button('Undo','btn quiet small',()=>{
+   try{
+    const list=calendarForChanges(),current=list.find(e=>e.id===state.before.id);
+    if(proposal.kind==='delete'){
+     if(current){fail.textContent='A reminder with that ID already exists. Nothing was overwritten.';return}
+     list.push({...state.before});
+    }else{
+     if(!current||calendarSnapshot(current)!==calendarSnapshot(state.after)){fail.textContent='This reminder changed again, so Undo won’t overwrite it. Open My calendar to review it.';return}
+     list[list.indexOf(current)]={...state.before};
+    }
+    commitCalendarChanges(list);state.status='undone';t.content='Undid that change in Orivia’s calendar on this device.';save();draw();
+   }catch(_){fail.textContent='I couldn’t confirm the calendar was saved. Please check My calendar before retrying.'}
+  }));
+  return box;
+ }
+ if(state.status==='cancelled'){box.append(el('p','tiny','Change dismissed. No reminder was changed.'));return box}
+ let list;try{list=calendarForChanges()}catch(_){box.append(el('p','tiny','I couldn’t read your saved calendar safely. Nothing has been changed.'));return box}
+ if(!list.length){box.append(el('p','tiny','There are no saved reminders on this device to change.'));return box}
+ const index=turns.indexOf(t),matched=calendarCandidates(proposal,list,turns.slice(0,index<0?0:index));
+ box.append(el('strong','',proposal.kind==='delete'?'Which reminder should I delete?':'Review the reminder to change'));
+ if(!matched.exact)box.append(el('p','tiny','Choose the saved reminder you mean.'));
+ if(proposal.question)box.append(el('p','',proposal.question));
+ const label=el('label','','Saved reminder'),select=document.createElement('select');label.append(select);box.append(label);
+ select.setAttribute('aria-label','Saved reminder');
+ const blank=document.createElement('option');blank.value='';blank.textContent='Choose a reminder';select.append(blank);
+ for(const e of matched.items){const o=document.createElement('option');o.value=e.id;o.textContent=e.title+' · '+when(e);select.append(o)}
+ const editor=el('div','calendar-change-editor');box.append(editor,note,fail);
+ const update=()=>{
+  editor.replaceChildren();fail.textContent='';const before=matched.items.find(e=>e.id===select.value);if(!before)return;
+  const original=calendarSnapshot(before),expected={...before};
+  let title,date,time;
+  if(proposal.kind==='update'){
+   const field=(text,type,value)=>{const l=el('label','',text),input=document.createElement('input');input.type=type;input.value=value;l.append(input);editor.append(l);return input};
+   const d=new Date(before.at);
+   title=field('Reminder title','text',proposal.title||before.title);title.maxLength=100;
+   date=field('New date','date',proposal.needsDate?'':proposal.date||dayKey(d));
+   const pad=n=>String(n).padStart(2,'0');time=field('New time (this device’s time zone)','time',proposal.needsTime?'':proposal.time||pad(d.getHours())+':'+pad(d.getMinutes()));
+  }else editor.append(el('p','',before.title+' · '+when(before)));
+  editor.append(button(proposal.kind==='delete'?'Delete this reminder':'Save changes',proposal.kind==='delete'?'btn small danger':'btn small',()=>{
+   try{
+    const fresh=calendarForChanges(),current=fresh.find(e=>e.id===expected.id);
+    if(!current||calendarSnapshot(current)!==original){fail.textContent='This reminder changed or was removed. Choose it again to review the latest version.';return}
+    let after=null;
+    if(proposal.kind==='update'){
+     const at=new Date(date.value+'T'+time.value);
+     if(!title.value.trim()||!date.value||!time.value||!Number.isFinite(at.getTime())||dayKey(at)!==date.value||at.getTime()<Date.now()+60000||at.getTime()>Date.now()+366*86400000){fail.textContent='Choose a title and a future date and time within the next year.';return}
+     const pad=n=>String(n).padStart(2,'0');if(pad(at.getHours())+':'+pad(at.getMinutes())!==time.value){fail.textContent='That local time is unavailable on this date. Choose another time.';return}
+     after={...current,title:title.value.trim().slice(0,100),at:at.toISOString()};fresh[fresh.indexOf(current)]=after;
+    }else fresh.splice(fresh.indexOf(current),1);
+    commitCalendarChanges(fresh);state.before={...current};state.after=after;state.status='applied';t.content=proposal.kind==='delete'?'Deleted the selected reminder from Orivia’s calendar on this device.':'Updated the selected reminder in Orivia’s calendar on this device.';save();draw();
+   }catch(_){fail.textContent='I couldn’t confirm the calendar was saved. Please check My calendar before retrying.'}
+  }));
+ };
+ select.onchange=update;if(matched.items.length===1){select.value=matched.items[0].id;update()}
+ box.append(button('Not now','btn text small',()=>{state.status='cancelled';save();draw()}));
+ return box;
+}
+
 /* The person's own clock: "tomorrow" and "at 5" mean their day and time zone, not the server's. */
 function localNow(){const d=new Date(),p=n=>String(n).padStart(2,'0');let tz='';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||''}catch(_){}
  return {date:d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()),time:p(d.getHours())+':'+p(d.getMinutes()),weekday:d.toLocaleDateString('en-GB',{weekday:'long'}),tz:tz.slice(0,40)}}
@@ -1243,13 +1343,14 @@ function saveChatReminder(r){
  events.push(saved);storeEvents();renderEvents();renderUpcoming();return saved;
 }
 function reminderBox(t){
- const r=t.meta.reminder,box=el('div','event');box.style.cssText='margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px';
- const live=events.some(e=>e.id===r.id),when=new Date(r.at).toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+ const saved=t.meta.reminder,live=events.find(e=>e.id===saved.id),r=live||saved,box=el('div','event');box.style.cssText='margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px';
+ const when=new Date(r.at).toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
  if(!live){box.append(el('p','tiny','Reminder removed: '+r.title));return box}
  box.append(el('strong','','✓ Reminder saved: '+r.title),el('p','tiny',when+' · saved in Orivia on this device. For an alert on your phone, add it to your calendar too.'));
  const acts=el('div','acts');acts.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-top:6px';
  for(const a of calendarLinks(r))acts.append(a);
- acts.append(button('Undo','btn text small danger',()=>{removeEvent(r.id);draw()}));box.append(acts);return box;
+ if(calendarSnapshot(r)===calendarSnapshot(saved))acts.append(button('Undo','btn text small danger',()=>{removeEvent(r.id);draw()}));
+ box.append(acts);return box;
 }
 /* When this private test offers the OpenAI research mode but it's off on this device, say so in the chat itself (once per
    chat view), with a button that shows what is shared before turning it on. */
@@ -1330,11 +1431,11 @@ $('form').onsubmit=async e=>{
    if(why==='rate_limit'||(r.status===429&&!why))cooldown(wait||60);
    return}
   if(typeof d.reply!=='string'||!d.reply.trim())throw Error('empty');
-  const meta={};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
+  const meta={};const change=safeCalendarChange(d.calendarChange);if(change)meta.calendarChange={proposal:change,status:'pending'};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
   if(vetted.length&&Array.isArray(d.organisations)){const orgs=d.organisations.slice(0,8);if(safeOrgs(orgs,vetted).length){meta.organisations=JSON.parse(JSON.stringify(orgs));if(['list','single','choose'].includes(d.cardMode))meta.cardMode=d.cardMode}}
   const dr=safeDraft(d.draft);if(dr)meta.draft=dr;
   // A reminder Orivia set from the conversation: saved now (the reply says so), with Undo under the reply.
-  if(d.reminder&&store.active===chatId){const ev=saveChatReminder(d.reminder);if(ev)meta.reminder={id:ev.id,title:ev.title,at:ev.at,alarm:ev.alarm}}
+  if(!change&&d.reminder&&store.active===chatId){const ev=saveChatReminder(d.reminder);if(ev)meta.reminder={id:ev.id,title:ev.title,at:ev.at,alarm:ev.alarm}}
   const answer={role:'assistant',content:d.reply.slice(0,4000),...(Object.keys(meta).length?{meta}:{})};
   if(store.active!==chatId){ // they switched chats while Orivia was replying: file the answer in its own chat
    const c=store.chats.find(x=>x.id===chatId);if(c){c.turns=[...c.turns,answer];c.updated=Date.now();persist();renderChats()}

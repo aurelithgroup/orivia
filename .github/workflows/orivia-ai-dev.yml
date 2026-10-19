@@ -32,6 +32,8 @@ jobs:
         run: node tests/reply-arrival.test.mjs
       - name: Dictation lifecycle and language
         run: node tests/dictation.test.mjs
+      - name: Conversational calendar changes
+        run: node tests/calendar-changes.test.mjs
       - name: Buddy rule and conversation regression tests
         run: node tests/buddy-smoke.js
       - name: Secure AI bridge tests
