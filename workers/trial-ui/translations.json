@@ -1090,5 +1090,45 @@
   "Looking things up": {
     "fr": "Recherche d’informations",
     "ar": "جارٍ البحث عن المعلومات"
+  },
+  "A message to show someone": {
+    "fr": "Un message à montrer",
+    "ar": "رسالة لعرضها على شخص"
+  },
+  "Show someone": {
+    "fr": "Montrer à quelqu’un",
+    "ar": "اعرض الرسالة على شخص"
+  },
+  "Review the message before showing it. Nothing is sent automatically.": {
+    "fr": "Vérifiez le message avant de le montrer. Rien n’est envoyé automatiquement.",
+    "ar": "راجع الرسالة قبل عرضها. لا يُرسل شيء تلقائياً."
+  },
+  "Message language": {
+    "fr": "Langue du message",
+    "ar": "لغة الرسالة"
+  },
+  "Only this message will be shown. Choose a language, then tap Listen if needed.": {
+    "fr": "Seul ce message sera affiché. Choisissez une langue, puis Écouter si besoin.",
+    "ar": "ستُعرض هذه الرسالة فقط. اختر لغة، ثم اضغط على الاستماع عند الحاجة."
+  },
+  "Listen is unavailable in this browser.": {
+    "fr": "La lecture audio n’est pas disponible dans ce navigateur.",
+    "ar": "الاستماع غير متاح في هذا المتصفح."
+  },
+  "Your destination": {
+    "fr": "Votre destination",
+    "ar": "وجهتك"
+  },
+  "Opens a map search. Check the place and entrance before starting directions.": {
+    "fr": "Ouvre une recherche sur la carte. Vérifiez le lieu et l’entrée avant de lancer l’itinéraire.",
+    "ar": "يفتح بحثاً في الخرائط. تحقّق من المكان والمدخل قبل بدء الاتجاهات."
+  },
+  "Source": {
+    "fr": "Source",
+    "ar": "المصدر"
+  },
+  "This phone has no voice for this language yet. You can add one in your phone’s text-to-speech settings.": {
+    "fr": "Aucune voix n’est disponible pour cette langue sur cet appareil. Vous pouvez en ajouter une dans les paramètres de synthèse vocale.",
+    "ar": "لا يتوفّر صوت بهذه اللغة على هذا الجهاز. يمكنك إضافته من إعدادات تحويل النص إلى كلام."
   }
 }

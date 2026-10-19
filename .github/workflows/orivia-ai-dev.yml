@@ -24,6 +24,8 @@ jobs:
         run: node tests/spea-directory-feed.test.mjs
       - name: OpenAI private pilot transport (offline only)
         run: node tests/openai-pilot.test.mjs
+      - name: In-person messages and maps (scripted)
+        run: node tests/handoff-cards.test.mjs
       - name: Pilot assistant (consent v3, scripted model)
         run: node tests/assistant.test.mjs
       - name: Assistant timing and same-turn page reuse

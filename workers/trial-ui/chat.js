@@ -78,8 +78,8 @@ function save(){
  const ok=persist();renderChats();return ok;
 }
 function clearChatCards(){resources([]);for(const id of ['guide-offer','remember-card','inline-calendar'])$(id)?.remove();$('status').textContent=''}
-function openChat(id){stopSpeaking();stopDictation(false);store.active=id;persist();const c=activeChat();turns=c?c.turns.slice():[];clearChatCards();draw();closeChats();tab('chat')}
-function newChat(){stopSpeaking();stopDictation(false);store.active=null;persist();turns=[];clearChatCards();draw();closeChats();tab('chat');$('msg').focus()}
+function openChat(id){closeHandoff();stopSpeaking();stopDictation(false);store.active=id;persist();const c=activeChat();turns=c?c.turns.slice():[];clearChatCards();draw();closeChats();tab('chat')}
+function newChat(){closeHandoff();stopSpeaking();stopDictation(false);store.active=null;persist();turns=[];clearChatCards();draw();closeChats();tab('chat');$('msg').focus()}
 function whenShort(t){const d=new Date(t),now=new Date();const same=d.toDateString()===now.toDateString();const y=new Date(now);y.setDate(now.getDate()-1);
  return same?d.toLocaleTimeString(uiLanguage(),{hour:'numeric',minute:'2-digit'}):d.toDateString()===y.toDateString()?'Yesterday':d.toLocaleDateString(uiLanguage(),{day:'numeric',month:'short'})}
 function chatRow(c){
@@ -323,6 +323,68 @@ function orgCards(t,srcs){
  paint();return wrap;
 }
 
+/* ===== Show someone and destination handoff cards ===== */
+const HANDOFF_LANGUAGES={en:'English',ar:'العربية',fr:'Français',fil:'Filipino',hi:'हिन्दी',ur:'اردو',zh:'中文',bn:'বাংলা',ml:'മലയാളം',ru:'Русский'};
+function safeShowMessage(value){
+ if(!value?.texts||typeof value.texts!=='object')return null;
+ const texts={};for(const code of Object.keys(HANDOFF_LANGUAGES)){const t=value.texts[code];if(typeof t==='string'&&t.trim()&&t.length<=1200)texts[code]=t.trim()}
+ return texts.en&&texts.ar?{texts}:null;
+}
+function safeDestinations(value,sources){
+ if(!Array.isArray(value))return [];
+ return value.slice(0,3).flatMap(d=>{
+  const proof=sourcedItem(d,sources);if(!proof||!['official','institution','organisation','operator'].includes(proof.src.category))return [];
+  const name=typeof d.name==='string'?d.name.trim().slice(0,120):'',address=typeof d.address==='string'?d.address.trim().slice(0,240):'';
+  return name?[{name,address,sourceId:d.sourceId,quote:proof.quote,src:proof.src}]:[];
+ });
+}
+function mapSearchLinks(destination){
+ const query=destination.name+(destination.address?', '+destination.address:'');
+ return {google:'https://www.google.com/maps/search/?'+new URLSearchParams({api:'1',query}),apple:'https://maps.apple.com/?'+new URLSearchParams({q:query})};
+}
+function destinationCards(items,sources){
+ const places=safeDestinations(items,sources);if(!places.length)return null;
+ const wrap=el('div','destination-cards');
+ for(const d of places){
+  const card=el('section','destination-card'),links=mapSearchLinks(d);
+  card.append(el('small','kicker',uiText('Your destination')),el('strong','destination-name',d.name));
+  if(d.address)card.append(el('p','',d.address));
+  const note=el('p','tiny',uiText('Opens a map search. Check the place and entrance before starting directions.'));card.append(note);
+  const row=el('div','handoff-actions');
+  for(const [label,url]of [['Google Maps',links.google],['Apple Maps',links.apple]]){const a=el('a','btn small',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';row.append(a)}
+  card.append(row);
+  const source=el('a','tiny destination-source',uiText('Source')+' · '+d.src.host);source.href=d.src.url;source.target='_blank';source.rel='noopener noreferrer';card.append(source);wrap.append(card);
+ }
+ return wrap;
+}
+let handoffDialog=null;
+function closeHandoff(){if(handoffDialog?.open)handoffDialog.close()}
+function showSomeoneBox(value){
+ const data=safeShowMessage(value);if(!data)return null;
+ const box=el('section','show-someone-card'),previewLanguage=data.texts[uiLanguage()]?uiLanguage():'en';
+ box.append(el('strong','',uiText('A message to show someone')),el('p','show-someone-preview',data.texts[previewLanguage]),el('p','tiny',uiText('Review the message before showing it. Nothing is sent automatically.')),button('Show someone','btn',event=>openHandoff(data,event.currentTarget)));
+ return box;
+}
+function openHandoff(value,opener){
+ const data=safeShowMessage(value);if(!data)return;
+ closeHandoff();stopSpeaking();stopDictation(true);
+ const dialog=document.createElement('dialog');dialog.className='handoff-dialog';dialog.setAttribute('aria-labelledby','handoff-heading');handoffDialog=dialog;
+ const shell=el('div','handoff-shell'),top=el('div','handoff-top'),heading=el('h2','','');heading.id='handoff-heading';heading.textContent=uiText('Show someone');
+ const close=button('Close','btn quiet',()=>dialog.close());top.append(heading,close);
+ const languages=el('div','handoff-languages');languages.setAttribute('role','group');languages.setAttribute('aria-label',uiText('Message language'));
+ const message=el('p','handoff-message'),feedback=el('p','tiny');feedback.setAttribute('role','status');
+ const voice=button('▶ Listen','btn handoff-listen',()=>listen(message.textContent,voice,{language:message.lang,feedback}));voice.setAttribute('aria-pressed','false');
+ voice.disabled=!canSpeak;
+ const codes=[...new Set([uiLanguage(),'en','ar'])].filter(code=>data.texts[code]);const tabs=[];
+ const select=code=>{stopSpeaking();message.textContent=data.texts[code];message.lang=code;message.dir=['ar','ur'].includes(code)?'rtl':'ltr';feedback.textContent=canSpeak?'':uiText('Listen is unavailable in this browser.');for(const [id,b]of tabs)b.setAttribute('aria-pressed',String(id===code))};
+ for(const code of codes){const b=button(HANDOFF_LANGUAGES[code],'btn quiet small',()=>select(code));b.lang=code;tabs.push([code,b]);languages.append(b)}
+ shell.append(top,languages,el('p','tiny',uiText('Only this message will be shown. Choose a language, then tap Listen if needed.')),message,feedback,voice);dialog.append(shell);document.body.append(dialog);
+ const restoreOverflow=document.body.style.overflow;document.body.style.overflow='hidden';
+ dialog.addEventListener('close',()=>{stopSpeaking();document.body.style.overflow=restoreOverflow;dialog.remove();if(handoffDialog===dialog)handoffDialog=null;if(opener?.isConnected)opener.focus()},{once:true});
+ select(codes[0]);dialog.showModal();close.focus();
+}
+/* ===== End handoff cards ===== */
+
 // Keep the full answer and source cards on screen, but respect the chat API's
 // per-message limit and never send browser-only evidence metadata back.
 function chatMessages(turns){return turns.slice(-12).map(({role,content})=>({role,content:content.slice(0,1200)}))} // only the active chat, latest 12 messages
@@ -340,6 +402,8 @@ function draw({newReply=null,scroll=false}={}){
   const cards=t.role==='assistant'&&t.meta&&t.meta.organisations?orgCards(t,srcs):null;
   if(cards){p.append(cards);p.classList.add('has-cards')}
   if(t.role==='assistant'&&t.meta&&safeDraft(t.meta.draft))p.append(draftBox(t));
+  if(t.role==='assistant'&&t.meta?.showMessage){const h=showSomeoneBox(t.meta.showMessage);if(h)p.append(h)}
+  if(t.role==='assistant'&&t.meta?.destinations){const dc=destinationCards(t.meta.destinations,srcs);if(dc)p.append(dc)}
   if(t.role==='assistant'&&t.meta&&t.meta.reminder&&typeof t.meta.reminder.id==='string')p.append(reminderBox(t));
   if(t.role==='assistant'&&t.meta?.calendarChange){const cb=calendarChangeBox(t);if(cb)p.append(cb)}
   if(t.role==='assistant'&&(srcs.length||(t.meta&&t.meta.research))){
@@ -642,12 +706,12 @@ function bestVoice(l){
 function voicesReady(){return new Promise(res=>{const now=speechSynthesis.getVoices();if(now.length)return res();let done=false;const fin=()=>{if(!done){done=true;res()}};speechSynthesis.addEventListener('voiceschanged',fin,{once:true});setTimeout(fin,1200)})}
 let speakingBtn=null,speakRun=0;
 function stopSpeaking(){if(!canSpeak)return;speakRun++;speechSynthesis.cancel();if(speakingBtn){speakingBtn.setAttribute('aria-pressed','false');speakingBtn.textContent=uiText('▶ Listen');speakingBtn=null}}
-async function listen(text,btn){
+async function listen(text,btn,{language=null,feedback=null}={}){
  if(speakingBtn===btn){stopSpeaking();return}
  stopSpeaking();stopDictation(false);
- const l=textLang(text);await voicesReady();const v=bestVoice(l);
- if(!v&&l!=='en'){$('status').textContent='This phone has no voice for this language yet. You can add one in your phone’s text-to-speech settings.';return}
- const run=++speakRun;speakingBtn=btn;btn.setAttribute('aria-pressed','true');btn.textContent=uiText('■ Stop');
+ const run=++speakRun,l=language&&VOICE_LOC[language]?language:textLang(text);await voicesReady();if(run!==speakRun)return;const v=bestVoice(l);
+ if(!v&&(language||l!=='en')){const target=feedback||$('status');target.textContent=uiText('This phone has no voice for this language yet. You can add one in your phone’s text-to-speech settings.');return}
+ if(feedback)feedback.textContent='';speakingBtn=btn;btn.setAttribute('aria-pressed','true');btn.textContent=uiText('■ Stop');
  const clean=text.replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu,'').replace(/\s+/g,' ').trim();
  const parts=clean.split(/(?<=[.!?。！？।۔])\s+/).flatMap(x=>x.length>220?x.match(/.{1,200}(\s|$)/g):[x]).filter(Boolean);
  parts.forEach((c,i)=>{const u=new SpeechSynthesisUtterance(c);u.lang=v?v.lang:VOICE_LOC[l];if(v)u.voice=v;u.rate=v&&/natural|neural|online|enhanced|premium/i.test(v.name)?1:.95;
@@ -1461,6 +1525,8 @@ $('form').onsubmit=async e=>{
   const meta={};const change=safeCalendarChange(d.calendarChange);if(change)meta.calendarChange={proposal:change,status:'pending'};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
   if(vetted.length&&Array.isArray(d.organisations)){const orgs=d.organisations.slice(0,8);if(safeOrgs(orgs,vetted).length){meta.organisations=JSON.parse(JSON.stringify(orgs));if(['list','single','choose'].includes(d.cardMode))meta.cardMode=d.cardMode}}
   const dr=safeDraft(d.draft);if(dr)meta.draft=dr;
+  const showMessage=safeShowMessage(d.showMessage);if(showMessage)meta.showMessage=showMessage;
+  const destinations=safeDestinations(d.destinations,vetted);if(destinations.length)meta.destinations=destinations.map(({src,...d})=>d);
   // A reminder Orivia set from the conversation: saved now (the reply says so), with Undo under the reply.
   if(!change&&d.reminder&&store.active===chatId){const ev=saveChatReminder(d.reminder);if(ev)meta.reminder={id:ev.id,title:ev.title,at:ev.at,alarm:ev.alarm}}
   const answer={role:'assistant',content:(change?uiText(d.reply):d.reply).slice(0,4000),...(Object.keys(meta).length?{meta}:{})};
