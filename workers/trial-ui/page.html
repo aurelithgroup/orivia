@@ -440,6 +440,23 @@ nav.bottom .help-tab{color:var(--ink)}
 .handoff-languages{display:flex;gap:8px;flex-wrap:wrap}.handoff-languages [aria-pressed="true"]{background:var(--amber);color:#17212b;border-color:var(--amber)}
 .handoff-message{flex:1;display:flex;align-items:center;white-space:pre-wrap;overflow-wrap:anywhere;font-size:clamp(1.5rem,5vw,2.6rem);font-weight:650;line-height:1.6;margin:10px 0;unicode-bidi:plaintext}
 .handoff-listen{align-self:stretch;min-height:54px;font-size:1.1rem}
+
+/* Destination cards: one visual place, sourced details and a single primary action. */
+.destination-cards{display:grid;gap:16px;margin-top:16px;white-space:normal;overflow-wrap:normal}
+.place-card{border:1px solid var(--line);border-radius:22px;background:var(--surface);overflow:hidden;box-shadow:0 6px 22px rgba(19,31,44,.07);min-width:0}
+.place-hero{position:relative;aspect-ratio:16/8;min-height:140px;background:#1b2b3c;overflow:hidden}
+.place-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.place-art{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 58%,transparent 0 38px,#ffffff0b 39px 40px,transparent 41px 75px,#ffffff0b 76px 77px,transparent 78px),linear-gradient(125deg,#243b50,#132331)}
+.place-art svg{width:64px;height:64px;color:var(--amber);stroke-width:1.3;filter:drop-shadow(0 8px 14px #0004)}
+.place-badge{position:absolute;inset-block-start:12px;inset-inline-end:12px;border-radius:99px;background:#fffefa;color:#243244;padding:7px 10px;font-size:11px;font-weight:700;box-shadow:0 2px 8px #0002}
+.place-body{padding:18px}.place-eyebrow{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.place-name{font-size:clamp(22px,5vw,29px);line-height:1.15;letter-spacing:-.025em;margin:6px 0 9px;font-weight:750;overflow-wrap:break-word}
+.place-address{margin:0;color:var(--muted);font-size:14px;line-height:1.5}.place-description{margin:13px 0;font-size:14px;line-height:1.6}
+.place-facts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.place-fact{padding:9px 12px;border:1px solid var(--line);border-radius:12px;min-width:0;flex:1 1 100px}.place-fact small{display:block;color:var(--muted);font-size:11px;margin-bottom:3px}.place-fact strong{font-size:13px}
+.place-actions{display:flex;gap:9px;margin-top:19px}.place-go{flex:1;min-width:0;min-height:50px;font-size:15px;background:var(--amber);color:#17212b;border-color:var(--amber)}.place-save{flex:0 0 auto;min-height:50px;background:transparent;color:var(--ink);border:1px solid var(--line);padding-inline:14px}.place-save[aria-pressed="true"]{color:var(--ink);border-color:var(--amber);background:color-mix(in srgb,var(--amber) 14%,var(--surface))}
+.place-map-choice{padding:13px 0 0;display:flex;flex-wrap:wrap;gap:8px}.place-map-choice p{flex-basis:100%;margin:0}.place-map-note{font-size:11px;line-height:1.5;margin:10px 0;color:var(--muted)}
+.place-evidence{border-top:1px solid var(--line);padding-top:10px;font-size:11px;color:var(--muted)}.place-evidence summary{cursor:pointer;font-weight:650}.place-evidence a{display:inline-block;margin-top:9px;overflow-wrap:anywhere}.place-evidence blockquote{margin:8px 0;padding-inline-start:10px;border-inline-start:2px solid var(--amber);font-size:11px;line-height:1.5}
+@media(max-width:380px){.place-body{padding:14px}.place-save{padding-inline:10px}.place-go{font-size:14px}}
 </style></head>
 <body><div class="app">
 <header class="top"><button type="button" id="open-chats" class="gear menu-btn" aria-label="Chats" aria-haspopup="dialog" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button><span class="brand" role="img" aria-label="Orivia"><svg class="brand-mark" viewBox="0 0 306 310" aria-hidden="true"><path fill="currentColor" d="M0 0 L0 168 C0 248 60 302 136 308 L136 160 C136 70 78 4 0 0 Z"/><path fill="var(--amber)" d="M160 308 L160 190 C160 108 222 44 306 40 L306 172 C306 254 240 302 160 308 Z"/></svg><span class="wordmark" aria-hidden="true">ORIVIA</span></span><span class="chip" data-public="Beta">Private AI trial</span><span class="top-title" id="view-title"></span><button type="button" id="open-settings" class="gear" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>
@@ -529,6 +546,7 @@ nav.bottom .help-tab{color:var(--ink)}
    <div id="life-journeys" class="list"></div>
    <div id="upcoming" class="list"></div>
   </section>
+  <section class="card" aria-labelledby="saved-places-title"><h3 id="saved-places-title">Saved places</h3><p class="tiny">Saved with your chats on this device.</p><div id="saved-places" class="list"></div></section>
   <button type="button" class="link-card" id="life-settings"><span><strong>Settings and your data</strong><small class="tiny">Theme, how Orivia talks to you, clear or delete what’s saved</small></span>›</button>
   <p class="tiny">Saved only in this browser. Never enter passport, visa or ID numbers.</p>
  </div></section>

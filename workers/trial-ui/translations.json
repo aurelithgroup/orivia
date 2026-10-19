@@ -1130,5 +1130,57 @@
   "This phone has no voice for this language yet. You can add one in your phone’s text-to-speech settings.": {
     "fr": "Aucune voix n’est disponible pour cette langue sur cet appareil. Vous pouvez en ajouter une dans les paramètres de synthèse vocale.",
     "ar": "لا يتوفّر صوت بهذه اللغة على هذا الجهاز. يمكنك إضافته من إعدادات تحويل النص إلى كلام."
+  },
+  "Take me there →": {
+    "fr": "M’y rendre →",
+    "ar": "خذني إلى هناك ←"
+  },
+  "♡ Save": {
+    "fr": "♡ Enregistrer",
+    "ar": "♡ حفظ"
+  },
+  "♥ Saved": {
+    "fr": "♥ Enregistré",
+    "ar": "♥ محفوظ"
+  },
+  "Not saved yet": {
+    "fr": "Pas encore enregistré",
+    "ar": "لم يُحفظ بعد"
+  },
+  "Saved places": {
+    "fr": "Lieux enregistrés",
+    "ar": "الأماكن المحفوظة"
+  },
+  "Saved with your chats on this device.": {
+    "fr": "Enregistrés avec vos discussions sur cet appareil.",
+    "ar": "تُحفظ مع محادثاتك على هذا الجهاز."
+  },
+  "Places you save in chat will appear here.": {
+    "fr": "Les lieux enregistrés dans vos discussions apparaîtront ici.",
+    "ar": "ستظهر هنا الأماكن التي تحفظها في المحادثة."
+  },
+  "Find saved places in My Life on this device.": {
+    "fr": "Retrouvez ces lieux dans Ma vie sur cet appareil.",
+    "ar": "اعثر على الأماكن المحفوظة في «حياتي» على هذا الجهاز."
+  },
+  "Choose your map app": {
+    "fr": "Choisissez votre application de cartes",
+    "ar": "اختر تطبيق الخرائط"
+  },
+  "Check the place and entrance in Maps before setting off.": {
+    "fr": "Vérifiez le lieu et l’entrée sur la carte avant de partir.",
+    "ar": "تحقّق من المكان والمدخل في الخرائط قبل الانطلاق."
+  },
+  "Sources and details": {
+    "fr": "Sources et détails",
+    "ar": "المصادر والتفاصيل"
+  },
+  "Preview from the place’s website": {
+    "fr": "Aperçu du site du lieu",
+    "ar": "معاينة من موقع المكان"
+  },
+  "Image preview supplied by the source page.": {
+    "fr": "Image d’aperçu fournie par la page source.",
+    "ar": "صورة المعاينة مأخوذة من صفحة المصدر."
   }
 }

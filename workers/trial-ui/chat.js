@@ -335,27 +335,55 @@ function safeDestinations(value,sources){
  return value.slice(0,3).flatMap(d=>{
   const proof=sourcedItem(d,sources);if(!proof||!['official','institution','organisation','operator'].includes(proof.src.category))return [];
   const name=typeof d.name==='string'?d.name.trim().slice(0,120):'',address=typeof d.address==='string'?d.address.trim().slice(0,240):'';
-  return name?[{name,address,sourceId:d.sourceId,quote:proof.quote,src:proof.src}]:[];
+  const details=(Array.isArray(d.details)?d.details:[]).slice(0,3).filter(x=>typeof x?.label==='string'&&typeof x.value==='string'&&typeof x.quote==='string'&&x.quote.trim()).map(x=>({label:x.label.slice(0,30),value:x.value.slice(0,100),quote:x.quote.slice(0,120)}));
+  const description=typeof d.description==='string'?d.description.slice(0,220):'';
+  const image=typeof d.image?.data==='string'&&d.image.data.length<=160100&&/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(d.image.data)&&d.image.sourceUrl===proof.src.url?{data:d.image.data,sourceUrl:d.image.sourceUrl}:null;
+  return name?[{name,address,sourceId:d.sourceId,quote:proof.quote,description,details,image,src:proof.src}]:[];
  });
 }
 function mapSearchLinks(destination){
  const query=destination.name+(destination.address?', '+destination.address:'');
  return {google:'https://www.google.com/maps/search/?'+new URLSearchParams({api:'1',query}),apple:'https://maps.apple.com/?'+new URLSearchParams({q:query})};
 }
-function destinationCards(items,sources){
+function placeIdentity(d){return d.sourceId+'|'+d.name}
+function destinationCards(items,sources,turn=null){
  const places=safeDestinations(items,sources);if(!places.length)return null;
  const wrap=el('div','destination-cards');
  for(const d of places){
-  const card=el('section','destination-card'),links=mapSearchLinks(d);
-  card.append(el('small','kicker',uiText('Your destination')),el('strong','destination-name',d.name));
-  if(d.address)card.append(el('p','',d.address));
-  const note=el('p','tiny',uiText('Opens a map search. Check the place and entrance before starting directions.'));card.append(note);
-  const row=el('div','handoff-actions');
-  for(const [label,url]of [['Google Maps',links.google],['Apple Maps',links.apple]]){const a=el('a','btn small',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';row.append(a)}
-  card.append(row);
-  const source=el('a','tiny destination-source',uiText('Source')+' · '+d.src.host);source.href=d.src.url;source.target='_blank';source.rel='noopener noreferrer';card.append(source);wrap.append(card);
+  const card=el('section','place-card'),links=mapSearchLinks(d),hero=el('div','place-hero');
+  const art=el('div','place-art');art.setAttribute('aria-hidden','true');art.append(icon('M12 21s7-6.4 7-12a7 7 0 1 0-14 0c0 5.6 7 12 7 12ZM9 9a3 3 0 1 0 6 0 3 3 0 0 0-6 0'));hero.append(art);
+  if(d.image){const img=document.createElement('img');img.src=d.image.data;img.alt=uiText('Preview from the place’s website');img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>img.remove();hero.append(img)}
+  const badge=el('span','place-badge',uiText(d.src.category==='official'?'Official source':'Organisation source'));hero.append(badge);
+  const body=el('div','place-body');body.append(el('small','place-eyebrow',uiText('Your destination')),el('h3','place-name',d.name));
+  if(d.address){const address=el('p','place-address',d.address);address.dir='auto';body.append(address)}
+  if(d.description)body.append(el('p','place-description',d.description));
+  if(d.details.length){const tags=el('div','place-facts');for(const detail of d.details){const tag=el('div','place-fact');tag.append(el('small','',uiText(detail.label)),el('strong','',detail.value));tags.append(tag)}body.append(tags)}
+  const actions=el('div','place-actions'),maps=el('div','place-map-choice');maps.hidden=true;maps.setAttribute('role','group');maps.setAttribute('aria-label',uiText('Choose your map app'));
+  const go=button('Take me there →','btn place-go',()=>{maps.hidden=!maps.hidden;go.setAttribute('aria-expanded',String(!maps.hidden))});go.setAttribute('aria-expanded','false');
+  maps.append(el('p','tiny',uiText('Choose your map app')));
+  for(const [label,url]of [['Google Maps',links.google],['Apple Maps',links.apple]]){const a=el('a','btn quiet small',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';maps.append(a)}
+  const saved=()=>Array.isArray(turn?.meta?.savedPlaces)&&turn.meta.savedPlaces.includes(placeIdentity(d));
+  const pin=button(saved()?'♥ Saved':'♡ Save','btn place-save',()=>{
+   if(!turn)return;turn.meta=turn.meta||{};const ids=new Set(Array.isArray(turn.meta.savedPlaces)?turn.meta.savedPlaces:[]);ids.has(placeIdentity(d))?ids.delete(placeIdentity(d)):ids.add(placeIdentity(d));turn.meta.savedPlaces=[...ids];
+   const ok=save();pin.textContent=uiText(ok?(saved()?'♥ Saved':'♡ Save'):'Not saved yet');pin.setAttribute('aria-pressed',String(saved()));renderSavedPlaces();
+  });pin.setAttribute('aria-pressed',String(saved()));pin.disabled=!turn;pin.title=uiText('Find saved places in My Life on this device.');
+  actions.append(go,pin);body.append(actions,maps);
+  const note=el('p','place-map-note',uiText('Check the place and entrance in Maps before setting off.'));body.append(note);
+  const evidence=el('details','place-evidence');evidence.append(el('summary','',uiText('Sources and details')));
+  const source=el('a','destination-source',uiText('Source')+' · '+d.src.host);source.href=d.src.url;source.target='_blank';source.rel='noopener noreferrer';evidence.append(source,el('blockquote','',d.quote));
+  for(const detail of d.details)evidence.append(el('p','tiny',uiText(detail.label)+': '+detail.quote));
+  if(d.image)evidence.append(el('p','tiny',uiText('Image preview supplied by the source page.')));
+  body.append(evidence);card.append(hero,body);wrap.append(card);
  }
  return wrap;
+}
+function renderSavedPlaces(){
+ const root=$('saved-places');if(!root)return;root.replaceChildren();const found=[];
+ for(const chat of store.chats)for(const t of chat.turns){if(!Array.isArray(t.meta?.savedPlaces))continue;
+  const places=safeDestinations(t.meta.destinations,safeSources(t.meta.sources));for(const d of places)if(t.meta.savedPlaces.includes(placeIdentity(d)))found.push({d,chat});
+ }
+ if(!found.length){root.append(el('p','tiny',uiText('Places you save in chat will appear here.')));return}
+ for(const {d,chat}of found){const b=button('','link-card',()=>openChat(chat.id));const label=el('span');label.append(el('strong','',d.name),el('small','tiny',d.address||chat.title));b.append(label,el('span','','›'));root.append(b)}
 }
 let handoffDialog=null;
 function closeHandoff(){if(handoffDialog?.open)handoffDialog.close()}
@@ -403,7 +431,7 @@ function draw({newReply=null,scroll=false}={}){
   if(cards){p.append(cards);p.classList.add('has-cards')}
   if(t.role==='assistant'&&t.meta&&safeDraft(t.meta.draft))p.append(draftBox(t));
   if(t.role==='assistant'&&t.meta?.showMessage){const h=showSomeoneBox(t.meta.showMessage);if(h)p.append(h)}
-  if(t.role==='assistant'&&t.meta?.destinations){const dc=destinationCards(t.meta.destinations,srcs);if(dc)p.append(dc)}
+  if(t.role==='assistant'&&t.meta?.destinations){const dc=destinationCards(t.meta.destinations,srcs,t);if(dc)p.append(dc)}
   if(t.role==='assistant'&&t.meta&&t.meta.reminder&&typeof t.meta.reminder.id==='string')p.append(reminderBox(t));
   if(t.role==='assistant'&&t.meta?.calendarChange){const cb=calendarChangeBox(t);if(cb)p.append(cb)}
   if(t.role==='assistant'&&(srcs.length||(t.meta&&t.meta.research))){
@@ -519,7 +547,7 @@ function tab(which){
  if(which==='calendar')renderEvents();
  if(which==='settings')renderSettings();
  if(which==='journeys')renderJourneys();
- if(which==='mylife'){renderUpcoming();loadProfile();renderJourneys()}
+ if(which==='mylife'){renderUpcoming();loadProfile();renderJourneys();renderSavedPlaces()}
  if(which==='chat'){const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight}
 }
 window.oriviaGo=tab;
