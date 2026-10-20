@@ -25,6 +25,7 @@
   finally{syncing=false;if(!paused&&generation!==sentGeneration)timer=setTimeout(()=>sync().catch(()=>{}),900)}
  }
  function applyCopy(){
+  window.OriviaSpaces?.changed();
   const banner=$('account-sync-banner');if(banner&&!user)banner.hidden=true;
   const settings=$('account-open-settings');if(settings){settings.hidden=!(config.email||config.google||config.apple);settings.onclick=()=>apiObject.open()}
   const review=$('account-sync-review');if(review)review.onclick=()=>apiObject.open();
@@ -33,7 +34,7 @@
   const label=$('account-open');if(label)label.hidden=!(config.email||config.google||config.apple);if(label)label.textContent=t(user?'Your account':'Sign in or create an account');
   const name=$('life-display-name');if(name&&user)name.textContent=user.name||t('Your personal space');
  }
- function hideApp(){callbacks?.leave();$('intro').hidden=true;$('workspace').hidden=true;$('nav').hidden=true;$('open-chats').hidden=true;$('open-settings').hidden=true;}
+ function hideApp(){window.OriviaSpaces?.reset();callbacks?.leave();$('intro').hidden=true;$('workspace').hidden=true;$('nav').hidden=true;$('open-chats').hidden=true;$('open-settings').hidden=true;}
  function shell(title,subtitle){hideApp();document.body.dataset.accountFlow='on';const root=$('account-entry');root.hidden=false;root.replaceChildren();const brand=document.querySelector('header .brand')?.cloneNode(true);if(brand){brand.classList.add('auth-brand');root.append(brand)}const content=el('div','auth-content');root.append(content);if(title)content.append(el('h1','',title));if(subtitle)content.append(el('p','notice',subtitle));const status=el('p','notice');status.id='account-flow-status';status.setAttribute('role','status');content.append(status);return content}
  function fail(e){const n=$('account-flow-status');if(n)n.textContent=t(e.status===429?'Please wait before trying again.':'That didn’t work. Check the details and try again.');}
  function guest(){const leavingAccount=!!scope;delete document.body.dataset.accountFlow;user=null;scope=null;ready=false;paused=false;clearTimeout(timer);$('account-entry').hidden=true;applyCopy();if(sessionStorage.getItem('orivia-ai-private-consent')==='yes'){if(leavingAccount||$('workspace').hidden)callbacks.reload()}else $('intro').hidden=false;}

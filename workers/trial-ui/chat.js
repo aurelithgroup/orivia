@@ -572,6 +572,7 @@ function dashboardCard(title,subtitle,action,symbol='›'){
 }
 function renderHome(){
  const root=$('home');if(!root)return;
+ window.OriviaSpaces?.refresh();
  const hour=new Date().getHours();$('home-greeting').textContent=uiText(hour<12?'Good morning':hour<18?'Good afternoon':'Good evening');
  const accountName=globalThis.OriviaAccounts?.user?.name;if(accountName)$('home-greeting').textContent+=', '+accountName;
  renderHomeDestination(migrateProfile(readProfile()||{}));

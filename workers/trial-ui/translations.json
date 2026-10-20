@@ -1654,5 +1654,77 @@
   "Saved to your private account. Never enter passport, visa or ID numbers.": {
     "fr": "Enregistré dans votre compte privé. Ne saisissez jamais de numéro de passeport, de visa ou d’identité.",
     "ar": "محفوظ في حسابك الخاص. لا تُدخل أرقام جواز السفر أو التأشيرة أو الهوية."
+  },
+  "Your spaces": {
+    "fr": "Vos espaces",
+    "ar": "مساحاتك"
+  },
+  "Checking your spaces…": {
+    "fr": "Chargement de vos espaces…",
+    "ar": "جارٍ تحميل مساحاتك…"
+  },
+  "Guides, dates and contacts": {
+    "fr": "Guides, dates et contacts",
+    "ar": "أدلة ومواعيد وجهات اتصال"
+  },
+  "Join or manage your spaces →": {
+    "fr": "Rejoindre ou gérer vos espaces →",
+    "ar": "انضم إلى مساحاتك أو أدرها ←"
+  },
+  "Loading your organisation’s information…": {
+    "fr": "Chargement des informations de votre organisme…",
+    "ar": "جارٍ تحميل معلومات مؤسستك…"
+  },
+  "Demo organisation": {
+    "fr": "Organisme de démonstration",
+    "ar": "مؤسسة تجريبية"
+  },
+  "From your organisation. Your personal chats, calendar and About you remain private.": {
+    "fr": "Informations de votre organisme. Vos conversations, votre calendrier et votre profil restent privés.",
+    "ar": "من مؤسستك. تظل محادثاتك الشخصية وتقويمك وملفك الشخصي خاصة."
+  },
+  "Guides": {
+    "fr": "Guides",
+    "ar": "أدلة"
+  },
+  "Useful contacts": {
+    "fr": "Contacts utiles",
+    "ar": "جهات اتصال مفيدة"
+  },
+  "Important dates": {
+    "fr": "Dates importantes",
+    "ar": "مواعيد مهمة"
+  },
+  "Updates": {
+    "fr": "Actualités",
+    "ar": "تحديثات"
+  },
+  "Manage membership": {
+    "fr": "Gérer votre adhésion",
+    "ar": "إدارة العضوية"
+  },
+  "Waiting for approval": {
+    "fr": "En attente d’approbation",
+    "ar": "في انتظار الموافقة"
+  },
+  "Your organisation hasn’t published anything here yet.": {
+    "fr": "Votre organisme n’a encore rien publié ici.",
+    "ar": "لم تنشر مؤسستك أي معلومات هنا بعد."
+  },
+  "Application progress is not connected yet. Organisation dates are not automatically added to your personal calendar.": {
+    "fr": "Le suivi des dossiers n’est pas encore connecté. Les dates de l’organisme ne sont pas ajoutées automatiquement à votre calendrier personnel.",
+    "ar": "متابعة الطلبات غير متصلة بعد. لا تضاف مواعيد المؤسسة تلقائيًا إلى تقويمك الشخصي."
+  },
+  "No organisations connected yet. An invitation adds one after staff approval.": {
+    "fr": "Aucun organisme connecté. Une invitation permet d’en ajouter un après approbation.",
+    "ar": "لا توجد مؤسسات متصلة بعد. يمكنك إضافة مؤسسة بدعوة بعد موافقة الموظفين."
+  },
+  "Your spaces couldn’t be loaded. Try again when you’re connected.": {
+    "fr": "Impossible de charger vos espaces. Réessayez une fois connecté.",
+    "ar": "تعذر تحميل مساحاتك. حاول مجددًا عند الاتصال."
+  },
+  "This space couldn’t be opened. Your access may have changed. Close it and refresh your spaces.": {
+    "fr": "Impossible d’ouvrir cet espace. Votre accès a peut-être changé. Fermez-le et rechargez vos espaces.",
+    "ar": "تعذر فتح هذه المساحة. ربما تغيرت صلاحية وصولك. أغلقها وأعد تحميل مساحاتك."
   }
 }
