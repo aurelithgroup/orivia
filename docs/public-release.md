@@ -62,3 +62,12 @@ To publish:
 - **Website:** copy `release/public-entry.html` → `index.html` and `release/public-sw.js` → `sw.js` on `main`.
 - **App:** redeploy the public Worker with the new embedded UI, using `tools/prepare-public-promotion.mjs`, the same patch flow as the 20 October promotion.
 - **Still to check by hand:** a real iPhone Safari human check inside the preview, and one real chat.
+
+Published 20 October:
+
+- **Website:** `main` at 2050e7f. GitHub Pages deployed successfully.
+- **Public Worker:** version `1f1321a2-d804-47a5-89f3-da627d6ee3c4`. Rollback is `d506682a-6f38-4408-9bc6-73862d1cdb51`.
+  - Only the embedded page and `/chat.js` interface texts were replaced, from branch 3a33ed4.
+  - Settings, secrets and limits were confirmed identical before and after.
+  - The private pilot was untouched.
+- **Still open:** a real iPhone Safari human check inside the preview, and one real chat in the preview and full screen.
