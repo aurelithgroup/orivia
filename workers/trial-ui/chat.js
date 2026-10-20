@@ -1394,14 +1394,17 @@ function loadTurnstile(siteKey){
 }
 /* Private research pilot: shown only when this private deployment offers it; off unless the tester ticks it. The consent names
    OpenAI and is versioned, so a changed pilot never reuses an older tick. Stored on this device only. */
-const pilotKey='orivia-pilot-consent';let pilotOffer=null;
+const pilotKey='orivia-pilot-consent';let pilotOffer=null,publicProviderOffered=false;
 function setupPilot(d){
- const p=d&&d.mode!=='public'&&d.providerPilot&&typeof d.providerPilot==='object'?d.providerPilot:null;
+ const p=d&&(d.mode!=='public'||d.publicAssistant===true)&&d.providerPilot&&typeof d.providerPilot==='object'?d.providerPilot:null;
  const row=$('pilot-row');if(!row)return;
  if(!p||p.provider!=='OpenAI'||typeof p.consent!=='string'||!/^[a-z0-9-]{4,60}$/.test(p.consent)){pilotOffer=null;row.hidden=true;return}
  pilotOffer=p.consent;row.hidden=false;$('pilot-text').textContent=String(p.text||'').slice(0,600);
+ publicProviderOffered=d.publicAssistant===true;
+ if(publicProviderOffered&&!$('public-provider-consent')){const note=document.createElement('p');note.id='public-provider-consent';note.className='notice';note.textContent=String(p.text||'').slice(0,600);$('consent').parentElement.before(note)}
  let saved='';try{saved=(globalThis.OriviaAccountStorage?.storage||localStorage).getItem(pilotKey)||''}catch(_){}
  $('set-pilot').checked=saved===pilotOffer;
+ if(publicProviderOffered&&saved!==pilotOffer){sessionStorage.removeItem(ck);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false}
  $('set-pilot').onchange=e=>{try{if(e.target.checked)(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(pilotKey,pilotOffer);else (globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(pilotKey)}catch(_){}researchNotice()};
  researchNotice();
 }
@@ -1423,6 +1426,7 @@ queueMicrotask(()=>{
 });
 $('start').onclick=()=>{
  if(!$('consent').checked)return;
+ if(publicProviderOffered&&pilotOffer){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(pilotKey,pilotOffer);$('set-pilot').checked=true}catch(_){$('human-note').textContent='Please allow browser storage before starting Orivia.';return}}
  if(!humanOk){
   if(humanState==='failed')return; // keep the actual error and Try again button
   startRequested=true;$('human-note').textContent=humanState==='verifying'?'Confirming your check with Orivia… We’ll open it when this finishes.':'Please complete the quick check above. We’ll open Orivia when it’s confirmed.';return

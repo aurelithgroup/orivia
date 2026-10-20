@@ -26,11 +26,11 @@
  }
  function applyCopy(){
   const banner=$('account-sync-banner');if(banner&&!user)banner.hidden=true;
-  const settings=$('account-open-settings');if(settings){settings.hidden=!config.ui;settings.onclick=()=>apiObject.open()}
+  const settings=$('account-open-settings');if(settings){settings.hidden=!(config.email||config.google||config.apple);settings.onclick=()=>apiObject.open()}
   const review=$('account-sync-review');if(review)review.onclick=()=>apiObject.open();
   const end=$('end-session');if(end&&user)end.textContent=t('Your account');
   for(const n of document.querySelectorAll('[data-account-copy]'))n.textContent=t(user?n.dataset.accountCopy:n.dataset.deviceCopy);
-  const label=$('account-open');if(label)label.hidden=!config.ui;if(label)label.textContent=t(user?'Your account':'Sign in or create an account');
+  const label=$('account-open');if(label)label.hidden=!(config.email||config.google||config.apple);if(label)label.textContent=t(user?'Your account':'Sign in or create an account');
   const name=$('life-display-name');if(name&&user)name.textContent=user.name||t('Your personal space');
  }
  function hideApp(){callbacks?.leave();$('intro').hidden=true;$('workspace').hidden=true;$('nav').hidden=true;$('open-chats').hidden=true;$('open-settings').hidden=true;}
@@ -40,7 +40,7 @@
  function welcome(){screen='welcome';const box=shell('Welcome to Orivia','Find your way, get answers and take your next step.');
   const photo=callbacks.photos?.().uae;if(photo){const cover=el('div','auth-cover'),img=el('img');img.src=photo.image;img.alt='';cover.append(img,el('h2','','A new place. A little more familiar.'));$('account-entry').prepend(cover)}
   if(config.email||config.google||config.apple){box.append(btn('Get started',()=>signIn()),btn('I already have an account',()=>signIn(),true));}
-  else box.append(el('p','notice','Accounts are being connected for this private test.'));
+  else box.append(el('p','notice','Accounts are coming. You can use Orivia as a guest.'));
   box.append(btn('Continue as a guest',guest,true),el('p','tiny','Basic help is available without an account.'));
  }
  function signIn(){screen='signin';const box=shell('Good to see you.','Sign in to keep your Orivia with you.');box.prepend(btn('← Back',welcome,true));

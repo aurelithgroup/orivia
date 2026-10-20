@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {createPublicRelease} from '../workers/orivia-public-release.mjs';
+import {createPilotWorker,PUBLIC_CONSENT,PILOT_CONSENT,consentedToOpenAI} from '../workers/orivia-research-pilot.mjs';
+const host='orivia-beta.example.workers.dev',origin='https://'+host;
+let calls=0;const worker=createPublicRelease({fetcher:async()=>{calls++;throw Error('No real requests in tests')}});
+const env={PUBLIC_RELEASE:'1',PUBLIC_BETA:'1',PUBLIC_HOST:host,OPENAI_PILOT:'1',OPENAI_API_KEY:'scripted-only',BUDGET_DB:{prepare(){throw Error('No DB access before human verification')}},TURNSTILE_SITE_KEY:'test-site',TURNSTILE_SECRET:'test-secret',SESSION_SECRET:'x'.repeat(40),PILOT_OPENAI_DAY_USD:'1',PILOT_OPENAI_MONTH_USD:'5',OPENAI_INPUT_USD_PER_M:'2',OPENAI_OUTPUT_USD_PER_M:'10'};
+const req=(p,opts)=>new Request(origin+p,opts);
+for(const key of ['PUBLIC_RELEASE','PUBLIC_BETA','OPENAI_PILOT','OPENAI_API_KEY','TURNSTILE_SECRET','SESSION_SECRET','BUDGET_DB','PILOT_OPENAI_DAY_USD','OPENAI_INPUT_USD_PER_M'])assert.equal((await worker.fetch(req('/'),{...env,[key]:undefined},{})).status,503,key+' missing must not release basic mode');
+const page=await worker.fetch(req('/'),env,{});assert.equal(page.status,200,'new UI does not require private tester login');assert.match(page.headers.get('Content-Security-Policy'),/frame-ancestors 'self' https:\/\/aurelithgroup\.github\.io/);assert.doesNotMatch(page.headers.get('Content-Security-Policy'),/frame-ancestors \*/);
+const end=await worker.fetch(req('/v1/end',{method:'POST',headers:{Origin:origin}}),env,{});assert.match(end.headers.get('Set-Cookie'),/SameSite=None; Partitioned/);
+const account=await (await worker.fetch(req('/api/account/config'),env,{})).json();assert.deepEqual(account,{ui:true,enabled:false,email:false,google:false,apple:false},'welcome offers guest access without unfinished sign-in methods');
+const config=await (await worker.fetch(req('/v1/config'),env,{})).json();assert.equal(config.mode,'public');assert.equal(config.publicAssistant,true);assert.equal(config.providerPilot.consent,PUBLIC_CONSENT);assert.ok(!config.providerPilot.text.includes('private test'));assert.equal(config.research.browserDirectory,false);
+assert.equal((await createPilotWorker().fetch(req('/'),{...env,PUBLIC_ASSISTANT:'1'},{})).status,404,'private entry remains private even if public flag is set');
+assert.equal(consentedToOpenAI({providerConsent:{openai:PILOT_CONSENT}},env),false,'private consent is not reused for public release');assert.equal(consentedToOpenAI({providerConsent:{openai:PUBLIC_CONSENT}},env),true);
+const chat={method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:'hello'}],preferences:{providerConsent:{openai:PUBLIC_CONSENT}}})};
+const blocked=await worker.fetch(req('/v1/chat',chat),env,{});assert.equal(blocked.status,401);assert.equal((await blocked.json()).error,'human_check');assert.equal(calls,0,'no provider charge before human verification');
+assert.equal((await worker.fetch(req('/v1/chat',{...chat,headers:{Origin:'https://evil.example'}}),env,{})).status,403);
+console.log('Public release: explicit gate, public consent, no tester login, private entry preserved, human verification and origin required before any provider call. Scripted transport only.');

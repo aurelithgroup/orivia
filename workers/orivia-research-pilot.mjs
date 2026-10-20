@@ -21,13 +21,16 @@ import {runAssistantTurn} from './orivia-assistant.mjs';
 export const PILOT_CONSENT='openai-assistant-pilot-v3';
 export const PILOT_CONSENT_TEXT='Use OpenAI for this private test. Your messages in this chat (the latest 12), the public pages Orivia reads for you, and your About me details (unless “Use About me in chats” is off) are sent to OpenAI so it can understand you, research and write Orivia’s replies. Your saved documents, calendar and journeys are not sent. Search terms, never your full messages, go to Brave Search. You can turn this off at any time.';
 const isPublic=env=>env?.PUBLIC_BETA==='1';
-export const consentedToOpenAI=p=>!!p&&typeof p==='object'&&p.providerConsent&&typeof p.providerConsent==='object'&&p.providerConsent.openai===PILOT_CONSENT;
-export const pilotAvailable=env=>!isPublic(env)&&env?.OPENAI_PILOT==='1'&&!!env?.BUDGET_DB?.prepare;
+export const PUBLIC_CONSENT='openai-assistant-public-v1';
+export const PUBLIC_CONSENT_TEXT='Use OpenAI to help with your question. Your latest 12 chat messages, the public pages Orivia reads for you, and About me details (unless you turn off “Use About me in chats”) are sent to OpenAI to understand, research and write replies. Saved documents, calendar and journeys are not sent. Search terms, not full messages, go to Brave Search. You can turn this off in Settings.';
+const providerAllowed=env=>!isPublic(env)||env.PUBLIC_ASSISTANT==='1';
+export const consentedToOpenAI=(p,env={})=>!!p&&typeof p==='object'&&p.providerConsent&&typeof p.providerConsent==='object'&&p.providerConsent.openai===(isPublic(env)?PUBLIC_CONSENT:PILOT_CONSENT);
+export const pilotAvailable=env=>providerAllowed(env)&&env?.OPENAI_PILOT==='1'&&!!env?.BUDGET_DB?.prepare;
 
 /** Per-request research options for the private trial's hook. Returns null when nothing applies (existing provider path). */
 /** The OpenAI transport for one message, or null (switch off, no consent, no confirmed rates and limits, or no key). */
 export function pilotAI(env,preferences,{fetcher}={}){
- if(isPublic(env)||env.OPENAI_PILOT!=='1'||!consentedToOpenAI(preferences)||!env.BUDGET_DB?.prepare)return null;
+ if(!providerAllowed(env)||env.OPENAI_PILOT!=='1'||!consentedToOpenAI(preferences,env)||!env.BUDGET_DB?.prepare)return null;
  try{const budget=createOpenAIBudget(env,env.BUDGET_DB);if(!budget.configured)return null;
   const ai=createOpenAIPilot(env,{consented:true,budget,...(fetcher?{fetcher}:{})});
   // For the assistant: money left today/this month and what one call could cost at most (it plans around both).
@@ -37,7 +40,7 @@ export function pilotAI(env,preferences,{fetcher}={}){
  catch(_){return null} // missing key / disabled: stay on the existing provider
 }
 export function pilotResearchOptions({env,preferences,ctx},{launchBrowser,fetcher,getAI}={}){
- if(isPublic(env))return null;
+ if(!providerAllowed(env))return null;
  const options={},notes=[];
  const ai=getAI?getAI(env,preferences):pilotAI(env,preferences,{fetcher});
  if(ai){options.ai=ai;notes.push('openai')}
@@ -50,9 +53,9 @@ export function pilotResearchOptions({env,preferences,ctx},{launchBrowser,fetche
 }
 
 /** Build the pilot Worker. launchBrowser(env) → Puppeteer browser (production: puppeteer.launch(env.BROWSER)). */
-export function createPilotWorker({launchBrowser,fetcher}={}){
+export function createPilotWorker({launchBrowser,fetcher,publicRelease=false}={}){
  return {async fetch(req,env,ctx){
-  if(isPublic(env))return new Response(JSON.stringify({error:'Pilot is private only'}),{status:404,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
+  if(isPublic(env)&&!(publicRelease&&env.PUBLIC_ASSISTANT==='1'))return new Response(JSON.stringify({error:'Pilot is private only'}),{status:404,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
   // Capture the execution context per request; never retain it in module state.
   // One OpenAI transport per message, shared by the assistant and the fallback research path, so a provider failure
   // stops OpenAI for the rest of this message instead of being tried again by the next path.
@@ -67,7 +70,8 @@ export function createPilotWorker({launchBrowser,fetcher}={}){
   // Tell the private UI the consent checkbox may be shown (booleans and fixed text only; never keys or limits).
   if(url.pathname==='/v1/config'&&req.method==='GET'&&res.ok){
    const body=await res.json();
-   body.providerPilot=pilotAvailable(env)?{provider:'OpenAI',consent:PILOT_CONSENT,text:PILOT_CONSENT_TEXT}:null;
+   body.providerPilot=pilotAvailable(env)?{provider:'OpenAI',consent:isPublic(env)?PUBLIC_CONSENT:PILOT_CONSENT,text:isPublic(env)?PUBLIC_CONSENT_TEXT:PILOT_CONSENT_TEXT}:null;
+   body.publicAssistant=isPublic(env)&&publicRelease&&env.PUBLIC_ASSISTANT==='1';
    body.research={...(body.research||{}),browserDirectory:env.BROWSER_DIRECTORY==='1'&&!!env.BROWSER};
    return new Response(JSON.stringify(body),{status:200,headers:res.headers});
   }
