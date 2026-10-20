@@ -41,7 +41,9 @@
   const photo=callbacks.photos?.().uae;if(photo){const cover=el('div','auth-cover'),img=el('img');img.src=photo.image;img.alt='';cover.append(img,el('h2','','A new place. A little more familiar.'));$('account-entry').prepend(cover)}
   if(config.email||config.google||config.apple){box.append(btn('Get started',()=>signIn()),btn('I already have an account',()=>signIn(),true));}
   else box.append(el('p','notice','Accounts are coming. You can use Orivia as a guest.'));
-  box.append(btn('Continue as a guest',guest,true),el('p','tiny','Basic help is available without an account.'));
+  box.append(btn('Continue as a guest',guest,true),el('p','tiny','No account needed. As a guest, your chats are saved in this browser on this device.'));
+  // In the website's phone preview, browsers keep this app's data separate from the full-screen app.
+  if(window.top!==window){const note=el('p','tiny','This is a preview. Chats you start here stay in the preview and won’t appear when you open Orivia full screen.');const a=document.createElement('a');a.href='/';a.target='_blank';a.rel='noopener';a.className='btn';a.textContent=t('Open Orivia full screen');box.append(note,a)}
  }
  function signIn(){screen='signin';const box=shell('Good to see you.','Sign in to keep your Orivia with you.');box.prepend(btn('← Back',welcome,true));
   for(const provider of ['google','apple'])if(config[provider])box.append(btn(provider==='google'?'Continue with Google':'Continue with Apple',async()=>{try{const d=await api('/api/auth/sign-in/social',{method:'POST',body:{provider,callbackURL:location.origin+'/'}});const u=new URL(d.url);if(!['https:'].includes(u.protocol))throw Error('Invalid redirect');location.assign(u.href)}catch(e){fail(e)}},true));

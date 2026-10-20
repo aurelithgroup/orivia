@@ -1378,7 +1378,10 @@ function humanFailed(msg){
  const n=$('human-note');n.replaceChildren(document.createTextNode(msg+' '));
  const b=document.createElement('button');b.type='button';b.className='ask';b.textContent='Try again';
  b.onclick=()=>{humanState='checking';n.textContent='Checking again…';try{window.turnstile.reset('#human-check')}catch(_){humanFailed('Couldn’t restart the check. Please reload Orivia.')}};n.append(b);
+ const f=framedFullScreen();if(f)n.append(' ',f);
 }
+/* Inside the website preview some browsers (notably iPhone Safari) won't keep the human-check cookie. Offer the full app. */
+function framedFullScreen(){if(window.top===window)return null;const a=document.createElement('a');a.href='/';a.target='_blank';a.rel='noopener';a.className='ask';a.textContent='Open Orivia full screen';return a}
 function loadTurnstile(siteKey){
  humanOk=false;humanState='checking';window.__siteKey=siteKey;$('human-check').hidden=false;$('human-note').hidden=false;
  const go=()=>window.turnstile.render('#human-check',{sitekey:siteKey,'error-callback':code=>{humanFailed('The check couldn’t load (code: '+String(code).slice(0,12)+').');return true},callback:async token=>{
@@ -1402,11 +1405,22 @@ function setupPilot(d){
  pilotOffer=p.consent;row.hidden=false;$('pilot-text').textContent=String(p.text||'').slice(0,600);
  publicProviderOffered=d.publicAssistant===true;
  if(publicProviderOffered&&!$('public-provider-consent')){const note=document.createElement('p');note.id='public-provider-consent';note.className='notice';note.textContent=String(p.text||'').slice(0,600);$('consent').parentElement.before(note)}
+ if(publicProviderOffered)publicConsentCopy();
  let saved='';try{saved=(globalThis.OriviaAccountStorage?.storage||localStorage).getItem(pilotKey)||''}catch(_){}
  $('set-pilot').checked=saved===pilotOffer;
  if(publicProviderOffered&&saved!==pilotOffer){sessionStorage.removeItem(ck);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=!!$('account-entry')&&!$('account-entry').hidden}
  $('set-pilot').onchange=e=>{try{if(e.target.checked)(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(pilotKey,pilotOffer);else (globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(pilotKey)}catch(_){}researchNotice()};
  researchNotice();
+}
+/* Public release: one honest consent. The device paragraph no longer claims Workers AI only, and the tick box says it
+   includes OpenAI (with Workers AI as a backup when OpenAI is unavailable). The same wording is kept for accounts.js,
+   which re-applies data-device-copy. */
+function publicConsentCopy(){
+ const card=$('consent')?.closest('.card'),intro=card?.querySelector('p[data-device-copy]');
+ const device='Your chats are saved in this browser on this device so you can come back to them. They aren’t stored in Orivia’s database.';
+ if(intro){intro.dataset.deviceCopy=device;intro.dataset.accountCopy='Signed-in chats and plans are saved to my private Orivia account.';intro.textContent=device}
+ const label=$('consent')?.parentElement?.querySelector('span'),agree='I agree to start using Orivia, including sending my messages to OpenAI as described above (or to Cloudflare Workers AI if OpenAI is unavailable).';if(label){label.dataset.public=agree;label.textContent=agree}
+ for(const n of document.querySelectorAll('#settings-view p[data-device-copy]'))if(/Workers AI/.test(n.dataset.deviceCopy)){const t=n.dataset.deviceCopy.replace('Messages are sent to Cloudflare Workers AI to get a reply.','Messages are sent to OpenAI (with your agreement) or, if it’s unavailable, Cloudflare Workers AI to get a reply.');n.dataset.deviceCopy=t;n.textContent=t}
 }
 function pilotConsent(){if(!pilotOffer)return null;try{return (globalThis.OriviaAccountStorage?.storage||localStorage).getItem(pilotKey)===pilotOffer?{openai:pilotOffer}:null}catch(_){return null}}
 async function loadMode(){
@@ -1637,7 +1651,10 @@ $('form').onsubmit=async e=>{
   if((globalThis.OriviaAccounts?.epoch||'')!==accountAtSend)return;
   if(!r.ok){
    const why=d&&d.error;
-   if(r.status===401&&why==='human_check'){sessionStorage.removeItem(ck);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false;if(window.__siteKey)loadTurnstile(window.__siteKey);$('status').textContent='';return}
+   if(r.status===401&&why==='human_check'){const passedBefore=humanOk;sessionStorage.removeItem(ck);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false;if(window.__siteKey)loadTurnstile(window.__siteKey);$('status').textContent='';
+    // Passed the check but the browser didn't keep it (a framed preview in a strict browser): say so instead of looping.
+    const f=passedBefore&&framedFullScreen();if(f){const n=$('human-note');n.hidden=false;n.replaceChildren(document.createTextNode('This browser didn’t keep your check inside the preview. Open Orivia full screen to continue. '),f)}
+    return}
    // The message didn't go through: take it back out of the chat and put it in the composer, so a retry doesn't repeat it.
    if(turns.at(-1)?.role==='user'&&turns.at(-1).content===text.slice(0,900)&&store.active===chatId){turns.pop();save();draw();if(!$('msg').value)$('msg').value=text}
    const wait=Math.max(0,Math.min(86400,Math.round(Number(d&&d.retryAfter)||0)));

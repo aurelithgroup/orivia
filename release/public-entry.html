@@ -23,12 +23,16 @@ html,body{height:auto;min-height:100%}.landing{display:flex;flex-direction:colum
 @media(max-width:900px){body{padding:24px 20px}.stage{display:flex;flex-direction:column;align-items:stretch;height:auto;gap:28px}.landing{max-width:none}.land-diff,.land-org{grid-template-columns:1fr 1fr}.new-app-preview{position:static}.land-hero h1{font-size:44px}.land-qr{width:100%}.land-qr img{width:96px;height:96px}.land-lead{font-size:17px}}
 @media(max-width:480px){.land-diff,.land-org{grid-template-columns:1fr}.land-nav{gap:12px}.preview-phone{border-width:6px!important}.land-qr{padding:12px;gap:12px}}
 
+.land-url{overflow-wrap:anywhere}.land-actions{display:flex;flex-wrap:wrap;gap:12px;margin:4px 0 8px}.land-open{background:#1c2733;color:#fff;font-weight:700;text-decoration:none;padding:13px 22px;border-radius:999px}.land-peek{color:var(--ink);font-weight:700;padding:13px 6px;text-decoration:underline;text-underline-offset:3px}
+.arrival{margin:0;padding:16px 18px;border-radius:16px;background:#1c2733;color:#fff;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}.arrival p{margin:0;flex:1 1 220px;font-size:15px;line-height:1.5}.arrival a{color:#1c2733;background:var(--amber,#F2B90F);font-weight:700;text-decoration:none;padding:10px 16px;border-radius:999px}.arrival a.alt{background:transparent;color:#fff;text-decoration:underline;padding:10px 4px}
 .preview-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}.preview-heading .demo-cap{margin:0}.preview-open{color:var(--ink);font-size:12px;font-weight:700;text-decoration:none}.preview-phone{width:min(100%,420px);height:800px;max-height:85svh;border:9px solid #1c2733;border-radius:38px;overflow:hidden;background:#fff;box-shadow:0 22px 60px #14213725;margin:auto}.preview-phone iframe{border:0;width:100%;height:100%;display:block;background:#f8f9f5}.preview-note{max-width:420px;font-size:12px;line-height:1.6;color:#5f6870;margin:14px auto}.preview-note a{color:inherit}.new-app-preview{position:sticky;top:24px;align-self:start}
+@media(max-width:900px){.land-qr{display:none}.new-app-preview{align-self:stretch;width:100%}.preview-heading{max-width:420px;width:100%;margin:0 auto 12px}}
 @media(max-width:850px){.new-app-preview{position:static;margin-top:28px}.preview-phone{height:740px;max-height:85svh}.preview-heading{max-width:420px;margin:0 auto 12px}}
 </style></head>
 <body>
 <div class="stage">
   <section class="landing" aria-label="About Orivia">
+    <div class="arrival" id="arrival" hidden></div>
     <header class="land-top">
       <span class="land-brand"><svg class="" viewBox="0 0 306 310" aria-hidden="true"><path fill="currentColor" d="M0 0 L0 168 C0 248 60 302 136 308 L136 160 C136 70 78 4 0 0 Z"/><path fill="var(--amber)" d="M160 308 L160 190 C160 108 222 44 306 40 L306 172 C306 254 240 302 160 308 Z"/></svg><span class="land-brand-text"><span class="wordmark">ORIVIA</span><span class="tagline">New place. Same you.</span></span></span>
       <nav class="land-nav" aria-label="Who is this for"><a href="#for-newcomers">For newcomers</a><a href="#for-organisations">For organisations</a></nav>
@@ -37,7 +41,8 @@ html,body{height:auto;min-height:100%}.landing{display:flex;flex-direction:colum
     <div class="land-hero" id="for-newcomers">
       <span class="land-eyebrow">For life in the UAE and UK</span>
       <h1>A new place. A little more familiar.</h1>
-      <p class="land-lead">Ask in your own words. Orivia helps you research everyday questions, understand your next steps and organise life in the UAE or UK—with sources you can open. Try the new app beside this page, or open it full screen. Language and voice support are still being tested.</p>
+      <p class="land-lead">Ask in your own words. Orivia helps you research everyday questions, understand your next steps and organise life in the UAE or UK—with sources you can open. Language and voice support are still being tested.</p>
+      <div class="land-actions"><a class="land-open" href="https://orivia-beta.habeebahsallah27.workers.dev/" target="_blank" rel="noopener">Open Orivia</a><a class="land-peek" href="#preview">See the preview</a></div>
       <div class="land-qr">
         <img src="icons/qr-dubai.png" alt="QR code that opens Orivia" width="132" height="132" id="landQr">
         <div><strong>Try it on your phone</strong><span>Scan with your camera. It opens straight in the browser.</span><span class="land-url">aurelithgroup.github.io/orivia</span></div>
@@ -86,7 +91,7 @@ html,body{height:auto;min-height:100%}.landing{display:flex;flex-direction:colum
       <p class="land-p">Put an Orivia QR code in your arrival email or at your desk. Newcomers get step-by-step help for the common tasks, and are sent to your team when a person is needed.</p>
       <div class="land-org">
         <div><h3>Fewer repeat questions</h3><p>The “what do I do next?” questions that fill inboxes every September get answered on the spot, in the newcomer’s language.</p></div>
-        <div><h3>Safe by design</h3><p>No accounts or personal data needed. Progress stays on the newcomer’s phone, and every step links to its official source.</p></div>
+        <div><h3>Safe by design</h3><p>No account needed. Chats stay on the newcomer’s phone, messages go to our AI providers only with their agreement, and research answers link to the sources used.</p></div>
         <div><h3>Your instructions, on top</h3><p>Planned: institution-provided instructions, contacts and deadlines alongside Orivia’s general guidance.</p></div>
         <div><h3>See where people get stuck</h3><p>Planned institution dashboards could show aggregate patterns without exposing personal chats. These dashboards are not live yet.</p></div>
       </div>
@@ -99,11 +104,26 @@ html,body{height:auto;min-height:100%}.landing{display:flex;flex-direction:colum
     </footer>
   </section>
 
-  <div class="demo-col new-app-preview">
+  <div class="demo-col new-app-preview" id="preview">
     <div class="preview-heading"><span class="demo-cap">Meet the new Orivia</span><a href="https://orivia-beta.habeebahsallah27.workers.dev/" target="_blank" rel="noopener" class="preview-open">Open full screen ↗</a></div>
     <div class="preview-phone"><iframe title="Orivia app preview" src="https://orivia-beta.habeebahsallah27.workers.dev/" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-    <p class="preview-note">Your personal space, in a new place. If the preview cannot open, <a href="https://orivia-beta.habeebahsallah27.workers.dev/" target="_blank" rel="noopener">open Orivia in its own tab</a>.</p>
+    <p class="preview-note">Chats you start in this preview are kept separately from the full-screen app. To keep your chats, <a href="https://orivia-beta.habeebahsallah27.workers.dev/" target="_blank" rel="noopener">open Orivia in its own tab</a>, which also works if the preview can’t open.</p>
   </div>
 </div>
+<script>
+/* Visitors arriving from a QR code (?city=, organisation ?p=/?d=) or a home-screen icon see Orivia first.
+   Organisation codes keep working in the previous version, which still holds their instructions. No automatic redirect. */
+(function(){
+ var q=new URLSearchParams(location.search),box=document.getElementById('arrival');if(!box)return;
+ var standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+ var org=q.has('p')||q.has('d'),fromQr=q.has('city');if(!org&&!fromQr&&!standalone)return;
+ function link(href,text,alt){var a=document.createElement('a');a.href=href;a.textContent=text;if(alt)a.className='alt';return a}
+ var p=document.createElement('p');
+ if(org){p.textContent='Opened from your organisation’s QR code? Its guide and contacts are in the previous version of Orivia.';box.append(p,link('legacy.html'+location.search,'Open your organisation’s guide'),link('https://orivia-beta.habeebahsallah27.workers.dev/','Try the new Orivia',true))}
+ else{p.textContent=standalone?'Orivia has a new app. Your older saved progress is still in the previous version.':'Welcome. Start with Orivia, or read about it below.';box.append(p,link('https://orivia-beta.habeebahsallah27.workers.dev/','Open Orivia'),standalone?link('legacy.html','Previous version',true):link('#preview','See the preview',true))}
+ box.hidden=false;
+})();
+if('serviceWorker' in navigator&&location.protocol==='https:')addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+</script>
 </body>
 </html>

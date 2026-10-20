@@ -34,3 +34,31 @@ Public rollback before release: version bacccd44-0ba0-44b8-bd68-981bd38de1f4 (in
 GitHub Pages main entry commit: 4f3907b60157ab1230f387e27cb126a0d378056d. Pages deployment succeeded. Browser check shows the marketing website beside the new guest welcome inside the phone frame; full-screen and legacy links are present. Public Worker is promoted with inherited secrets and unchanged monetary/search limits. A later small patch prevents late consent configuration from showing the intro underneath the welcome. Real chat remains unverified until a human completes Turnstile.
 
 The existing CI workflow had an invalid unquoted colon in a step name; step names are now quoted so GitHub can parse it. The 56 local checks passed before deployment; focused release, startup and account-client checks passed after the welcome adjustment.
+
+## Review fixes (20 October, Cleo). On the branch, not yet published
+
+The founder's review covered the phone preview, mobile layout, guest entry, consent, human check and full-screen link. Fixes:
+
+- **Consent:** the public welcome no longer says messages go only to Cloudflare Workers AI. The single tick box now says it includes OpenAI, with Workers AI as the backup when OpenAI is unavailable. The Settings privacy text matches.
+- **Guest wording:** "Basic help…" is now "No account needed. As a guest, your chats are saved in this browser on this device."
+- **Preview vs full screen:** the welcome inside the preview, and the note under it, say that chats in the preview stay separate from the full-screen app (browsers partition embedded storage). The welcome offers "Open Orivia full screen".
+- **Human check in the preview:** if the check fails or doesn't stick, the message offers the full-screen app instead of looping.
+- **Phones:**
+  - An Open Orivia button and a "See the preview" link sit near the top.
+  - The text no longer says "beside this page".
+  - The "scan with your phone" QR box is hidden on screens up to 900px.
+  - The QR address no longer overflows.
+- **Tablets:** the preview is centred.
+- **QR and home-screen arrivals:** the page shows a banner, with no automatic redirect.
+  - `?city=` visitors get Open Orivia first.
+  - Organisation codes (`?p=` / `?d=`) open the organisation's guide in `legacy.html` with the same query, because the new app doesn't have organisation instructions yet.
+  - Home-screen launches get Open Orivia plus the previous version.
+- **Organisations copy:** "No accounts or personal data needed" is corrected to say messages go to AI providers only with the newcomer's agreement.
+- **Welcome notice:** it no longer says "early AI trial".
+- **Service worker:** it caches the previous version's files again, so legacy.html works offline. Each file is added separately and pages are fetched fresh first. Saved progress (localStorage) is untouched.
+
+To publish:
+
+- **Website:** copy `release/public-entry.html` → `index.html` and `release/public-sw.js` → `sw.js` on `main`.
+- **App:** redeploy the public Worker with the new embedded UI, using `tools/prepare-public-promotion.mjs`, the same patch flow as the 20 October promotion.
+- **Still to check by hand:** a real iPhone Safari human check inside the preview, and one real chat.

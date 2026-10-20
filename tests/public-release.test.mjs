@@ -15,4 +15,18 @@ assert.equal(consentedToOpenAI({providerConsent:{openai:PILOT_CONSENT}},env),fal
 const chat={method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:'hello'}],preferences:{providerConsent:{openai:PUBLIC_CONSENT}}})};
 const blocked=await worker.fetch(req('/v1/chat',chat),env,{});assert.equal(blocked.status,401);assert.equal((await blocked.json()).error,'human_check');assert.equal(calls,0,'no provider charge before human verification');
 assert.equal((await worker.fetch(req('/v1/chat',{...chat,headers:{Origin:'https://evil.example'}}),env,{})).status,403);
+
+// Website and app review fixes (20 Oct): honest consent, guest wording, preview vs full screen, phone layout, QR arrivals.
+{const {readFileSync}=await import('node:fs');const read=f=>readFileSync(new URL('../'+f,import.meta.url),'utf8');
+ const site=read('release/public-entry.html'),sw=read('release/public-sw.js'),ui=read('workers/trial-ui/chat.js'),acc=read('workers/trial-ui/accounts.js'),page=read('workers/trial-ui/page.html');
+ assert.doesNotMatch(site,/beside this page/,'phones show the preview below, not beside');assert.match(site,/class="land-open" href="https:\/\/orivia-beta\.habeebahsallah27\.workers\.dev\/"/,'an Open Orivia button near the top');
+ assert.match(site,/id="preview"/);assert.match(site,/kept separately from the full-screen app/,'the preview says its chats are separate');
+ assert.match(site,/q\.has\('p'\)\|\|q\.has\('d'\)/);assert.match(site,/legacy\.html'\+location\.search/,'organisation QR codes keep their guide in the previous version');assert.match(site,/display-mode: standalone/,'home-screen launches see Orivia first');
+ assert.doesNotMatch(site,/location\.(replace|assign)\(|http-equiv="refresh"/,'no automatic redirect');assert.match(site,/\.land-qr\{display:none\}/,'no “scan with your phone” box on phones');
+ assert.doesNotMatch(site,/No accounts or personal data needed/);
+ assert.match(sw,/'legacy\.html'/);assert.match(sw,/c\.add\(f\)\.catch/,'one missing file cannot stop install');assert.doesNotMatch(sw,/localStorage\./,"saved progress is never touched");
+ assert.match(ui,/function publicConsentCopy/);assert.match(ui,/including sending my messages to OpenAI/);assert.match(ui,/Cloudflare Workers AI if OpenAI is unavailable/,'the backup provider is disclosed');
+ assert.match(ui,/function framedFullScreen/,'a way out when the preview cannot keep the human check');
+ assert.doesNotMatch(acc,/Basic help is available/);assert.match(acc,/This is a preview\. Chats you start here stay in the preview/);
+ assert.match(page,/data-public="Orivia can’t look up live routes/);assert.doesNotMatch(page,/data-public="[^"]*early AI trial/);}
 console.log('Public release: explicit gate, public consent, no tester login, private entry preserved, human verification and origin required before any provider call. Scripted transport only.');
