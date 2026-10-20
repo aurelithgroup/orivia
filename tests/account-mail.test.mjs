@@ -9,5 +9,8 @@ await assert.rejects(sendAccountMail(env,{...m,to:'other@example.com'},{EmailMes
 await assert.rejects(sendAccountMail({...env,ACCOUNTS_TEST_EMAIL:'bad\r\nBcc: other@example.com'},m,{EmailMessage}));
 await assert.rejects(sendAccountMail({...env,ACCOUNTS_FROM:'bad\r\nBcc: other@example.com'},m,{EmailMessage}));
 await sendAccountMail({...env,ACCOUNTS_EMAIL_MODE:undefined},m);assert.equal(out[1],m);
+await sendAccountMail({...env,ACCOUNTS_TEST_EMAILS:'tester@example.com,student@example.com'},{...m,to:'student@example.com'},{EmailMessage});assert.equal(out.at(-1).to,'student@example.com');
+await assert.rejects(sendAccountMail({...env,ACCOUNTS_TEST_EMAILS:'tester@example.com,student@example.com'},{...m,to:'outsider@example.com'},{EmailMessage}));
+await assert.rejects(sendAccountMail({...env,ACCOUNTS_TEST_EMAILS:'tester@example.com,broken'},m,{EmailMessage}));
 assert.match(accountTestPage,/account-test.js/);assert.doesNotMatch(accountTestPage,/<script>/);new Function('return ('+mountAccountTest.toString()+')');assert.doesNotMatch(mountAccountTest.toString(),/localStorage|console\.|innerHTML/);
 console.log('Account mail: verified-only recipient restriction, safe envelope, unchanged paid transport and private test page passed. Delivery scripted.');

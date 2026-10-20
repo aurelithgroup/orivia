@@ -64,3 +64,7 @@ Private flags: accounts enabled, organisation API enabled, main-app account UI o
 `mail.mjs` uses the legacy `cloudflare:email` EmailMessage transport for this verified-recipient test. Other modes retain the structured sender. The test page does not store or log codes; session cookies remain managed by Better Auth. `/account-test` is behind the existing private Access check. Do not expose or promote this test page publicly.
 
 Actual inbox delivery and live sign-in still need the founder to open `/account-test`, request a code and enter it there. Never paste codes into chat. Then verify reload, logout and the dashboard session before assigning owner access. Local tests use real Better Auth and SQLite, independently decoded QR codes, and scripted email delivery; the deployment was accepted by Cloudflare but that does not prove inbox delivery.
+
+### Second student test destination
+
+Deployment `ed1a9c494ac240f4972b0f133810c357` enables the founder's separately verified Outlook address for the student test. `ACCOUNTS_TEST_EMAILS` is a comma-separated allowlist (maximum 10 addresses); malformed entries fail closed and the legacy single-address setting remains supported. The Cloudflare binding separately allows only the same two verified destinations. Spending caps and the existing assistant module are unchanged. The founder completed live Gmail sign-in and owner/admin invitation acceptance; Outlook delivery and the student approval flow still need live testing. The Outlook address receives no owner/admin privilege from being allowed to sign in.
