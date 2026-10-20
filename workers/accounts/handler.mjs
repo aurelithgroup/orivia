@@ -1,3 +1,5 @@
+import {handleNotificationRequest} from './notifications.mjs';
+export {runNotificationTick} from './notifications.mjs';
 import {accountTestPage,mountAccountTest} from './test-entry.mjs';
 import {handleOrganisationRequest,organisationRoute,organisationDeletionBlock} from './organisations.mjs';
 import {accountConfig,createAccountAuth} from './auth.mjs';
@@ -11,11 +13,12 @@ export function validateSnapshot(d){
 }
 const AUTH_PATHS=new Set(['/get-session','/sign-in/social','/callback/google','/callback/apple','/sign-out','/email-otp/send-verification-otp','/sign-in/email-otp','/update-user']);
 export async function handleAccountRequest(req,env,ctx,options={}){
- const url=new URL(req.url);if(!url.pathname.startsWith('/api/auth/')&&!url.pathname.startsWith('/api/account')&&!organisationRoute(url.pathname)&&!['/account-test','/account-test.js'].includes(url.pathname))return null;
+ const url=new URL(req.url);if(!url.pathname.startsWith('/api/auth/')&&!url.pathname.startsWith('/api/account')&&!organisationRoute(url.pathname)&&!['/account-test','/account-test.js','/orivia-notifications-sw.js'].includes(url.pathname))return null;
  const c=accountConfig(env);if(url.pathname==='/api/account/config'&&req.method==='GET')return json({ui:c.ui,enabled:c.enabled,email:c.email,google:c.google,apple:c.apple});
  if(!c.enabled)return json({error:'accounts_unavailable'},503);if(url.origin!==c.origin)return json({error:'wrong_origin'},403);
  if(!['GET','HEAD'].includes(req.method)&&url.pathname!=='/api/auth/callback/apple'&&req.headers.get('Origin')!==c.origin)return json({error:'origin_required'},403);
  if(env.ACCOUNTS_TEST_UI==='1'&&req.method==='GET'&&['/account-test','/account-test.js'].includes(url.pathname))return new Response(url.pathname.endsWith('.js')?'('+mountAccountTest.toString()+')();':accountTestPage,{headers:{'Content-Type':url.pathname.endsWith('.js')?'text/javascript; charset=utf-8':'text/html; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"}});
+ if(url.pathname==='/orivia-notifications-sw.js'&&req.method==='GET')return handleNotificationRequest(req,env);
  const auth=options.auth||createAccountAuth(env,options);
  try{
   if(organisationRoute(url.pathname))return await handleOrganisationRequest(req,env,{auth,readJson:boundedJson,...options.organisationOptions});
@@ -29,7 +32,8 @@ export async function handleAccountRequest(req,env,ctx,options={}){
     return await auth.handler(new Request(req,{body:JSON.stringify(body)}));}return await auth.handler(req);}
   const session=await auth.api.getSession({headers:req.headers});if(!session?.user?.id)return json({error:'sign_in_required'},401);const owner=session.user.id;
   const expected=req.headers.get('X-Orivia-Account');if(url.pathname!=='/api/account/session'&&expected&&expected!==owner)return json({error:'account_changed'},409);
-  if(req.method==='PUT'&&!expected)return json({error:'account_header_required'},428);
+  if((req.method==='PUT'||url.pathname.startsWith('/api/account/notifications')&&!['GET','HEAD'].includes(req.method))&&!expected)return json({error:'account_header_required'},428);
+  if(url.pathname.startsWith('/api/account/notifications'))return await handleNotificationRequest(req,env,{session,readJson:boundedJson});
   if(url.pathname==='/api/account/session'&&req.method==='GET')return json({user:{id:owner,name:session.user.name,email:session.user.email}});
   if(url.pathname==='/api/account/sessions'&&req.method==='GET'){
    const sessions=await auth.api.listSessions({headers:req.headers});

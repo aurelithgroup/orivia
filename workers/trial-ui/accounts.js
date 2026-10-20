@@ -1,6 +1,7 @@
 /* Account UI and local storage isolation. Auth cookies are HttpOnly; no token is stored in localStorage or sessionStorage. */
 (function(){
  'use strict';
+ document.title='Orivia';
  let native;try{native=window.localStorage}catch(_){native={getItem(){throw Error('storage_unavailable')},setItem(){throw Error('storage_unavailable')},removeItem(){throw Error('storage_unavailable')}}}
  const keys={profile:'orivia-private-profile-v1',events:'orivia-private-events-v1',journeys:'orivia-private-journeys-v1',chats:'orivia-private-chats-v1'},privateKeys=new Set([...Object.values(keys),'orivia-private-chats-v1-unreadable']);
  let user=null,scope=null,callbacks=null,config={},revision=0,ready=false,paused=false,timer=null,syncing=false,generation=0,screen='welcome',email='';
@@ -31,7 +32,7 @@
   finally{syncing=false;if(!paused&&generation!==sentGeneration)timer=setTimeout(()=>sync().catch(()=>{}),900)}
  }
  function applyCopy(){
-  window.OriviaSpaces?.changed();
+  window.OriviaSpaces?.changed();window.OriviaNotifications?.changed();
   const banner=$('account-sync-banner');if(banner&&!user)banner.hidden=true;
   const settings=$('account-open-settings');if(settings){settings.hidden=!(config.email||config.google||config.apple);settings.onclick=()=>apiObject.open()}
   const review=$('account-sync-review');if(review)review.onclick=()=>apiObject.open();
@@ -40,7 +41,7 @@
   const label=$('account-open');if(label)label.hidden=!(config.email||config.google||config.apple);if(label)label.textContent=t(user?'Your account':'Sign in or create an account');
   const name=$('life-display-name');if(name&&user)name.textContent=user.name||t('Your personal space');
  }
- function hideApp(){window.OriviaSpaces?.reset();callbacks?.leave();$('intro').hidden=true;$('workspace').hidden=true;$('nav').hidden=true;$('open-chats').hidden=true;$('open-settings').hidden=true;}
+ function hideApp(){window.OriviaNotifications?.reset();window.OriviaSpaces?.reset();callbacks?.leave();$('intro').hidden=true;$('workspace').hidden=true;$('nav').hidden=true;$('open-chats').hidden=true;$('open-settings').hidden=true;}
  function shell(title,subtitle){hideApp();copyNodes=[];document.body.dataset.accountFlow='on';const root=$('account-entry');root.hidden=false;root.replaceChildren();const brand=document.querySelector('header .brand')?.cloneNode(true);if(brand){brand.classList.add('auth-brand');root.append(brand)}const content=el('div','auth-content');root.append(content);languagePicker(content);if(title)content.append(el('h1','',title));if(subtitle)content.append(el('p','notice',subtitle));const status=el('p','notice');status.id='account-flow-status';status.setAttribute('role','status');content.append(status);return content}
  function languagePicker(root){
   const label=el('label','field','Language'),select=el('select');label.style.alignSelf='flex-end';label.style.width='fit-content';select.style.minHeight='44px';select.setAttribute('aria-label',t('Language'));
@@ -53,9 +54,10 @@
   const d=await api('/api/public/orgs/'+encodeURIComponent(slug));let token='';
   const match=String(location.hash||'').match(/^#join=([a-f0-9]{64})$/);if(match){token=match[1];sessionStorage.setItem(arrivalKey,JSON.stringify({slug,token}));history.replaceState(null,'',location.pathname+location.search)}
   else try{const saved=JSON.parse(sessionStorage.getItem(arrivalKey)||'null');if(saved?.slug===slug&&/^[a-f0-9]{64}$/.test(saved.token))token=saved.token}catch(_){}
+  document.title=d.organisation.name+' · Orivia';
   arrival={organisation:d.organisation,defaults:d.arrival,token,status:null,role:null};
  }
- function leaveArrival(){arrival=null;try{sessionStorage.removeItem(arrivalKey);history.replaceState(null,'',location.pathname||'/')}catch(_){}}
+ function leaveArrival(){document.title='Orivia';arrival=null;try{sessionStorage.removeItem(arrivalKey);history.replaceState(null,'',location.pathname||'/')}catch(_){}}
  function personalInstead(){leaveArrival();if(user){restore().catch(fail)}else signIn()}
  async function resumeArrival(vault){
   if(!arrival.defaults){const box=shell('University setup is not ready',arrival.organisation.name);box.append(el('p','notice','Your organisation has not set its campus destination yet. Ask its staff, or continue with personal Orivia.'),btn('Continue with personal Orivia',personalInstead,true));return}
@@ -76,7 +78,7 @@
  }
  async function universityHome(){
   const entry=arrival,owner=scope,box=shell(entry.organisation.name,'Your university space');
-  box.append(btn('My Orivia',()=>{leaveArrival();enter()},true));
+  box.append(btn('My Orivia',()=>{leaveArrival();enter()},true));if(window.OriviaNotifications)box.append(btn('Notifications and alerts',()=>window.OriviaNotifications.inbox(),true));
   if(entry.organisation.demo)box.append(el('p','notice','Demo organisation'));
   if(entry.status!=='active'){box.append(el('h2','','Waiting for approval'),el('p','notice','Your request is with your university. Private guides and updates appear after staff approve it.'),btn('Check approval',()=>restore().catch(fail),true));return}
   if(entry.role!=='student'){const a=el('a','btn','Open organisation dashboard');a.href='/platform';box.append(a);return}
@@ -148,7 +150,7 @@
   const start=btn('Let’s get started',async()=>{start.disabled=true;try{if(scope!==owner)return;if(!callbacks.authorizeStart||!await callbacks.authorizeStart())return;if(scope!==owner)return;enter()}catch(e){fail(e)}finally{start.disabled=false}});
   box.append(start,btn('Back',()=>user?accountPanel():signIn(),true));
  }
- function enter(){if(sessionStorage.getItem('orivia-ai-private-consent')!=='yes'){consentEntry();return}if(arrival){universityHome().catch(fail);return}delete document.body.dataset.accountFlow;$('account-entry').hidden=true;applyCopy();callbacks.reload();}
+ function enter(){if(sessionStorage.getItem('orivia-ai-private-consent')!=='yes'){consentEntry();return}if(window.OriviaNotifications?.offer(enter))return;if(arrival){universityHome().catch(fail);return}delete document.body.dataset.accountFlow;$('account-entry').hidden=true;applyCopy();callbacks.reload();}
  function accountPanel(){const panelOwner=scope;screen='account';const box=shell('Your account',user?user.email:'');box.prepend(btn('← Back',enter,true));if(!user){signIn();return}
   const status=el('p','notice');status.id='account-status';status.setAttribute('role','status');box.append(status);note(paused?'Sync is paused. Your device copy is kept.':'Your chats and plans are saved to your private account.');
   box.append(el('p','tiny','Logging out clears this account’s synced personal copy and recovery backups from this browser. If changes are unsynced, you can explicitly keep them to recover after signing in again. Guest data and downloaded files stay.'),btn('Sync now',async()=>{if(paused){note('Sync is paused. Review the account version first.');return}try{await sync()}catch(_){}}),btn('Review the account version',async()=>{try{if(scope!==panelOwner)return;const reviewedGeneration=generation;const remote=await api('/api/account/vault');if(scope!==panelOwner||screen!=='account')return;const review=el('section','card');review.append(el('p','notice','Loading the account version replaces this device’s account copy. A backup is kept on this device.'));

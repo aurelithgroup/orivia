@@ -140,6 +140,10 @@ jobs:
         run: node tests/onboarding-consent.test.mjs
       - name: Organisation arrival
         run: node tests/organisation-arrival.test.mjs
+      - name: Notification server and client
+        run: |
+          node --experimental-sqlite tests/notifications.test.mjs
+          node tests/notification-client.test.mjs
       - name: "Explicit public assistant release gates"
         run: node --experimental-sqlite tests/public-release.test.mjs
       - name: "Organisation membership and invitation server boundaries"

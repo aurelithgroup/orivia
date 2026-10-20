@@ -1950,5 +1950,145 @@
   "Destination and reason are set by your university for this campus. They cannot be edited here.": {
     "fr": "La destination et le motif sont définis par votre université pour ce campus. Ils ne peuvent pas être modifiés ici.",
     "ar": "تحدد جامعتك الوجهة والسبب لهذا الحرم الجامعي، ولا يمكن تعديلهما هنا."
+  },
+  "Notifications": {
+    "fr": "Notifications",
+    "ar": "الإشعارات"
+  },
+  "Your notifications": {
+    "fr": "Vos notifications",
+    "ar": "إشعاراتك"
+  },
+  "Notification settings": {
+    "fr": "Paramètres des notifications",
+    "ar": "إعدادات الإشعارات"
+  },
+  "Notifications and alerts": {
+    "fr": "Notifications et alertes",
+    "ar": "الإشعارات والتنبيهات"
+  },
+  "Stay up to date": {
+    "fr": "Restez au courant",
+    "ar": "ابقَ على اطلاع"
+  },
+  "Enable notifications": {
+    "fr": "Activer les notifications",
+    "ar": "تفعيل الإشعارات"
+  },
+  "Enable device alerts": {
+    "fr": "Activer les alertes sur cet appareil",
+    "ar": "تفعيل تنبيهات الجهاز"
+  },
+  "Calendar reminders": {
+    "fr": "Rappels du calendrier",
+    "ar": "تذكيرات التقويم"
+  },
+  "Membership approved": {
+    "fr": "Adhésion approuvée",
+    "ar": "تمت الموافقة على العضوية"
+  },
+  "University updates": {
+    "fr": "Actualités de l’université",
+    "ar": "تحديثات الجامعة"
+  },
+  "Save notification settings": {
+    "fr": "Enregistrer les préférences",
+    "ar": "حفظ إعدادات الإشعارات"
+  },
+  "Notification settings saved.": {
+    "fr": "Préférences enregistrées.",
+    "ar": "تم حفظ إعدادات الإشعارات."
+  },
+  "Disconnect device alerts": {
+    "fr": "Déconnecter les alertes de cet appareil",
+    "ar": "فصل تنبيهات الجهاز"
+  },
+  "Device alerts disconnected.": {
+    "fr": "Alertes de cet appareil déconnectées.",
+    "ar": "تم فصل تنبيهات الجهاز."
+  },
+  "Send a test alert": {
+    "fr": "Envoyer une alerte de test",
+    "ar": "إرسال تنبيه تجريبي"
+  },
+  "A test notification": {
+    "fr": "Une notification de test",
+    "ar": "إشعار تجريبي"
+  },
+  "A calendar reminder is due": {
+    "fr": "Un rappel du calendrier arrive à échéance",
+    "ar": "حان موعد تذكير في التقويم"
+  },
+  "Your membership was approved": {
+    "fr": "Votre adhésion a été approuvée",
+    "ar": "تمت الموافقة على عضويتك"
+  },
+  "A university update is available": {
+    "fr": "Une actualité universitaire est disponible",
+    "ar": "يتوفر تحديث من الجامعة"
+  },
+  "No notifications yet.": {
+    "fr": "Aucune notification pour le moment.",
+    "ar": "لا توجد إشعارات بعد."
+  },
+  "Your latest reminders and updates": {
+    "fr": "Vos derniers rappels et actualités",
+    "ar": "أحدث تذكيراتك وتحديثاتك"
+  },
+  "Choose what appears in your Orivia inbox. Device alerts are optional.": {
+    "fr": "Choisissez ce qui apparaît dans votre boîte Orivia. Les alertes sur l’appareil sont facultatives.",
+    "ar": "اختر ما يظهر في صندوق إشعارات أوريفيا. تنبيهات الجهاز اختيارية."
+  },
+  "Get calendar reminders, membership approval and university updates. Device alerts use your browser’s notification service.": {
+    "fr": "Recevez vos rappels, l’approbation de votre adhésion et les actualités universitaires. Les alertes utilisent le service de notification de votre navigateur.",
+    "ar": "احصل على تذكيرات التقويم والموافقة على العضوية وتحديثات الجامعة. تستخدم تنبيهات الجهاز خدمة إشعارات متصفحك."
+  },
+  "Device alerts are not supported here. On iPhone or iPad, try adding Orivia to your Home Screen.": {
+    "fr": "Les alertes ne sont pas prises en charge ici. Sur iPhone ou iPad, essayez d’ajouter Orivia à l’écran d’accueil.",
+    "ar": "تنبيهات الجهاز غير مدعومة هنا. على iPhone أو iPad، جرّب إضافة أوريفيا إلى الشاشة الرئيسية."
+  },
+  "Notifications are blocked in your browser settings. You can change this there.": {
+    "fr": "Les notifications sont bloquées dans les paramètres de votre navigateur. Vous pouvez les modifier à cet endroit.",
+    "ar": "الإشعارات محظورة في إعدادات متصفحك. يمكنك تغيير ذلك من هناك."
+  },
+  "Device permission alone does not mean this device is connected. Use Enable device alerts to connect it.": {
+    "fr": "L’autorisation seule ne signifie pas que l’appareil est connecté. Choisissez Activer les alertes sur cet appareil pour le connecter.",
+    "ar": "إذن الجهاز وحده لا يعني أن هذا الجهاز متصل. استخدم «تفعيل تنبيهات الجهاز» لتوصيله."
+  },
+  "This device is connected. Alerts can arrive while Orivia is closed.": {
+    "fr": "Cet appareil est connecté. Les alertes peuvent arriver même quand Orivia est fermé.",
+    "ar": "هذا الجهاز متصل. يمكن أن تصل التنبيهات عندما تكون أوريفيا مغلقة."
+  },
+  "Device alerts were not connected. Your inbox still works.": {
+    "fr": "Les alertes n’ont pas été connectées. Votre boîte de notifications reste disponible.",
+    "ar": "لم يتم توصيل تنبيهات الجهاز. لا يزال صندوق إشعاراتك يعمل."
+  },
+  "Device alerts were not connected. You can continue and change this in Settings.": {
+    "fr": "Les alertes n’ont pas été connectées. Vous pouvez continuer et modifier cela dans les paramètres.",
+    "ar": "لم يتم توصيل تنبيهات الجهاز. يمكنك المتابعة وتغيير ذلك في الإعدادات."
+  },
+  "Device alerts are not supported here. You can still use the inbox in Settings.": {
+    "fr": "Les alertes ne sont pas prises en charge ici. La boîte de notifications reste accessible dans les paramètres.",
+    "ar": "تنبيهات الجهاز غير مدعومة هنا. يمكنك استخدام صندوق الإشعارات من الإعدادات."
+  },
+  "Notifications could not be loaded. Please try again.": {
+    "fr": "Impossible de charger les notifications. Réessayez.",
+    "ar": "تعذر تحميل الإشعارات. حاول مرة أخرى."
+  },
+  "Notifications could not be loaded. You can continue.": {
+    "fr": "Impossible de charger les notifications. Vous pouvez continuer.",
+    "ar": "تعذر تحميل الإشعارات. يمكنك المتابعة."
+  },
+  "Test alert queued. It may take a minute or two.": {
+    "fr": "Alerte de test mise en attente. Elle peut prendre une ou deux minutes.",
+    "ar": "تمت جدولة التنبيه التجريبي. قد يستغرق دقيقة أو دقيقتين."
+  },
+  "Connect this device first, or wait before sending another test.": {
+    "fr": "Connectez d’abord cet appareil ou attendez avant d’envoyer un autre test.",
+    "ar": "وصّل هذا الجهاز أولاً، أو انتظر قبل إرسال اختبار آخر."
+  },
+  "Lock-screen alerts never include your reminder title, chat text or university details. Delivery can be delayed by your device or network.": {
+    "fr": "Les alertes sur l’écran verrouillé n’incluent jamais le titre du rappel, vos conversations ou les détails universitaires. L’appareil ou le réseau peuvent retarder leur réception.",
+    "ar": "لا تتضمن تنبيهات شاشة القفل عنوان تذكيرك أو نص المحادثة أو تفاصيل الجامعة. قد يتأخر وصولها بسبب جهازك أو شبكتك."
   }
 }
