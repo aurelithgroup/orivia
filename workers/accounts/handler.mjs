@@ -31,6 +31,17 @@ export async function handleAccountRequest(req,env,ctx,options={}){
   const expected=req.headers.get('X-Orivia-Account');if(url.pathname!=='/api/account/session'&&expected&&expected!==owner)return json({error:'account_changed'},409);
   if(req.method==='PUT'&&!expected)return json({error:'account_header_required'},428);
   if(url.pathname==='/api/account/session'&&req.method==='GET')return json({user:{id:owner,name:session.user.name,email:session.user.email}});
+  if(url.pathname==='/api/account/sessions'&&req.method==='GET'){
+   const sessions=await auth.api.listSessions({headers:req.headers});
+   return json({sessions:sessions.map(s=>({current:s.id===session.session.id,createdAt:s.createdAt,updatedAt:s.updatedAt,expiresAt:s.expiresAt,userAgent:s.userAgent||null}))});
+  }
+  if(url.pathname==='/api/account/sessions/revoke-others'&&req.method==='POST'){
+   if(!expected)return json({error:'account_header_required'},428);
+   const body=await boundedJson(req,200);if(body?.confirm!=='sign out other sessions')return json({error:'confirmation_required'},400);
+   const age=Date.now()-new Date(session.session.createdAt).getTime();
+   if(!Number.isFinite(age)||age<0||age>900000)return json({error:'recent_sign_in_required'},403);
+   await auth.api.revokeOtherSessions({headers:req.headers,body:{}});return json({ok:true});
+  }
   if(url.pathname==='/api/account/vault'&&req.method==='GET'){const row=await env.ACCOUNTS_DB.prepare('SELECT revision,data,updated_at FROM account_vault WHERE user_id=?').bind(owner).first();return json({revision:row?.revision||0,data:row?JSON.parse(row.data):null,updatedAt:row?.updated_at||null});}
   if(url.pathname==='/api/account/vault'&&req.method==='PUT'){
    const match=req.headers.get('If-Match')||'';if(!/^"?\d+"?$/.test(match))return json({error:'revision_required'},428);const revision=Number(match.replaceAll('"',''));if(!Number.isSafeInteger(revision)||revision<0)return json({error:'invalid_revision'},400);
