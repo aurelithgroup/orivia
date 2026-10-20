@@ -14,7 +14,7 @@ One Better Auth identity owns personal data; `organisation_memberships` assigns 
 - Student: read the organisation's published member space only after approval. May leave; personal vault remains untouched.
 - Application-record permissions, analytics ingestion, progress sharing, support attachments and sponsorship billing are not implemented. APIs report unavailable/deny instead of fabricating information.
 
-`/api/account` deletion refuses the sole platform owner or an organisation's sole admin. Admin transfer and general role reassignment are future work; operators must arrange a reviewed transfer before such accounts can be deleted. Removed members cannot rejoin themselves with a cohort link. Explicit reinstatement is future work.
+`/api/account` deletion refuses the sole platform owner or an organisation's sole admin. Organisation admins can change active members’ roles after recent sign-in and explicit confirmation. To transfer administration, promote a trusted active verified member first, then step down; an atomic database guard protects the last admin. Platform-owner transfer remains a separate trusted operator task. Removed members cannot rejoin until an admin explicitly permits a new request; this does not automatically restore access.
 
 ## Setup and first owner
 
@@ -47,6 +47,8 @@ All requests are same-origin, credentials included, JSON. Mutations require Orig
 | Accept/request membership | POST `/api/invitations/join` | `{token}` → `{membership:{organisationId,role,status}}`; students requested, named staff active |
 | Member list | GET `/api/orgs/:org/members` | Admin only: names, emails, roles, status |
 | Approve/decline | POST `/api/orgs/:org/requests/:user/decision` | `{decision:'approve'|'decline'}`. Approval rechecks invitation validity. |
+| Change organisation role | POST `/api/orgs/:org/members/:user/role` | Admin, recent sign-in; `{role,expectedRole,confirm:"change organisation role"}`. Active verified targets only, no platform roles, last admin protected. |
+| Allow removed member to request again | POST `/api/orgs/:org/members/:user/reinstate` | Admin, recent sign-in; `{confirm:"allow new join request"}`. Does not activate membership; valid invitation and approval still required for students. |
 | Remove non-admin member | DELETE `/api/orgs/:org/members/:user` | `{}` |
 | Content list/create | GET/POST `/api/orgs/:org/content` | Create `{kind:'guide'|'contact'|'date'|'update',title,body,visibility:'public'|'members'}`; always draft |
 | Edit/publish/unpublish | PATCH `/api/orgs/:org/content/:id` | `{revision,title?,body?,visibility?,status?}`. Published edits/admin publication require admin. Revision conflicts return 409. |
@@ -74,4 +76,4 @@ Public resolution checks current publication and visibility every time. Unpublis
 
 `tests/organisations.test.mjs` exercises the full flow through the actual Better Auth library with hashed single-use OTP sign-in, secure sessions and real SQLite behind a transaction-capable D1 adapter. Email is a captured outbox; no real messages are sent. Tests attempt forged roles, stolen staff invitations, access across organisations, editor publishing, reading application records, wrong-origin and stale-account mutations, revoked/expired/exhausted invitations, stale content edits, audit failures and leaving while preserving the personal vault. The generated invitation and public QR images are decoded independently in tests and must resolve to their exact intended links. Existing authentication tests still pass. This is not a real Cloudflare D1 deployment or external-provider test.
 
-Before enabling for real organisations: complete actual provider and D1 tests, review admission/fresh-session/rate-limit requirements, finish role transfer/reinstatement and pagination, exercise simultaneous admissions against real D1, and connect Cleo's final UI to this API. External university records require a separately authorised integration and granular access model. No organisation-facing analytics should be populated from personal chat text.
+Before enabling for real organisations: complete actual provider and D1 tests, review admission/fresh-session/rate-limit requirements, finish pagination and platform-owner recovery/transfer procedures, exercise simultaneous admissions against real D1, and connect Cleo's final UI to this API. External university records require a separately authorised integration and granular access model. No organisation-facing analytics should be populated from personal chat text.

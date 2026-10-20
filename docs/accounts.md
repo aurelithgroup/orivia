@@ -68,3 +68,18 @@ Actual inbox delivery and live sign-in still need the founder to open `/account-
 ### Second student test destination
 
 Deployment `ed1a9c494ac240f4972b0f133810c357` enables the founder's separately verified Outlook address for the student test. `ACCOUNTS_TEST_EMAILS` is a comma-separated allowlist (maximum 10 addresses); malformed entries fail closed and the legacy single-address setting remains supported. The Cloudflare binding separately allows only the same two verified destinations. Spending caps and the existing assistant module are unchanged. The founder completed live Gmail sign-in and owner/admin invitation acceptance; Outlook delivery and the student approval flow still need live testing. The Outlook address receives no owner/admin privilege from being allowed to sign in.
+
+
+## Organisation account management — 20 October
+
+Admins can change an active verified member between student, editor and admin. The request requires the current role, explicit confirmation and a session created within 15 minutes. The update checks that the actor is still an active admin and that another admin exists before demotion, in the same SQL statement. A trusted colleague must be promoted before an admin can step down. Existing personal data is not read or changed.
+
+Removed memberships appear separately for admins. Allow new join request changes removed to eligible-to-request, not active. The person must accept a valid invitation and, for student membership, be approved again. Editors/students cannot reinstate themselves. Actions are audited transactionally; audit failure rolls changes back.
+
+Tests use real Better Auth and SQLite and cover sole-admin protection, promotion/handover, immediate permission loss, stale role expectations, unverified/nonmember targets, no platform escalation, recent-sign-in expiry, explicit reinstatement, reapproval and audit rollback. Real simultaneous D1 role changes still need a deployment-level concurrency test. No change to the actual founder/student roles is made by this code update.
+
+Accounts are still not declared public-ready. Remaining release checks include multi-device personal sync/recovery/logout, public email availability, pagination, platform-owner recovery, accessibility/device checks, full language review and final retention/privacy/terms. Google and Apple remain unconfigured; university records and analytics remain separate features.
+
+Private deployment `7ff24a50a1e5491b81b4c4291835584f` adds those role controls. The live main module was preserved; before/after comparison found no binding changes, and the public beta was not deployed.
+
+Two independent real Better Auth sessions were also exercised on local SQLite: repeat email login keeps the identity, both sessions read the saved revision, simultaneous writes from one revision yield one success and one conflict, current-session logout leaves the other session active, and deletion removes the vault and invalidates the other session. Delivery remains scripted and these are not physical-device/live-D1 tests. The account-client import/unsynced-recovery checks passed unchanged.

@@ -21,7 +21,7 @@ assert.match(js,/me\.platformRoles\.includes\('owner'\)/);assert.match(js,/me\.m
 for(const label of ['Not connected yet','Application records need a separate permission','Admin status isn’t shown here yet','Paging isn’t available yet'])assert.ok(js.includes(label),'labelled: '+label);
 assert.doesNotMatch(js,/1,284|4,920|\$11\.40|Mariam K\.|Aisha R\./,'no demo figures or demo people in the connected version');
 // Distinct pending and expired states; leaving explains downloads
-assert.match(js,/Download QR image/);assert.match(js,/Tap again to withdraw/);assert.match(js,/An admin can withdraw this code/);assert.match(js,/Waiting for approval/);assert.match(js,/Invitation expired/);assert.match(js,/won’t update, so it may go out of date/);
+assert.match(js,/Confirm role change/);assert.match(js,/Allow new join request/);assert.match(js,/At least one active admin must remain/);assert.match(js,/Download QR image/);assert.match(js,/Tap again to withdraw/);assert.match(js,/An admin can withdraw this code/);assert.match(js,/Waiting for approval/);assert.match(js,/Invitation expired/);assert.match(js,/won’t update, so it may go out of date/);
 // Page: one external script from self (CSP script-src 'self'), no third-party loads
 assert.equal((platformPage.match(/<script/g)||[]).length,1);assert.match(platformPage,/<script src="\/platform\.js"><\/script>/);
 assert.doesNotMatch(platformPage,/https?:\/\//,'no third-party resources');assert.match(platformPage,/integration preview/);
