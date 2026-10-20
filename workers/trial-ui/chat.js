@@ -1428,14 +1428,46 @@ async function loadMode(){
  try{const r=await fetch('/v1/config',{credentials:'same-origin',cache:'no-store'});const d=await r.json();
   setupPilot(d);
   if(d&&d.mode==='public'){mode='public';document.body.dataset.mode='public';for(const n of document.querySelectorAll('[data-public]'))n.textContent=n.dataset.public;if(!$('intro').hidden&&d.turnstileSiteKey)loadTurnstile(d.turnstileSiteKey);else window.__siteKey=d.turnstileSiteKey}
- }catch(_){}
+  return d;
+ }catch(_){return null}
 }
-loadMode();
+const modeReady=loadMode();
+/* Integrated onboarding consent: move the existing controls, never clone the human widget. */
+let onboardingConsentCard=null;
+function releaseOnboardingConsent(){
+ if(onboardingConsentCard){$('intro').append(onboardingConsentCard);$('start').hidden=false}
+}
+async function mountOnboardingConsent(root){
+ const config=await modeReady;if(!root.isConnected)return;
+ if(!config){root.append(document.createTextNode(uiText('Could not load the privacy and verification settings. Please reload before starting.')));return}
+ onboardingConsentCard=onboardingConsentCard||$('consent').closest('.card');$('consent').checked=false;
+ const info=onboardingConsentCard.querySelector('p[data-device-copy]');
+ const device='Your chats and plans stay in this browser on this device. General search terms go to Brave Search, not your full conversation or ID numbers.';
+ const account='Your personal chats and plans are saved to your private Orivia account. General search terms go to Brave Search, not your full conversation or ID numbers.';
+ if(info){info.dataset.deviceCopy=device;info.dataset.accountCopy=account;info.textContent=uiText(window.OriviaAccounts?.user?account:device)}
+ const label=$('consent').parentElement.querySelector('span');
+ const agree=pilotOffer?'I agree to send my messages and recent conversation to OpenAI, or Cloudflare Workers AI if OpenAI is unavailable.':'I agree to send my messages and recent conversation to Cloudflare Workers AI.';
+ if(label){delete label.dataset.public;label.textContent=uiText(agree)}
+ $('start').hidden=true;root.append(onboardingConsentCard);
+ if(mode==='public'&&window.__siteKey&&humanState==='idle')loadTurnstile(window.__siteKey);
+}
+async function authorizeOnboardingStart(){
+ const config=await modeReady;
+ if(!config){$('account-flow-status').textContent=uiText('Could not load the privacy and verification settings. Please reload before starting.');return false}
+ if(!$('consent').checked){$('account-flow-status').textContent=uiText('Please agree to AI processing before starting.');return false}
+ if(!humanOk){$('account-flow-status').textContent=uiText('Please complete the human check before starting.');return false}
+ try{
+  if(pilotOffer){(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(pilotKey,pilotOffer);$('set-pilot').checked=true}
+  sessionStorage.setItem(ck,'yes');startRequested=false;return true;
+ }catch(_){$('account-flow-status').textContent=uiText('Please allow browser storage before starting Orivia.');return false}
+}
+/* End integrated onboarding consent. */
 queueMicrotask(()=>{
  if(!window.OriviaAccounts){if(sessionStorage.getItem(ck)==='yes')show();return}
  window.OriviaAccounts.boot({photos:()=>DESTINATION_PHOTOS,
-  leave(){stopSpeaking();stopDictation(false);closeHandoff()},
+  leave(){releaseOnboardingConsent();stopSpeaking();stopDictation(false);closeHandoff()},
   cancelReply(){activeChatRequest?.abort()},
+  mountStart:mountOnboardingConsent,authorizeStart:authorizeOnboardingStart,
   reload(){turns=[];storeLocked=false;$('msg').value='';$('home-question').value='';clearChatCards();loadEvents();show();window.OriviaAccounts.copy()}
  });
 });

@@ -1854,5 +1854,41 @@
   "You can review your data in Settings. Downloads and copies on other devices are not remotely erased. These pilot notices are not the final public terms and privacy policy.": {
     "fr": "Vous pouvez consulter vos données dans les paramètres. Les téléchargements et les copies sur d’autres appareils ne sont pas effacés à distance. Ces notices pilotes ne constituent pas les conditions publiques et la politique de confidentialité définitives.",
     "ar": "يمكنك مراجعة بياناتك في الإعدادات. لا تُحذف التنزيلات والنسخ الموجودة على أجهزة أخرى عن بُعد. هذه الإشعارات التجريبية ليست الشروط العامة وسياسة الخصوصية النهائية."
+  },
+  "Before we begin": {
+    "fr": "Avant de commencer",
+    "ar": "قبل أن نبدأ"
+  },
+  "Choose whether to use AI, then open your Orivia.": {
+    "fr": "Choisissez si vous souhaitez utiliser l’IA, puis ouvrez votre Orivia.",
+    "ar": "اختر ما إذا كنت توافق على استخدام الذكاء الاصطناعي، ثم افتح أوريفيا."
+  },
+  "Could not load the privacy and verification settings. Please reload before starting.": {
+    "fr": "Impossible de charger les paramètres de confidentialité et de vérification. Rechargez la page avant de commencer.",
+    "ar": "تعذر تحميل إعدادات الخصوصية والتحقق. يرجى إعادة تحميل الصفحة قبل البدء."
+  },
+  "Please agree to AI processing before starting.": {
+    "fr": "Veuillez accepter le traitement par l’IA avant de commencer.",
+    "ar": "يرجى الموافقة على المعالجة بالذكاء الاصطناعي قبل البدء."
+  },
+  "Please complete the human check before starting.": {
+    "fr": "Veuillez terminer la vérification humaine avant de commencer.",
+    "ar": "يرجى إكمال التحقق البشري قبل البدء."
+  },
+  "Your chats and plans stay in this browser on this device. General search terms go to Brave Search, not your full conversation or ID numbers.": {
+    "fr": "Vos conversations et projets restent dans ce navigateur sur cet appareil. Seuls des termes généraux sont envoyés à Brave Search, pas votre conversation complète ni vos numéros d’identité.",
+    "ar": "تبقى محادثاتك وخططك في هذا المتصفح على هذا الجهاز. تُرسل كلمات بحث عامة إلى Brave Search، وليس المحادثة كاملة أو أرقام الهوية."
+  },
+  "Your personal chats and plans are saved to your private Orivia account. General search terms go to Brave Search, not your full conversation or ID numbers.": {
+    "fr": "Vos conversations et projets personnels sont enregistrés dans votre compte privé Orivia. Seuls des termes généraux sont envoyés à Brave Search, pas votre conversation complète ni vos numéros d’identité.",
+    "ar": "تُحفظ محادثاتك وخططك الشخصية في حساب أوريفيا الخاص بك. تُرسل كلمات بحث عامة إلى Brave Search، وليس المحادثة كاملة أو أرقام الهوية."
+  },
+  "I agree to send my messages and recent conversation to OpenAI, or Cloudflare Workers AI if OpenAI is unavailable.": {
+    "fr": "J’accepte d’envoyer mes messages et ma conversation récente à OpenAI, ou à Cloudflare Workers AI si OpenAI est indisponible.",
+    "ar": "أوافق على إرسال رسائلي والمحادثة الأخيرة إلى OpenAI، أو إلى Cloudflare Workers AI إذا تعذر استخدام OpenAI."
+  },
+  "I agree to send my messages and recent conversation to Cloudflare Workers AI.": {
+    "fr": "J’accepte d’envoyer mes messages et ma conversation récente à Cloudflare Workers AI.",
+    "ar": "أوافق على إرسال رسائلي والمحادثة الأخيرة إلى Cloudflare Workers AI."
   }
 }
