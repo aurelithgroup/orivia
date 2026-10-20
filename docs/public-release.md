@@ -28,3 +28,9 @@ Existing public-beta tests cover the signed human cookie, per-person and daily c
 Keep the side-by-side website and phone-sized Orivia preview. On mobile they stack. Always include Open full screen and a fallback link. Before enabling the iframe, set public app frame-ancestors to https://aurelithgroup.github.io (plus self), never *. Test human verification and cookie behaviour in a cross-site frame; do not disable these safeguards to make embedding work. Public human cookies now use Secure, SameSite=None and Partitioned for the cross-site preview, with exact-origin checks still required for mutations. This is covered by scripted tests; the founder still needs to complete the real embedded human check. The full-screen fallback link remains available. The private pilot remains non-embeddable.
 
 Public rollback before release: version bacccd44-0ba0-44b8-bd68-981bd38de1f4 (includes the founder-added secret); private pilot remains 2fcbf9ab-a5a7-42a1-88ca-c19c318a4662.
+
+## Published result (20 October)
+
+GitHub Pages main entry commit: 4f3907b60157ab1230f387e27cb126a0d378056d. Pages deployment succeeded. Browser check shows the marketing website beside the new guest welcome inside the phone frame; full-screen and legacy links are present. Public Worker is promoted with inherited secrets and unchanged monetary/search limits. A later small patch prevents late consent configuration from showing the intro underneath the welcome. Real chat remains unverified until a human completes Turnstile.
+
+The existing CI workflow had an invalid unquoted colon in a step name; step names are now quoted so GitHub can parse it. The 56 local checks passed before deployment; focused release, startup and account-client checks passed after the welcome adjustment.

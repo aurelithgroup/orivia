@@ -19,7 +19,8 @@ export function createPublicRelease(options={}){
   if(headers.get('X-Frame-Options'))headers.delete('X-Frame-Options');
   // Cross-site previews need their own partitioned human-check cookie. Origin validation still protects mutations.
   const cookies=response.headers.getSetCookie();if(cookies.length){headers.delete('Set-Cookie');for(const c of cookies)headers.append('Set-Cookie',c.startsWith('orivia_human=')?c.replace('SameSite=Strict','SameSite=None; Partitioned'):c)}
-  return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
+  const body=/text\/html/i.test(headers.get('Content-Type')||'')?(await response.text()).replace('<title>Orivia private AI trial</title>','<title>Orivia</title>'):response.body;
+  return new Response(body,{status:response.status,statusText:response.statusText,headers});
  }};
 }
 export default createPublicRelease();

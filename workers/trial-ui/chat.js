@@ -1404,7 +1404,7 @@ function setupPilot(d){
  if(publicProviderOffered&&!$('public-provider-consent')){const note=document.createElement('p');note.id='public-provider-consent';note.className='notice';note.textContent=String(p.text||'').slice(0,600);$('consent').parentElement.before(note)}
  let saved='';try{saved=(globalThis.OriviaAccountStorage?.storage||localStorage).getItem(pilotKey)||''}catch(_){}
  $('set-pilot').checked=saved===pilotOffer;
- if(publicProviderOffered&&saved!==pilotOffer){sessionStorage.removeItem(ck);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false}
+ if(publicProviderOffered&&saved!==pilotOffer){sessionStorage.removeItem(ck);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=!!$('account-entry')&&!$('account-entry').hidden}
  $('set-pilot').onchange=e=>{try{if(e.target.checked)(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(pilotKey,pilotOffer);else (globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(pilotKey)}catch(_){}researchNotice()};
  researchNotice();
 }

@@ -15,122 +15,122 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install pinned account authentication dependencies
+      - name: "Install pinned account authentication dependencies"
         run: npm ci --prefix workers/accounts --ignore-scripts --no-fund --no-audit
-      - name: Syntax checks
+      - name: "Syntax checks"
         run: |
           node --check js/buddy.js
           node --check js/orivia-ai-bridge.js
           node --check workers/orivia-ai-preview.mjs
-      - name: SPEA official directory feed
+      - name: "SPEA official directory feed"
         run: node tests/spea-directory-feed.test.mjs
-      - name: OpenAI private pilot transport (offline only)
+      - name: "OpenAI private pilot transport (offline only)"
         run: node tests/openai-pilot.test.mjs
-      - name: Trips through assistant destination cards (scripted)
+      - name: "Trips through assistant destination cards (scripted)"
         run: node tests/transport-assistant-card.test.mjs
-      - name: Visual destination cards (offline)
+      - name: "Visual destination cards (offline)"
         run: node tests/place-card.test.mjs
-      - name: In-person messages and maps (scripted)
+      - name: "In-person messages and maps (scripted)"
         run: node tests/handoff-cards.test.mjs
-      - name: Pilot assistant (consent v3, scripted model)
+      - name: "Pilot assistant (consent v3, scripted model)"
         run: node tests/assistant.test.mjs
-      - name: Assistant timing and same-turn page reuse
+      - name: "Assistant timing and same-turn page reuse"
         run: node tests/assistant-timing.test.mjs
-      - name: Reply arrival and reading position
+      - name: "Reply arrival and reading position"
         run: node tests/reply-arrival.test.mjs
-      - name: Dictation lifecycle and language
+      - name: "Dictation lifecycle and language"
         run: node tests/dictation.test.mjs
-      - name: Conversational calendar changes
+      - name: "Conversational calendar changes"
         run: node tests/calendar-changes.test.mjs
-      - name: Legacy calendar routing
+      - name: "Legacy calendar routing"
         run: node tests/inline-calendar-routing.test.mjs
-      - name: French and Arabic UI
+      - name: "French and Arabic UI"
         run: node tests/i18n.test.mjs
-      - name: Buddy rule and conversation regression tests
+      - name: "Buddy rule and conversation regression tests"
         run: node tests/buddy-smoke.js
-      - name: Secure AI bridge tests
+      - name: "Secure AI bridge tests"
         run: node tests/ai-bridge.test.js
-      - name: Consent and open-ended AI entry tests
+      - name: "Consent and open-ended AI entry tests"
         run: node tests/ai-chat-consent.test.js
-      - name: Native calendar and Google draft flow
+      - name: "Native calendar and Google draft flow"
         run: node tests/native-calendar.test.cjs
-      - name: Live official fetch and calendar alarms
+      - name: "Live official fetch and calendar alarms"
         run: node tests/live-official-and-reminders.test.mjs
-      - name: Official-only source policy and Heriot-Watt details
+      - name: "Official-only source policy and Heriot-Watt details"
         run: node tests/official-sources.test.mjs
-      - name: Verified university journey resources
+      - name: "Verified university journey resources"
         run: node tests/journey-sources.test.mjs
-      - name: Journey API contract tests
+      - name: "Journey API contract tests"
         run: node --experimental-sqlite tests/journey-api.test.mjs
-      - name: Journey chat does not loop (16 Oct regression)
+      - name: "Journey chat does not loop (16 Oct regression)"
         run: node tests/journey-adapter-loop.test.mjs
-      - name: Natural first-contact conversations
+      - name: "Natural first-contact conversations"
         run: node tests/natural-entry.test.mjs
-      - name: Realistic journey intelligence scenarios (with tracked TODO gaps)
+      - name: "Realistic journey intelligence scenarios (with tracked TODO gaps)"
         run: node --test tests/journey-intelligence.test.mjs
-      - name: Transport is actionable (Maps links, no made-up times, no stray reminders)
+      - name: "Transport is actionable (Maps links, no made-up times, no stray reminders)"
         run: node tests/transport-actions.test.mjs
-      - name: Device-first Maps and calendar handoffs
+      - name: "Device-first Maps and calendar handoffs"
         run: node tests/device-handoffs.test.mjs
-      - name: Journey cards (decision-only, three choices, route-aware nol guide)
+      - name: "Journey cards (decision-only, three choices, route-aware nol guide)"
         run: node tests/guide-cards.test.mjs
-      - name: Settings and Calendar
+      - name: "Settings and Calendar"
         run: node tests/settings-calendar.test.mjs
-      - name: Research display (fixtures)
+      - name: "Research display (fixtures)"
         run: node tests/research-display.test.mjs
-      - name: Chat history and origin
+      - name: "Chat history and origin"
         run: node tests/chat-history.test.mjs
-      - name: Beta Start waits for server verification
+      - name: "Beta Start waits for server verification"
         run: node tests/beta-start.test.mjs
-      - name: Source-controlled research and founder acceptance scenarios
+      - name: "Source-controlled research and founder acceptance scenarios"
         run: node --experimental-sqlite tests/research.test.mjs
-      - name: School task state and named lookups
+      - name: "School task state and named lookups"
         run: node tests/school-task-integration.test.mjs
-      - name: Research follows the current task
+      - name: "Research follows the current task"
         run: node tests/research-follow-through.test.mjs
-      - name: Sharjah school discovery from official SPEA profiles
+      - name: "Sharjah school discovery from official SPEA profiles"
         run: node tests/research-schools.test.mjs
-      - name: Information cards (sourced facts and contacts only)
+      - name: "Information cards (sourced facts and contacts only)"
         run: node tests/information-cards.test.mjs
-      - name: SPEA reader (beyond page 1, name lookup, coverage and failures)
+      - name: "SPEA reader (beyond page 1, name lookup, coverage and failures)"
         run: node tests/spea-reader.test.mjs
-      - name: School websites anchored to SPEA (identity, domain proof, facts tied to source)
+      - name: "School websites anchored to SPEA (identity, domain proof, facts tied to source)"
         run: node tests/school-sites.test.mjs
-      - name: Research loop (understand, research, coverage, answer the latest question)
+      - name: "Research loop (understand, research, coverage, answer the latest question)"
         run: node tests/research-loop.test.mjs
-      - name: Research loop through the Worker (opt-in, auth and quota first)
+      - name: "Research loop through the Worker (opt-in, auth and quota first)"
         run: node --experimental-sqlite tests/research-loop-worker.test.mjs
-      - name: Website reader against raw captured pages
+      - name: "Website reader against raw captured pages"
         run: node tests/site-captures.test.mjs
-      - name: Website reader across page layouts (link ranking, year tables, labelled curriculum)
+      - name: "Website reader across page layouts (link ranking, year tables, labelled curriculum)"
         run: node tests/site-reader-layouts.test.mjs
-      - name: Navigation and year evidence on raw captured pages
+      - name: "Navigation and year evidence on raw captured pages"
         run: node tests/site-captures-navigation.test.mjs
-      - name: Research agent (whole process: model-chosen steps, code-enforced rules, Ina's case study)
+      - name: "Research agent (whole process: model-chosen steps, code-enforced rules, Ina's case study)"
         run: node tests/research-agent.test.mjs
-      - name: Searching like a person with labelled evidence (listing sites, own websites, reworded searches)
+      - name: "Searching like a person with labelled evidence (listing sites, own websites, reworded searches)"
         run: node --experimental-sqlite tests/research-web-evidence.test.mjs
-      - name: Shared spending ledger (atomic day/month limits, uncertain outcomes kept)
+      - name: "Shared spending ledger (atomic day/month limits, uncertain outcomes kept)"
         run: node --experimental-sqlite tests/spend-ledger.test.mjs
-      - name: Browser directory tool (scripted fake browser; counter-ahead guard, host checks, long lists)
+      - name: "Browser directory tool (scripted fake browser; counter-ahead guard, host checks, long lists)"
         run: node tests/browser-directory.test.mjs
-      - name: Private research pilot entry (consent naming OpenAI, gates, public Worker untouched)
+      - name: "Private research pilot entry (consent naming OpenAI, gates, public Worker untouched)"
         run: node --experimental-sqlite tests/research-pilot.test.mjs
-      - name: Provider comparison harness (scripted conversations, aggregate metrics)
+      - name: "Provider comparison harness (scripted conversations, aggregate metrics)"
         run: node --experimental-sqlite tests/provider-comparison.test.mjs
-      - name: Public beta mode (human check, per-person and daily limits)
+      - name: "Public beta mode (human check, per-person and daily limits)"
         run: node --experimental-sqlite tests/public-beta.test.mjs
-      - name: AI Worker contract and safety tests
+      - name: "AI Worker contract and safety tests"
         run: node tests/ai-preview.test.mjs
-      - name: Read-only journey tool regression tests
+      - name: "Read-only journey tool regression tests"
         run: node tests/ai-journey-tools.test.mjs
-      - name: Home dashboard shared records and navigation
+      - name: "Home dashboard shared records and navigation"
         run: node tests/home-dashboard.test.mjs
-      - name: Local destination hero photos and fallback
+      - name: "Local destination hero photos and fallback"
         run: node tests/home-destination-photo.test.mjs
-      - name: Account authentication and private storage on real SQLite
+      - name: "Account authentication and private storage on real SQLite"
         run: node --experimental-sqlite tests/accounts.test.mjs
-      - name: Account client isolation and optional data import
+      - name: "Account client isolation and optional data import"
         run: node tests/account-client.test.mjs
-      - name: Explicit public assistant release gates
+      - name: "Explicit public assistant release gates"
         run: node --experimental-sqlite tests/public-release.test.mjs
