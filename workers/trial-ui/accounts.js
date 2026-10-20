@@ -4,7 +4,7 @@
  let native;try{native=window.localStorage}catch(_){native={getItem(){throw Error('storage_unavailable')},setItem(){throw Error('storage_unavailable')},removeItem(){throw Error('storage_unavailable')}}}
  const keys={profile:'orivia-private-profile-v1',events:'orivia-private-events-v1',journeys:'orivia-private-journeys-v1',chats:'orivia-private-chats-v1'},privateKeys=new Set([...Object.values(keys),'orivia-private-chats-v1-unreadable']);
  let user=null,scope=null,callbacks=null,config={},revision=0,ready=false,paused=false,timer=null,syncing=false,generation=0,screen='welcome',email='';
- let copyNodes=[];
+ let copyNodes=[],arrival=null;const arrivalKey='orivia-pending-arrival-v1';
  const $=id=>document.getElementById(id),t=s=>window.OriviaI18n?.text(s)??s;
  const prefix=id=>'orivia-account:'+encodeURIComponent(id)+':';
  const key=k=>scope&&privateKeys.has(k)?prefix(scope)+k:k;
@@ -48,18 +48,59 @@
   select.value=window.OriviaI18n?.language?.()||'en';select.onchange=()=>{window.OriviaI18n?.setLanguage?.(select.value);try{const settings=JSON.parse(native.getItem('orivia-private-settings-v1')||'{}');native.setItem('orivia-private-settings-v1',JSON.stringify({...settings,language:select.value}))}catch(_){}for(const [node,source] of copyNodes)node.textContent=t(source)};label.append(select);root.append(label);
  }
  function hasSavedPersonalData(){try{const d=snapshot(native);return !!(d.profile||d.events.length||Object.keys(d.journeys).length||d.chats.chats.length)}catch(_){return true}}
+ async function loadArrival(){
+  if(!location.search)return;const query=new URLSearchParams(location.search||''),slug=query.get('organisation');if(!slug||!/^([a-z0-9]+-)*[a-z0-9]+$/.test(slug)||slug.length<3||slug.length>64)return;
+  const d=await api('/api/public/orgs/'+encodeURIComponent(slug));let token='';
+  const match=String(location.hash||'').match(/^#join=([a-f0-9]{64})$/);if(match){token=match[1];sessionStorage.setItem(arrivalKey,JSON.stringify({slug,token}));history.replaceState(null,'',location.pathname+location.search)}
+  else try{const saved=JSON.parse(sessionStorage.getItem(arrivalKey)||'null');if(saved?.slug===slug&&/^[a-f0-9]{64}$/.test(saved.token))token=saved.token}catch(_){}
+  arrival={organisation:d.organisation,defaults:d.arrival,token,status:null,role:null};
+ }
+ function leaveArrival(){arrival=null;try{sessionStorage.removeItem(arrivalKey);history.replaceState(null,'',location.pathname||'/')}catch(_){}}
+ function personalInstead(){leaveArrival();if(user){restore().catch(fail)}else signIn()}
+ async function resumeArrival(vault){
+  if(!arrival.defaults){const box=shell('University setup is not ready',arrival.organisation.name);box.append(el('p','notice','Your organisation has not set its campus destination yet. Ask its staff, or continue with personal Orivia.'),btn('Continue with personal Orivia',personalInstead,true));return}
+  if(native.getItem(dirtyKey())){paused=true;ready=true;enter();return}
+  if(vault.data){putLocal(vault.data);ready=true;enter()}else setup();
+ }
+ async function checkArrival(vault){
+  const owner=scope,entry=arrival,d=await api('/api/me/memberships');if(scope!==owner||arrival!==entry)return;
+  const m=d.memberships?.find(m=>m.organisationId===entry.organisation.id);if(m){entry.status=m.status;entry.role=m.role;await resumeArrival(vault);return}
+  const box=shell('Join your university’s Orivia',entry.organisation.name);
+  box.append(el('p','notice','Your university can see your membership name and email. It cannot see your personal chats or plans. Student access needs staff approval.'));
+  if(!entry.token){box.append(el('p','notice','Ask your university for an Orivia invitation link. Signing in alone does not grant membership.'));}
+  else{try{const invitation=await api('/api/invitations/inspect',{method:'POST',body:{token:entry.token}});if(scope!==owner||arrival!==entry)return;
+   if(invitation.organisation.id!==entry.organisation.id||invitation.role!=='student'||!invitation.available)throw Error('invalid_invitation');
+   box.append(btn('Request to join',async()=>{try{if(scope!==owner||arrival!==entry)return;const result=await api('/api/invitations/join',{method:'POST',body:{token:entry.token}});if(scope!==owner||arrival!==entry)return;entry.status=result.membership.status;entry.role=result.membership.role;entry.token='';sessionStorage.removeItem(arrivalKey);await resumeArrival(vault)}catch(e){fail(e)}}));
+  }catch(_){box.append(el('p','notice','This invitation is unavailable, expired or for a different organisation. Ask your university for a new invitation.'))}}
+  box.append(btn('Continue with personal Orivia',personalInstead,true));
+ }
+ async function universityHome(){
+  const entry=arrival,owner=scope,box=shell(entry.organisation.name,'Your university space');
+  box.append(btn('My Orivia',()=>{leaveArrival();enter()},true));
+  if(entry.organisation.demo)box.append(el('p','notice','Demo organisation'));
+  if(entry.status!=='active'){box.append(el('h2','','Waiting for approval'),el('p','notice','Your request is with your university. Private guides and updates appear after staff approve it.'),btn('Check approval',()=>restore().catch(fail),true));return}
+  if(entry.role!=='student'){const a=el('a','btn','Open organisation dashboard');a.href='/platform';box.append(a);return}
+  const loading=el('p','notice','Loading your organisation’s information…');box.append(loading);
+  try{const d=await api('/api/me/orgs/'+encodeURIComponent(entry.organisation.id));if(scope!==owner||arrival!==entry)return;loading.remove();
+   box.append(el('p','tiny','From your organisation. Your personal chats, calendar and About you remain private.'));
+   for(const [kind,label] of [['guide','Guides'],['date','Important dates'],['contact','Useful contacts'],['update','Updates']]){const items=(d.content||[]).filter(c=>c.kind===kind);if(!items.length)continue;box.append(el('h2','',label));for(const c of items){const item=el('article','card');item.append(el('h3','',c.title),el('p','organisation-text',c.body));box.append(item)}}
+   if(!d.content?.length)box.append(el('p','notice','Your organisation hasn’t published anything here yet.'));
+  }catch(_){if(scope===owner&&arrival===entry)loading.textContent=t('This space couldn’t be opened. Your access may have changed. Close it and refresh your spaces.')}
+ }
  function fail(e){const n=$('account-flow-status');if(n)n.textContent=t(e.status===429?'Please wait before trying again.':'That didn’t work. Check the details and try again.');}
  function guest(skipSetup=false){if(skipSetup!==true&&!scope&&!hasSavedPersonalData()){personalSetup({guestMode:true});return}const leavingAccount=!!scope;delete document.body.dataset.accountFlow;user=null;scope=null;ready=false;paused=false;clearTimeout(timer);$('account-entry').hidden=true;applyCopy();if(sessionStorage.getItem('orivia-ai-private-consent')==='yes'){if(leavingAccount||$('workspace').hidden)callbacks.reload()}else consentEntry();}
  function welcome(){signIn()}
- function signIn(signup=false){signup=signup===true;screen='signin';const box=shell(signup?'Create your Orivia account':'Sign in to Orivia',signup?'Your own space, wherever you’re going.':'Welcome back. Your next step starts here.');
+ function signIn(signup=false){signup=signup===true;screen='signin';const box=shell(arrival?arrival.organisation.name:signup?'Create your Orivia account':'Sign in to Orivia',signup?'Your own space, wherever you’re going.':'Welcome back. Your next step starts here.');
+  if(arrival){box.append(el('p','notice','Welcome to your university’s Orivia. University single sign-on is not connected yet; use your Orivia email sign-in for this pilot.'),el('p','tiny','Don’t have access? Ask your university for your Orivia invitation.'),btn('Continue with personal Orivia',personalInstead,true));if(arrival.organisation.demo)box.append(el('p','tiny','Demo organisation'));}
   for(const provider of ['google','apple'])if(config[provider])box.append(btn(provider==='google'?'Continue with Google':'Continue with Apple',async()=>{try{const d=await api('/api/auth/sign-in/social',{method:'POST',body:{provider,callbackURL:location.origin+'/'}});const u=new URL(d.url);if(!['https:'].includes(u.protocol))throw Error('Invalid redirect');location.assign(u.href)}catch(e){fail(e)}},true));
   if(config.email){const form=el('form','auth-form'),label=el('label','field','Email address'),input=el('input');input.type='email';input.required=true;input.autocomplete='email';input.placeholder='you@example.com';label.append(input);const send=el('button','btn','Continue with email');send.type='submit';form.append(label,send);form.onsubmit=async e=>{e.preventDefault();send.disabled=true;email=input.value.trim();try{await api('/api/auth/email-otp/send-verification-otp',{method:'POST',body:{email,type:'sign-in'}});codeScreen()}catch(e){fail(e)}finally{send.disabled=false}};box.append(form)}
   if(config.email||config.google||config.apple)box.append(el('p','tiny',signup?'Already have an account?':'Don’t have an account?'),btn(signup?'Sign in':'Sign up',()=>signIn(!signup),true));else box.append(el('p','tiny','Accounts are coming. You can use Orivia as a guest.'));
-  box.append(btn('Continue as a guest',()=>guest(),true),el('p','tiny','No password needed. We email you a one-time sign-in code. New email addresses create an account. As a guest, your data stays in this browser.'));
+  box.append(btn('Continue as a guest',()=>{leaveArrival();guest()},true),el('p','tiny','No password needed. We email you a one-time sign-in code. New email addresses create an account. As a guest, your data stays in this browser.'));
   if(window.top!==window){const note=el('p','tiny','This is a preview. Chats you start here stay in the preview and won’t appear when you open Orivia full screen.');const a=el('a','','Open Orivia full screen');a.href='/';a.target='_blank';a.rel='noopener';a.className='btn';box.append(note,a)}
  }
  function codeScreen(){screen='code';const box=shell('Check your email','Enter the six-digit code we sent you.');box.prepend(btn('← Back',signIn,true));box.append(el('p','tiny',email));const form=el('form','auth-form'),label=el('label','field','Sign-in code'),input=el('input');input.inputMode='numeric';input.pattern='[0-9]{6}';input.maxLength=6;input.autocomplete='one-time-code';input.required=true;label.append(input);const send=el('button','btn','Continue');send.type='submit';form.append(label,send);form.onsubmit=async e=>{e.preventDefault();send.disabled=true;try{await api('/api/auth/sign-in/email-otp',{method:'POST',body:{email,otp:input.value}});await restore()}catch(e){fail(e)}finally{send.disabled=false}};box.append(form,btn('Send a new code',async()=>{try{await api('/api/auth/email-otp/send-verification-otp',{method:'POST',body:{email,type:'sign-in'}});$('account-flow-status').textContent=t('A new code has been sent.')}catch(e){fail(e)}},true));}
  async function restore(){const d=await api('/api/account/session');user=d.user;scope=user.id;ready=false;paused=false;const vault=await api('/api/account/vault');revision=vault.revision;
+  if(arrival){await checkArrival(vault);return}
   if(native.getItem(dirtyKey())){paused=true;ready=true;enter();note('Not synced yet. Your device copy is kept.');return}
   if(vault.data){putLocal(vault.data);ready=true;enter();return}
   setup();
@@ -73,7 +114,7 @@
  }
  function personalSetup({data=empty(),preferredName='',guestMode=false}={}){
   screen='onboarding';const owner=scope,box=shell('Make yourself at home','A few details help Orivia give you a useful starting point. You can change them in My Life.');
-  const p=data.profile||{},fields={};
+  const p=data.profile||{},fields={},campus=arrival?.defaults||null;
   const field=(key,label,value='',options=null)=>{const lab=el('label','field',label),input=el(options?'select':'input');input.id='onboard-'+key;
    if(options){for(const [v,title] of options){const option=el('option','',title);option.value=v;input.append(option)}}else input.maxLength=60;
    input.value=value;fields[key]=input;lab.append(input);box.append(lab);return input};
@@ -87,6 +128,7 @@
   const region=field('region','Emirate / nation (optional)','',[['','Not sure yet']]);const fillRegion=()=>{region.replaceChildren();for(const value of ['',...(dest.value==='uae'?['Abu Dhabi','Ajman','Dubai','Fujairah','Ras Al Khaimah','Sharjah','Umm Al Quwain']:dest.value==='uk'?['England','Scotland','Wales','Northern Ireland']:[])]){const option=el('option','',value||'Not sure yet');option.value=value;region.append(option)}region.disabled=!dest.value};fillRegion();region.value=p.destRegion||p.region||'';dest.onchange=fillRegion;
   field('town','Destination city or area (optional)',p.destTown||p.town||'');
   field('reason','What brings you here?',p.who||'',[['','Not sure yet'],['study','Study'],['work','Work'],['join or bring my family','Family'],['something else','Something else']]);
+  if(campus){dest.value=campus.country;fillRegion();region.value=campus.region;fields.town.value=campus.town;fields.reason.value=campus.reason;for(const input of [dest,region,fields.town,fields.reason])input.disabled=true;box.append(el('p','tiny','Destination and reason are set by your university for this campus. They cannot be edited here.'));}
   const terms=el('details','card');terms.append(el('summary','','Pilot terms and privacy'),el('p','tiny','Orivia is an early service for practical information and planning. Check important decisions with the relevant authority or professional. It does not submit applications or act for you unless a feature explicitly says so and you confirm.'),el('p','tiny',guestMode?'As a guest, your chats, profile and plans stay in this browser on this device. Clearing browser data can remove them.':'Signed-in personal chats, profile and plans are saved to your private account and cached on this device. Your institution cannot see your personal chats through its dashboard.'),el('p','tiny','With your separate AI agreement, your messages and recent conversation go to OpenAI, or Cloudflare Workers AI if unavailable. General search terms go to Brave Search. Never send passwords or passport, visa or ID numbers. Microphone, location and camera permissions are requested only when you use those features.'),el('p','tiny','You can review your data in Settings. Downloads and copies on other devices are not remotely erased. These pilot notices are not the final public terms and privacy policy.'));box.append(terms);
   const agreement=el('label','auth-choice'),accept=el('input');accept.type='checkbox';agreement.append(accept,el('span','','I accept the pilot terms above.'));
   const privacy=el('label','auth-choice'),read=el('input');read.type='checkbox';privacy.append(read,el('span','','I have read the privacy information above.'));box.append(agreement,privacy);const startControls=el('section');box.append(startControls);callbacks.mountStart?.(startControls);
@@ -106,7 +148,7 @@
   const start=btn('Let’s get started',async()=>{start.disabled=true;try{if(scope!==owner)return;if(!callbacks.authorizeStart||!await callbacks.authorizeStart())return;if(scope!==owner)return;enter()}catch(e){fail(e)}finally{start.disabled=false}});
   box.append(start,btn('Back',()=>user?accountPanel():signIn(),true));
  }
- function enter(){delete document.body.dataset.accountFlow;$('account-entry').hidden=true;applyCopy();if(sessionStorage.getItem('orivia-ai-private-consent')==='yes')callbacks.reload();else consentEntry();}
+ function enter(){if(sessionStorage.getItem('orivia-ai-private-consent')!=='yes'){consentEntry();return}if(arrival){universityHome().catch(fail);return}delete document.body.dataset.accountFlow;$('account-entry').hidden=true;applyCopy();callbacks.reload();}
  function accountPanel(){const panelOwner=scope;screen='account';const box=shell('Your account',user?user.email:'');box.prepend(btn('← Back',enter,true));if(!user){signIn();return}
   const status=el('p','notice');status.id='account-status';status.setAttribute('role','status');box.append(status);note(paused?'Sync is paused. Your device copy is kept.':'Your chats and plans are saved to your private account.');
   box.append(el('p','tiny','Logging out clears this account’s synced personal copy and recovery backups from this browser. If changes are unsynced, you can explicitly keep them to recover after signing in again. Guest data and downloaded files stay.'),btn('Sync now',async()=>{if(paused){note('Sync is paused. Review the account version first.');return}try{await sync()}catch(_){}}),btn('Review the account version',async()=>{try{if(scope!==panelOwner)return;const reviewedGeneration=generation;const remote=await api('/api/account/vault');if(scope!==panelOwner||screen!=='account')return;const review=el('section','card');review.append(el('p','notice','Loading the account version replaces this device’s account copy. A backup is kept on this device.'));
@@ -123,6 +165,6 @@
   }catch(e){if(scope===panelOwner&&screen==='account')sessions.replaceChildren(el('p','notice','Could not load signed-in sessions.'),btn('Try again',loadSessions,true))}};loadSessions();
   const del=btn('Delete account',()=>{const review=el('section','card');review.append(el('p','notice','This deletes your account and saved personal chats and plans, and clears this account’s copies and recovery backups on this browser. Guest data, downloaded files and copies on other devices are not erased. You may need to sign in again first. If you are the last owner or organisation admin, hand over that role first.'));review.append(btn('Delete my account permanently',async()=>{try{if(scope!==panelOwner)return;callbacks.cancelReply?.();await api('/api/account',{method:'DELETE',body:{confirm:'delete my account'}});if(scope!==panelOwner)return;clearTimeout(timer);clearAccountCopy(panelOwner);user=null;scope=null;ready=false;welcome()}catch(e){fail(e)}},true),btn('Cancel',()=>review.remove(),true));box.append(review)},true);del.classList.add('danger');box.append(del);
  }
- const apiObject={get user(){return user},get epoch(){return scope},storage,open(){user?accountPanel():signIn()},copy:applyCopy,async boot(cb){callbacks=cb;try{config=await api('/api/account/config');if(!config.ui){guest();return}if(config.enabled){try{await restore();return}catch(e){if(e.status===401){user=null;scope=null;ready=false;paused=false;clearTimeout(timer)}if(e.status!==401){shell('Your account could not be opened','Your saved data has not been changed.');$('account-entry').append(btn('Try again',()=>apiObject.boot(cb)),btn('Continue as a guest',guest,true));return}}}welcome()}catch(_){config={};guest()}}};
+ const apiObject={get user(){return user},get epoch(){return scope},storage,open(){user?accountPanel():signIn()},copy:applyCopy,async boot(cb){callbacks=cb;try{config=await api('/api/account/config');if(!config.ui){guest();return}if(config.enabled){try{await loadArrival();await restore();return}catch(e){if(e.status===401){user=null;scope=null;ready=false;paused=false;clearTimeout(timer)}if(e.status!==401){shell('Your account could not be opened','Your saved data has not been changed.');$('account-entry').append(btn('Try again',()=>apiObject.boot(cb)),btn('Continue as a guest',guest,true));return}}}welcome()}catch(_){config={};guest()}}};
  window.OriviaAccounts=apiObject;
 })();

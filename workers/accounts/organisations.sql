@@ -42,3 +42,9 @@ CREATE TABLE IF NOT EXISTS organisation_audit (
  actor_id TEXT REFERENCES user(id) ON DELETE SET NULL,action TEXT NOT NULL,target_id TEXT,created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS org_audit_time ON organisation_audit(org_id,created_at);
+
+-- Public arrival configuration only. Never contains member or application data.
+CREATE TABLE IF NOT EXISTS organisation_arrivals (
+ org_id TEXT PRIMARY KEY REFERENCES organisations(id) ON DELETE CASCADE,
+ data TEXT NOT NULL,revision INTEGER NOT NULL DEFAULT 1,updated_at INTEGER NOT NULL
+);

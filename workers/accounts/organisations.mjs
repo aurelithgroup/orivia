@@ -23,6 +23,7 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
  const audit=(actor,org,action,target)=>q('INSERT INTO organisation_audit(id,org_id,actor_id,action,target_id,created_at) VALUES (?,?,?,?,?,?)',id(),org,actor,action,target,clock());
  const write=async(statement,actor,org,action,target)=>{const result=await db.batch([statement,q('INSERT INTO organisation_audit(id,org_id,actor_id,action,target_id,created_at) SELECT ?,?,?,?,?,? WHERE changes()>0',id(),org,actor,action,target,clock())]);return result[0].results?.[0]||null};
  const qr=async value=>SVG.render(QRCode.create(value,{errorCorrectionLevel:'M'}),{margin:4,width:256});
+ const arrival=async oid=>{const row=await q('SELECT data,revision FROM organisation_arrivals WHERE org_id=?',oid).first();return row?{...JSON.parse(row.data),revision:row.revision}:null};
  const publicOrg=o=>({id:o.id,slug:o.slug,name:o.name,city:o.city,demo:!!o.demo});
  const content=c=>({id:c.id,kind:c.kind,title:c.title,body:c.body,visibility:c.visibility,status:c.status,revision:c.revision,updatedAt:c.updated_at});
  try{
@@ -35,7 +36,7 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
    let o,rows;
    const codeMatch=path.match(/^\/api\/public\/codes\/([a-zA-Z0-9-]{1,80})$/);
    if(codeMatch){const c=await q('SELECT * FROM organisation_public_codes WHERE id=? AND revoked=0',codeMatch[1]).first();if(!c)deny(404,'not_found');o=await q("SELECT * FROM organisations WHERE id=? AND status='active'",c.org_id).first();if(!o)deny(404,'not_found');rows=c.content_id?await all("SELECT * FROM organisation_content WHERE id=? AND org_id=? AND visibility='public' AND status='published'",c.content_id,o.id):await all("SELECT * FROM organisation_content WHERE org_id=? AND visibility='public' AND status='published' ORDER BY updated_at DESC LIMIT 100",o.id);if(c.content_id&&!rows.length)deny(404,'not_found');return json({organisation:publicOrg(o),content:rows.map(content),grantsMembership:false})}
-   const match=path.match(/^\/api\/public\/orgs\/([a-z0-9-]{3,64})$/);if(!match)deny(404,'not_found');o=await q("SELECT * FROM organisations WHERE slug=? AND status='active'",match[1]).first();if(!o)deny(404,'not_found');rows=await all("SELECT * FROM organisation_content WHERE org_id=? AND visibility='public' AND status='published' ORDER BY updated_at DESC LIMIT 100",o.id);return json({organisation:publicOrg(o),content:rows.map(content),grantsMembership:false});
+   const match=path.match(/^\/api\/public\/orgs\/([a-z0-9-]{3,64})$/);if(!match)deny(404,'not_found');o=await q("SELECT * FROM organisations WHERE slug=? AND status='active'",match[1]).first();if(!o)deny(404,'not_found');rows=await all("SELECT * FROM organisation_content WHERE org_id=? AND visibility='public' AND status='published' ORDER BY updated_at DESC LIMIT 100",o.id);return json({organisation:publicOrg(o),arrival:await arrival(o.id),content:rows.map(content),grantsMembership:false});
   }
   const session=await auth.api.getSession({headers:req.headers});if(!session?.user?.id)deny(401,'sign_in_required');const actor=session.user.id;
   if(!session.user.emailVerified)deny(403,'verified_email_required');
@@ -55,7 +56,8 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
    const args=[inv,oid,await hash(raw),role,recipient,label,at+life*1000,max,actor,at,...(role==='admin'?[oid,oid,at]:[])];
    const made=await write(q('INSERT INTO organisation_invitations(id,org_id,token_hash,role,recipient_email,label,expires_at,max_uses,created_by,created_at) SELECT ?,?,?,?,?,?,?,?,?,?'+guard+' RETURNING id',...args),actor,oid,'invitation.created',inv);if(!made)deny(409,'admin_already_assigned');
    // The raw token is returned once. List endpoints and audit logs never reveal it.
-   return json({invitation:{id:inv,role,label,expiresAt:at+life*1000,maxUses:max},joinUrl:url.origin+'/platform#join='+raw,token:raw,qrSvg:await qr(url.origin+'/platform#join='+raw)},201);
+   const link=role==='student'?url.origin+'/?organisation='+encodeURIComponent((await org(oid)).slug)+'#join='+raw:url.origin+'/platform#join='+raw;
+   return json({invitation:{id:inv,role,label,expiresAt:at+life*1000,maxUses:max},joinUrl:link,token:raw,qrSvg:await qr(link)},201);
   };
   if(path==='/api/me/memberships'&&req.method==='GET')return json({platformRoles:(await all('SELECT role FROM platform_roles WHERE user_id=?',actor)).map(r=>r.role),memberships:(await all("SELECT m.org_id,m.role,m.status,o.name,o.slug,o.demo FROM organisation_memberships m JOIN organisations o ON o.id=m.org_id WHERE m.user_id=? AND m.status IN ('active','requested') AND o.status='active'",actor)).map(m=>({organisationId:m.org_id,name:m.name,slug:m.slug,demo:!!m.demo,role:m.role,status:m.status}))});
   if(path==='/api/admin/orgs'){
@@ -81,6 +83,16 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
   }
   m=path.match(/^\/api\/orgs\/([^/]+)(?:\/(.*))?$/);
   if(m){const oid=m[1],tail=m[2]||'';
+   if(tail==='arrival'){
+    await member(oid,'content.publish');
+    if(req.method==='GET')return json({arrival:await arrival(oid)});
+    if(req.method==='PATCH'){fresh();const b=await body(['country','region','town','reason','revision']);if(!['uae','uk'].includes(b.country)||!['study','work','join or bring my family','something else'].includes(b.reason)||!Number.isInteger(b.revision)||b.revision<0)deny(400,'invalid_arrival');
+     const regions=b.country==='uae'?['Abu Dhabi','Ajman','Dubai','Fujairah','Ras Al Khaimah','Sharjah','Umm Al Quwain']:['England','Scotland','Wales','Northern Ireland'];if(!regions.includes(b.region))deny(400,'invalid_arrival_region');
+     const data=JSON.stringify({country:b.country,region:b.region,town:text(b.town,1,100),reason:b.reason});
+     const statement=b.revision===0?q('INSERT INTO organisation_arrivals(org_id,data,revision,updated_at) VALUES (?,?,1,?) ON CONFLICT(org_id) DO NOTHING RETURNING revision',oid,data,clock()):q('UPDATE organisation_arrivals SET data=?,revision=revision+1,updated_at=? WHERE org_id=? AND revision=? RETURNING revision',data,clock(),oid,b.revision);
+     const changed=await write(statement,actor,oid,'arrival.updated',oid);if(!changed)deny(409,'arrival_conflict');return json({arrival:await arrival(oid)});
+    }
+   }
    if(tail==='summary'&&req.method==='GET'){await member(oid,'org.view');const counts=await all('SELECT role,status,COUNT(*) AS count FROM organisation_memberships WHERE org_id=? GROUP BY role,status',oid);return json({organisation:publicOrg(await org(oid)),counts,analytics:{available:false,reason:'tracking_not_connected'},applicationRecordsAvailable:false})}
    if(tail==='invitations'){await member(oid,'qr.invite');if(req.method==='POST'){const b=await body(['role','recipientEmail','label','expiresInSeconds','maxUses']);if(!['editor','student'].includes(b.role))deny(400,'invalid_invitation_role');return makeInvite(oid,b.role,b)}if(req.method==='GET')return json({invitations:await all('SELECT id,role,label,recipient_email AS recipientEmail,expires_at AS expiresAt,revoked,max_uses AS maxUses,uses FROM organisation_invitations WHERE org_id=? ORDER BY created_at DESC LIMIT 100',oid)})}
    const revoke=tail.match(/^invitations\/([^/]+)\/revoke$/);if(revoke&&req.method==='POST'){await member(oid,'qr.invite');await body([]);if(!await q('SELECT id FROM organisation_invitations WHERE id=? AND org_id=?',revoke[1],oid).first())deny(404,'not_found');await db.batch([q('UPDATE organisation_invitations SET revoked=1 WHERE id=? AND org_id=?',revoke[1],oid),audit(actor,oid,'invitation.revoked',revoke[1])]);return json({revoked:true})}

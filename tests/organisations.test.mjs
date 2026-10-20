@@ -29,6 +29,13 @@ let r=await call(owner,'/api/admin/orgs','POST',{name:'Northbay University',slug
 r=await call(owner,'/api/admin/orgs/'+org+'/admin-invite','POST',{recipientEmail:mariam.email,label:'First admin'});assert.equal(r.status,201,JSON.stringify(r));const adminInvite=r.data;assert.equal(decodeSvg(adminInvite.qrSvg),adminInvite.joinUrl);assert.match(adminInvite.joinUrl,/\/platform#join=/);
 assert.equal((await call(omar,'/api/invitations/join','POST',{token:adminInvite.token})).status,403,'staff invitation cannot be stolen by another verified email');
 r=await call(mariam,'/api/invitations/join','POST',{token:adminInvite.token});assert.equal(r.status,201,JSON.stringify(r));assert.equal(r.data.membership.role,'admin');assert.equal(r.data.membership.status,'active');
+// Campus settings are public, admin-controlled, revision checked, and never infer a destination.
+assert.equal((await call(null,'/api/public/orgs/northbay')).data.arrival,null);
+assert.equal((await call(omar,'/api/orgs/'+org+'/arrival','PATCH',{country:'uae',region:'Sharjah',town:'University City',reason:'study',revision:0})).status,403);
+let campus=await call(mariam,'/api/orgs/'+org+'/arrival','PATCH',{country:'uae',region:'Sharjah',town:'University City',reason:'study',revision:0});assert.equal(campus.status,200,JSON.stringify(campus));assert.equal(campus.data.arrival.revision,1);
+assert.equal((await call(mariam,'/api/orgs/'+org+'/arrival','PATCH',{country:'uk',region:'Dubai',town:'Wrong',reason:'study',revision:1})).status,400);
+assert.equal((await call(mariam,'/api/orgs/'+org+'/arrival','PATCH',{country:'uk',region:'England',town:'Manchester',reason:'study',revision:0})).status,409);
+const publicArrival=await call(null,'/api/public/orgs/northbay');assert.equal(publicArrival.data.arrival.country,'uae');assert.equal(publicArrival.data.arrival.reason,'study');assert.equal(publicArrival.data.grantsMembership,false);assert.ok(!JSON.stringify(publicArrival.data).includes(mariam.email));
 assert.equal((await call(owner,'/api/admin/orgs/'+org+'/admin-invite','POST',{recipientEmail:omar.email})).status,409,'owner cannot bypass admin management with a second bootstrap invite');
 assert.equal((await call(owner,'/api/orgs/'+org+'/members')).status,403,'owner role does not grant access to member identities');
 r=await call(mariam,'/api/orgs/'+org+'/invitations','POST',{role:'editor',recipientEmail:editor.email});assert.equal(r.status,201);const editorToken=r.data.token;
@@ -40,7 +47,7 @@ r=await call(mariam,'/api/orgs/'+org+'/content/'+guide,'PATCH',{revision:1,statu
 assert.equal((await call(mariam,'/api/orgs/'+org+'/content/'+guide,'PATCH',{revision:1,title:'stale edit'})).status,409);
 assert.equal((await call(editor,'/api/orgs/'+org+'/content/'+guide,'PATCH',{revision:2,title:'sneak published edit'})).status,403);
 assert.equal((await call(omar,'/api/me/orgs/'+org)).status,403,'verified university email does not auto-enrol anyone');
-r=await call(mariam,'/api/orgs/'+org+'/invitations','POST',{role:'student',label:'Autumn arrivals',maxUses:2});assert.equal(r.status,201);const cohort=r.data;
+r=await call(mariam,'/api/orgs/'+org+'/invitations','POST',{role:'student',label:'Autumn arrivals',maxUses:2});assert.equal(r.status,201);const cohort=r.data;assert.equal(decodeSvg(cohort.qrSvg),cohort.joinUrl);const arrivalUrl=new URL(cohort.joinUrl);assert.equal(arrivalUrl.pathname,'/');assert.equal(arrivalUrl.searchParams.get('organisation'),'northbay');assert.equal(arrivalUrl.hash,'#join='+cohort.token);assert.ok(!arrivalUrl.search.includes(cohort.token));
 r=await call(aisha,'/api/invitations/join','POST',{token:cohort.token});assert.equal(r.status,201);assert.equal(r.data.membership.status,'requested');
 assert.equal((await call(aisha,'/api/me/orgs/'+org)).status,403,'pending membership does not expose member content');
 assert.equal((await call(aisha,'/api/invitations/join','POST',{token:cohort.token})).status,200,'join retry is idempotent');assert.equal(sql.prepare('SELECT uses FROM organisation_invitations WHERE id=?').get(cohort.invitation.id).uses,1);

@@ -1890,5 +1890,65 @@
   "I agree to send my messages and recent conversation to Cloudflare Workers AI.": {
     "fr": "J’accepte d’envoyer mes messages et ma conversation récente à Cloudflare Workers AI.",
     "ar": "أوافق على إرسال رسائلي والمحادثة الأخيرة إلى Cloudflare Workers AI."
+  },
+  "Welcome to your university’s Orivia. University single sign-on is not connected yet; use your Orivia email sign-in for this pilot.": {
+    "fr": "Bienvenue dans l’Orivia de votre université. La connexion universitaire unique n’est pas encore connectée ; utilisez votre connexion Orivia par e-mail pour ce pilote.",
+    "ar": "مرحباً بك في أوريفيا جامعتك. تسجيل الدخول الموحد للجامعة غير متصل بعد؛ استخدم تسجيل الدخول إلى أوريفيا بالبريد الإلكتروني لهذه النسخة التجريبية."
+  },
+  "Don’t have access? Ask your university for your Orivia invitation.": {
+    "fr": "Vous n’avez pas accès ? Demandez une invitation Orivia à votre université.",
+    "ar": "ليس لديك وصول؟ اطلب دعوة أوريفيا من جامعتك."
+  },
+  "Continue with personal Orivia": {
+    "fr": "Continuer avec Orivia personnel",
+    "ar": "المتابعة باستخدام أوريفيا الشخصي"
+  },
+  "University setup is not ready": {
+    "fr": "L’espace universitaire n’est pas prêt",
+    "ar": "إعداد الجامعة غير جاهز"
+  },
+  "Your organisation has not set its campus destination yet. Ask its staff, or continue with personal Orivia.": {
+    "fr": "Votre établissement n’a pas encore défini la destination du campus. Contactez son équipe ou continuez avec Orivia personnel.",
+    "ar": "لم تحدد مؤسستك وجهة الحرم الجامعي بعد. اسأل موظفيها أو تابع باستخدام أوريفيا الشخصي."
+  },
+  "Join your university’s Orivia": {
+    "fr": "Rejoindre l’Orivia de votre université",
+    "ar": "انضم إلى أوريفيا جامعتك"
+  },
+  "Your university can see your membership name and email. It cannot see your personal chats or plans. Student access needs staff approval.": {
+    "fr": "Votre université peut voir votre nom de membre et votre e-mail, mais pas vos conversations ou projets personnels. L’accès étudiant nécessite l’approbation du personnel.",
+    "ar": "يمكن لجامعتك رؤية اسم عضويتك وبريدك الإلكتروني، ولا يمكنها رؤية محادثاتك أو خططك الشخصية. يتطلب وصول الطالب موافقة الموظفين."
+  },
+  "Ask your university for an Orivia invitation link. Signing in alone does not grant membership.": {
+    "fr": "Demandez un lien d’invitation Orivia à votre université. Se connecter ne suffit pas pour devenir membre.",
+    "ar": "اطلب رابط دعوة أوريفيا من جامعتك. تسجيل الدخول وحده لا يمنح العضوية."
+  },
+  "Request to join": {
+    "fr": "Demander à rejoindre",
+    "ar": "طلب الانضمام"
+  },
+  "This invitation is unavailable, expired or for a different organisation. Ask your university for a new invitation.": {
+    "fr": "Cette invitation est indisponible, expirée ou destinée à un autre établissement. Demandez une nouvelle invitation à votre université.",
+    "ar": "هذه الدعوة غير متاحة أو منتهية أو تخص مؤسسة أخرى. اطلب دعوة جديدة من جامعتك."
+  },
+  "Your university space": {
+    "fr": "Votre espace universitaire",
+    "ar": "مساحة جامعتك"
+  },
+  "Your request is with your university. Private guides and updates appear after staff approve it.": {
+    "fr": "Votre demande a été transmise à votre université. Les guides et actualités privés apparaîtront après son approbation.",
+    "ar": "طلبك لدى جامعتك. تظهر الأدلة والتحديثات الخاصة بعد موافقة الموظفين."
+  },
+  "Check approval": {
+    "fr": "Vérifier l’approbation",
+    "ar": "التحقق من الموافقة"
+  },
+  "Open organisation dashboard": {
+    "fr": "Ouvrir le tableau de bord de l’établissement",
+    "ar": "افتح لوحة تحكم المؤسسة"
+  },
+  "Destination and reason are set by your university for this campus. They cannot be edited here.": {
+    "fr": "La destination et le motif sont définis par votre université pour ce campus. Ils ne peuvent pas être modifiés ici.",
+    "ar": "تحدد جامعتك الوجهة والسبب لهذا الحرم الجامعي، ولا يمكن تعديلهما هنا."
   }
 }
