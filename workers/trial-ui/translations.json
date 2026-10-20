@@ -404,8 +404,8 @@
     "ar": "أين تعيش؟"
   },
   "Where are you moving to?": {
-    "fr": "Où allez-vous vous installer ?",
-    "ar": "إلى أين ستنتقل؟"
+    "fr": "Où déménagez-vous ?",
+    "ar": "إلى أين تنتقل؟"
   },
   "Where did you move from?": {
     "fr": "D’où avez-vous déménagé ?",
@@ -413,11 +413,11 @@
   },
   "Where are you moving from?": {
     "fr": "D’où déménagez-vous ?",
-    "ar": "من أين ستنتقل؟"
+    "ar": "من أين تنتقل؟"
   },
   "What brings you here?": {
     "fr": "Qu’est-ce qui vous amène ici ?",
-    "ar": "ما سبب قدومك إلى هنا؟"
+    "ar": "ما سبب انتقالك؟"
   },
   "Your institution": {
     "fr": "Votre établissement",
@@ -456,7 +456,7 @@
     "ar": "العائلة"
   },
   "Something else": {
-    "fr": "Autre raison",
+    "fr": "Autre chose",
     "ar": "سبب آخر"
   },
   "Not there yet": {
@@ -1726,5 +1726,133 @@
   "This space couldn’t be opened. Your access may have changed. Close it and refresh your spaces.": {
     "fr": "Impossible d’ouvrir cet espace. Votre accès a peut-être changé. Fermez-le et rechargez vos espaces.",
     "ar": "تعذر فتح هذه المساحة. ربما تغيرت صلاحية وصولك. أغلقها وأعد تحميل مساحاتك."
+  },
+  "Sign in to Orivia": {
+    "fr": "Se connecter à Orivia",
+    "ar": "تسجيل الدخول إلى أوريفيا"
+  },
+  "Create your Orivia account": {
+    "fr": "Créez votre compte Orivia",
+    "ar": "أنشئ حسابك في أوريفيا"
+  },
+  "Your own space, wherever you’re going.": {
+    "fr": "Votre espace, quelle que soit votre destination.",
+    "ar": "مساحتك الخاصة، أينما كانت وجهتك."
+  },
+  "Welcome back. Your next step starts here.": {
+    "fr": "Bon retour. Votre prochaine étape commence ici.",
+    "ar": "مرحباً بعودتك. خطوتك التالية تبدأ هنا."
+  },
+  "Language": {
+    "fr": "Langue",
+    "ar": "اللغة"
+  },
+  "Already have an account?": {
+    "fr": "Vous avez déjà un compte ?",
+    "ar": "لديك حساب بالفعل؟"
+  },
+  "Don’t have an account?": {
+    "fr": "Vous n’avez pas de compte ?",
+    "ar": "ليس لديك حساب؟"
+  },
+  "Sign up": {
+    "fr": "Créer un compte",
+    "ar": "إنشاء حساب"
+  },
+  "Sign in": {
+    "fr": "Se connecter",
+    "ar": "تسجيل الدخول"
+  },
+  "Make yourself at home": {
+    "fr": "Bienvenue chez vous",
+    "ar": "أهلاً بك في مساحتك"
+  },
+  "A few details help Orivia give you a useful starting point. You can change them in My Life.": {
+    "fr": "Quelques détails permettent à Orivia de vous aider à démarrer. Vous pourrez les modifier dans Ma vie.",
+    "ar": "تساعد بعض التفاصيل أوريفيا على تقديم بداية مفيدة. يمكنك تغييرها في «حياتي»."
+  },
+  "City or town (optional)": {
+    "fr": "Ville (facultatif)",
+    "ar": "المدينة أو البلدة (اختياري)"
+  },
+  "Have you already moved?": {
+    "fr": "Avez-vous déjà déménagé ?",
+    "ar": "هل انتقلت بالفعل؟"
+  },
+  "I’m planning my move": {
+    "fr": "Je prépare mon déménagement",
+    "ar": "أخطط للانتقال"
+  },
+  "I’ve already moved": {
+    "fr": "J’ai déjà déménagé",
+    "ar": "انتقلت بالفعل"
+  },
+  "Not sure yet": {
+    "fr": "Je ne sais pas encore",
+    "ar": "لست متأكداً بعد"
+  },
+  "Not sure yet / prefer not to say": {
+    "fr": "Je ne sais pas encore / je préfère ne pas répondre",
+    "ar": "لست متأكداً بعد / أفضل عدم الإجابة"
+  },
+  "Emirate / nation (optional)": {
+    "fr": "Émirat / nation (facultatif)",
+    "ar": "الإمارة / الدولة ضمن المملكة المتحدة (اختياري)"
+  },
+  "Destination city or area (optional)": {
+    "fr": "Ville ou quartier de destination (facultatif)",
+    "ar": "مدينة أو منطقة الوجهة (اختياري)"
+  },
+  "Pilot terms and privacy": {
+    "fr": "Conditions et confidentialité de la version pilote",
+    "ar": "شروط النسخة التجريبية والخصوصية"
+  },
+  "I accept the pilot terms above.": {
+    "fr": "J’accepte les conditions de la version pilote ci-dessus.",
+    "ar": "أوافق على شروط النسخة التجريبية أعلاه."
+  },
+  "I have read the privacy information above.": {
+    "fr": "J’ai lu les informations de confidentialité ci-dessus.",
+    "ar": "قرأت معلومات الخصوصية أعلاه."
+  },
+  "Let’s get started": {
+    "fr": "Commençons",
+    "ar": "لنبدأ"
+  },
+  "Start without importing": {
+    "fr": "Commencer sans importer",
+    "ar": "ابدأ دون استيراد"
+  },
+  "Please accept the pilot terms and read the privacy information before continuing.": {
+    "fr": "Veuillez accepter les conditions et lire les informations de confidentialité avant de continuer.",
+    "ar": "يرجى الموافقة على الشروط وقراءة معلومات الخصوصية قبل المتابعة."
+  },
+  "AI consent and the human check follow before chat. Notification delivery is not connected yet.": {
+    "fr": "L’accord concernant l’IA et la vérification humaine suivent avant le chat. Les notifications ne sont pas encore connectées.",
+    "ar": "تأتي الموافقة على استخدام الذكاء الاصطناعي والتحقق البشري قبل المحادثة. إرسال الإشعارات غير متصل بعد."
+  },
+  "No password needed. We email you a one-time sign-in code. New email addresses create an account. As a guest, your data stays in this browser.": {
+    "fr": "Aucun mot de passe. Nous vous envoyons un code de connexion unique par e-mail. Une nouvelle adresse crée un compte. En tant qu’invité, vos données restent dans ce navigateur.",
+    "ar": "لا تحتاج إلى كلمة مرور. نرسل إليك رمز دخول لمرة واحدة بالبريد الإلكتروني. ينشئ العنوان الجديد حساباً. عند الاستخدام كضيف، تبقى بياناتك في هذا المتصفح."
+  },
+  "Orivia is an early service for practical information and planning. Check important decisions with the relevant authority or professional. It does not submit applications or act for you unless a feature explicitly says so and you confirm.": {
+    "fr": "Orivia est un service en développement d’information pratique et de planification. Vérifiez les décisions importantes auprès de l’autorité ou du professionnel compétent. Orivia ne dépose pas de demandes et n’agit pas en votre nom, sauf si une fonctionnalité le précise et que vous confirmez.",
+    "ar": "أوريفيا خدمة قيد التطوير للمعلومات العملية والتخطيط. تحقق من القرارات المهمة مع الجهة أو المختص المعني. لا تقدم طلبات ولا تتصرف نيابة عنك إلا إذا أوضحت الميزة ذلك وأكدت موافقتك."
+  },
+  "As a guest, your chats, profile and plans stay in this browser on this device. Clearing browser data can remove them.": {
+    "fr": "En tant qu’invité, vos conversations, votre profil et vos projets restent dans ce navigateur sur cet appareil. Effacer les données du navigateur peut les supprimer.",
+    "ar": "كضيف، تبقى محادثاتك وملفك وخططك في هذا المتصفح على هذا الجهاز. قد يؤدي مسح بيانات المتصفح إلى حذفها."
+  },
+  "Signed-in personal chats, profile and plans are saved to your private account and cached on this device. Your institution cannot see your personal chats through its dashboard.": {
+    "fr": "Une fois connecté, vos conversations personnelles, votre profil et vos projets sont enregistrés dans votre compte privé et mis en cache sur cet appareil. Votre établissement ne peut pas consulter vos conversations personnelles depuis son tableau de bord.",
+    "ar": "عند تسجيل الدخول، تُحفظ محادثاتك الشخصية وملفك وخططك في حسابك الخاص مع نسخة مؤقتة على هذا الجهاز. لا تستطيع مؤسستك رؤية محادثاتك الشخصية عبر لوحة التحكم الخاصة بها."
+  },
+  "With your separate AI agreement, your messages and recent conversation go to OpenAI, or Cloudflare Workers AI if unavailable. General search terms go to Brave Search. Never send passwords or passport, visa or ID numbers. Microphone, location and camera permissions are requested only when you use those features.": {
+    "fr": "Avec votre accord distinct pour l’IA, vos messages et la conversation récente sont envoyés à OpenAI, ou à Cloudflare Workers AI en cas d’indisponibilité. Les termes généraux de recherche sont envoyés à Brave Search. N’envoyez jamais de mots de passe ni de numéros de passeport, visa ou pièce d’identité. Les autorisations du microphone, de localisation et de caméra sont demandées uniquement à l’utilisation de ces fonctions.",
+    "ar": "بعد موافقتك المنفصلة على الذكاء الاصطناعي، تُرسل رسائلك والمحادثة الأخيرة إلى OpenAI، أو Cloudflare Workers AI إذا تعذر استخدامه. تُرسل كلمات البحث العامة إلى Brave Search. لا ترسل كلمات مرور أو أرقام جوازات أو تأشيرات أو هويات. تُطلب أذونات الميكروفون والموقع والكاميرا عند استخدام ميزاتها فقط."
+  },
+  "You can review your data in Settings. Downloads and copies on other devices are not remotely erased. These pilot notices are not the final public terms and privacy policy.": {
+    "fr": "Vous pouvez consulter vos données dans les paramètres. Les téléchargements et les copies sur d’autres appareils ne sont pas effacés à distance. Ces notices pilotes ne constituent pas les conditions publiques et la politique de confidentialité définitives.",
+    "ar": "يمكنك مراجعة بياناتك في الإعدادات. لا تُحذف التنزيلات والنسخ الموجودة على أجهزة أخرى عن بُعد. هذه الإشعارات التجريبية ليست الشروط العامة وسياسة الخصوصية النهائية."
   }
 }
