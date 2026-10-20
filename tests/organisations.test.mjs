@@ -60,10 +60,22 @@ assert.equal((await call(editor,'/api/orgs/'+org+'/codes','POST',{label:'Draft',
 assert.equal((await call(mariam,'/api/orgs/'+org+'/content/'+publicGuide,'PATCH',{revision:1,status:'published'})).status,200);
 r=await call(editor,'/api/orgs/'+org+'/codes','POST',{label:'Welcome poster',contentId:publicGuide});assert.equal(r.status,201);const publicCode=r.data.code;assert.equal(decodeSvg(publicCode.qrSvg),publicCode.url);
 r=await call(null,'/api/public/codes/'+publicCode.id);assert.equal(r.status,200);assert.equal(r.data.grantsMembership,false);assert.equal(r.data.content.length,1);assert.equal((await call(null,'/api/public/orgs/northbay')).data.content.length,1);
+// Staff retrieve exact public QR links; only admins withdraw, and public access ends immediately.
+r=await call(editor,'/api/orgs/'+org+'/codes/'+publicCode.id);assert.equal(r.status,200);assert.equal(decodeSvg(r.data.code.qrSvg),publicCode.url);
+assert.equal((await call(aisha,'/api/orgs/'+org+'/codes/'+publicCode.id)).status,403);
+assert.equal((await call(editor,'/api/orgs/'+org+'/codes/'+publicCode.id+'/revoke','POST',{})).status,403);
+assert.equal((await call(mariam,'/api/orgs/'+org+'/codes/'+publicCode.id+'/revoke','POST',{})).status,200);
+assert.equal((await call(mariam,'/api/orgs/'+org+'/codes/'+publicCode.id+'/revoke','POST',{})).status,200,'withdrawal is idempotent');
+assert.equal((await call(null,'/api/public/codes/'+publicCode.id)).status,404);
+assert.equal((await call(editor,'/api/orgs/'+org+'/codes/'+publicCode.id)).status,410);
+assert.equal(sql.prepare("SELECT COUNT(*) AS n FROM organisation_audit WHERE action='public_code.revoked' AND target_id=?").get(publicCode.id).n,1);
+assert.equal((await call(aisha,'/api/me/orgs/'+org)).status,200,'withdrawing a public code does not remove students');
 // Tenant separation: changing the URL cannot transfer permissions or read content.
 r=await call(owner,'/api/admin/orgs','POST',{name:'Other University',slug:'other-university',city:'Edinburgh',demo:true});const other=r.data.organisation.id;
 assert.equal((await call(mariam,'/api/orgs/'+other+'/content/'+guide,'PATCH',{revision:2,title:'wrong tenant'})).status,403);
 assert.equal((await call(omar,'/api/orgs/'+org+'/summary')).status,403);
+assert.equal((await call(mariam,'/api/orgs/'+other+'/codes/'+publicCode.id)).status,403);
+assert.equal((await call(mariam,'/api/orgs/'+other+'/codes/'+publicCode.id+'/revoke','POST',{})).status,403);
 assert.equal((await call(mariam,'/api/orgs/'+org+'/content/'+publicGuide,'PATCH',{revision:2,title:'x'}, {Origin:'https://evil.example'})).status,403);
 assert.equal((await call(mariam,'/api/orgs/'+org+'/invitations','POST',{role:'student'},{'X-Orivia-Account':aisha.id})).status,409);
 assert.equal((await call(mariam,'/api/orgs/'+org+'/invitations','POST',{role:'admin',recipientEmail:omar.email})).status,400,'no staff escalation through student invite API');

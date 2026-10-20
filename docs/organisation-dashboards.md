@@ -23,7 +23,7 @@
 - **Public code (`/platform?publicCode=…`):** public information only, saying it gives no membership.
 - **Errors:** every API error code maps to a plain message. 401 shows a sign-in screen, 503 shows "not switched on here", and 403/404 show an access-denied screen. Content is always set as text, never HTML.
 
-**Labelled as unfinished:** admin status on the owner list, sponsorships, costs, support, platform counts, counts, application records, progress, re-downloading or withdrawing public codes, and paging beyond 200 members.
+**Labelled as unfinished:** admin status on the owner list, sponsorships, costs, support, platform counts, counts, application records, progress, and paging beyond 200 members.
 
 The demo prototype (`prototypes/northbay-demo.html`) is unchanged and still the only place with sample people and persona buttons.
 
@@ -54,3 +54,14 @@ The demo prototype (`prototypes/northbay-demo.html`) is unchanged and still the 
 ## Before it goes live
 
 Follow Ina's setup list in `docs/organisation-backend.md`: provider setup, applying `organisations.sql` to ACCOUNTS_DB, bootstrapping the owner out of band, and `ORGANISATIONS_ENABLED=1` only on the isolated account test deployment. Then run the real flow once with real accounts.
+
+
+## QR sharing update — Ina, 20 October
+
+Invitation results now offer Download QR image (SVG). Invitation links remain one-time display, with expiry/use limits unchanged. Public QR codes can be retrieved again by staff from View / download QR. Only organisation admins can withdraw a public code; the red button requires a second tap. Withdrawal is audited and immediately stops public resolution, with no change to memberships. Editors cannot withdraw by direct API calls either. Withdrawn public links show unavailable; a downloaded or printed image cannot itself be erased.
+
+Both newly generated and retrieved SVGs are decoded independently in backend tests. Additional cases cover student/outsider/cross-organisation refusal, editor withdrawal refusal, repeated withdrawal, exactly one audit record and student membership staying active.
+
+These controls remain on the private pilot: public information visibility does not bypass Cloudflare Access while the whole pilot is private. Do not distribute pilot QR codes as public production access. No phone scanning or visual browser check is claimed for this update.
+
+Cloudflare accepted private deployment `7b0114f190094372b41452b18807742b`. Only `accounts.mjs` changed; the live main module was preserved and a before/after comparison found no binding changes. Public beta unchanged. Focused organisation/authentication/platform/Home checks and the standalone build passed before deployment.

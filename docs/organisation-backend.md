@@ -51,6 +51,8 @@ All requests are same-origin, credentials included, JSON. Mutations require Orig
 | Content list/create | GET/POST `/api/orgs/:org/content` | Create `{kind:'guide'|'contact'|'date'|'update',title,body,visibility:'public'|'members'}`; always draft |
 | Edit/publish/unpublish | PATCH `/api/orgs/:org/content/:id` | `{revision,title?,body?,visibility?,status?}`. Published edits/admin publication require admin. Revision conflicts return 409. |
 | Public QR list/create | GET/POST `/api/orgs/:org/codes` | Create `{label,contentId?}`. Specific target must already be published and public. |
+| Retrieve public QR | GET `/api/orgs/:org/codes/:id` | Staff only; returns the public URL and QR. Withdrawn codes return 410. |
+| Withdraw public code | POST `/api/orgs/:org/codes/:id/revoke` | Admin only, `{}`; idempotent, audited, stops public resolution, keeps memberships. |
 | Resolve public code | GET `/api/public/codes/:id` | Only current published public content; `grantsMembership:false` |
 | Public organisation page | GET `/api/public/orgs/:slug` | Published public content only |
 | Student institution space | GET `/api/me/orgs/:org` | Published content, `personalDataShared:false`, progress explicitly unavailable |
