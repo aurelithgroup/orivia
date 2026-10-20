@@ -1,3 +1,4 @@
+import {handleOrganisationRequest,organisationRoute,organisationDeletionBlock} from './organisations.mjs';
 import {accountConfig,createAccountAuth} from './auth.mjs';
 const json=(body,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 export async function boundedJson(req,max=1048576){if(!req.body)return null;const reader=req.body.getReader();let size=0,parts=[];try{while(true){const {value,done}=await reader.read();if(done)break;size+=value.byteLength;if(size>max){await reader.cancel();throw Error('body_too_large')}parts.push(value)}}finally{reader.releaseLock()}const bytes=new Uint8Array(size);let offset=0;for(const p of parts){bytes.set(p,offset);offset+=p.byteLength}return JSON.parse(new TextDecoder().decode(bytes));}
@@ -9,12 +10,13 @@ export function validateSnapshot(d){
 }
 const AUTH_PATHS=new Set(['/get-session','/sign-in/social','/callback/google','/callback/apple','/sign-out','/email-otp/send-verification-otp','/sign-in/email-otp','/update-user']);
 export async function handleAccountRequest(req,env,ctx,options={}){
- const url=new URL(req.url);if(!url.pathname.startsWith('/api/auth/')&&!url.pathname.startsWith('/api/account'))return null;
+ const url=new URL(req.url);if(!url.pathname.startsWith('/api/auth/')&&!url.pathname.startsWith('/api/account')&&!organisationRoute(url.pathname))return null;
  const c=accountConfig(env);if(url.pathname==='/api/account/config'&&req.method==='GET')return json({ui:c.ui,enabled:c.enabled,email:c.email,google:c.google,apple:c.apple});
  if(!c.enabled)return json({error:'accounts_unavailable'},503);if(url.origin!==c.origin)return json({error:'wrong_origin'},403);
  if(!['GET','HEAD'].includes(req.method)&&url.pathname!=='/api/auth/callback/apple'&&req.headers.get('Origin')!==c.origin)return json({error:'origin_required'},403);
  const auth=options.auth||createAccountAuth(env,options);
  try{
+  if(organisationRoute(url.pathname))return await handleOrganisationRequest(req,env,{auth,readJson:boundedJson,...options.organisationOptions});
   if(url.pathname.startsWith('/api/auth/')){const path=url.pathname.slice('/api/auth'.length);if(!AUTH_PATHS.has(path))return json({error:'not_found'},404);
    if(['/email-otp/send-verification-otp','/sign-in/email-otp'].includes(path)&&!c.email)return json({error:'email_unavailable'},503);
    if(path.startsWith('/callback/')){const provider=path.slice('/callback/'.length);if(!c[provider])return json({error:'provider_unavailable'},400);return await auth.handler(req)}
@@ -33,7 +35,7 @@ export async function handleAccountRequest(req,env,ctx,options={}){
    const data=await boundedJson(req);if(!validateSnapshot(data))return json({error:'invalid_snapshot'},400);const text=JSON.stringify(data),now=new Date().toISOString();
    const row=revision===0?await env.ACCOUNTS_DB.prepare('INSERT INTO account_vault(user_id,revision,data,updated_at) VALUES (?,1,?,?) ON CONFLICT(user_id) DO NOTHING RETURNING revision').bind(owner,text,now).first():await env.ACCOUNTS_DB.prepare('UPDATE account_vault SET data=?,revision=revision+1,updated_at=? WHERE user_id=? AND revision=? RETURNING revision').bind(text,now,owner,revision).first();
    return row?json({revision:row.revision,updatedAt:now}):json({error:'sync_conflict'},409);}
-  if(url.pathname==='/api/account'&&req.method==='DELETE'){const body=await boundedJson(req,100);if(body?.confirm!=='delete my account')return json({error:'confirmation_required'},400);return await auth.api.deleteUser({headers:req.headers,body:{callbackURL:c.origin+'/'},asResponse:true});}
+  if(url.pathname==='/api/account'&&req.method==='DELETE'){const body=await boundedJson(req,100);if(body?.confirm!=='delete my account')return json({error:'confirmation_required'},400);if(env.ORGANISATIONS_ENABLED==='1'){const blocked=await organisationDeletionBlock(env.ACCOUNTS_DB,owner);if(blocked)return json({error:blocked},409)}return await auth.api.deleteUser({headers:req.headers,body:{callbackURL:c.origin+'/'},asResponse:true});}
   return json({error:'not_found'},404);
  }catch(e){return json({error:e?.message==='body_too_large'?'body_too_large':'account_request_failed'},e?.message==='body_too_large'?413:400)}
 }

@@ -2,7 +2,16 @@
   "name": "orivia-accounts",
   "private": true,
   "type": "module",
-  "scripts": {"build": "node build.mjs", "test": "node --experimental-sqlite ../../tests/accounts.test.mjs"},
-  "dependencies": {"better-auth": "1.7.11"},
-  "devDependencies": {"esbuild": "0.28.2"}
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --experimental-sqlite ../../tests/accounts.test.mjs"
+  },
+  "dependencies": {
+    "better-auth": "1.7.11",
+    "qrcode": "1.5.4"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "jsqr": "1.4.0"
+  }
 }
