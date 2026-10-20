@@ -49,3 +49,18 @@ Configure an Apple Services ID and a generated Apple client-secret JWT as `APPLE
 ## Before broader release
 
 Complete real provider tests and D1 deployment checks; review all account strings in every beta language (new translations currently cover French and Arabic with English fallback); publish the actual privacy/terms and retention policy; decide backup removal and export behaviour; add scalable record-level sync before heavy usage. Organisations need a separate permission model and consent before any institution integration.
+
+
+## Private verified-email test — 20 October
+
+Private pilot deployment `e66de51635a04898bbf1fd70d12336d1` adds the compiled account module to the existing live pilot. Its research, assistant, interface, limits and previous bindings were retained; before/after binding comparison found no changes to existing bindings. Public beta was not deployed.
+
+Dedicated D1 `orivia-accounts-private` (`3ebd10d5-01e5-4a01-b846-977f1bb2d5b3`, EU jurisdiction) has both account and organisation schemas applied. No owner is seeded: first complete real Orivia email sign-in, then confirm the exact verified user ID before assigning the founder role.
+
+Cloudflare Routing is ready for `auth.aurelithgroup.org`. Existing apex Zoho MX records and SES subdomain MX records were checked unchanged. This is the free verified-destination route, not arbitrary-recipient Email Sending. The founder's test destination is verified by Cloudflare; that alone does not create an Orivia account.
+
+Private flags: accounts enabled, organisation API enabled, main-app account UI off, private `/account-test` on. `ACCOUNTS_EMAIL_MODE=verified_only` and `ACCOUNTS_TEST_EMAIL` restrict delivery to the configured verified address, additionally enforced by the email binding's destination restriction. Sender is `login@auth.aurelithgroup.org`. Test caps are 10/day and 100/month. A random account secret was generated directly in the deployment tool and stored as a secret; its value was not returned or committed.
+
+`mail.mjs` uses the legacy `cloudflare:email` EmailMessage transport for this verified-recipient test. Other modes retain the structured sender. The test page does not store or log codes; session cookies remain managed by Better Auth. `/account-test` is behind the existing private Access check. Do not expose or promote this test page publicly.
+
+Actual inbox delivery and live sign-in still need the founder to open `/account-test`, request a code and enter it there. Never paste codes into chat. Then verify reload, logout and the dashboard session before assigning owner access. Local tests use real Better Auth and SQLite, independently decoded QR codes, and scripted email delivery; the deployment was accepted by Cloudflare but that does not prove inbox delivery.

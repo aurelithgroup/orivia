@@ -1,3 +1,4 @@
+import {sendAccountMail} from './mail.mjs';
 import {betterAuth} from 'better-auth';
 import {emailOTP} from 'better-auth/plugins/email-otp';
 export function accountConfig(env){
@@ -12,7 +13,7 @@ export function authOptions(env,{database=env.ACCOUNTS_DB,deliver}={}){
  advanced:{useSecureCookies:true,cookiePrefix:'orivia_account',ipAddress:{ipAddressHeaders:['cf-connecting-ip']},defaultCookieAttributes:{httpOnly:true,secure:true,sameSite:'lax',path:'/'}},rateLimit:{enabled:true,storage:'database',window:60,max:20},
  plugins:[emailOTP({otpLength:6,expiresIn:300,allowedAttempts:5,storeOTP:'hashed',rateLimit:{window:60,max:3},async sendVerificationOTP({email,otp,type}){
  if(!c.email||type!=='sign-in')throw Error('Email unavailable');if(deliver)return deliver({email,otp,type});await reserveEmail(env);
- await env.ACCOUNTS_EMAIL.send({to:email,from:{email:env.ACCOUNTS_FROM,name:'Orivia'},subject:'Your Orivia sign-in code',text:'Your Orivia sign-in code is '+otp+'. It expires in 5 minutes. Do not share it. If you did not request it, ignore this email.',html:'<p>Your Orivia sign-in code is <strong>'+otp+'</strong>.</p><p>It expires in 5 minutes. Do not share it. If you did not request it, ignore this email.</p>'});}})]};
+ await sendAccountMail(env,{to:email,from:{email:env.ACCOUNTS_FROM,name:'Orivia'},subject:'Your Orivia sign-in code',text:'Your Orivia sign-in code is '+otp+'. It expires in 5 minutes. Do not share it. If you did not request it, ignore this email.',html:'<p>Your Orivia sign-in code is <strong>'+otp+'</strong>.</p><p>It expires in 5 minutes. Do not share it. If you did not request it, ignore this email.</p>'});}})]};
 }
 export const createAccountAuth=(env,options)=>betterAuth(authOptions(env,options));
 export async function reserveEmail(env,now=new Date()){

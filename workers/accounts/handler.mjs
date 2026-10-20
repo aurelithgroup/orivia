@@ -1,3 +1,4 @@
+import {accountTestPage,mountAccountTest} from './test-entry.mjs';
 import {handleOrganisationRequest,organisationRoute,organisationDeletionBlock} from './organisations.mjs';
 import {accountConfig,createAccountAuth} from './auth.mjs';
 const json=(body,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
@@ -10,10 +11,11 @@ export function validateSnapshot(d){
 }
 const AUTH_PATHS=new Set(['/get-session','/sign-in/social','/callback/google','/callback/apple','/sign-out','/email-otp/send-verification-otp','/sign-in/email-otp','/update-user']);
 export async function handleAccountRequest(req,env,ctx,options={}){
- const url=new URL(req.url);if(!url.pathname.startsWith('/api/auth/')&&!url.pathname.startsWith('/api/account')&&!organisationRoute(url.pathname))return null;
+ const url=new URL(req.url);if(!url.pathname.startsWith('/api/auth/')&&!url.pathname.startsWith('/api/account')&&!organisationRoute(url.pathname)&&!['/account-test','/account-test.js'].includes(url.pathname))return null;
  const c=accountConfig(env);if(url.pathname==='/api/account/config'&&req.method==='GET')return json({ui:c.ui,enabled:c.enabled,email:c.email,google:c.google,apple:c.apple});
  if(!c.enabled)return json({error:'accounts_unavailable'},503);if(url.origin!==c.origin)return json({error:'wrong_origin'},403);
  if(!['GET','HEAD'].includes(req.method)&&url.pathname!=='/api/auth/callback/apple'&&req.headers.get('Origin')!==c.origin)return json({error:'origin_required'},403);
+ if(env.ACCOUNTS_TEST_UI==='1'&&req.method==='GET'&&['/account-test','/account-test.js'].includes(url.pathname))return new Response(url.pathname.endsWith('.js')?'('+mountAccountTest.toString()+')();':accountTestPage,{headers:{'Content-Type':url.pathname.endsWith('.js')?'text/javascript; charset=utf-8':'text/html; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"}});
  const auth=options.auth||createAccountAuth(env,options);
  try{
   if(organisationRoute(url.pathname))return await handleOrganisationRequest(req,env,{auth,readJson:boundedJson,...options.organisationOptions});

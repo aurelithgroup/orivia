@@ -128,6 +128,8 @@ jobs:
         run: node tests/home-dashboard.test.mjs
       - name: "Local destination hero photos and fallback"
         run: node tests/home-destination-photo.test.mjs
+      - name: "Verified-only account mail transport"
+        run: node tests/account-mail.test.mjs
       - name: "Account authentication and private storage on real SQLite"
         run: node --experimental-sqlite tests/accounts.test.mjs
       - name: "Account client isolation and optional data import"
