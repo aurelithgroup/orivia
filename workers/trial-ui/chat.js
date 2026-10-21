@@ -1612,6 +1612,25 @@ function calendarLinks(e){
 }
 /* A reminder Orivia set from the conversation: saved on this device straight away, shown with exactly what was saved,
    Undo, and the phone-calendar buttons. */
+/* University dates (21 Oct): saved to the personal calendar only after the person confirms in the university space; tagged
+   with the organisation and item so the same date isn't added twice. The university is never told. */
+function zoneInstant(date,time,tz){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(date))||!/^\d{2}:\d{2}$/.test(String(time||'')))return null;
+ const [y,mo,d]=date.split('-').map(Number),[h,mi]=time.split(':').map(Number),wall=Date.UTC(y,mo-1,d,h,mi);
+ const offset=at=>{try{const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).formatToParts(new Date(at)).map(x=>[x.type,x.value]));return Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute)-at}catch(_){return NaN}};
+ let at=wall-offset(wall);at=wall-offset(at);return Number.isFinite(at)?new Date(at):null;
+}
+window.OriviaCalendar={
+ instant:zoneInstant,
+ hasOrganisationItem(tag){loadEvents();return events.some(e=>e.source?.org===tag.org&&e.source?.content===tag.content)},
+ addOrganisationDate(o){
+  loadEvents();if(events.some(e=>e.source?.org===o.org&&e.source?.content===o.content))return {ok:false,reason:'duplicate'};
+  const at=o.time?zoneInstant(o.date,o.time,o.timeZone):new Date(o.date+'T09:00');
+  if(!at||!Number.isFinite(at.getTime()))return {ok:false,reason:'invalid'};if(at.getTime()<Date.now())return {ok:false,reason:'past'};
+  const saved={id:'evt-'+Date.now()+'-'+Math.random().toString(36).slice(2),title:String(o.title).trim().slice(0,100),at:at.toISOString(),alarm:o.time?60:30,...(o.time?{}:{allDay:true}),source:{org:String(o.org),content:String(o.content),revision:Number(o.revision)||1}};
+  events.push(saved);storeEvents();renderEvents();renderUpcoming();return {ok:true,event:saved};
+ }
+};
 function saveChatReminder(r){
  // The assistant sends a date and time on this device's own clock (YYYY-MM-DD, HH:MM); built here as local time.
  if(!r||typeof r.title!=='string')return null;const at=typeof r.at==='string'?new Date(r.at):/^\d{4}-\d{2}-\d{2}$/.test(String(r.date||''))?new Date(r.date+'T'+(/^\d{2}:\d{2}$/.test(String(r.time||''))?r.time:'09:00')):new Date(NaN);

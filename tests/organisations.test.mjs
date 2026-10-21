@@ -155,6 +155,21 @@ const beforeStale=stamp;stamp+=900001;assert.equal((await setRole(editor,mariam,
 assert.equal(sql.prepare("SELECT COUNT(*) AS n FROM organisation_memberships WHERE org_id=? AND role='admin' AND status='active'").get(roleOrg).n,1);
 assert.equal((await call(mariam,'/api/account/vault')).data.revision,0,'role management never creates a personal vault');
 
+/* Structured content (21 Oct): staff save validated details; students see them once published; links stay in-organisation. */
+{let g=await call(mariam,'/api/orgs/'+org+'/content','POST',{kind:'guide',title:'Arrival guide',body:'What to do in your first week.',visibility:'members',details:{sourceUrl:'https://northbay.example/arrival'}});assert.equal(g.status,201,JSON.stringify(g));assert.deepEqual(g.data.content.details,{sourceUrl:'https://northbay.example/arrival'});
+ const guideId=g.data.content.id;
+ let d=await call(mariam,'/api/orgs/'+org+'/content','POST',{kind:'date',title:'Visa medical deadline',body:'Book before this date.',visibility:'members',details:{date:'2026-11-12',time:'17:00',timeZone:'Asia/Dubai'}});assert.equal(d.status,201,JSON.stringify(d));
+ assert.equal((await call(mariam,'/api/orgs/'+org+'/content','POST',{kind:'date',title:'Bad',body:'x',visibility:'members',details:{date:'2026-11-12',time:'17:00',timeZone:'Nowhere/Here'}})).data.error,'invalid_details:timeZone');
+ assert.equal((await call(mariam,'/api/orgs/'+org+'/content','POST',{kind:'contact',title:'Bad',body:'x',visibility:'members',details:{website:'http://insecure.example'}})).data.error,'invalid_details:website');
+ assert.equal((await call(mariam,'/api/orgs/'+org+'/content','POST',{kind:'update',title:'Bad',body:'x',visibility:'members',details:{relatedId:'not-a-northbay-guide'}})).data.error,'invalid_details:relatedId','related guides must belong to the same organisation');
+ let u=await call(mariam,'/api/orgs/'+org+'/content','POST',{kind:'update',title:'Medicals open',body:'Bookings are open.',visibility:'members',details:{relatedId:guideId,actionLabel:'Book a slot',actionUrl:'https://northbay.example/book'}});assert.equal(u.status,201,JSON.stringify(u));
+ for(const c of [g.data.content,d.data.content,u.data.content])assert.equal((await call(mariam,'/api/orgs/'+org+'/content/'+c.id,'PATCH',{status:'published',revision:c.revision})).status,200);
+ const lina=await signIn('lina'),inv=await call(mariam,'/api/orgs/'+org+'/invitations','POST',{role:'student',label:'Details test'});assert.equal(inv.status,201);
+ assert.equal((await call(lina,'/api/invitations/join','POST',{token:inv.data.token})).status,201);assert.equal((await call(mariam,'/api/orgs/'+org+'/requests/'+lina.id+'/decision','POST',{decision:'approve'})).status,200);
+ const seen=(await call(lina,'/api/me/orgs/'+org)).data.content;const date=seen.find(c=>c.title==='Visa medical deadline'),upd=seen.find(c=>c.title==='Medicals open');
+ assert.deepEqual(date.details,{date:'2026-11-12',time:'17:00',timeZone:'Asia/Dubai'});assert.equal(upd.details.relatedId,guideId);
+ const cleared=await call(mariam,'/api/orgs/'+org+'/content/'+u.data.content.id,'PATCH',{details:null,revision:u.data.content.revision+1});assert.equal(cleared.status,200,JSON.stringify(cleared));assert.equal(cleared.data.content.details,null,'staff can remove details');}
+
 /* myorivia.app (21 Oct): /manage is decided on the server before any page is sent; with the app at /app, links use it. */
 {const page=async(who,path,e=env)=>{const res=await handleAccountRequest(new Request(origin+path,{headers:{'cf-connecting-ip':'192.0.2.'+(++ip),...(who?{Cookie:who.cookie}:{})}}),e,{}, {auth,organisationOptions:{now:()=>stamp}});return {status:res.status,text:await res.text()}};
  let p=await page(owner,'/manage');assert.equal(p.status,200,'the owner gets management');assert.match(p.text,/data-app-home="\/"/);

@@ -13,6 +13,29 @@
  async function get(path,id){const r=await fetch(path,{credentials:'same-origin',cache:'no-store',headers:{'X-Orivia-Account':id},signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('unavailable');return r.json();}
  function card(name,subtitle,action){const b=node('button','dashboard-card');b.type='button';const copy=node('span','dashboard-copy');copy.append(node('strong','',name,true),node('small','',subtitle));b.append(copy,node('span','dashboard-arrow','›'));b.onclick=action;return b;}
  function management(label){const a=node('a','dashboard-card',label,true);a.href='/platform';return a;}
+ /* "17:00, Thursday 12 November (Dubai time)": shown in the university's time zone, in the app language. */
+ function orgWhen(det){
+  const lang=window.OriviaI18n?.language?.()||'en';
+  try{if(!det.time){const [y,mo,da]=det.date.split('-').map(Number);return new Intl.DateTimeFormat(lang,{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(Date.UTC(y,mo-1,da)))+' · '+t('All day')}
+   const at=window.OriviaCalendar?.instant(det.date,det.time,det.timeZone);if(!at)return det.date+' '+det.time;
+   return new Intl.DateTimeFormat(lang,{weekday:'long',day:'numeric',month:'long',hour:'numeric',minute:'2-digit',timeZone:det.timeZone,timeZoneName:'short'}).format(at)}catch(_){return det.date+(det.time?' '+det.time:'')}
+ }
+ /* "Add to my calendar": confirm first, then save once (duplicates are recognised by organisation and item). */
+ function calendarAction(c,det,m,org){
+  const wrap=node('div','org-cal'),cal=window.OriviaCalendar,tag={org:m.organisationId,content:c.id,revision:c.revision};
+  const done=text=>{wrap.replaceChildren(node('p','tiny org-saved',text))};
+  if(!cal){wrap.append(node('p','tiny','Your calendar isn’t available here.'));return wrap}
+  if(cal.hasOrganisationItem(tag)){done('✓ Already in your calendar');return wrap}
+  const add=node('button','btn small','Add to my calendar');add.type='button';
+  add.onclick=()=>{
+   const confirm=node('div','org-confirm');confirm.append(node('p','tiny','Add “'+c.title+'” ('+orgWhen(det)+') to your Orivia calendar? It’s saved for you only; '+org+' isn’t told.',true));
+   const yes=node('button','btn small','Add');yes.type='button';const no=node('button','btn quiet small','Cancel');no.type='button';
+   yes.onclick=()=>{const r=cal.addOrganisationDate({...tag,title:c.title,date:det.date,time:det.time,timeZone:det.timeZone});
+    if(r.ok)done('✓ Added to your calendar');else if(r.reason==='duplicate')done('✓ Already in your calendar');else if(r.reason==='past')done('This date has passed.');else wrap.replaceChildren(node('p','tiny','It couldn’t be saved. Please try again.'),add)};
+   no.onclick=()=>wrap.replaceChildren(add);confirm.append(node('div','org-actions'));confirm.lastChild.append(yes,no);wrap.replaceChildren(confirm);yes.focus();
+  };
+  wrap.append(add);return wrap;
+ }
  async function openSpace(m,fromAddress=false){
   if(!fromAddress&&window.OriviaNav)history.pushState(null,'',window.OriviaNav.spacePath(m.organisationId));
   const id=user()?.id;if(!id)return clear();const g=++generation,body=$('organisation-body'),sheet=$('organisation-sheet');if(!body||!sheet)return;
@@ -20,14 +43,34 @@
   try{const d=await get('/api/me/orgs/'+encodeURIComponent(m.organisationId),id);if(!current(id,g))return;
    const out=[];if(d.organisation.demo)out.push(node('p','notice','Demo organisation'));
    out.push(node('p','tiny','From your organisation. Your personal chats, calendar and About you remain private.'));
-   const labels={guide:'Guides',contact:'Useful contacts',date:'Important dates',update:'Updates'};
-   for(const [kind,label] of Object.entries(labels)){
-    const items=(d.content||[]).filter(c=>c.kind===kind);if(!items.length)continue;
+   // A university facility: updates, dates, guides and contacts, each labelled as coming from the university. Buttons appear
+   // only for details staff supplied. Nothing personal is sent to the university; dates are saved only after the person confirms.
+   const org=d.organisation?.name||m.name,from=node('span','org-from','From '+org,true);from.dataset.org=org;
+   const back=node('button','btn quiet small','← My Orivia');back.type='button';back.onclick=()=>{close();leaveAddress()};out.unshift(back);
+   out.push(node('p','tiny','Everything below is published by '+org+'. Check dates and requirements with them if anything is unclear.',true));
+   const content=d.content||[],byId=new Map(content.map(c=>[c.id,c]));
+   const groups=[['update','Updates'],['date','Important dates'],['guide','Guides'],['contact','Useful contacts']];
+   const link=(label,href,ext)=>{const a=node('a','btn quiet small',label);a.href=href;if(ext){a.target='_blank';a.rel='noopener noreferrer'}return a};
+   for(const [kind,label] of groups){
+    const items=content.filter(c=>c.kind===kind);if(!items.length)continue;
     const group=node('section','organisation-group');group.append(node('h3','',label));
-    for(const c of items){const item=node('article','card');item.append(node('strong','',c.title,true),node('p','organisation-text',c.body,true));group.append(item)}out.push(group);
+    for(const c of items){
+     const item=node('article','card org-item');item.id='org-item-'+c.id;const det=c.details&&typeof c.details==='object'?c.details:{};
+     const tag=node('small','org-from','From '+org,true);item.append(tag,node('strong','',c.title,true));
+     if(kind==='date'&&det.date)item.append(node('p','org-when',orgWhen(det),true));
+     item.append(node('p','organisation-text',c.body,true));
+     const actions=node('div','org-actions');
+     if(kind==='date'&&det.date)actions.append(calendarAction(c,det,m,org));
+     if(kind==='contact'){if(det.phone)actions.append(link('Call','tel:'+det.phone.replace(/[^\d+]/g,'')));if(det.email)actions.append(link('Email','mailto:'+det.email));if(det.website)actions.append(link('Website ↗',det.website,true))}
+     if(kind==='guide'&&det.sourceUrl)actions.append(link('Source page ↗',det.sourceUrl,true));
+     if(kind==='update'){const g=det.relatedId&&byId.get(det.relatedId);if(g&&g.kind==='guide'){const b=node('button','btn quiet small','Open guide: '+g.title,true);b.type='button';b.onclick=()=>{const t=$('org-item-'+g.id);t?.scrollIntoView({behavior:'smooth',block:'start'});t?.classList.add('org-highlight');setTimeout(()=>t?.classList.remove('org-highlight'),1600)};actions.append(b)}
+      if(det.actionLabel&&det.actionUrl)actions.append(link(det.actionLabel+' ↗',det.actionUrl,true))}
+     if(actions.childElementCount)item.append(actions);group.append(item);
+    }
+    out.push(group);
    }
-   if(!(d.content||[]).length)out.push(node('p','notice','Your organisation hasn’t published anything here yet.'));
-   out.push(node('p','tiny','Application progress is not connected yet. Organisation dates are not automatically added to your personal calendar.'));
+   if(!content.length)out.push(node('p','notice','Your organisation hasn’t published anything here yet.'));
+   out.push(node('p','tiny','Application progress is not connected yet.'));
    const manage=node('a','btn quiet','Manage membership');manage.href='/platform';out.push(manage);body.replaceChildren(...out);
   }catch(_){if(current(id,g))body.replaceChildren(node('p','notice','This space couldn’t be opened. Your access may have changed. Close it and refresh your spaces.'));}
  }

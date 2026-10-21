@@ -146,6 +146,10 @@ jobs:
           node tests/notification-client.test.mjs
       - name: "Explicit public assistant release gates"
         run: node --experimental-sqlite tests/public-release.test.mjs
+      - name: "University content details and space actions"
+        run: |
+          node tests/content-details.test.mjs
+          node tests/university-actions.test.mjs
       - name: "Shared navigation and space addresses"
         run: node tests/navigation.test.mjs
       - name: "myorivia.app production entry gates"

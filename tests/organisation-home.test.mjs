@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-class N{constructor(tag='div'){this.tag=tag;this.children=[];this.hidden=true;this.textContent='';this.listeners={}}append(...x){this.children.push(...x)}replaceChildren(...x){this.children=x}addEventListener(k,f){this.listeners[k]=f}focus(){}querySelectorAll(){return []}}
+class N{constructor(tag='div'){this.tag=tag;this.children=[];this.hidden=true;this.textContent='';this.listeners={};this.dataset={};this.classList={add(){},remove(){}}}get childElementCount(){return this.children.length}get lastChild(){return this.children.at(-1)}unshift(){}append(...x){this.children.push(...x)}replaceChildren(...x){this.children=x}addEventListener(k,f){this.listeners[k]=f}focus(){}querySelectorAll(){return []}}
 const roots=new Map(['home-spaces','home-spaces-list','organisation-sheet','organisation-body','organisation-title','organisation-close'].map(k=>[k,new N()]));
 const walk=n=>[n,...n.children.flatMap(walk)],words=n=>walk(n).map(n=>n.textContent).join(' ');
 let who={id:'student'},release=null,slow=false,deny=false,called=[];

@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS organisation_memberships (
 CREATE INDEX IF NOT EXISTS org_member_status ON organisation_memberships(org_id,status,role);
 CREATE TABLE IF NOT EXISTS organisation_content (
  id TEXT PRIMARY KEY,org_id TEXT NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
- kind TEXT NOT NULL CHECK(kind IN ('guide','contact','date','update')),title TEXT NOT NULL,body TEXT NOT NULL,
+ kind TEXT NOT NULL CHECK(kind IN ('guide','contact','date','update')),title TEXT NOT NULL,body TEXT NOT NULL,details TEXT,
  visibility TEXT NOT NULL CHECK(visibility IN ('public','members')),status TEXT NOT NULL CHECK(status IN ('draft','published')),
  revision INTEGER NOT NULL DEFAULT 1,updated_by TEXT REFERENCES user(id) ON DELETE SET NULL,updated_at INTEGER NOT NULL
 );
