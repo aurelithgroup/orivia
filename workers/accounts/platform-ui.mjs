@@ -86,7 +86,9 @@ export function mountPlatform(){
     input,h('div',{class:'row'},copy,download),isInvite?h('p',{class:'small muted'},'Expires '+fmtDate(result.invitation.expiresAt)+(result.invitation.maxUses>1?' · up to '+result.invitation.maxUses+' people':'')):null))}
 
  /* ---- Views ---- */
- async function render(){
+ // The address follows the open space, so Refresh, Back and shared links return to it.
+ function syncAddress(){const want=space==='owner'?'/manage':space.startsWith('org:')?'/platform?org='+encodeURIComponent(space.slice(4)):'/platform';if(location.pathname+location.search!==want&&!location.hash)history.replaceState(null,'',want);window.OriviaNav?.refresh()}
+ async function render(){syncAddress();
   const view=$('view');const out=[];
   if(flash)out.push(h('p',{class:'notice '+(flash.kind==='err'?'err':'good'),role:flash.kind==='err'?'alert':'status'},flash.text));
   try{
@@ -114,7 +116,7 @@ export function mountPlatform(){
    const expired=err.status===410;$('view').replaceChildren(panel(h('div',{class:'narrow stack'},chip(expired?'Invitation expired':'Invitation unavailable','c-warn'),h('h2',null,expired?'This invitation can’t be used any more':'This invitation can’t be used'),h('p',null,err.message+(expired?' Ask the organisation for a new one.':'')),h('p',{class:'small muted'},'Nothing in your Orivia has changed.'),h('div',{class:'row'},h('button',{class:'btn quiet',type:'button',onclick:()=>{location.hash='';render()}},'Back to my Orivia')))));return}
   const staffInvite=!d.approvalRequired;
   const go=h('button',{class:'btn',type:'button'},staffInvite?'Accept staff invitation':'Ask to join '+d.organisation.name);
-  go.onclick=act(go,async()=>{const r=await api('/api/invitations/join','POST',{token});location.hash='';await refreshMe();
+  go.onclick=act(go,async()=>{const r=await api('/api/invitations/join','POST',{token});history.replaceState(null,'',location.pathname+location.search);await refreshMe();
    if(r.membership.status==='active'){space='org:'+r.membership.organisationId;tab='overview';spaceMenu();flash={kind:'good',text:'You’re now '+(r.membership.role==='admin'?'an admin':r.membership.role==='editor'?'an editor':'a member')+' of '+d.organisation.name+'.'}}
    else{space='home';flash={kind:'good',text:'Request sent. '+d.organisation.name+'’s staff will review it.'}}await render()});
   $('view').replaceChildren(panel(h('div',{class:'narrow stack'},chip('Invitation','c-wait'),d.organisation.demo?chip('Demo organisation','c-demo'):null,
