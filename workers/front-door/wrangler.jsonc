@@ -13,5 +13,5 @@
   "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true, "html_handling": "none" },
   // The production Worker. Visitors reach it only with the release preview cookie, or once RELEASE_LIVE is "1".
   "services": [{ "binding": "APP", "service": "orivia-production" }],
-  "vars": { "RELEASE_LIVE": "0" }
+  "vars": { "RELEASE_LIVE": "1" }
 }

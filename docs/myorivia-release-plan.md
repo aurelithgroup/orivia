@@ -110,3 +110,45 @@ Each must pass on the production Worker, on a phone and a computer:
 - Notifications: opt-in only; a test alert arrives; lock-screen text is generic.
 - Money and search limits unchanged; `/v1/config` shows no secrets.
 - Rollback rehearsed: front door back on myorivia.app in under a minute.
+
+## Released (21 October, Cleo)
+
+myorivia.app now serves the newest Orivia for everyone. The founder ran the live checks in her own browser and phone before the switch.
+
+| Piece | Version | Rollback |
+|---|---|---|
+| `orivia-front-door` (myorivia.app, www) | `ccb6d8e7`, `RELEASE_LIVE=1` | Set `RELEASE_LIVE=0` and redeploy, or roll back to `05c45196` (gated) or `bc35b622` (redirect-only front door) |
+| `orivia-production` (no route; reached through the front door) | `fe28a2ae` | Previous versions in Cloudflare; it has no route of its own |
+| `orivia-beta` | `3e927ff6`, unchanged today apart from allowing the myorivia.app preview | `1f1321a2` |
+| `orivia-research-pilot` | unchanged | — |
+
+**Checks passed:**
+
+- **Guest entry, from a real browser:** consent v1 with Ina's exact wording and unticked box, then the human check, then a researched answer with an opened, quoted source.
+- **Account sign-in by email code:** refresh keeps the session, and `/manage` opens for the owner.
+- **University joining:** the invitation link is `myorivia.app/join/northbay-university#join=…`. It leads to the locked campus fields and the waiting screen; after approval the student sees the university space alongside My Orivia.
+- **Roles:** a student gets the refusal page on `/manage`. Signed-out visitors get 401.
+- **Preview to full screen:** a chat started in the landing page's phone preview is there in full screen.
+- **Logout:** after logging out, the dashboard asks the person to sign in.
+- **Automatic checks:**
+  - device push refused;
+  - no AI call before the human check;
+  - other origins refused;
+  - only myorivia.app may frame the app;
+  - no secrets in `/v1/config`;
+  - the landing page makes no third-party font requests.
+
+**Found and fixed during the live checks:**
+
+- the old intro flashed on start-up;
+- the tick-box wording and an unenforced ID-number promise;
+- the human check stalled after onboarding moved it;
+- the dashboard script failed under Wrangler's function-name helper.
+
+**Still open:**
+
+1. Privacy and Terms links. Ina's drafts stay unpublished until operator details are settled, and the links go into the consent and footer once approved.
+2. The pilot still shares the accounts database with production. The founder's decision was a new, empty test database for the pilot, which isn't done yet. Until then, testing on the pilot touches real accounts.
+3. The old public address (`orivia-beta…workers.dev`) still runs the previous app for the GitHub Pages website. Pointing it to myorivia.app is the founder's decision and is not done.
+4. Device push stays off until delivery passes a real-device test.
+5. Answer accuracy: a Gold-card price was carried over from the Silver-card quote (nol test). It needs a fix to how claims are matched to their own quote.
