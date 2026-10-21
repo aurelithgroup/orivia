@@ -31,5 +31,5 @@
  function changed(){close();clearInterval(poll);const bell=document.getElementById('open-notifications');if(bell){bell.hidden=!owner()||document.getElementById('workspace')?.hidden!==false;bell.onclick=inbox}const settings=document.getElementById('notifications-settings');if(settings)settings.onclick=inbox;if(!owner())return;poll=setInterval(()=>{if(document.visibilityState==='visible'&&owner())api('').catch(()=>{})},60000)}
  const settingsButton=document.getElementById('notifications-settings');if(settingsButton)settingsButton.onclick=inbox;
  const home=document.getElementById('brand-home');if(home)home.onclick=()=>{if(document.getElementById('workspace')?.hidden===false){close();window.oriviaGo?.('home')}};
- window.OriviaNotifications={offer,changed,settings,inbox,reset(){close();clearInterval(poll)}};
+ window.OriviaNotifications={offer,changed,settings,inbox,reset(){close();clearInterval(poll);const bell=document.getElementById('open-notifications');if(bell)bell.hidden=true}};
 })();
