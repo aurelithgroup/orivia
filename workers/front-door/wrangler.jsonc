@@ -10,7 +10,8 @@
     { "pattern": "www.myorivia.app", "custom_domain": true }
   ],
   // The Worker decides every route first; assets are only the landing page and its fonts.
-  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true, "html_handling": "none" }
-  // Switch-over (after production passes its checks): add
-  // "services": [{ "binding": "APP", "service": "orivia-production" }]
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true, "html_handling": "none" },
+  // The production Worker. Visitors reach it only with the release preview cookie, or once RELEASE_LIVE is "1".
+  "services": [{ "binding": "APP", "service": "orivia-production" }],
+  "vars": { "RELEASE_LIVE": "0" }
 }

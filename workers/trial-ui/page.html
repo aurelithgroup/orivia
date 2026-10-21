@@ -27,7 +27,7 @@ button{font:inherit;cursor:pointer}
 .btn:disabled{opacity:.55}
 button:focus-visible,a:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .card{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
-#intro{display:flex;flex-direction:column;gap:14px}
+#intro{display:flex;flex-direction:column;gap:14px}body:not([data-config]) #intro{visibility:hidden}
 #intro label{display:flex;gap:10px;align-items:flex-start}
 #intro input{width:22px;height:22px;margin-top:2px}
 #workspace{flex:1;min-height:0;display:flex;flex-direction:column}

@@ -85,11 +85,18 @@ for(const p of ['/','/app','/app/','/join/northbay-university','/platform','/pla
 {const fd=(await import('../workers/front-door/index.mjs')).default;
  const assets={fetch:async r=>new Response(new URL(r.url).pathname,{headers:{'Content-Type':'text/html'}})};
  let forwarded=null;const app={fetch:async r=>{forwarded=new URL(r.url).pathname;return new Response('app')}};
- let r=await fd.fetch(new Request(origin+'/'),{ASSETS:assets,APP:app});assert.equal(await r.text(),'/index.html');assert.match(r.headers.get('Content-Security-Policy'),/frame-src 'self'/);assert.doesNotMatch(r.headers.get('Content-Security-Policy'),/googleapis|gstatic/);
- r=await fd.fetch(new Request(origin+'/manage'),{ASSETS:assets,APP:app});assert.equal(forwarded,'/manage','management goes to the production Worker, which checks the owner');
- r=await fd.fetch(new Request(origin+'/join/northbay'),{ASSETS:assets,APP:app});assert.equal(r.status,302);assert.equal(r.headers.get('Location'),'/join/northbay-university');
- r=await fd.fetch(new Request(origin+'/sw.js'),{ASSETS:assets,APP:app});const sw=await r.text();assert.match(sw,/registration\.unregister\(\)/);assert.match(sw,/startsWith\('orivia-public'\)/);assert.doesNotMatch(sw,/localStorage|indexedDB/,'saved data is never touched');
- r=await fd.fetch(new Request('https://www.myorivia.app/app'),{});assert.equal(r.status,301);}
+ let r=await fd.fetch(new Request(origin+'/'),{ASSETS:assets,APP:app,RELEASE_LIVE:'1'});assert.equal(await r.text(),'/index.html');assert.match(r.headers.get('Content-Security-Policy'),/frame-src 'self'/);assert.doesNotMatch(r.headers.get('Content-Security-Policy'),/googleapis|gstatic/);
+ r=await fd.fetch(new Request(origin+'/manage'),{ASSETS:assets,APP:app,RELEASE_LIVE:'1'});assert.equal(forwarded,'/manage','management goes to the production Worker, which checks the owner');
+ r=await fd.fetch(new Request(origin+'/join/northbay'),{ASSETS:assets,APP:app,RELEASE_LIVE:'1'});assert.equal(r.status,302);assert.equal(r.headers.get('Location'),'/join/northbay-university');
+ r=await fd.fetch(new Request(origin+'/sw.js'),{ASSETS:assets,APP:app,RELEASE_LIVE:'1'});const sw=await r.text();assert.match(sw,/registration\.unregister\(\)/);assert.match(sw,/startsWith\('orivia-public'\)/);assert.doesNotMatch(sw,/localStorage|indexedDB/,'saved data is never touched');
+ r=await fd.fetch(new Request('https://www.myorivia.app/app'),{});assert.equal(r.status,301);
+ // Before the switch-over: only a browser with the preview cookie gets the release.
+ const key='p'.repeat(40),pre={ASSETS:assets,APP:app,RELEASE_PREVIEW:key};forwarded=null;
+ r=await fd.fetch(new Request(origin+'/app'),pre);assert.equal(r.status,302);assert.match(r.headers.get('Location'),/orivia-beta/);assert.equal(forwarded,null,'no cookie, no release');
+ r=await fd.fetch(new Request(origin+'/__release-preview?key=wrong'),pre);assert.equal(r.status,404);
+ r=await fd.fetch(new Request(origin+'/__release-preview?key='+key),pre);assert.equal(r.status,302);const cookie=r.headers.get('Set-Cookie');assert.match(cookie,/HttpOnly; Secure; SameSite=Lax/);
+ r=await fd.fetch(new Request(origin+'/app',{headers:{Cookie:cookie.split(';')[0]}}),pre);assert.equal(forwarded,'/app','preview cookie reaches production');
+ r=await fd.fetch(new Request(origin+'/__release-preview?key='+key),{...pre,RELEASE_LIVE:'1'});assert.notEqual(r.status,302,'preview entry closes after the switch-over');}
 // Landing page (Ina's approved concept): no concept labels or Google requests, live same-site preview with a full-screen link.
 {const landing=fs.readFileSync('workers/front-door/public/index.html','utf8');
  assert.doesNotMatch(landing,/fonts\.googleapis|fonts\.gstatic|Design concept|Illustrative|https:\/\/myorivia\.app\//);

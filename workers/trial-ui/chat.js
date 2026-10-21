@@ -1398,7 +1398,7 @@ function loadTurnstile(siteKey){
 }
 /* Private research pilot: shown only when this private deployment offers it; off unless the tester ticks it. The consent names
    OpenAI and is versioned, so a changed pilot never reuses an older tick. Stored on this device only. */
-const pilotKey='orivia-pilot-consent';let pilotOffer=null,publicProviderOffered=false;
+const pilotKey='orivia-pilot-consent';let pilotOffer=null,publicProviderOffered=false,pilotAgree='';
 /* Entry agreement: remembered per account or guest on this browser (account-scoped storage) for the consent version this
    deployment shows, so it's asked again only when that version changes, not on refresh or in a new tab. Decide only after
    /v1/config has said which version applies (window.OriviaConsent.ready). */
@@ -1411,7 +1411,7 @@ function setupPilot(d){
  const p=d&&(d.mode!=='public'||d.publicAssistant===true)&&d.providerPilot&&typeof d.providerPilot==='object'?d.providerPilot:null;
  const row=$('pilot-row');if(!row)return;
  if(!p||p.provider!=='OpenAI'||typeof p.consent!=='string'||!/^[a-z0-9-]{4,60}$/.test(p.consent)){pilotOffer=null;row.hidden=true;return}
- pilotOffer=p.consent;row.hidden=false;$('pilot-text').textContent=String(p.text||'').slice(0,1400);
+ pilotOffer=p.consent;pilotAgree=typeof p.agree==='string'?p.agree.slice(0,200):'';row.hidden=false;$('pilot-text').textContent=String(p.text||'').slice(0,1400);
  publicProviderOffered=d.publicAssistant===true;
  if(publicProviderOffered&&!$('public-provider-consent')){const note=document.createElement('div');note.id='public-provider-consent';note.className='notice';if(typeof p.heading==='string')note.append(Object.assign(document.createElement('strong'),{textContent:p.heading.slice(0,60)}));for(const para of String(p.text||'').slice(0,1400).split('\n\n'))note.append(Object.assign(document.createElement('p'),{textContent:para}));$('consent').parentElement.before(note)}
  if(publicProviderOffered)publicConsentCopy(typeof p.agree==='string'?p.agree.slice(0,200):'');
@@ -1435,9 +1435,12 @@ function pilotConsent(){if(!pilotOffer)return null;try{return (globalThis.Orivia
 async function loadMode(){
  try{const r=await fetch('/v1/config',{credentials:'same-origin',cache:'no-store'});const d=await r.json();
   setupPilot(d);
+  // Reveal the intro now that its wording is right, and before the human check renders: Turnstile stalls if it starts hidden.
+  document.body.dataset.config='ready';
   if(d&&d.mode==='public'){mode='public';document.body.dataset.mode='public';for(const n of document.querySelectorAll('[data-public]'))n.textContent=n.dataset.public;if(!$('intro').hidden&&d.turnstileSiteKey)loadTurnstile(d.turnstileSiteKey);else window.__siteKey=d.turnstileSiteKey}
   return d;
  }catch(_){return null}
+ finally{document.body.dataset.config='ready'}
 }
 const modeReady=loadMode();
 window.OriviaConsent={agreed,ready:modeReady};
@@ -1453,12 +1456,15 @@ async function mountOnboardingConsent(root){
  const info=onboardingConsentCard.querySelector('p[data-device-copy]');
  const device='Your chats and plans stay in this browser on this device. General search terms go to Brave Search, not your full conversation or ID numbers.';
  const account='Your personal chats and plans are saved to your private Orivia account. General search terms go to Brave Search, not your full conversation or ID numbers.';
- if(info){info.dataset.deviceCopy=device;info.dataset.accountCopy=account;info.textContent=uiText(window.OriviaAccounts?.user?account:device)}
+ if(info&&pilotAgree)info.hidden=true; // the server's consent notice already covers storage and search
+ else if(info){info.dataset.deviceCopy=device;info.dataset.accountCopy=account;info.textContent=uiText(window.OriviaAccounts?.user?account:device)}
  const label=$('consent').parentElement.querySelector('span');
- const agree=pilotOffer?'I agree to send my messages and recent conversation to OpenAI, or Cloudflare Workers AI if OpenAI is unavailable.':'I agree to send my messages and recent conversation to Cloudflare Workers AI.';
+ const agree=pilotAgree||(pilotOffer?'I agree to send my messages and recent conversation to OpenAI, or Cloudflare Workers AI if OpenAI is unavailable.':'I agree to send my messages and recent conversation to Cloudflare Workers AI.');
  if(label){delete label.dataset.public;label.textContent=uiText(agree)}
  $('start').hidden=true;root.append(onboardingConsentCard);
  if(mode==='public'&&window.__siteKey&&humanState==='idle')loadTurnstile(window.__siteKey);
+ // Moving the card reloads the check's frame, which leaves an already-started Cloudflare check stuck: start it again.
+ else if(mode==='public'&&humanState==='checking'&&window.turnstile){try{window.turnstile.reset('#human-check')}catch(_){}}
 }
 async function authorizeOnboardingStart(){
  const config=await modeReady;

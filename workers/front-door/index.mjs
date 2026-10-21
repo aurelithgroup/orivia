@@ -34,22 +34,38 @@ const SECURITY={'X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-ori
 const LANDING_CSP="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 const withHeaders=(res,extra={})=>{const h=new Headers(res.headers);for(const [k,v] of Object.entries({...SECURITY,...extra}))h.set(k,v);h.delete('Set-Cookie');return new Response(res.body,{status:res.status,statusText:res.statusText,headers:h})};
 
+// Release preview (before the switch-over only): a browser holding the preview cookie gets the new release; everyone else
+// keeps the current behaviour. RELEASE_PREVIEW is a temporary random test value set as a secret; RELEASE_LIVE=1 switches over.
+const PREVIEW_COOKIE='orivia_release_preview';
+async function sameSecret(a,b){if(typeof a!=='string'||typeof b!=='string'||a.length<32)return false;const e=new TextEncoder(),[x,y]=await Promise.all([a,b].map(v=>crypto.subtle.digest('SHA-256',e.encode(v))));const u=new Uint8Array(x),v=new Uint8Array(y);let d=0;for(let i=0;i<u.length;i++)d|=u[i]^v[i];return d===0}
+async function released(req,env){
+ if(!env.APP)return false;if(env.RELEASE_LIVE==='1')return true;
+ const c=(req.headers.get('Cookie')||'').split(/;\s*/).find(x=>x.startsWith(PREVIEW_COOKIE+'='));
+ return !!c&&sameSecret(env.RELEASE_PREVIEW,decodeURIComponent(c.slice(PREVIEW_COOKIE.length+1)));
+}
+
 export default {async fetch(req,env){
  const url=new URL(req.url);
  if(url.hostname!==HOST){url.hostname=HOST;return Response.redirect(url.href,301)}
  const p=url.pathname;
+ if(p==='/__release-preview'){
+  const key=url.searchParams.get('key')||'',on=!!env.APP&&env.RELEASE_LIVE!=='1'&&await sameSecret(env.RELEASE_PREVIEW,key);
+  if(!on)return new Response('Not found',{status:404,headers:SECURITY});
+  return new Response(null,{status:302,headers:{Location:'/','Cache-Control':'no-store','Set-Cookie':PREVIEW_COOKIE+'='+encodeURIComponent(key)+'; Max-Age=21600; Path=/; HttpOnly; Secure; SameSite=Lax',...SECURITY}});
+ }
+ const live=await released(req,env);
  // App, joining, dashboards and management.
  if(isAppPath(p)||/^\/join\/[a-z0-9-]{1,80}\/?$/.test(p)){
   const join=p.match(/^\/join\/([a-z0-9-]{1,80})\/?$/);
-  if(join&&ALIASES[join[1]])return new Response(null,{status:302,headers:{Location:'/join/'+ALIASES[join[1]],'Cache-Control':'no-store'}});
-  if(env.APP)return env.APP.fetch(req);
+  if(live&&join&&ALIASES[join[1]])return new Response(null,{status:302,headers:{Location:'/join/'+ALIASES[join[1]],'Cache-Control':'no-store'}});
+  if(live)return env.APP.fetch(req);
   const to=destination(url);if(to)return Response.redirect(to,302);
   return new Response('Not found',{status:404,headers:SECURITY});
  }
  if(req.method!=='GET'&&req.method!=='HEAD')return new Response('Method not allowed',{status:405,headers:{Allow:'GET, HEAD',...SECURITY}});
- if(p==='/sw.js')return new Response(RETIRE_SW,{headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store',...SECURITY}});
+ if(live&&p==='/sw.js')return new Response(RETIRE_SW,{headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store',...SECURITY}});
  // Landing page and its fonts.
- if(env.ASSETS&&(p==='/'||p==='/index.html'||p.startsWith('/fonts/'))){
+ if(env.ASSETS&&(live&&(p==='/'||p==='/index.html')||p.startsWith('/fonts/'))){
   const res=await env.ASSETS.fetch(new Request(new URL(p==='/'?'/index.html':p,url),req));
   return withHeaders(res,p.startsWith('/fonts/')?{'Cache-Control':'public, max-age=31536000, immutable'}:{'Content-Security-Policy':LANDING_CSP,'Cache-Control':'no-cache'});
  }

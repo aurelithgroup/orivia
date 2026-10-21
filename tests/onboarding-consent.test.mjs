@@ -5,11 +5,11 @@ const source=fs.readFileSync('workers/trial-ui/chat.js','utf8');
 // Entry agreement helpers (21 Oct): remembered per account or guest and consent version, not per tab.
 const helpers=source.slice(source.indexOf('const entryKey='),source.indexOf('\n',source.indexOf('function setAgreed(')));
 const block=helpers+'\n'+source.slice(source.indexOf('/* Integrated onboarding consent:'),source.indexOf('/* End integrated onboarding consent. */'));
-function harness(config={mode:'public'},human=true,offer='test-consent-v1'){
+function harness(config={mode:'public'},human=true,offer='test-consent-v1',agreeText=''){
  const saved=new Map(),session=new Map(),card={querySelector:()=>info},info={dataset:{},textContent:''},label={dataset:{public:'old'},textContent:''};
  const nodes={'intro':{append(n){this.card=n}},'start':{hidden:false},'consent':{checked:false,closest:()=>card,parentElement:{querySelector:()=>label}},'set-pilot':{checked:false},'account-flow-status':{textContent:''}};
  const root={isConnected:true,children:[],append(x){this.children.push(x)}};
- const ctx={modeReady:Promise.resolve(config),mode:'public',humanOk:human,humanState:'idle',pilotOffer:offer,pilotKey:'pilot',ck:'consent',publicProviderOffered:true,startRequested:false,window:{OriviaAccounts:{user:null},__siteKey:'test-site'},$:id=>nodes[id],uiText:x=>x,document:{createTextNode:text=>({text})},localStorage:{setItem:(k,v)=>saved.set(k,v)},sessionStorage:{setItem:(k,v)=>session.set(k,v)},loadTurnstile(){ctx.humanState='checking';ctx.humanOk=false;ctx.renders++},renders:0};
+ const ctx={modeReady:Promise.resolve(config),mode:'public',humanOk:human,humanState:'idle',pilotOffer:offer,pilotKey:'pilot',ck:'consent',publicProviderOffered:true,pilotAgree:agreeText,startRequested:false,window:{OriviaAccounts:{user:null},__siteKey:'test-site'},$:id=>nodes[id],uiText:x=>x,document:{createTextNode:text=>({text})},localStorage:{setItem:(k,v)=>saved.set(k,v)},sessionStorage:{setItem:(k,v)=>session.set(k,v)},loadTurnstile(){ctx.humanState='checking';ctx.humanOk=false;ctx.renders++},renders:0};
  ctx.globalThis=ctx;vm.createContext(ctx);vm.runInContext(block,ctx);return {ctx,nodes,root,saved,session,card,info,label};
 }
 const h=harness();await h.ctx.mountOnboardingConsent(h.root);assert.equal(h.root.children[0],h.card,'moves the existing card');assert.equal(h.nodes.start.hidden,true,'old button is hidden');assert.equal(h.ctx.renders,1);assert.match(h.label.textContent,/OpenAI/);assert.ok(!('public' in h.label.dataset));
@@ -21,4 +21,6 @@ const dead=harness();dead.root.isConnected=false;await dead.ctx.mountOnboardingC
 const failed=harness(null);failed.nodes.consent.checked=true;assert.equal(await failed.ctx.authorizeOnboardingStart(),false,'failed configuration never implies permission');assert.equal(failed.saved.size,0);
 const privateFlow=harness({mode:'private'},true,null);privateFlow.ctx.mode='private';await privateFlow.ctx.mountOnboardingConsent(privateFlow.root);assert.match(privateFlow.label.textContent,/Cloudflare Workers AI/);assert.doesNotMatch(privateFlow.label.textContent,/OpenAI/);assert.equal(privateFlow.ctx.renders,0);
 const acc=fs.readFileSync('workers/trial-ui/accounts.js','utf8');assert.match(acc,/callbacks\.authorizeStart&&!await callbacks\.authorizeStart\(\)/);assert.doesNotMatch(acc,/else \$\('intro'\)\.hidden=false/,'account flow never opens old welcome');
+/* Production (21 Oct): Ina's tick-box sentence, and no extra storage/search line. */
+{const p=harness({mode:'public'},true,'orivia-ai-consent-v1-2026-10-21','I agree to send my messages and recent conversation to the AI providers described above so I can use Orivia.');await p.ctx.mountOnboardingConsent(p.root);assert.equal(p.label.textContent,'I agree to send my messages and recent conversation to the AI providers described above so I can use Orivia.');assert.equal(p.info.hidden,true);}
 console.log('Integrated onboarding: original consent/widget controls, explicit AI agreement, human-check gate, configuration failure, provider disclosure, abandoned screens and fallback restoration passed. Scripted DOM only.');
