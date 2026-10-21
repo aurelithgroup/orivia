@@ -10,7 +10,7 @@ function show(){
  $('intro').hidden=true;$('workspace').hidden=false;$('nav').hidden=false;$('open-settings').hidden=false;$('open-chats').hidden=false;
  loadChats();const c=activeChat();turns=c?c.turns.slice():[];
 
- draw();tab('home');
+ draw();tab('home');window.OriviaNotifications?.changed();
 }
 /* ===== Chat history: saved on this device (localStorage), no account, no sync =====
    store = {chats:[{id,title,titled,created,updated,pinned,archived,turns}], active}
