@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import {createProduction,isAppPath,productionReady} from '../workers/orivia-production.mjs';
 import {createPublicRelease} from '../workers/orivia-public-release.mjs';
 import {PRODUCTION_CONSENT,PUBLIC_CONSENT,PILOT_CONSENT,consentedToOpenAI} from '../workers/orivia-research-pilot.mjs';
-import {destination} from '../workers/front-door/index.mjs';
+import {destination,isAppPath as doorPath} from '../workers/front-door/index.mjs';
 
 const host='myorivia.app',origin='https://'+host;
 let calls=0;const worker=createProduction({fetcher:async()=>{calls++;throw Error('No real requests in tests')}});
@@ -79,6 +79,21 @@ assert.match(ui,/why==='human_check'\)\{const passedBefore=humanOk;\$\('consent'
 assert.match(push,/scope:\(location\.pathname\.startsWith\('\/app'\)\?'\/app':'\/'\)/,'the app never takes over the website');
 assert.doesNotMatch(accounts,/callbackURL:location\.origin\+'\/'\}/);
 
-// Front door: the website stays; app paths reach the app.
+// Front door: the landing page owns '/'; app paths reach the app (same list as production).
 assert.equal(destination(new URL(origin+'/')),null);assert.equal(destination(new URL(origin+'/css/app.css')),null);
+for(const p of ['/','/app','/app/','/join/northbay-university','/platform','/platform.js','/manage','/chat.js','/api/x','/v1/config','/fonts/a.woff2','/sw.js','/legacy.html'])assert.equal(doorPath(p),isAppPath(p),'front door and production agree on '+p);
+{const fd=(await import('../workers/front-door/index.mjs')).default;
+ const assets={fetch:async r=>new Response(new URL(r.url).pathname,{headers:{'Content-Type':'text/html'}})};
+ let forwarded=null;const app={fetch:async r=>{forwarded=new URL(r.url).pathname;return new Response('app')}};
+ let r=await fd.fetch(new Request(origin+'/'),{ASSETS:assets,APP:app});assert.equal(await r.text(),'/index.html');assert.match(r.headers.get('Content-Security-Policy'),/frame-src 'self'/);assert.doesNotMatch(r.headers.get('Content-Security-Policy'),/googleapis|gstatic/);
+ r=await fd.fetch(new Request(origin+'/manage'),{ASSETS:assets,APP:app});assert.equal(forwarded,'/manage','management goes to the production Worker, which checks the owner');
+ r=await fd.fetch(new Request(origin+'/join/northbay'),{ASSETS:assets,APP:app});assert.equal(r.status,302);assert.equal(r.headers.get('Location'),'/join/northbay-university');
+ r=await fd.fetch(new Request(origin+'/sw.js'),{ASSETS:assets,APP:app});const sw=await r.text();assert.match(sw,/registration\.unregister\(\)/);assert.match(sw,/startsWith\('orivia-public'\)/);assert.doesNotMatch(sw,/localStorage|indexedDB/,'saved data is never touched');
+ r=await fd.fetch(new Request('https://www.myorivia.app/app'),{});assert.equal(r.status,301);}
+// Landing page (Ina's approved concept): no concept labels or Google requests, live same-site preview with a full-screen link.
+{const landing=fs.readFileSync('workers/front-door/public/index.html','utf8');
+ assert.doesNotMatch(landing,/fonts\.googleapis|fonts\.gstatic|Design concept|Illustrative|https:\/\/myorivia\.app\//);
+ assert.match(landing,/<iframe src="\/app" title="Orivia preview"/);assert.match(landing,/href="\/app" target="_blank" rel="noopener"><u>Open Orivia full screen ↗<\/u>/);
+ assert.match(landing,/src:url\(\/fonts\/manrope-latin-800-normal\.woff2\)/);for(const f of ['dm-sans-latin-400-normal.woff2','manrope-latin-600-normal.woff2','dm-sans-OFL.txt','manrope-OFL.txt'])assert.ok(fs.existsSync('workers/front-door/public/fonts/'+f),f);
+ assert.doesNotMatch(landing,/href="[^"]*(privacy|terms)/i,'legal drafts stay unpublished until approved');}
 console.log('myorivia.app: fails closed, app paths only, /join links, consent v1, accounts on (orivia-beta unchanged), push off, human check before any model call, consent remembered per version. Scripted only.');
