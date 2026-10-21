@@ -1,0 +1,12 @@
+{
+  // myorivia.app front door: website at the root, redirects for /app, /join/<org>, /platform and /manage.
+  "name": "orivia-front-door",
+  "main": "index.mjs",
+  "account_id": "dca77f1ed4a6d4407bc82e27b4581f7d",
+  "compatibility_date": "2026-10-18",
+  "workers_dev": false,
+  "routes": [
+    { "pattern": "myorivia.app", "custom_domain": true },
+    { "pattern": "www.myorivia.app", "custom_domain": true }
+  ]
+}
