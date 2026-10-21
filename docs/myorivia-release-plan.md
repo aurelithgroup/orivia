@@ -50,6 +50,9 @@ One production Worker on myorivia.app serves all of these, so the Better Auth se
 
 - **Deployer:** Cleo deploys every Orivia Worker during the release. Ina pauses pilot deployments and reviews consent and notifications.
 - **Accounts:** production takes over `orivia-accounts-private`, so the owner account, Northbay and test students carry over. The pilot gets a new, empty test accounts database.
+- **Email caps:** keep 10/day and 100/month for the demo.
+- **Privacy information and Terms:** Ina prepares drafts. They're linked from the consent before release.
+- **Landing page:** Ina's approved landing concept is the myorivia.app homepage in the final release. It keeps the new routes, and its phone preview shows `/app`.
 - **Guests:** fresh start on myorivia.app. Once production passes, the old public address points to myorivia.app. Old guest chats stay in the old browser storage and aren't imported.
 
 ## Ina's requirements (21 October)
