@@ -113,7 +113,7 @@ Each must pass on the production Worker, on a phone and a computer:
 
 ## Released (21 October, Cleo)
 
-myorivia.app now serves the newest Orivia for everyone. The founder ran the live checks in her own browser and phone before the switch.
+myorivia.app now serves the newest Orivia for everyone. The founder ran the live checks in their own browser and phone before the switch.
 
 | Piece | Version | Rollback |
 |---|---|---|
