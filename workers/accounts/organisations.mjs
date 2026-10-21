@@ -38,7 +38,7 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
    if(!owner)return new Response(manageRefusal(!s?.user?.id,appHome(env)),{status:s?.user?.id?403:401,headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'",'Referrer-Policy':'no-referrer'}});
   }
   if(req.method==='GET'&&(path==='/platform'||path==='/manage'))return new Response(platformPage.replace('<html','<html data-app-home="'+appHome(env)+'"'),{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",'Referrer-Policy':'no-referrer'}});
-  if(req.method==='GET'&&path==='/platform.js')return new Response('('+mountPlatform.toString()+')();',{headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
+  if(req.method==='GET'&&path==='/platform.js')return new Response('(function(){const __name=f=>f;('+mountPlatform.toString()+')()})();',{headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 
   // No request supplies its own actor, organisation role or platform role.
   if(req.method==='GET'&&path.startsWith('/api/public/')){
