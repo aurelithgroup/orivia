@@ -5,7 +5,7 @@
 import {createPilotWorker} from './orivia-research-pilot.mjs';
 
 // Paths the app answers on myorivia.app. Everything else belongs to the website.
-export const isAppPath=p=>p==='/app'||p==='/app/'||/^\/app\/space\/[A-Za-z0-9-]{1,64}\/?$/.test(p)||/^\/join\/[a-z0-9-]{3,64}\/?$/.test(p)||['/platform','/platform.js','/manage','/chat.js','/orivia-nav.js','/inline-calendar.js','/reminder.ics','/orivia-notifications-sw.js'].includes(p)||/^\/(?:api|v1)\//.test(p);
+export const isAppPath=p=>p==='/app'||p==='/app/'||/^\/app\/space\/[A-Za-z0-9-]{1,64}\/?$/.test(p)||/^\/join\/[a-z0-9-]{3,64}\/?$/.test(p)||['/platform','/platform.js','/manage','/chat.js','/orivia-nav.js','/inline-calendar.js','/reminder.ics','/orivia-notifications-sw.js','/orivia-sw.js','/manifest.webmanifest'].includes(p)||/^\/app-icons\/[a-z0-9-]+\.png$/.test(p)||/^\/(?:api|v1)\//.test(p);
 
 // Ready only with every safeguard configured; otherwise refuse instead of running a partial release.
 export function productionReady(env){

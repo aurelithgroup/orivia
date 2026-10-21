@@ -649,12 +649,25 @@ function tab(which){
  $('view-title').textContent=uiText(TITLES[which]);
  if(which==='home')renderHome();
  if(which==='calendar')renderEvents();
- if(which==='settings')renderSettings();
+ if(which==='settings'){renderSettings();renderInstall()}
  if(which==='journeys')renderJourneys();
  if(which==='mylife'){renderUpcoming();loadProfile();renderJourneys();renderSavedPlaces();renderLifeSummary();window.OriviaAccounts?.copy()}
  if(which==='chat'){const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight}
 }
 window.oriviaGo=tab;
+/* Installable app (21 Oct): register the app worker for this app's scope; show an honest offline note. */
+const APP_SCOPE=location.pathname.startsWith('/app')?'/app':'/';
+if('serviceWorker' in navigator)window.addEventListener('load',()=>{navigator.serviceWorker.register('/orivia-sw.js',{scope:APP_SCOPE}).catch(()=>{})});
+function showOffline(){const n=$('offline-note');if(n)n.hidden=navigator.onLine!==false}
+window.addEventListener('online',showOffline);window.addEventListener('offline',showOffline);showOffline();
+let installPrompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;renderInstall()});window.addEventListener('appinstalled',()=>{installPrompt=null;renderInstall()});
+function renderInstall(){const box=$('install-box');if(!box)return;box.replaceChildren();
+ const standalone=window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true;
+ const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ if(standalone){box.append(el('p','tiny',uiText('Orivia is installed on this device.')));return}
+ if(installPrompt){const b=el('button','btn',uiText('Install Orivia'));b.type='button';b.onclick=async()=>{const p=installPrompt;installPrompt=null;try{await p.prompt();await p.userChoice}catch(_){}renderInstall()};box.append(b,el('p','tiny',uiText('Opens like an app from your home screen. Chat still needs a connection.')));return}
+ box.append(el('p','tiny',uiText(ios?'On iPhone or iPad: open Orivia in Safari, tap Share, then Add to Home Screen.':'In Chrome or Edge, open the browser menu and choose Install app or Add to Home screen.')),el('p','tiny',uiText('Chat still needs a connection.')));
+}
 var guidesReturnTab='home';
 let lastTab='chat';
 for(const b of document.querySelectorAll('nav.bottom [data-tab]'))b.onclick=()=>tab(b.dataset.tab);
@@ -1731,6 +1744,7 @@ async function readReply(res,chatId){
 }
 $('form').onsubmit=async e=>{
  e.preventDefault();if(busy||!agreed()||Date.now()<coolUntil)return;
+ if(navigator.onLine===false){showOffline();$('status').textContent=uiText('You’re offline. Your message is still here; send it when you’re back online.');return}
  stopDictation(true);stopSpeaking();
  const text=$('msg').value.trim();if(!text)return;
  $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});save();draw({scroll:true});

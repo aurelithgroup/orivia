@@ -12,7 +12,7 @@ const HOST='myorivia.app';
 const ALIASES={northbay:'northbay-university'};
 
 // Same list as workers/orivia-production.mjs (tests keep them equal).
-export const isAppPath=p=>p==='/app'||p==='/app/'||/^\/app\/space\/[A-Za-z0-9-]{1,64}\/?$/.test(p)||/^\/join\/[a-z0-9-]{3,64}\/?$/.test(p)||['/platform','/platform.js','/manage','/chat.js','/orivia-nav.js','/inline-calendar.js','/reminder.ics','/orivia-notifications-sw.js'].includes(p)||/^\/(?:api|v1)\//.test(p);
+export const isAppPath=p=>p==='/app'||p==='/app/'||/^\/app\/space\/[A-Za-z0-9-]{1,64}\/?$/.test(p)||/^\/join\/[a-z0-9-]{3,64}\/?$/.test(p)||['/platform','/platform.js','/manage','/chat.js','/orivia-nav.js','/inline-calendar.js','/reminder.ics','/orivia-notifications-sw.js','/orivia-sw.js','/manifest.webmanifest'].includes(p)||/^\/app-icons\/[a-z0-9-]+\.png$/.test(p)||/^\/(?:api|v1)\//.test(p);
 
 // Before the switch-over only: where each app path currently lives.
 export function destination(url){

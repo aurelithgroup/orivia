@@ -2130,5 +2130,37 @@
   "saved": {
     "fr": "enregistrés",
     "ar": "محفوظة"
+  },
+  "Install Orivia": {
+    "fr": "Installer Orivia",
+    "ar": "تثبيت أوريفيا"
+  },
+  "Orivia is installed on this device.": {
+    "fr": "Orivia est installé sur cet appareil.",
+    "ar": "أوريفيا مثبّت على هذا الجهاز."
+  },
+  "Opens like an app from your home screen. Chat still needs a connection.": {
+    "fr": "S’ouvre comme une application depuis votre écran d’accueil. Le chat nécessite toujours une connexion.",
+    "ar": "يفتح كتطبيق من شاشتك الرئيسية. لا تزال الدردشة تحتاج إلى اتصال."
+  },
+  "On iPhone or iPad: open Orivia in Safari, tap Share, then Add to Home Screen.": {
+    "fr": "Sur iPhone ou iPad : ouvrez Orivia dans Safari, touchez Partager, puis Sur l’écran d’accueil.",
+    "ar": "على iPhone أو iPad: افتح أوريفيا في Safari، واضغط مشاركة، ثم إضافة إلى الشاشة الرئيسية."
+  },
+  "In Chrome or Edge, open the browser menu and choose Install app or Add to Home screen.": {
+    "fr": "Dans Chrome ou Edge, ouvrez le menu du navigateur et choisissez Installer l’application ou Ajouter à l’écran d’accueil.",
+    "ar": "في Chrome أو Edge، افتح قائمة المتصفح واختر تثبيت التطبيق أو الإضافة إلى الشاشة الرئيسية."
+  },
+  "Chat still needs a connection.": {
+    "fr": "Le chat nécessite toujours une connexion.",
+    "ar": "لا تزال الدردشة تحتاج إلى اتصال."
+  },
+  "You’re offline. Your message is still here; send it when you’re back online.": {
+    "fr": "Vous êtes hors ligne. Votre message est toujours là ; envoyez-le quand vous serez reconnecté.",
+    "ar": "أنت غير متصل. رسالتك ما زالت هنا؛ أرسلها عند عودة الاتصال."
+  },
+  "You’re offline. Chat and research need a connection; your saved chats, plans and calendar are still here.": {
+    "fr": "Vous êtes hors ligne. Le chat et la recherche nécessitent une connexion ; vos conversations, plans et calendrier enregistrés sont toujours là.",
+    "ar": "أنت غير متصل. تحتاج الدردشة والبحث إلى اتصال؛ محادثاتك وخططك وتقويمك المحفوظة ما زالت هنا."
   }
 }
