@@ -51,6 +51,8 @@
  }
  const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
  let user=null,root=null,openMenu=null;
+ // Signed-in pages drop the duplicate settings gear on narrow screens (Settings is in the account menu).
+ const markSignedIn=()=>{try{if(user)document.body.dataset.navSignedIn='1';else delete document.body.dataset.navSignedIn}catch(_){}};
  function closeMenus(){if(openMenu){openMenu.menu.hidden=true;openMenu.button.setAttribute('aria-expanded','false');openMenu=null}}
  function menu(buttonLabel,ariaLabel,build){
   const wrap=el('div','onav-wrap'),button=el('button','onav-btn');button.type='button';button.setAttribute('aria-haspopup','true');button.setAttribute('aria-expanded','false');button.setAttribute('aria-label',ariaLabel);
@@ -108,7 +110,7 @@
   try{const s=await fetch('/api/account/session',{credentials:'same-origin',cache:'no-store'});user=s.ok?(await s.json()).user:null}catch(_){user=null}
   me=null;loadError=false;
   if(user){try{me=await api('/api/me/memberships')}catch(_){loadError=true}}
-  render();return user;
+  markSignedIn();render();return user;
  }
  function mount(target){
   root=typeof target==='string'?document.getElementById(target):target;if(!root)return;root.classList.add('onav');
@@ -117,14 +119,14 @@
   refresh();
  }
  const style=document.createElement('style');
- style.textContent=".onav{display:flex;align-items:center;gap:8px;margin-inline-start:auto;position:relative}.onav-wrap{position:relative}"+
+ style.textContent=".onav{display:flex;align-items:center;gap:8px;margin-inline-start:auto;position:relative;min-width:0;flex:0 1 auto}.onav-wrap{min-width:0;display:flex}.onav-wrap .onav-btn{max-width:100%;min-width:0}.onav-wrap:last-child{flex:none}.onav-avatar-btn{min-width:36px;justify-content:center}.onav-wrap{position:relative}"+
   ".onav-btn{font:inherit;font-size:14px;font-weight:600;color:inherit;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:7px 12px;cursor:pointer;max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-height:36px}"+
   ".onav-btn:focus-visible,.onav-item:focus-visible{outline:2px solid #F3C04A;outline-offset:2px}.onav-avatar{display:inline-block;min-width:1.1em;text-align:center}"+
   ".onav-menu{position:absolute;inset-inline-end:0;top:calc(100% + 6px);z-index:60;min-width:240px;max-width:min(320px,92vw);background:#fff;color:#1C2733;border:1px solid #D8DDE3;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column;gap:2px}"+
   "@media (prefers-color-scheme:dark){.onav-menu{background:#18222D;color:#E8EDF3;border-color:#2C3A48}}"+
   ".onav-heading{font-size:12px;font-weight:700;opacity:.7;padding:8px 10px 4px;overflow:hidden;text-overflow:ellipsis}.onav-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:start;font:inherit;font-size:15px;color:inherit;background:none;border:0;border-radius:10px;padding:10px;text-decoration:none;cursor:pointer;min-height:44px;justify-content:center}"+
   ".onav-item:hover{background:rgba(127,127,127,.12)}.onav-item[aria-current=page]{background:rgba(243,192,74,.18);font-weight:700}.onav-item-note{font-size:12px;opacity:.75}.onav-note{font-size:12px;opacity:.8;margin:4px 10px}"+
-  ".onav-lang{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;font-size:15px}.onav-lang select{font:inherit;font-size:14px;border-radius:8px;padding:4px 6px}";
+  "@media (max-width:560px){header.top .chip{display:none}.onav-btn{max-width:34vw;padding:7px 10px}body[data-nav-signed-in] #open-settings{display:none}header.top{gap:8px}}@media (max-width:420px){header.top .wordmark{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.onav-btn{max-width:46vw}}.onav-lang{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;font-size:15px}.onav-lang select{font:inherit;font-size:14px;border-radius:8px;padding:4px 6px}";
  document.head.append(style);
  window.OriviaNav={mount,refresh,announce,menuItems,currentSpace,spacePath,onSettings:null};
  // Any page with a #orivia-nav slot gets the navigation (the app and the dashboards); no inline script needed.

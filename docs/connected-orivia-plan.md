@@ -138,3 +138,9 @@ Founder decisions are recorded in the brief: guides in Chat after an explicit ta
 **Next:** Stage 4 (Journeys into Home and My Life, then four tabs), then Stage 5 (installable app).
 
 Production stays as released until the founder's acceptance checks pass on the pilot.
+- **Stage 4, done** (`ccb1cee`, plus header fixes):
+  - **Home → "Your guides":** guides in progress (up to three) with progress and Reopen, then "All your guides". An empty state offers "Browse guides".
+  - **My Life → "Your guides":** shows saved and in-progress counts.
+  - **Navigation:** the Journeys tab is gone: Home · Chat · My Life · Calendar. The guides page stays reachable from Home, My Life, Help and Chat suggestions, and Back returns to where the person came from. Saved journeys and progress are unchanged.
+  - **Phone header:** it now fits 339 px. The trial badge hides and the separate settings gear hides when signed in, because Settings is in the account menu. Below 420 px the wordmark is visually hidden but still read aloud.
+  - **To tidy:** memberships are fetched about five times on start-up. It's harmless, and a later clean-up.
