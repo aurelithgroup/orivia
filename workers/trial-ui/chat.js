@@ -657,7 +657,9 @@ function tab(which){
 window.oriviaGo=tab;
 /* Installable app (21 Oct): register the app worker for this app's scope; show an honest offline note. */
 const APP_SCOPE=location.pathname.startsWith('/app')?'/app':'/';
-if('serviceWorker' in navigator)window.addEventListener('load',()=>{navigator.serviceWorker.register('/orivia-sw.js',{scope:APP_SCOPE}).catch(()=>{})});
+// Registered after the page has loaded (now, if it already has), so it never slows the first screen.
+let appWorkerAsked=false;function registerAppWorker(){if(appWorkerAsked||!('serviceWorker' in navigator))return;appWorkerAsked=true;navigator.serviceWorker.register('/orivia-sw.js',{scope:APP_SCOPE}).catch(()=>{})}
+if(document.readyState==='complete')setTimeout(registerAppWorker,0);else{window.addEventListener('load',registerAppWorker);setTimeout(registerAppWorker,4000)} // load can wait on slow third-party parts
 function showOffline(){const n=$('offline-note');if(n)n.hidden=navigator.onLine!==false}
 window.addEventListener('online',showOffline);window.addEventListener('offline',showOffline);showOffline();
 let installPrompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;renderInstall()});window.addEventListener('appinstalled',()=>{installPrompt=null;renderInstall()});

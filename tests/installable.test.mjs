@@ -49,7 +49,8 @@ assert.doesNotMatch(sw,/localStorage|indexedDB|\/api\/account\/vault/,'nothing p
 
 // Page code: one worker for offline and alerts; honest offline text; install guidance; push still off in production.
 const chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace(/\r\n/g,'\n'),notif=fs.readFileSync('workers/trial-ui/notifications.js','utf8');
-assert.match(chat,/navigator\.serviceWorker\.register\('\/orivia-sw\.js',\{scope:APP_SCOPE\}\)/);assert.match(notif,/serviceWorker\.register\('\/orivia-sw\.js'/);
+assert.match(chat,/navigator\.serviceWorker\.register\('\/orivia-sw\.js',\{scope:APP_SCOPE\}\)/);
+assert.ok(chat.includes("if(document.readyState==='complete')setTimeout(registerAppWorker,0);else{window.addEventListener('load',registerAppWorker);setTimeout(registerAppWorker,4000)}"),'registers even if the page already loaded or load is slow');assert.match(notif,/serviceWorker\.register\('\/orivia-sw\.js'/);
 assert.match(html,/You’re offline\. Chat and research need a connection; your saved chats, plans and calendar are still here\./);
 assert.match(chat,/if\(navigator\.onLine===false\)\{showOffline\(\);\$\('status'\)\.textContent=uiText\('You’re offline\. Your message is still here/);
 assert.match(chat,/Add to Home Screen/);assert.match(chat,/beforeinstallprompt/);
