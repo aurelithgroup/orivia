@@ -108,3 +108,33 @@ Goal: one connected Orivia, where nobody types a URL to reach a space. This docu
 5. Saved journeys stay reachable.
 6. Personal chats stay private. Server checks refuse cross-role and cross-organisation access (automated tests with real sessions, plus a live check).
 7. Logout updates other open app and dashboard tabs.
+
+## Progress (21 October, Cleo): on the pilot only
+
+Founder decisions are recorded in the brief: guides in Chat after an explicit tap with a first-use notice; optional structured fields; four tabs once Journeys have homes; invitation links in the installed app; separate pilot database first.
+
+- **Stage 0, done.**
+  - The pilot has its own empty test database `orivia-accounts-pilot-test` (`8cd85061`, EU) with production's exact structure. Isolation was confirmed (pilot 0 users; production unchanged).
+  - The founder's pilot account is the pilot owner. A demo Northbay University on the pilot has the founder as admin.
+  - Pilot rollback before the swap: `1a4a3c88`. The pilot is now deployed from source with its live settings (`deploy-pilot-source`), refusing to deploy unless it's on the test database.
+- **Stage 1, done** (`4552bf5`, `320fba4`): the shared header, space switcher and account menu.
+  - University spaces have their own address, and the dashboard address follows the open space.
+  - Sign-in and sign-out reach other tabs.
+  - Checked live on the pilot: owner → management → back, and Manage Northbay from a direct link.
+- **Stage 2, done** (`737cf90`): structured details, the dashboard editor fields, and the university space with labelled sections and Call/Email/Website, Source page, related guide and action buttons.
+  - "Add to my calendar" asks for confirmation, prevents duplicates, refuses past dates and converts the time zone.
+  - The pilot database has the `details` column. **Production needs `workers/accounts/content-details-migration.sql` applied before this code is released.**
+- **Stage 3, done** (`d41c6f7`): "Ask Orivia about this" with the one-time notice, a removable label and "Start a personal conversation".
+  - The server re-reads the item for active members on every message.
+  - "University instruction" is a separate source kind that never supports an official rule, and it's never kept in memory.
+  - The answer check now also verifies dates in sourced sentences.
+
+**Not yet checked by a person:**
+- the student side of Stages 1–3 (needs the founder's second account);
+- a real chat about a published guide;
+- logout across tabs;
+- install.
+
+**Next:** Stage 4 (Journeys into Home and My Life, then four tabs), then Stage 5 (installable app).
+
+Production stays as released until the founder's acceptance checks pass on the pilot.
