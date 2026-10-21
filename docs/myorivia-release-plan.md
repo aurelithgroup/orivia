@@ -52,6 +52,33 @@ One production Worker on myorivia.app serves all of these, so the Better Auth se
 - **Accounts:** production takes over `orivia-accounts-private`, so the owner account, Northbay and test students carry over. The pilot gets a new, empty test accounts database.
 - **Guests:** fresh start on myorivia.app. Once production passes, the old public address points to myorivia.app. Old guest chats stay in the old browser storage and aren't imported.
 
+## Ina's requirements (21 October)
+
+- Consent version `orivia-ai-consent-v1-2026-10-21` with her wording, an initially unticked box, and **Privacy information** and **Terms** linked separately. This is product copy, not a legal review.
+- Notifications are a separate, optional offer. "Not now" continues normally, and permission alone enables nothing.
+  - Events: only calendar reminders, approval of the user's own membership, and updates from organisations the user belongs to.
+  - Lock-screen text is generic.
+- **Device push stays off in production** until delivery passes a real-device test (12 deliveries were recorded as `uncertain`).
+- Consent is remembered per account or guest on that browser and asked again only when its version changes.
+- Ina won't deploy until Cleo says the release is done.
+
+## Progress (21 October, branch `myorivia-release-plan`)
+
+Done and tested (full CI suite passes locally):
+
+- `2b56ba4`: the accommodation-test assistant fixes that were live on the pilot but never on GitHub are now in source. GitHub's source is now at least as new as the live pilot everywhere, so production is **built from source**, not patched from a live bundle.
+- `0538b5c`: production entry `workers/orivia-production.mjs`.
+  - Blockers 1–5: one host; accounts outside Access only with `PUBLIC_ACCOUNTS=1`; app at `/app` through `APP_HOME`; notification worker scoped to `/app`; `/join/<org>` and an owner-only `/manage` checked on the server.
+  - Consent v1 and push off.
+  - **Repeated consent screen fixed.** Agreement was stored per tab (`sessionStorage`). It's now remembered per account or guest and version, decided only after `/v1/config`, and an expired human check no longer wipes it.
+- `tools/embed-trial-ui.mjs` always embeds LF line endings. Windows checkouts had made two tests fail locally only.
+
+Still open before switching:
+
+- **Privacy information and Terms pages don't exist** (404 on the website, none in the repo). Ina's consent requires them. They need the founder's or Ina's text.
+- **Sign-in email allowance:** the account email caps are 10/day and 100/month. On a public site that allows at most 10 sign-in codes a day for everyone. The founder decides whether to raise them (it costs money) before launch.
+- Deployment and live checks (below).
+
 ## Order of work
 
 1. ~~Founder decides 6, 8 and the deployer (11).~~ Done, see above.
