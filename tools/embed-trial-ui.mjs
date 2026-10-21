@@ -16,6 +16,8 @@ const i18n=fs.readFileSync('workers/trial-ui/i18n.js','utf8').replace('/*__TRANS
 const photos=JSON.parse(fs.readFileSync('workers/trial-ui/destination-photos.json','utf8'));
 for(const photo of Object.values(photos)){photo.image='data:image/jpeg;base64,'+fs.readFileSync(photo.file).toString('base64');delete photo.file;}
 const chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace('/*__DESTINATION_PHOTOS__*/{}',()=>JSON.stringify(photos));
-swap('/chat.js',i18n+'\n'+fs.readFileSync('workers/trial-ui/accounts.js','utf8')+'\n'+fs.readFileSync('workers/trial-ui/spaces.js','utf8')+'\n'+fs.readFileSync('workers/trial-ui/notifications.js','utf8')+'\n'+chat);
+const nav=fs.readFileSync('workers/trial-ui/nav.js','utf8');
+swap('/orivia-nav.js',nav);
+swap('/chat.js',i18n+'\n'+nav+'\n'+fs.readFileSync('workers/trial-ui/accounts.js','utf8')+'\n'+fs.readFileSync('workers/trial-ui/spaces.js','utf8')+'\n'+fs.readFileSync('workers/trial-ui/notifications.js','utf8')+'\n'+chat);
 fs.writeFileSync(W,src);
 console.log('Embedded trial UI into',W);

@@ -615,6 +615,8 @@ $('life-journeys-open').onclick=()=>tab('journeys');
 $('life-places-open').onclick=()=>{const box=$('saved-places-section');box.hidden=!box.hidden;$('life-places-open').setAttribute('aria-expanded',String(!box.hidden));if(!box.hidden)renderSavedPlaces()};
 
 /* Switching sections: the bottom bar, and Orivia herself (window.oriviaGo) */
+if(window.OriviaNav)window.OriviaNav.onSettings=()=>tab('settings');
+try{if(new URLSearchParams(location.search).get('view')==='settings')queueMicrotask(()=>{tab('settings');history.replaceState(null,'',location.pathname)})}catch(_){}
 function tab(which){
  const views={home:'home',chat:'chat',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view',settings:'settings-view'};
  if(!views[which])return;

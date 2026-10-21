@@ -45,16 +45,16 @@ form{display:flex;flex-direction:column;gap:12px}form.row{flex-direction:row}.st
 .content-body{white-space:pre-wrap}
 @media (prefers-reduced-motion:no-preference){.panel{transition:background .2s}}
 </style></head><body>
-<header class="top"><div class="top-in"><span class="brand">ORIVIA</span><span class="chip c-demo">Preview · not yet live</span><span class="grow"></span><label for="space">Space<select id="space" aria-label="Choose a space"></select></label><span class="who" id="identity"></span></div></header>
+<header class="top"><div class="top-in"><span class="brand">ORIVIA</span><span class="chip c-demo">Preview · not yet live</span><span class="grow"></span><label for="space" hidden>Space<select id="space" aria-label="Choose a space"></select></label><span class="who" id="identity" hidden></span><div id="orivia-nav"></div></div></header>
 <main id="view" aria-live="polite"><div class="panel"><p>Loading your Orivia…</p></div></main>
-<script src="/platform.js"></script></body></html>`;
+<script src="/orivia-nav.js"></script><script src="/platform.js"></script></body></html>`;
 
 export function mountPlatform(){
  'use strict';
  const $=id=>document.getElementById(id);
  // Where personal Orivia lives on this deployment ('/' on the pilot, '/app' on myorivia.app); set by the server.
   const APP_HOME=document.documentElement.dataset.appHome==='/app'?'/app':'/';
-  let user=null,me={platformRoles:[],memberships:[]},space=location.pathname==='/manage'?'owner':'home',tab='overview',flash=null;
+  let user=null,me={platformRoles:[],memberships:[]},space=location.pathname==='/manage'?'owner':(()=>{const o=new URLSearchParams(location.search).get('org');return o&&/^[A-Za-z0-9-]{1,64}$/.test(o)?'org:'+o:'home'})(),tab='overview',flash=null;
  /* ---- tiny DOM helper: text is always text ---- */
  function h(tag,props,...kids){const n=document.createElement(tag);if(props)for(const [k,v] of Object.entries(props)){if(v===undefined||v===null||v===false)continue;if(k==='class')n.className=v;else if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(v===true)n.setAttribute(k,'');else n.setAttribute(k,String(v))}for(const k of kids.flat()){if(k===null||k===undefined||k===false)continue;n.append(k instanceof Node?k:document.createTextNode(String(k)))}return n}
  const chip=(text,kind)=>h('span',{class:'chip '+kind},text);
