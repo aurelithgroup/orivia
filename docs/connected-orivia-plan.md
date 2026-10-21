@@ -144,3 +144,14 @@ Production stays as released until the founder's acceptance checks pass on the p
   - **Navigation:** the Journeys tab is gone: Home · Chat · My Life · Calendar. The guides page stays reachable from Home, My Life, Help and Chat suggestions, and Back returns to where the person came from. Saved journeys and progress are unchanged.
   - **Phone header:** it now fits 339 px. The trial badge hides and the separate settings gear hides when signed in, because Settings is in the account menu. Below 420 px the wordmark is visually hidden but still read aloud.
   - **To tidy:** memberships are fetched about five times on start-up. It's harmless, and a later clean-up.
+- **Stage 5, done** (`63835ef` plus a registration fix): installable web app.
+  - **Manifest:** Orivia's name and icons. It starts at the app (`/app` on myorivia.app, `/` on the pilot) with scope `/`, so `/join`, `/platform` and `/manage` open inside the installed app (`handle_links: preferred`). Where that isn't supported, the browser opens them normally and the invitation is kept through sign-in.
+  - **One versioned app worker** (`/orivia-sw.js`): app pages and scripts open offline. API, Chat, research, sign-in and dashboard requests always go to the network and are never cached. The push handlers are inert because push is off. Checked live on the pilot: it registers itself and saves only the app's files.
+  - **Offline:** a note says Chat and research need a connection, and a message sent while offline stays in the box.
+  - **Settings → Install Orivia:** an install button where the browser offers one, Add to Home Screen steps on iPhone/iPad, and "installed" when running as the app.
+  - App Store and Google Play remain a separate project.
+
+**Before any of this goes to myorivia.app:**
+1. The founder's acceptance checks on the pilot (student side, logout across tabs, a real guide chat, install on a phone).
+2. Apply `content-details-migration.sql` to the production accounts database.
+3. Deploy production from this branch and re-run the release checks.
