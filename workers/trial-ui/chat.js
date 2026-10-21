@@ -796,7 +796,7 @@ $('end-session').onclick=async()=>{
  stopSpeaking();stopDictation(false);
  try{await fetch('/v1/end',{method:'POST',credentials:'same-origin'})}catch(_){}
  store.active=null;persist(); // saved chats stay; the welcome screen opens to a new chat
- try{for(const k of [key,ck,'orivia-private-offered','orivia-private-remember-no'])sessionStorage.removeItem(k)}catch(_){}
+ try{for(const k of [key,ck,'orivia-private-offered','orivia-private-remember-no'])sessionStorage.removeItem(k)}catch(_){}setAgreed(false);
  location.reload();
 };
 /* ===== Listen: Orivia's replies read aloud with the phone's own voices ===== */
@@ -1371,7 +1371,7 @@ function chip(label,fn){const holder=$('journey-actions')||(resources([]),$('jou
 let mode='private',humanOk=true,humanState='idle',startRequested=false,humanAttempt=0;
 function enterApp(){
  if(!$('consent').checked||!humanOk)return;
- startRequested=false;$('consent').checked=false;sessionStorage.setItem(ck,'yes');show();
+ startRequested=false;$('consent').checked=false;setAgreed(true);show();
 }
 /* On failure, say why and let the person retry: never loop the check by itself */
 function humanFailed(msg){
@@ -1382,7 +1382,7 @@ function humanFailed(msg){
  const f=framedFullScreen();if(f)n.append(' ',f);
 }
 /* Inside the website preview some browsers (notably iPhone Safari) won't keep the human-check cookie. Offer the full app. */
-function framedFullScreen(){if(window.top===window)return null;const a=document.createElement('a');a.href='/';a.target='_blank';a.rel='noopener';a.className='ask';a.textContent='Open Orivia full screen';return a}
+function framedFullScreen(){if(window.top===window)return null;const a=document.createElement('a');a.href=(location.pathname.startsWith('/app')?'/app':'/');a.target='_blank';a.rel='noopener';a.className='ask';a.textContent='Open Orivia full screen';return a}
 function loadTurnstile(siteKey){
  humanOk=false;humanState='checking';window.__siteKey=siteKey;$('human-check').hidden=false;$('human-note').hidden=false;
  const go=()=>window.turnstile.render('#human-check',{sitekey:siteKey,'error-callback':code=>{humanFailed('The check couldn’t load (code: '+String(code).slice(0,12)+').');return true},callback:async token=>{
@@ -1399,28 +1399,36 @@ function loadTurnstile(siteKey){
 /* Private research pilot: shown only when this private deployment offers it; off unless the tester ticks it. The consent names
    OpenAI and is versioned, so a changed pilot never reuses an older tick. Stored on this device only. */
 const pilotKey='orivia-pilot-consent';let pilotOffer=null,publicProviderOffered=false;
+/* Entry agreement: remembered per account or guest on this browser (account-scoped storage) for the consent version this
+   deployment shows, so it's asked again only when that version changes, not on refresh or in a new tab. Decide only after
+   /v1/config has said which version applies (window.OriviaConsent.ready). */
+const entryKey='orivia-entry-consent';
+function entryStore(){return globalThis.OriviaAccountStorage?.storage||localStorage}
+function consentVersion(){return publicProviderOffered&&pilotOffer?pilotOffer:'private-entry-v1'}
+function agreed(){try{return entryStore().getItem(entryKey)===consentVersion()&&(!publicProviderOffered||entryStore().getItem(pilotKey)===pilotOffer)}catch(_){return sessionStorage.getItem(ck)==='yes'}}
+function setAgreed(on){try{if(on){entryStore().setItem(entryKey,consentVersion());if(publicProviderOffered&&pilotOffer)entryStore().setItem(pilotKey,pilotOffer)}else entryStore().removeItem(entryKey)}catch(_){}try{on?sessionStorage.setItem(ck,'yes'):sessionStorage.removeItem(ck)}catch(_){}}
 function setupPilot(d){
  const p=d&&(d.mode!=='public'||d.publicAssistant===true)&&d.providerPilot&&typeof d.providerPilot==='object'?d.providerPilot:null;
  const row=$('pilot-row');if(!row)return;
  if(!p||p.provider!=='OpenAI'||typeof p.consent!=='string'||!/^[a-z0-9-]{4,60}$/.test(p.consent)){pilotOffer=null;row.hidden=true;return}
- pilotOffer=p.consent;row.hidden=false;$('pilot-text').textContent=String(p.text||'').slice(0,600);
+ pilotOffer=p.consent;row.hidden=false;$('pilot-text').textContent=String(p.text||'').slice(0,1400);
  publicProviderOffered=d.publicAssistant===true;
- if(publicProviderOffered&&!$('public-provider-consent')){const note=document.createElement('p');note.id='public-provider-consent';note.className='notice';note.textContent=String(p.text||'').slice(0,600);$('consent').parentElement.before(note)}
- if(publicProviderOffered)publicConsentCopy();
+ if(publicProviderOffered&&!$('public-provider-consent')){const note=document.createElement('div');note.id='public-provider-consent';note.className='notice';if(typeof p.heading==='string')note.append(Object.assign(document.createElement('strong'),{textContent:p.heading.slice(0,60)}));for(const para of String(p.text||'').slice(0,1400).split('\n\n'))note.append(Object.assign(document.createElement('p'),{textContent:para}));$('consent').parentElement.before(note)}
+ if(publicProviderOffered)publicConsentCopy(typeof p.agree==='string'?p.agree.slice(0,200):'');
  let saved='';try{saved=(globalThis.OriviaAccountStorage?.storage||localStorage).getItem(pilotKey)||''}catch(_){}
  $('set-pilot').checked=saved===pilotOffer;
- if(publicProviderOffered&&saved!==pilotOffer){sessionStorage.removeItem(ck);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=!!$('account-entry')&&!$('account-entry').hidden}
+ if(publicProviderOffered&&saved!==pilotOffer){setAgreed(false);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=!!$('account-entry')&&!$('account-entry').hidden}
  $('set-pilot').onchange=e=>{try{if(e.target.checked)(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(pilotKey,pilotOffer);else (globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(pilotKey)}catch(_){}researchNotice()};
  researchNotice();
 }
 /* Public release: one honest consent. The device paragraph no longer claims Workers AI only, and the tick box says it
    includes OpenAI (with Workers AI as a backup when OpenAI is unavailable). The same wording is kept for accounts.js,
    which re-applies data-device-copy. */
-function publicConsentCopy(){
+function publicConsentCopy(agreeText){
  const card=$('consent')?.closest('.card'),intro=card?.querySelector('p[data-device-copy]');
  const device='Your chats are saved in this browser on this device so you can come back to them. They aren’t stored in Orivia’s database.';
  if(intro){intro.dataset.deviceCopy=device;intro.dataset.accountCopy='Signed-in chats and plans are saved to my private Orivia account.';intro.textContent=device}
- const label=$('consent')?.parentElement?.querySelector('span'),agree='I agree to start using Orivia, including sending my messages to OpenAI as described above (or to Cloudflare Workers AI if OpenAI is unavailable).';if(label){label.dataset.public=agree;label.textContent=agree}
+ const label=$('consent')?.parentElement?.querySelector('span'),agree=agreeText||'I agree to start using Orivia, including sending my messages to OpenAI as described above (or to Cloudflare Workers AI if OpenAI is unavailable).';if(label){label.dataset.public=agree;label.textContent=agree}
  for(const n of document.querySelectorAll('#settings-view p[data-device-copy]'))if(/Workers AI/.test(n.dataset.deviceCopy)){const t=n.dataset.deviceCopy.replace('Messages are sent to Cloudflare Workers AI to get a reply.','Messages are sent to OpenAI (with your agreement) or, if it’s unavailable, Cloudflare Workers AI to get a reply.');n.dataset.deviceCopy=t;n.textContent=t}
 }
 function pilotConsent(){if(!pilotOffer)return null;try{return (globalThis.OriviaAccountStorage?.storage||localStorage).getItem(pilotKey)===pilotOffer?{openai:pilotOffer}:null}catch(_){return null}}
@@ -1432,6 +1440,7 @@ async function loadMode(){
  }catch(_){return null}
 }
 const modeReady=loadMode();
+window.OriviaConsent={agreed,ready:modeReady};
 /* Integrated onboarding consent: move the existing controls, never clone the human widget. */
 let onboardingConsentCard=null;
 function releaseOnboardingConsent(){
@@ -1458,12 +1467,12 @@ async function authorizeOnboardingStart(){
  if(!humanOk){$('account-flow-status').textContent=uiText('Please complete the human check before starting.');return false}
  try{
   if(pilotOffer){(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(pilotKey,pilotOffer);$('set-pilot').checked=true}
-  sessionStorage.setItem(ck,'yes');startRequested=false;return true;
+  setAgreed(true);startRequested=false;return true;
  }catch(_){$('account-flow-status').textContent=uiText('Please allow browser storage before starting Orivia.');return false}
 }
 /* End integrated onboarding consent. */
 queueMicrotask(()=>{
- if(!window.OriviaAccounts){if(sessionStorage.getItem(ck)==='yes')show();return}
+ if(!window.OriviaAccounts){modeReady.then(()=>{if(agreed())show()});return}
  window.OriviaAccounts.boot({photos:()=>DESTINATION_PHOTOS,
   leave(){releaseOnboardingConsent();stopSpeaking();stopDictation(false);closeHandoff()},
   cancelReply(){activeChatRequest?.abort()},
@@ -1671,7 +1680,7 @@ async function readReply(res,chatId){
  return {r:{ok:final.status<400,status:final.status},d:final.body};
 }
 $('form').onsubmit=async e=>{
- e.preventDefault();if(busy||sessionStorage.getItem(ck)!=='yes'||Date.now()<coolUntil)return;
+ e.preventDefault();if(busy||!agreed()||Date.now()<coolUntil)return;
  stopDictation(true);stopSpeaking();
  const text=$('msg').value.trim();if(!text)return;
  $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});save();draw({scroll:true});
@@ -1684,7 +1693,7 @@ $('form').onsubmit=async e=>{
   if((globalThis.OriviaAccounts?.epoch||'')!==accountAtSend)return;
   if(!r.ok){
    const why=d&&d.error;
-   if(r.status===401&&why==='human_check'){const passedBefore=humanOk;sessionStorage.removeItem(ck);$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false;if(window.__siteKey)loadTurnstile(window.__siteKey);$('status').textContent='';
+   if(r.status===401&&why==='human_check'){const passedBefore=humanOk;$('consent').checked=agreed();try{sessionStorage.removeItem(ck)}catch(_){}$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false;if(window.__siteKey)loadTurnstile(window.__siteKey);$('status').textContent='';
     // Passed the check but the browser didn't keep it (a framed preview in a strict browser): say so instead of looping.
     const f=passedBefore&&framedFullScreen();if(f){const n=$('human-note');n.hidden=false;n.replaceChildren(document.createTextNode('This browser didn’t keep your check inside the preview. Open Orivia full screen to continue. '),f)}
     return}

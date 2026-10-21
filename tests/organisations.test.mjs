@@ -154,4 +154,17 @@ assert.equal((await setRole(editor,mariam,'editor','student')).status,400);asser
 const beforeStale=stamp;stamp+=900001;assert.equal((await setRole(editor,mariam,'editor','student')).status,403,'old sessions must sign in again');stamp=beforeStale;
 assert.equal(sql.prepare("SELECT COUNT(*) AS n FROM organisation_memberships WHERE org_id=? AND role='admin' AND status='active'").get(roleOrg).n,1);
 assert.equal((await call(mariam,'/api/account/vault')).data.revision,0,'role management never creates a personal vault');
+
+/* myorivia.app (21 Oct): /manage is decided on the server before any page is sent; with the app at /app, links use it. */
+{const page=async(who,path,e=env)=>{const res=await handleAccountRequest(new Request(origin+path,{headers:{'cf-connecting-ip':'192.0.2.'+(++ip),...(who?{Cookie:who.cookie}:{})}}),e,{}, {auth,organisationOptions:{now:()=>stamp}});return {status:res.status,text:await res.text()}};
+ let p=await page(owner,'/manage');assert.equal(p.status,200,'the owner gets management');assert.match(p.text,/data-app-home="\/"/);
+ p=await page(mariam,'/manage');assert.equal(p.status,403,'an organisation admin is not the platform owner');assert.match(p.text,/only for Orivia’s management account/);assert.doesNotMatch(p.text,/Northbay|platform\.js/,'no organisation data or dashboard script');
+ p=await page(aisha,'/manage');assert.equal(p.status,403,'students cannot open management');
+ p=await page(null,'/manage');assert.equal(p.status,401);assert.match(p.text,/Sign in to Orivia with the management account/);assert.match(p.text,/href="\/"/);
+ const app={...env,APP_HOME:'/app'};
+ p=await page(null,'/manage',app);assert.match(p.text,/href="\/app"/,'sign-in goes to the app, not the website');
+ p=await page(owner,'/platform',app);assert.match(p.text,/data-app-home="\/app"/);
+ const made=await handleAccountRequest(new Request(origin+'/api/orgs/'+org+'/invitations',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','cf-connecting-ip':'192.0.2.'+(++ip),Cookie:mariam.cookie,'X-Orivia-Account':mariam.id},body:JSON.stringify({role:'student',label:'App home'})}),app,{}, {auth,organisationOptions:{now:()=>stamp}});
+ const inv=await made.json();assert.equal(made.status,201,JSON.stringify(inv));assert.equal(inv.joinUrl,origin+'/join/northbay#join='+inv.token,'short university link on myorivia.app');assert.equal(decodeSvg(inv.qrSvg),inv.joinUrl,'the QR code opens the same link');
+ r=await call(mariam,'/api/orgs/'+org+'/invitations','POST',{role:'student',label:'Pilot link'});assert.equal(r.data.joinUrl,origin+'/?organisation=northbay#join='+r.data.token,'pilot links are unchanged');}
 console.log('Organisations: real account sessions and SQL, full owner → admin → invite → request → approval → student flow; forged roles, cross-tenant access, stale writes, expiry/revocation, public-code isolation and personal-vault preservation passed. No real email or deployment.');

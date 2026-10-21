@@ -52,7 +52,9 @@ form{display:flex;flex-direction:column;gap:12px}form.row{flex-direction:row}.st
 export function mountPlatform(){
  'use strict';
  const $=id=>document.getElementById(id);
- let user=null,me={platformRoles:[],memberships:[]},space='home',tab='overview',flash=null;
+ // Where personal Orivia lives on this deployment ('/' on the pilot, '/app' on myorivia.app); set by the server.
+  const APP_HOME=document.documentElement.dataset.appHome==='/app'?'/app':'/';
+  let user=null,me={platformRoles:[],memberships:[]},space=location.pathname==='/manage'?'owner':'home',tab='overview',flash=null;
  /* ---- tiny DOM helper: text is always text ---- */
  function h(tag,props,...kids){const n=document.createElement(tag);if(props)for(const [k,v] of Object.entries(props)){if(v===undefined||v===null||v===false)continue;if(k==='class')n.className=v;else if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(v===true)n.setAttribute(k,'');else n.setAttribute(k,String(v))}for(const k of kids.flat()){if(k===null||k===undefined||k===false)continue;n.append(k instanceof Node?k:document.createTextNode(String(k)))}return n}
  const chip=(text,kind)=>h('span',{class:'chip '+kind},text);
@@ -155,7 +157,7 @@ export function mountPlatform(){
    const region=h('select'),fill=()=>{region.replaceChildren(...(country.value==='uae'?['Abu Dhabi','Ajman','Dubai','Fujairah','Ras Al Khaimah','Sharjah','Umm Al Quwain']:['England','Scotland','Wales','Northern Ireland']).map(value=>h('option',{value},value)))};fill();if(a.region)region.value=a.region;country.onchange=fill;
    const town=h('input',{required:true,maxLength:100,value:a.town||'',placeholder:'Campus city or area'}),reason=h('select',null,...[['study','Study'],['work','Work'],['join or bring my family','Family'],['something else','Something else']].map(([value,label])=>h('option',{value},label)));reason.value=a.reason||'study';
    const save=h('button',{type:'submit',class:'btn'},'Save welcome settings');
-   body=[h('p',{class:'note'},'These public campus settings are shown as locked fields during student setup. They do not grant membership or change existing personal profiles. Use separate organisations for campuses with different destinations. A sign-in within 15 minutes is required to save.'),h('a',{class:'btn quiet',href:'/?organisation='+encodeURIComponent(org.slug)},'Open university welcome'),h('form',{onsubmit:act(save,async()=>{await api(pre+'/arrival','PATCH',{country:country.value,region:region.value,town:town.value,reason:reason.value,revision:a.revision||0});flash={kind:'good',text:'Student welcome settings saved.'};await render()})},field('Destination country',country),field('Emirate / nation',region),field('Campus city or area',town),field('Reason for moving',reason),save)];
+   body=[h('p',{class:'note'},'These public campus settings are shown as locked fields during student setup. They do not grant membership or change existing personal profiles. Use separate organisations for campuses with different destinations. A sign-in within 15 minutes is required to save.'),h('a',{class:'btn quiet',href:APP_HOME+'?organisation='+encodeURIComponent(org.slug)},'Open university welcome'),h('form',{onsubmit:act(save,async()=>{await api(pre+'/arrival','PATCH',{country:country.value,region:region.value,town:town.value,reason:reason.value,revision:a.revision||0});flash={kind:'good',text:'Student welcome settings saved.'};await render()})},field('Destination country',country),field('Emirate / nation',region),field('Campus city or area',town),field('Reason for moving',reason),save)];
   }
   if(tab==='overview'){
    body=[h('div',{class:'kpis'},h('div',{class:'kpi'},h('span',{class:'small muted'},'Members'),h('strong',null,count('student','active'))),h('div',{class:'kpi'},h('span',{class:'small muted'},'Waiting for approval'),h('strong',null,count('student','requested'))),h('div',{class:'kpi'},h('span',{class:'small muted'},'Staff'),h('strong',null,count('admin','active')+count('editor','active')))),
@@ -250,7 +252,7 @@ export function mountPlatform(){
    await render();
   }catch(err){
    const signIn=err.status===401,publicLink=!!new URL(location.href).searchParams.get('publicCode');
-   $('view').replaceChildren(panel(h('div',{class:'narrow stack'},h('h2',null,signIn?'Sign in to continue':publicLink?'This public link isn’t available':'Organisations aren’t available here'),h('p',null,err.message),signIn?h('p',{class:'small muted'},'Sign in from Orivia’s welcome screen, then open your link again. If it’s an invitation, it will still work while it’s valid.'):null,signIn?h('div',{class:'row'},h('a',{class:'btn',href:'/',style:'text-decoration:none;display:inline-flex;align-items:center'},'Go to sign-in')):null)));
+   $('view').replaceChildren(panel(h('div',{class:'narrow stack'},h('h2',null,signIn?'Sign in to continue':publicLink?'This public link isn’t available':'Organisations aren’t available here'),h('p',null,err.message),signIn?h('p',{class:'small muted'},'Sign in from Orivia’s welcome screen, then open your link again. If it’s an invitation, it will still work while it’s valid.'):null,signIn?h('div',{class:'row'},h('a',{class:'btn',href:APP_HOME,style:'text-decoration:none;display:inline-flex;align-items:center'},'Go to sign-in')):null)));
   }
  }
  window.addEventListener('hashchange',()=>{const m=location.hash.match(/^#join=([a-f0-9]{64})$/);if(m&&user)inviteView(m[1])});

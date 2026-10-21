@@ -1,6 +1,9 @@
 import QRCode from 'qrcode/lib/core/qrcode.js';
 import SVG from 'qrcode/lib/renderer/svg-tag.js';
 import {platformPage,mountPlatform} from './platform-ui.mjs';
+import {appHome} from './app-home.mjs';
+/* Plain page for /manage when the visitor isn't the owner account. No organisation or account details. */
+const manageRefusal=(signedOut,home)=>'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orivia management</title><style>body{font-family:system-ui,sans-serif;max-width:520px;margin:15vh auto;padding:0 20px;line-height:1.5;color:#1C2733;background:#F7F8FA}@media (prefers-color-scheme:dark){body{color:#E8EDF3;background:#0E1620}a{color:#F3C04A}}</style></head><body><h1>Orivia management</h1><p>'+(signedOut?'Sign in to Orivia with the management account, then open this page again.':'This page is only for Orivia’s management account.')+'</p><p><a href="'+home+'">'+(signedOut?'Go to sign-in':'Back to Orivia')+'</a></p></body></html>';
 /* Personal identities come from Better Auth; organisation and platform roles come only from ACCOUNTS_DB.
  * No organisation endpoint reads account_vault, personal chats, calendar, profile or documents. */
 const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'}});
@@ -8,7 +11,7 @@ class Fault extends Error{constructor(status,code){super(code);this.status=statu
 const deny=(status,code)=>{throw new Fault(status,code)};
 const id=()=>crypto.randomUUID();
 const roles={admin:new Set(['org.view','content.draft','content.publish','members.manage','staff.manage','qr.public','qr.invite','qr.withdraw']),editor:new Set(['org.view','content.draft','qr.public']),student:new Set(['space.view'])};
-export const organisationRoute=p=>['/platform','/platform.js'].includes(p)||/^\/api\/(?:admin(?:\/|$)|orgs(?:\/|$)|invitations(?:\/|$)|public\/orgs(?:\/|$)|public\/codes(?:\/|$)|me\/(?:memberships|orgs)(?:\/|$))/.test(p);
+export const organisationRoute=p=>['/platform','/platform.js','/manage'].includes(p)||/^\/api\/(?:admin(?:\/|$)|orgs(?:\/|$)|invitations(?:\/|$)|public\/orgs(?:\/|$)|public\/codes(?:\/|$)|me\/(?:memberships|orgs)(?:\/|$))/.test(p);
 const keys=(b,allowed)=>{if(!b||typeof b!=='object'||Array.isArray(b)||Object.keys(b).some(k=>!allowed.includes(k)))deny(400,'invalid_fields')};
 const text=(v,min,max)=>{if(typeof v!=='string'||v.trim().length<min||v.length>max||/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v))deny(400,'invalid_text');return v.trim()};
 const email=v=>{const s=text(v,3,254).toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))deny(400,'invalid_email');return s};
@@ -28,7 +31,13 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
  const content=c=>({id:c.id,kind:c.kind,title:c.title,body:c.body,visibility:c.visibility,status:c.status,revision:c.revision,updatedAt:c.updated_at});
  try{
   if(!db?.prepare||!db?.batch)deny(503,'organisation_storage_unavailable');
-  if(req.method==='GET'&&path==='/platform')return new Response(platformPage,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",'Referrer-Policy':'no-referrer'}});
+  if(req.method==='GET'&&path==='/manage'){
+   // Founder management: only a verified owner account gets the page; everyone else gets a plain refusal.
+   const s=await auth.api.getSession({headers:req.headers}),uid=s?.user?.emailVerified?s.user.id:null;
+   const owner=uid&&await q("SELECT 1 AS yes FROM platform_roles WHERE user_id=? AND role='owner'",uid).first();
+   if(!owner)return new Response(manageRefusal(!s?.user?.id,appHome(env)),{status:s?.user?.id?403:401,headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'",'Referrer-Policy':'no-referrer'}});
+  }
+  if(req.method==='GET'&&(path==='/platform'||path==='/manage'))return new Response(platformPage.replace('<html','<html data-app-home="'+appHome(env)+'"'),{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",'Referrer-Policy':'no-referrer'}});
   if(req.method==='GET'&&path==='/platform.js')return new Response('('+mountPlatform.toString()+')();',{headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 
   // No request supplies its own actor, organisation role or platform role.
@@ -56,7 +65,8 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
    const args=[inv,oid,await hash(raw),role,recipient,label,at+life*1000,max,actor,at,...(role==='admin'?[oid,oid,at]:[])];
    const made=await write(q('INSERT INTO organisation_invitations(id,org_id,token_hash,role,recipient_email,label,expires_at,max_uses,created_by,created_at) SELECT ?,?,?,?,?,?,?,?,?,?'+guard+' RETURNING id',...args),actor,oid,'invitation.created',inv);if(!made)deny(409,'admin_already_assigned');
    // The raw token is returned once. List endpoints and audit logs never reveal it.
-   const link=role==='student'?url.origin+'/?organisation='+encodeURIComponent((await org(oid)).slug)+'#join='+raw:url.origin+'/platform#join='+raw;
+   const slug=encodeURIComponent((await org(oid)).slug);
+   const link=role==='student'?url.origin+(appHome(env)==='/app'?'/join/'+slug:'/?organisation='+slug)+'#join='+raw:url.origin+'/platform#join='+raw;
    return json({invitation:{id:inv,role,label,expiresAt:at+life*1000,maxUses:max},joinUrl:link,token:raw,qrSvg:await qr(link)},201);
   };
   if(path==='/api/me/memberships'&&req.method==='GET')return json({platformRoles:(await all('SELECT role FROM platform_roles WHERE user_id=?',actor)).map(r=>r.role),memberships:(await all("SELECT m.org_id,m.role,m.status,o.name,o.slug,o.demo FROM organisation_memberships m JOIN organisations o ON o.id=m.org_id WHERE m.user_id=? AND m.status IN ('active','requested') AND o.status='active'",actor)).map(m=>({organisationId:m.org_id,name:m.name,slug:m.slug,demo:!!m.demo,role:m.role,status:m.status}))});

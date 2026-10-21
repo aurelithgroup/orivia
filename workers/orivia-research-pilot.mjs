@@ -23,8 +23,14 @@ export const PILOT_CONSENT_TEXT='Use OpenAI for this private test. Your messages
 const isPublic=env=>env?.PUBLIC_BETA==='1';
 export const PUBLIC_CONSENT='openai-assistant-public-v1';
 export const PUBLIC_CONSENT_TEXT='Use OpenAI to help with your question. Your latest 12 chat messages, the public pages Orivia reads for you, and About me details (unless you turn off “Use About me in chats”) are sent to OpenAI to understand, research and write replies. Saved documents, calendar and journeys are not sent. Search terms, not full messages, go to Brave Search. You can turn this off in Settings.';
+// myorivia.app (production entry sets PRODUCTION_CONSENT=1). Product consent copy from Ina, not a completed legal review.
+export const PRODUCTION_CONSENT='orivia-ai-consent-v1-2026-10-21';
+export const PRODUCTION_CONSENT_HEADING='Before we begin';
+export const PRODUCTION_CONSENT_TEXT="Orivia sends your messages and recent conversation to OpenAI to generate replies. If OpenAI is unavailable, Cloudflare Workers AI may respond instead. If you enable “Use About me in chats”, the profile details described in that setting are included.\n\nFor web research, Orivia sends general search terms to Brave Search. These should exclude personal identifiers such as names, email addresses and document numbers.\n\nWhen signed in, your personal chats and plans are saved to your private Orivia account, with a local copy in this browser. As a guest, they are saved in this browser on this device. University or organisation staff cannot read your personal chats through their dashboard.\n\nOrivia can make mistakes. Check important information against its sources and confirm consequential decisions with the relevant authority or organisation.";
+export const PRODUCTION_CONSENT_AGREE="I agree to send my messages and recent conversation to the AI providers described above so I can use Orivia.";
+const consentFor=env=>env?.PRODUCTION_CONSENT==='1'?PRODUCTION_CONSENT:isPublic(env)?PUBLIC_CONSENT:PILOT_CONSENT;
 const providerAllowed=env=>!isPublic(env)||env.PUBLIC_ASSISTANT==='1';
-export const consentedToOpenAI=(p,env={})=>!!p&&typeof p==='object'&&p.providerConsent&&typeof p.providerConsent==='object'&&p.providerConsent.openai===(isPublic(env)?PUBLIC_CONSENT:PILOT_CONSENT);
+export const consentedToOpenAI=(p,env={})=>!!p&&typeof p==='object'&&p.providerConsent&&typeof p.providerConsent==='object'&&p.providerConsent.openai===consentFor(env);
 export const pilotAvailable=env=>providerAllowed(env)&&env?.OPENAI_PILOT==='1'&&!!env?.BUDGET_DB?.prepare;
 
 /** Per-request research options for the private trial's hook. Returns null when nothing applies (existing provider path). */
@@ -70,7 +76,7 @@ export function createPilotWorker({launchBrowser,fetcher,publicRelease=false}={}
   // Tell the private UI the consent checkbox may be shown (booleans and fixed text only; never keys or limits).
   if(url.pathname==='/v1/config'&&req.method==='GET'&&res.ok){
    const body=await res.json();
-   body.providerPilot=pilotAvailable(env)?{provider:'OpenAI',consent:isPublic(env)?PUBLIC_CONSENT:PILOT_CONSENT,text:isPublic(env)?PUBLIC_CONSENT_TEXT:PILOT_CONSENT_TEXT}:null;
+   body.providerPilot=pilotAvailable(env)?(env.PRODUCTION_CONSENT==='1'?{provider:'OpenAI',consent:PRODUCTION_CONSENT,heading:PRODUCTION_CONSENT_HEADING,text:PRODUCTION_CONSENT_TEXT,agree:PRODUCTION_CONSENT_AGREE}:{provider:'OpenAI',consent:isPublic(env)?PUBLIC_CONSENT:PILOT_CONSENT,text:isPublic(env)?PUBLIC_CONSENT_TEXT:PILOT_CONSENT_TEXT}):null;
    body.publicAssistant=isPublic(env)&&publicRelease&&env.PUBLIC_ASSISTANT==='1';
    body.research={...(body.research||{}),browserDirectory:env.BROWSER_DIRECTORY==='1'&&!!env.BROWSER};
    return new Response(JSON.stringify(body),{status:200,headers:res.headers});
