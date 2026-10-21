@@ -49,7 +49,7 @@ assert.equal(offer([u('show me my transport guide')], { paused: ['dubai.nol'] })
 assert.equal(kind([u('where was I?')], { following: ['dubai.nol'] }), 'refresher:dubai.nol');
 assert.match(offer([u('where was I?')], { following: ['dubai.nol', 'dubai.sim'] }).context, /Ask which one/);
 assert.match(offer([u('what do I do next?')], {}).context, /not following any guide/);
-for (const label of ['Pause journey', 'Resume journey', 'Mark completed', 'Where are you with this step?', 'Next step', 'Save to My Journeys', 'Open saved guide', 'Preview guide', 'Return to Chat'])
+for (const label of ['Pause journey', 'Resume journey', 'Mark completed', 'Where are you with this step?', 'Next step', 'Save to My Journeys', 'Open saved guide', 'Preview guide', 'aria-label="Back"'])
   assert.ok(js.includes(label) || fs.readFileSync('workers/trial-ui/page.html', 'utf8').includes(label), label);
 assert.match(js, /removes it and its progress from this device/, 'remove asks before losing progress');
 

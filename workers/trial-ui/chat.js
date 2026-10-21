@@ -5,7 +5,7 @@ let turns=[],busy=false,events=[],activeChatRequest=null;
 const $=id=>document.getElementById(id);
 function uiText(value){return window.OriviaI18n?.text(value)??value}
 function uiLanguage(){return window.OriviaI18n?.language()||'en'}
-const TITLES={home:'',chat:'',calendar:'Calendar',journeys:'Journeys',mylife:'My Life',guide:'Journeys',settings:'Settings'};
+const TITLES={home:'',chat:'',calendar:'Calendar',journeys:'Your guides',mylife:'My Life',guide:'Your guides',settings:'Settings'};
 function show(){
  $('intro').hidden=true;$('workspace').hidden=false;$('nav').hidden=false;$('open-settings').hidden=false;$('open-chats').hidden=false;
  loadChats();const c=activeChat();turns=c?c.turns.slice():[];
@@ -598,12 +598,15 @@ function renderHome(){
   tile.append(el('b','',date.toLocaleDateString(uiLanguage(),{day:'numeric'})),el('small','',date.toLocaleDateString(uiLanguage(),{month:'short'})));b.prepend(tile);coming.append(b);
  }
  if(!data.upcoming.length)dashboardEmpty(coming,'A little breathing room. No upcoming reminders.','Add a reminder',()=>{tab('calendar');openAdd()});
- if(data.active){const [id,v]=data.active,b=dashboardCard(v.title,'',()=>openGuide(id,{from:'home'}));
-  const copy=b.querySelector('.dashboard-copy');copy.prepend(el('span','dashboard-kicker',uiText(v.status==='paused'?'Paused journey':'Journey')));
+ const going=Object.entries(readJourneys()).filter(([id,v])=>JID.test(id)&&v&&typeof v.title==='string'&&(v.status==='active'||v.status==='paused')).sort((a,b)=>String(b[1].updated||'').localeCompare(String(a[1].updated||'')));
+ for(const [id,v] of going.slice(0,3)){const b=dashboardCard(v.title,'',()=>openGuide(id,{from:'home'}));
+  const copy=b.querySelector('.dashboard-copy');copy.prepend(el('span','dashboard-kicker',uiText(v.status==='paused'?'Paused':'In progress')));
   const total=Math.max(0,Number(v.steps)||0),done=Math.min(total,doneCount(v));
   copy.append(el('small','',uiText('Steps completed')+': '+done+' / '+total));if(total){const p=el('div','dashboard-progress');p.append(bar(done,total,uiText('Steps completed')));copy.append(p)}
-  copy.append(el('small','',uiText('Continue your journey →')));const symbol=el('span','dashboard-symbol');symbol.append(icon('M6 18a2.5 2.5 0 1 0 0-.1M18 6a2.5 2.5 0 1 0 0-.1M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5'));b.prepend(symbol);journey.append(b);
- }else dashboardEmpty(journey,'Take things one step at a time. Find a guide when you need one.','Explore journeys',()=>tab('journeys'));
+  copy.append(el('small','',uiText('Reopen →')));const symbol=el('span','dashboard-symbol');symbol.append(icon('M6 18a2.5 2.5 0 1 0 0-.1M18 6a2.5 2.5 0 1 0 0-.1M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5'));b.prepend(symbol);journey.append(b);
+ }
+ if(going.length>3)journey.append(dashboardCard(uiText('All your guides →'),String(going.length-3)+' '+uiText('more in progress'),()=>tab('journeys')));
+ if(!going.length)dashboardEmpty(journey,'Take things one step at a time. Find a guide when you need one.','Browse guides',()=>tab('journeys'));
  for(const chat of data.recent){const b=dashboardCard(chat.title,whenShort(chat.updated),()=>openChat(chat.id)),symbol=el('span','dashboard-symbol');symbol.append(icon('M4 5h16v11H9l-5 4z'));b.prepend(symbol);recent.append(b)}
  if(!data.recent.length)dashboardEmpty(recent,'Your conversations will be here when you want to return.','Start a conversation',()=>newChat());
 }
@@ -616,7 +619,7 @@ function renderLifeSummary(){
  $('life-institution-note').textContent=uiText(p.place?'Added by you · not linked':'Optional. You can add this later.');
  const places=new Set();for(const chat of store.chats)for(const t of chat.turns){if(!Array.isArray(t.meta?.savedPlaces))continue;for(const d of safeDestinations(t.meta.destinations,safeSources(t.meta.sources)))if(t.meta.savedPlaces.includes(placeIdentity(d)))places.add(placeIdentity(d))}
  $('life-place-count').textContent=String(places.size)+' · '+uiText('Saved on this device');
- const journeys=Object.entries(readJourneys()).filter(([id,v])=>JID.test(id)&&v&&typeof v.title==='string');$('life-journey-count').textContent=String(journeys.length)+' · '+uiText('Saved on this device');
+ const journeys=Object.entries(readJourneys()).filter(([id,v])=>JID.test(id)&&v&&typeof v.title==='string'),inProgress=journeys.filter(([,v])=>v.status==='active'||v.status==='paused').length;$('life-journey-count').textContent=journeys.length?String(journeys.length)+' '+uiText('saved')+(inProgress?' · '+inProgress+' '+uiText('in progress'):''):uiText('Browse step-by-step guides');
 }
 function submitHomeQuestion(e){
  e.preventDefault();const input=$('home-question'),text=input.value.trim(),note=$('home-question-status');note.hidden=true;
@@ -628,6 +631,7 @@ $('home-ask-form').addEventListener('submit',submitHomeQuestion);
 $('home-calendar').onclick=()=>tab('calendar');
 $('home-all-chats').onclick=()=>{tab('chat');openChats()};
 $('life-journeys-open').onclick=()=>tab('journeys');
+$('home-all-guides').onclick=()=>tab('journeys');
 $('life-places-open').onclick=()=>{const box=$('saved-places-section');box.hidden=!box.hidden;$('life-places-open').setAttribute('aria-expanded',String(!box.hidden));if(!box.hidden)renderSavedPlaces()};
 
 /* Switching sections: the bottom bar, and Orivia herself (window.oriviaGo) */
@@ -638,8 +642,9 @@ function tab(which){
  if(!views[which])return;
  if(which==='chat')try{renderOrgContext()}catch(_){}
  if(which!=='settings')lastTab=which;
+ if(!['journeys','guide','settings'].includes(which))guidesReturnTab=which;
  if(which!=='chat'){try{stopSpeaking();stopDictation(true);closeMicLanguageMenu()}catch(_){}}
- const navKey=which==='guide'?'journeys':which; // a guide opens inside Journeys; Settings has no tab of its own
+ const navKey=which==='guide'||which==='journeys'?'mylife':which; // guides live under My Life (no Journeys tab); Settings has no tab of its own
  for(const [k,id] of Object.entries(views)){$(id).hidden=k!==which;const b=$('tab-'+k);if(b){b.classList.toggle('active',k===navKey);b.setAttribute('aria-current',k===navKey?'page':'false')}}
  $('view-title').textContent=uiText(TITLES[which]);
  if(which==='home')renderHome();
@@ -650,6 +655,7 @@ function tab(which){
  if(which==='chat'){const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight}
 }
 window.oriviaGo=tab;
+var guidesReturnTab='home';
 let lastTab='chat';
 for(const b of document.querySelectorAll('nav.bottom [data-tab]'))b.onclick=()=>tab(b.dataset.tab);
 loadEvents();
@@ -1364,7 +1370,7 @@ async function openGuide(id,opts={}){
  draw();
 }
 $('j-search').addEventListener('input',()=>renderLibrary());
-$('back-chat').onclick=()=>tab('chat');
+$('back-chat').onclick=()=>tab(guidesReturnTab||'mylife');
 for(const [t,u,sub] of OFFICIAL){const a=el('a','link-card');a.href=u;a.target='_blank';a.rel='noopener noreferrer';const s=el('span');s.append(el('strong','',t),el('small','tiny',sub));a.append(s,document.createTextNode('↗'));$('officials').append(a)}
 renderJourneys();
 /* Calendar form (Calendar section) */

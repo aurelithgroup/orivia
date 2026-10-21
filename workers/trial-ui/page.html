@@ -371,7 +371,7 @@ a.src strong{font-size:14px;overflow-wrap:anywhere}
 .toggle input:checked::after{inset-inline-start:23px}
 :root.large .app{zoom:1.12}
 /* Bottom navigation with Help in the middle */
-nav.bottom{display:grid;grid-template-columns:repeat(5,1fr);align-items:end;border-top:1px solid var(--line);background:var(--surface);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
+nav.bottom{display:grid;grid-template-columns:repeat(4,1fr);align-items:end;border-top:1px solid var(--line);background:var(--surface);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
 nav.bottom button{border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:600;padding:4px 2px;min-height:48px;border-radius:12px}
 nav.bottom button svg{width:24px;height:24px}
 nav.bottom button.active{color:var(--ink)}
@@ -549,7 +549,7 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
   <p id="home-question-status" class="tiny" role="status" hidden></p>
   <section id="home-spaces" class="dashboard-section" hidden aria-labelledby="home-spaces-title"><div class="dashboard-head"><h2 id="home-spaces-title">Your spaces</h2></div><div id="home-spaces-list" class="list"></div></section>
   <section class="dashboard-section" aria-labelledby="home-coming-title"><div class="dashboard-head"><h2 id="home-coming-title">Coming up</h2><button type="button" class="ask" id="home-calendar">View calendar →</button></div><div id="home-coming" class="list"></div></section>
-  <section class="dashboard-section" aria-labelledby="home-next-title"><div class="dashboard-head"><h2 id="home-next-title">Your next step</h2></div><div id="home-journey"></div></section>
+  <section class="dashboard-section" aria-labelledby="home-next-title"><div class="dashboard-head"><h2 id="home-next-title">Your guides</h2><button type="button" class="ask" id="home-all-guides">All your guides →</button></div><div id="home-journey" class="list"></div></section>
   <section class="dashboard-section" aria-labelledby="home-recent-title"><div class="dashboard-head"><h2 id="home-recent-title">Pick up where you left off</h2><button type="button" class="ask" id="home-all-chats">All chats →</button></div><div id="home-recent" class="list"></div></section>
   <p class="life-bottom-note" data-device-copy="Saved on this device. Accounts and sync are coming later." data-account-copy="Your chats and plans are saved to your private account.">Saved on this device. Accounts and sync are coming later.</p>
  </div></section>
@@ -564,7 +564,7 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
   <p class="tiny">Orivia’s calendar doesn’t send alerts by itself. For a phone alert, add the reminder to your calendar with the button under it (iPhone Calendar on an iPhone, Google Calendar elsewhere), then press Save or Add there.</p>
  </div></section>
  <section id="journeys" class="view" hidden><div class="pad section" style="overflow:auto">
-  <div class="jhead"><div><h2>Journeys</h2><p class="notice">Everything you’re working through, in one place.</p></div><button id="back-chat" type="button" class="chip-btn" aria-label="Return to Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Chat</button></div>
+  <div class="jhead"><div><h2>Your guides</h2><p class="notice">Everything you’re working through, in one place.</p></div><button id="back-chat" type="button" class="chip-btn" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Chat</button></div>
   <div class="sechead"><h3>My Journeys</h3><span id="j-count" class="tiny"></span></div>
   <p class="tiny">Pick up where you left off. Saved on this device.</p>
   <div class="list" id="my-journeys"></div>
@@ -609,7 +609,7 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
   <section class="life-group" aria-labelledby="life-saved-title"><div class="life-group-head"><h2 id="life-saved-title">Saved for later</h2></div>
    <button type="button" class="link-card life-saved" id="life-places-open" aria-expanded="false" aria-controls="saved-places-section"><span><strong>Places</strong><small id="life-place-count"></small></span>›</button>
    <div id="saved-places-section" hidden><p class="tiny">Saved with your chats on this device.</p><div id="saved-places" class="list"></div></div>
-   <button type="button" class="link-card life-saved" id="life-journeys-open"><span><strong>Journeys</strong><small id="life-journey-count"></small></span>›</button>
+   <button type="button" class="link-card life-saved" id="life-journeys-open"><span><strong>Your guides</strong><small id="life-journey-count"></small></span>›</button>
   </section>
   <div id="life-journeys" hidden></div><div id="upcoming" hidden></div>
   <button type="button" class="link-card" id="account-open">Sign in or create an account</button>
@@ -659,7 +659,7 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
  <button id="tab-home" type="button" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-7 9 7v11h-6v-7H9v7H3z"/></svg><span>Home</span></button>
  <button id="tab-chat" type="button" data-tab="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Chat</span></button>
  <button id="tab-mylife" type="button" data-tab="mylife"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>My Life</span></button>
- <button id="tab-journeys" type="button" data-tab="journeys"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg><span>Journeys</span></button>
+ 
  <button id="tab-calendar" type="button" data-tab="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Calendar</span></button>
 </nav>
 <div id="chats-drawer" class="drawer-scrim" hidden><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="chats-title">
@@ -688,7 +688,7 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
  <div class="em"><a href="tel:999"><b>999</b>Police</a><a href="tel:998"><b>998</b>Ambulance</a><a href="tel:997"><b>997</b>Fire</a></div>
  <button type="button" class="btn" id="help-wrong">Something went wrong? Tell Orivia</button>
  <button type="button" class="btn quiet" id="help-staff">Show a card asking staff for help</button>
- <button type="button" class="btn quiet" id="help-journeys">Step-by-step guides in Journeys</button>
+ <button type="button" class="btn quiet" id="help-journeys">Browse step-by-step guides</button>
  <button type="button" class="btn quiet" id="help-close">Close</button>
 </div></div>
 <div id="staff-card" class="staff" hidden role="dialog" aria-modal="true" aria-label="Help card for staff"><button type="button" class="x" id="staff-close" aria-label="Close">×</button>

@@ -2090,5 +2090,45 @@
   "Lock-screen alerts never include your reminder title, chat text or university details. Delivery can be delayed by your device or network.": {
     "fr": "Les alertes sur l’écran verrouillé n’incluent jamais le titre du rappel, vos conversations ou les détails universitaires. L’appareil ou le réseau peuvent retarder leur réception.",
     "ar": "لا تتضمن تنبيهات شاشة القفل عنوان تذكيرك أو نص المحادثة أو تفاصيل الجامعة. قد يتأخر وصولها بسبب جهازك أو شبكتك."
+  },
+  "Your guides": {
+    "fr": "Vos guides",
+    "ar": "أدلتك"
+  },
+  "All your guides →": {
+    "fr": "Tous vos guides →",
+    "ar": "كل أدلتك ←"
+  },
+  "Browse guides": {
+    "fr": "Parcourir les guides",
+    "ar": "تصفّح الأدلة"
+  },
+  "Browse step-by-step guides": {
+    "fr": "Parcourir les guides étape par étape",
+    "ar": "تصفّح الأدلة خطوة بخطوة"
+  },
+  "Reopen →": {
+    "fr": "Rouvrir →",
+    "ar": "إعادة الفتح ←"
+  },
+  "In progress": {
+    "fr": "En cours",
+    "ar": "قيد التقدّم"
+  },
+  "Paused": {
+    "fr": "En pause",
+    "ar": "متوقف مؤقتًا"
+  },
+  "in progress": {
+    "fr": "en cours",
+    "ar": "قيد التقدّم"
+  },
+  "more in progress": {
+    "fr": "autres en cours",
+    "ar": "أخرى قيد التقدّم"
+  },
+  "saved": {
+    "fr": "enregistrés",
+    "ar": "محفوظة"
   }
 }
