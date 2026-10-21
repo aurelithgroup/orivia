@@ -150,6 +150,7 @@ jobs:
         run: |
           node tests/content-details.test.mjs
           node tests/university-actions.test.mjs
+          node --experimental-sqlite tests/university-chat.test.mjs
       - name: "Shared navigation and space addresses"
         run: node tests/navigation.test.mjs
       - name: "myorivia.app production entry gates"

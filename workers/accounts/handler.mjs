@@ -4,6 +4,19 @@ import {accountTestPage,mountAccountTest} from './test-entry.mjs';
 import {handleOrganisationRequest,organisationRoute,organisationDeletionBlock} from './organisations.mjs';
 import {accountConfig,createAccountAuth} from './auth.mjs';
 import {appHome} from './app-home.mjs';
+import {parseDetails} from './content-details.mjs';
+/* A university item the person chose to ask Orivia about. Returned only to a signed-in, verified, ACTIVE member of that
+ * organisation, only while it's published. Called on every chat message, so removed access or unpublished content stops
+ * at once. Nothing is stored. */
+export async function readOrgContext(req,env,ref,options={}){
+ const c=accountConfig(env);if(!c.enabled||env.ORGANISATIONS_ENABLED!=='1')return null;
+ if(!ref||typeof ref!=='object'||Object.keys(ref).some(k=>!['org','content'].includes(k)))return null;
+ if(typeof ref.org!=='string'||typeof ref.content!=='string'||!/^[A-Za-z0-9-]{1,64}$/.test(ref.org)||!/^[A-Za-z0-9-]{1,64}$/.test(ref.content))return null;
+ const auth=options.auth||createAccountAuth(env,options),s=await auth.api.getSession({headers:req.headers});if(!s?.user?.id||!s.user.emailVerified)return null;
+ const row=await env.ACCOUNTS_DB.prepare("SELECT c.id,c.kind,c.title,c.body,c.details,c.revision,c.updated_at,o.id AS org_id,o.name FROM organisation_content c JOIN organisations o ON o.id=c.org_id JOIN organisation_memberships m ON m.org_id=c.org_id AND m.user_id=? AND m.status='active' WHERE c.id=? AND c.org_id=? AND c.status='published' AND o.status='active'").bind(s.user.id,ref.content,ref.org).first();
+ if(!row)return null;
+ return {orgId:row.org_id,orgName:row.name,contentId:row.id,kind:row.kind,title:row.title,body:row.body,details:parseDetails(row.details),revision:row.revision,updatedAt:new Date(row.updated_at).toISOString()};
+}
 const json=(body,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 export async function boundedJson(req,max=1048576){if(!req.body)return null;const reader=req.body.getReader();let size=0,parts=[];try{while(true){const {value,done}=await reader.read();if(done)break;size+=value.byteLength;if(size>max){await reader.cancel();throw Error('body_too_large')}parts.push(value)}}finally{reader.releaseLock()}const bytes=new Uint8Array(size);let offset=0;for(const p of parts){bytes.set(p,offset);offset+=p.byteLength}return JSON.parse(new TextDecoder().decode(bytes));}
 export function validateSnapshot(d){

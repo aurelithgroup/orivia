@@ -69,7 +69,7 @@ export function createPilotWorker({launchBrowser,fetcher,publicRelease=false}={}
   const inner=createTrialWorker({
    research:async({env,preferences})=>pilotResearchOptions({env,preferences,ctx},{launchBrowser,fetcher,getAI}),
    assistant:({env,preferences})=>{const ai=getAI(env,preferences);if(!ai)return null;
-    return ({messages,profile,context,localNow,reserve,onProgress})=>runAssistantTurn({messages,profile,context,localNow,calendarChangeUI:preferences?.calendarChangeUI===1,replyLanguage:preferences?.language},env,{ai,reserve,onProgress,...(fetcher?{fetcher}:{})})}
+    return ({messages,profile,context,localNow,orgContext,reserve,onProgress})=>runAssistantTurn({messages,profile,context,localNow,orgContext,calendarChangeUI:preferences?.calendarChangeUI===1,replyLanguage:preferences?.language},env,{ai,reserve,onProgress,...(fetcher?{fetcher}:{})})}
   });
   const res=await inner.fetch(req,env,ctx);
   const url=new URL(req.url);

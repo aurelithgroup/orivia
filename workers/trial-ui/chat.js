@@ -25,7 +25,7 @@ function autoTitle(ts){const u=(ts.find(t=>t.role==='user')||{}).content||'New c
 function normChat(c){
  if(!c||typeof c!=='object'||typeof c.id!=='string')return null;
  const ts=Array.isArray(c.turns)?c.turns.filter(validTurn).map(t=>({role:t.role,content:String(t.content).slice(0,t.role==='assistant'?4000:2000),...(t.meta&&typeof t.meta==='object'?{meta:t.meta}:{})})):[];
- return {id:c.id.slice(0,24),title:String(c.title||autoTitle(ts)).slice(0,80),titled:!!c.titled,created:Number(c.created)||Date.now(),updated:Number(c.updated)||Date.now(),pinned:!!c.pinned,archived:!!c.archived,turns:ts};
+ return {id:c.id.slice(0,24),title:String(c.title||autoTitle(ts)).slice(0,80),titled:!!c.titled,created:Number(c.created)||Date.now(),updated:Number(c.updated)||Date.now(),pinned:!!c.pinned,archived:!!c.archived,turns:ts,...(c.orgContext&&typeof c.orgContext==='object'&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.org))&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.content))?{orgContext:{org:String(c.orgContext.org),content:String(c.orgContext.content),title:String(c.orgContext.title||'').slice(0,150),orgName:String(c.orgContext.orgName||'').slice(0,80)}}:{})};
 }
 let storeLocked=false; // saved chats exist but couldn't be read or backed up: never overwrite them
 function storageWarn(msg){
@@ -73,13 +73,29 @@ function loadChats(){
 function activeChat(){return store.chats.find(c=>c.id===store.active)||null}
 function save(){
  let c=activeChat();
- if(!c){if(!turns.length)return;c=normChat({id:newId(),turns:[],created:Date.now()});store.chats.unshift(c);store.active=c.id}
+ if(!c){if(!turns.length)return;c=normChat({id:newId(),turns:[],created:Date.now(),orgContext:pendingOrgContext});pendingOrgContext=null;store.chats.unshift(c);store.active=c.id}
  c.turns=turns.slice();c.updated=Date.now();if(!c.titled)c.title=autoTitle(c.turns);
  const ok=persist();renderChats();return ok;
 }
 function clearChatCards(){resources([]);for(const id of ['guide-offer','remember-card','inline-calendar'])$(id)?.remove();$('status').textContent=''}
-function openChat(id){closeHandoff();stopSpeaking();stopDictation(false);store.active=id;persist();const c=activeChat();turns=c?c.turns.slice():[];clearChatCards();draw();closeChats();tab('chat')}
-function newChat(){closeHandoff();stopSpeaking();stopDictation(false);store.active=null;persist();turns=[];clearChatCards();draw();closeChats();tab('chat');$('msg').focus()}
+function openChat(id){closeHandoff();stopSpeaking();stopDictation(false);pendingOrgContext=null;store.active=id;persist();const c=activeChat();turns=c?c.turns.slice():[];clearChatCards();draw();closeChats();tab('chat');renderOrgContext()}
+function newChat(ctx=null){closeHandoff();stopSpeaking();stopDictation(false);pendingOrgContext=ctx;store.active=null;persist();turns=[];clearChatCards();draw();closeChats();tab('chat');renderOrgContext();$('msg').focus()}
+/* University context (21 Oct): the guide a person chose with 'Ask Orivia about this'. Shown as a removable label; sent as ids
+   only; the server re-reads it for an active member on every message. A personal conversation never carries it. */
+var pendingOrgContext=null; // var: chat restore may run before this line
+function currentOrgContext(){const c=activeChat();return c?c.orgContext||null:pendingOrgContext}
+function clearOrgContext(note){const c=activeChat();if(c&&c.orgContext){delete c.orgContext;persist()}pendingOrgContext=null;renderOrgContext();if(note)$('status').textContent=note}
+function renderOrgContext(){
+ const box=$('org-context');if(!box)return;const o=currentOrgContext();if(!o){box.hidden=true;box.replaceChildren();return}
+ const label=el('span','org-context-text','Using '+(o.orgName||'your university')+'’s “'+(o.title||'guide')+'”');
+ const x=el('button','org-context-clear','✕');x.type='button';x.setAttribute('aria-label','Stop using this university guide');x.onclick=()=>clearOrgContext('');
+ const personal=el('button','ask','Start a personal conversation');personal.type='button';personal.onclick=()=>newChat(null);
+ box.replaceChildren(label,x,personal);box.hidden=false;
+}
+const ORG_AI_NOTICE='orivia-org-ai-notice-v1';
+window.OriviaChat={aiNoticeSeen(){try{return (globalThis.OriviaAccountStorage?.storage||localStorage).getItem(ORG_AI_NOTICE)==='yes'}catch(_){return false}},markAiNotice(){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(ORG_AI_NOTICE,'yes')}catch(_){}},useOrgContext(o){if(!o||!/^[A-Za-z0-9-]{1,64}$/.test(String(o.org))||!/^[A-Za-z0-9-]{1,64}$/.test(String(o.content)))return;
+ newChat({org:String(o.org),content:String(o.content),title:String(o.title||'').slice(0,150),orgName:String(o.orgName||'').slice(0,80)});
+ const m=$('msg');if(m&&!m.value)m.value='Help me with “'+String(o.title||'this guide').slice(0,120)+'”: what do I need to do?';m?.focus()}};
 function whenShort(t){const d=new Date(t),now=new Date();const same=d.toDateString()===now.toDateString();const y=new Date(now);y.setDate(now.getDate()-1);
  return same?d.toLocaleTimeString(uiLanguage(),{hour:'numeric',minute:'2-digit'}):d.toDateString()===y.toDateString()?'Yesterday':d.toLocaleDateString(uiLanguage(),{day:'numeric',month:'short'})}
 function chatRow(c){
@@ -620,6 +636,7 @@ try{if(new URLSearchParams(location.search).get('view')==='settings')queueMicrot
 function tab(which){
  const views={home:'home',chat:'chat',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view',settings:'settings-view'};
  if(!views[which])return;
+ if(which==='chat')try{renderOrgContext()}catch(_){}
  if(which!=='settings')lastTab=which;
  if(which!=='chat'){try{stopSpeaking();stopDictation(true);closeMicLanguageMenu()}catch(_){}}
  const navKey=which==='guide'?'journeys':which; // a guide opens inside Journeys; Settings has no tab of its own
@@ -935,7 +952,7 @@ function resources(items){let holder=$('journey-actions');if(!holder){holder=doc
    "Official source" / "Organisation source" (later "Community experiences"); "Opened" = retrieved, not
    comprehensively verified; claims are "Source-backed" (an exact quote, not proof of interpretation). */
 /* A listing site is cited for names to check, never as proof. */
-const SOURCE_KIND={official:'Official source',government:'Official source',organisation:'Organisation source',institution:'Organisation source',operator:'Organisation source',business:'Organisation source',transport:'Organisation source',directory:'Listing site',community:'People’s experiences'};
+const SOURCE_KIND={university:'From your university',official:'Official source',government:'Official source',organisation:'Organisation source',institution:'Organisation source',operator:'Organisation source',business:'Organisation source',transport:'Organisation source',directory:'Listing site',community:'People’s experiences'};
 function safeSources(list){
  if(!Array.isArray(list))return [];
  const out=[];
@@ -1715,11 +1732,12 @@ $('form').onsubmit=async e=>{
  const controller=new AbortController();activeChatRequest=controller;
  busy=true;$('send').disabled=true;$('status').textContent=uiText('Orivia is thinking…');working('Thinking…');window.oriviaResearchMode=!!pilotConsent();
  try{
-  const res=await fetch('/v1/chat',{method:'POST',signal:controller.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),researchContext:currentResearchContext(sentTurns),language:uiLanguage(),style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
+  const res=await fetch('/v1/chat',{method:'POST',signal:controller.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),...(currentOrgContext()?{orgContext:{org:currentOrgContext().org,content:currentOrgContext().content}}:{}),researchContext:currentResearchContext(sentTurns),language:uiLanguage(),style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
   const {r,d}=await readReply(res,chatId);
   if((globalThis.OriviaAccounts?.epoch||'')!==accountAtSend)return;
   if(!r.ok){
    const why=d&&d.error;
+   if(r.status===403&&why==='org_context_unavailable'){clearOrgContext('That university guide isn’t available to you any more, so Orivia stopped using it. Send your message again to ask without it.');$('msg').value=$('msg').value||sentTurns.at(-1)?.content||'';return}
    if(r.status===401&&why==='human_check'){const passedBefore=humanOk;$('consent').checked=agreed();try{sessionStorage.removeItem(ck)}catch(_){}$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false;if(window.__siteKey)loadTurnstile(window.__siteKey);$('status').textContent='';
     // Passed the check but the browser didn't keep it (a framed preview in a strict browser): say so instead of looping.
     const f=passedBefore&&framedFullScreen();if(f){const n=$('human-note');n.hidden=false;n.replaceChildren(document.createTextNode('This browser didn’t keep your check inside the preview. Open Orivia full screen to continue. '),f)}

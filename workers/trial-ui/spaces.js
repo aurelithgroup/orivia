@@ -1,4 +1,5 @@
-/* Organisation content is fetched for the current session only, never saved in the personal vault or sent to the AI. */
+/* Organisation content is fetched for the current session only and never saved in the personal vault. It reaches the AI only
+   when the person taps "Ask Orivia about this" on a guide: then only that item, re-read by the server for an active member. */
 (function(){
  'use strict';
  const $=id=>document.getElementById(id),t=s=>window.OriviaI18n?.text(s)??s;
@@ -19,6 +20,18 @@
   try{if(!det.time){const [y,mo,da]=det.date.split('-').map(Number);return new Intl.DateTimeFormat(lang,{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(Date.UTC(y,mo-1,da)))+' · '+t('All day')}
    const at=window.OriviaCalendar?.instant(det.date,det.time,det.timeZone);if(!at)return det.date+' '+det.time;
    return new Intl.DateTimeFormat(lang,{weekday:'long',day:'numeric',month:'long',hour:'numeric',minute:'2-digit',timeZone:det.timeZone,timeZoneName:'short'}).format(at)}catch(_){return det.date+(det.time?' '+det.time:'')}
+ }
+ /* "Ask Orivia about this": the first time, explain that the selected guide's text goes to the AI providers with the question. */
+ function askAction(c,m,org,actions){
+  const b=node('button','btn small','Ask Orivia about this');b.type='button';
+  const go=()=>{close();leaveAddress();window.OriviaChat?.useOrgContext({org:m.organisationId,content:c.id,title:c.title,orgName:org})};
+  b.onclick=()=>{const seen=!!window.OriviaChat?.aiNoticeSeen?.();
+   if(seen)return go();
+   const box=node('div','org-confirm');box.append(node('p','tiny','To answer, Orivia sends this guide’s text and your question to OpenAI, or to Cloudflare Workers AI if OpenAI is unavailable. Nothing else from '+org+' is sent, and '+org+' doesn’t see your chat.',true));
+   const ok=node('button','btn small','Continue');ok.type='button';const no=node('button','btn quiet small','Cancel');no.type='button';
+   ok.onclick=()=>{window.OriviaChat?.markAiNotice?.();go()};no.onclick=()=>box.remove();
+   const row=node('div','org-actions');row.append(ok,no);box.append(row);actions.after?actions.after(box):actions.append(box);ok.focus()};
+  return b;
  }
  /* "Add to my calendar": confirm first, then save once (duplicates are recognised by organisation and item). */
  function calendarAction(c,det,m,org){
@@ -62,6 +75,7 @@
      const actions=node('div','org-actions');
      if(kind==='date'&&det.date)actions.append(calendarAction(c,det,m,org));
      if(kind==='contact'){if(det.phone)actions.append(link('Call','tel:'+det.phone.replace(/[^\d+]/g,'')));if(det.email)actions.append(link('Email','mailto:'+det.email));if(det.website)actions.append(link('Website ↗',det.website,true))}
+     if(kind==='guide')actions.append(askAction(c,m,org,actions));
      if(kind==='guide'&&det.sourceUrl)actions.append(link('Source page ↗',det.sourceUrl,true));
      if(kind==='update'){const g=det.relatedId&&byId.get(det.relatedId);if(g&&g.kind==='guide'){const b=node('button','btn quiet small','Open guide: '+g.title,true);b.type='button';b.onclick=()=>{const t=$('org-item-'+g.id);t?.scrollIntoView({behavior:'smooth',block:'start'});t?.classList.add('org-highlight');setTimeout(()=>t?.classList.remove('org-highlight'),1600)};actions.append(b)}
       if(det.actionLabel&&det.actionUrl)actions.append(link(det.actionLabel+' ↗',det.actionUrl,true))}

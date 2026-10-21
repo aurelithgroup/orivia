@@ -7,7 +7,7 @@ const block = js.slice(js.indexOf('/* ===== Chat history'), js.indexOf('let chat
 const mem = {}, store = k => ({ getItem: x => (k[x] ?? null), setItem: (x, v) => { k[x] = String(v); }, removeItem: x => { delete k[x]; } });
 const local = {}, session = {};
 const h = new Function('localStorage', 'sessionStorage', '$', 'renderChatsStub',
-  'const key="orivia-ai-private-turns";let turns=[];const resources=()=>{},el=()=>({}),button=()=>({}),stopSpeaking=()=>{},stopDictation=()=>{},draw=()=>{},closeChats=()=>{},tab=()=>{};' +
+  'const window={};const key="orivia-ai-private-turns";let turns=[];const resources=()=>{},el=()=>({}),button=()=>({}),stopSpeaking=()=>{},stopDictation=()=>{},draw=()=>{},closeChats=()=>{},tab=()=>{};' +
   block.replace(/function renderChats\(\)\{[\s\S]*?\n\}\n/, 'function renderChats(){}\n') +
   ';return {get store(){return store},set turns(v){turns=v},get turns(){return turns},loadChats,save,activeChat,autoTitle,chatMessages:null,persist,newChat:()=>{store.active=null;turns=[];persist()}}')(
   store(local), store(session), () => ({ textContent: '', focus() {} }));
@@ -60,7 +60,7 @@ function make(opts = {}) {
     removeItem: x => { delete local[x]; } };
   const $ = id => (els[id] ||= { textContent: '', hidden: true, focus() {} });
   const api = new Function('localStorage', 'sessionStorage', '$',
-    'const key="orivia-ai-private-turns";let turns=[];const resources=()=>{},el=()=>({}),button=()=>({}),stopSpeaking=()=>{},stopDictation=()=>{},draw=()=>{},closeChats=()=>{},tab=()=>{};' +
+    'const window={};const key="orivia-ai-private-turns";let turns=[];const resources=()=>{},el=()=>({}),button=()=>({}),stopSpeaking=()=>{},stopDictation=()=>{},draw=()=>{},closeChats=()=>{},tab=()=>{};' +
     block.replace(/function renderChats\(\)\{[\s\S]*?\n\}\n/, 'function renderChats(){}\n') +
     ';return {get store(){return store},set turns(v){turns=v},get turns(){return turns},loadChats,save,persist,newChat:()=>{store.active=null;turns=[];persist()}}')(ls, store(session), $);
   return { api, ls, local, session, warn: () => (els['storage-warn'] && !els['storage-warn'].hidden ? els['storage-warn-text'].textContent : '') };
