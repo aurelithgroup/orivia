@@ -46,9 +46,15 @@ One production Worker on myorivia.app serves all of these, so the Better Auth se
 10. **Consent and notifications (Ina).** Production needs one consent version covering OpenAI (with Workers AI backup), Brave Search, accounts and optional notifications. Agree wording and version name with Ina before the build. Pilot testers' consent is not reused.
 11. **One deployer.** Ina deployed the pilot today. During the release, only one person deploys any Orivia Worker. The other reviews.
 
+## Founder decisions (21 October)
+
+- **Deployer:** Cleo deploys every Orivia Worker during the release. Ina pauses pilot deployments and reviews consent and notifications.
+- **Accounts:** production takes over `orivia-accounts-private`, so the owner account, Northbay and test students carry over. The pilot gets a new, empty test accounts database.
+- **Guests:** fresh start on myorivia.app. Once production passes, the old public address points to myorivia.app. Old guest chats stay in the old browser storage and aren't imported.
+
 ## Order of work
 
-1. Founder decides 6, 8 and the deployer (11).
+1. ~~Founder decides 6, 8 and the deployer (11).~~ Done, see above.
 2. Code changes 2–5 on the branch, with tests: public account routes, `/app` page, `/join/<org>`, `/manage` owner check, service-worker scope.
 3. Build the production bundle from the live pilot bundle, apply the public-release patch, then the changes from step 2. Record every replaced string.
 4. Deploy it as a **new** Worker `orivia-production` with no custom domain yet (workers.dev on, or a hidden test host such as `next.myorivia.app` behind Access).
