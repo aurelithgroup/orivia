@@ -642,6 +642,7 @@ function tab(which){
  const views={home:'home',chat:'chat',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view',settings:'settings-view'};
  if(!views[which])return;
  if(which==='chat')try{renderOrgContext()}catch(_){}
+ if(which==='mylife')try{window.OriviaFiles?.render()}catch(_){}
  if(which!=='settings')lastTab=which;
  if(!['journeys','guide','settings'].includes(which))guidesReturnTab=which;
  if(which!=='chat'){try{stopSpeaking();stopDictation(true);closeMicLanguageMenu()}catch(_){}}

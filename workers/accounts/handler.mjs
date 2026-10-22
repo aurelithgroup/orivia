@@ -5,6 +5,7 @@ import {handleOrganisationRequest,organisationRoute,organisationDeletionBlock} f
 import {accountConfig,createAccountAuth} from './auth.mjs';
 import {appHome} from './app-home.mjs';
 import {parseDetails} from './content-details.mjs';
+import {filesRoute,handleFileRequest,deleteAllFiles} from './files.mjs';
 /* A university item the person chose to ask Orivia about. Returned only to a signed-in, verified, ACTIVE member of that
  * organisation, only while it's published. Called on every chat message, so removed access or unpublished content stops
  * at once. Nothing is stored. */
@@ -48,6 +49,7 @@ export async function handleAccountRequest(req,env,ctx,options={}){
   const expected=req.headers.get('X-Orivia-Account');if(url.pathname!=='/api/account/session'&&expected&&expected!==owner)return json({error:'account_changed'},409);
   if((req.method==='PUT'||url.pathname.startsWith('/api/account/notifications')&&!['GET','HEAD'].includes(req.method))&&!expected)return json({error:'account_header_required'},428);
   if(url.pathname.startsWith('/api/account/notifications'))return await handleNotificationRequest(req,env,{session,readJson:boundedJson});
+  if(filesRoute(url.pathname))return await handleFileRequest(req,env,{owner,expected,json,readJson:boundedJson});
   if(url.pathname==='/api/account/session'&&req.method==='GET')return json({user:{id:owner,name:session.user.name,email:session.user.email}});
   if(url.pathname==='/api/account/sessions'&&req.method==='GET'){
    const sessions=await auth.api.listSessions({headers:req.headers});
@@ -66,7 +68,9 @@ export async function handleAccountRequest(req,env,ctx,options={}){
    const data=await boundedJson(req);if(!validateSnapshot(data))return json({error:'invalid_snapshot'},400);const text=JSON.stringify(data),now=new Date().toISOString();
    const row=revision===0?await env.ACCOUNTS_DB.prepare('INSERT INTO account_vault(user_id,revision,data,updated_at) VALUES (?,1,?,?) ON CONFLICT(user_id) DO NOTHING RETURNING revision').bind(owner,text,now).first():await env.ACCOUNTS_DB.prepare('UPDATE account_vault SET data=?,revision=revision+1,updated_at=? WHERE user_id=? AND revision=? RETURNING revision').bind(text,now,owner,revision).first();
    return row?json({revision:row.revision,updatedAt:now}):json({error:'sync_conflict'},409);}
-  if(url.pathname==='/api/account'&&req.method==='DELETE'){const body=await boundedJson(req,100);if(body?.confirm!=='delete my account')return json({error:'confirmation_required'},400);if(env.ORGANISATIONS_ENABLED==='1'){const blocked=await organisationDeletionBlock(env.ACCOUNTS_DB,owner);if(blocked)return json({error:blocked},409)}return await auth.api.deleteUser({headers:req.headers,body:{callbackURL:c.origin+appHome(env)},asResponse:true});}
+  if(url.pathname==='/api/account'&&req.method==='DELETE'){const body=await boundedJson(req,100);if(body?.confirm!=='delete my account')return json({error:'confirmation_required'},400);if(env.ORGANISATIONS_ENABLED==='1'){const blocked=await organisationDeletionBlock(env.ACCOUNTS_DB,owner);if(blocked)return json({error:blocked},409)}const res=await auth.api.deleteUser({headers:req.headers,body:{callbackURL:c.origin+appHome(env)},asResponse:true});
+   // The account is gone: its stored files go too (their records were removed with the account).
+   if(res.ok)await deleteAllFiles(env,owner).catch(()=>{});return res;}
   return json({error:'not_found'},404);
  }catch(e){return json({error:e?.message==='body_too_large'?'body_too_large':'account_request_failed'},e?.message==='body_too_large'?413:400)}
 }

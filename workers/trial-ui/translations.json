@@ -2274,5 +2274,101 @@
   "Your phone went to sleep before Orivia finished. Sending your message again…": {
     "fr": "Votre téléphone s’est mis en veille avant la fin de la réponse d’Orivia. Nouvel envoi de votre message…",
     "ar": "دخل هاتفك في وضع السكون قبل أن تُنهي أوريفيا الرد. جارٍ إرسال رسالتك مرة أخرى…"
+  },
+  "Your files": {
+    "fr": "Vos fichiers",
+    "ar": "ملفاتك"
+  },
+  "Take a photo": {
+    "fr": "Prendre une photo",
+    "ar": "التقاط صورة"
+  },
+  "Add a file": {
+    "fr": "Ajouter un fichier",
+    "ar": "إضافة ملف"
+  },
+  "Saved privately to your account. Only you can open them. Orivia doesn’t read or check your documents.": {
+    "fr": "Enregistrés de façon privée dans votre compte. Vous seul pouvez les ouvrir. Orivia ne lit pas et ne vérifie pas vos documents.",
+    "ar": "محفوظة بشكل خاص في حسابك. أنت وحدك من يمكنه فتحها. لا تقرأ أوريفيا مستنداتك ولا تتحقق منها."
+  },
+  "Saved only in this browser. Sign in to keep them in your private account. Orivia doesn’t read or check your documents.": {
+    "fr": "Enregistrés uniquement dans ce navigateur. Connectez-vous pour les garder dans votre compte privé. Orivia ne lit pas et ne vérifie pas vos documents.",
+    "ar": "محفوظة في هذا المتصفح فقط. سجّل الدخول للاحتفاظ بها في حسابك الخاص. لا تقرأ أوريفيا مستنداتك ولا تتحقق منها."
+  },
+  "No files yet. Take a photo of a document or add a PDF.": {
+    "fr": "Aucun fichier pour l’instant. Prenez un document en photo ou ajoutez un PDF.",
+    "ar": "لا توجد ملفات بعد. التقط صورة لمستند أو أضف ملف PDF."
+  },
+  "of 100 MB used": {
+    "fr": "utilisés sur 100 Mo",
+    "ar": "مستخدمة من 100 ميغابايت"
+  },
+  "Saving": {
+    "fr": "Enregistrement",
+    "ar": "جارٍ الحفظ"
+  },
+  "File saved.": {
+    "fr": "Fichier enregistré.",
+    "ar": "تم حفظ الملف."
+  },
+  "Files saved.": {
+    "fr": "Fichiers enregistrés.",
+    "ar": "تم حفظ الملفات."
+  },
+  "Deleted.": {
+    "fr": "Supprimé.",
+    "ar": "تم الحذف."
+  },
+  "Open": {
+    "fr": "Ouvrir",
+    "ar": "فتح"
+  },
+  "Download": {
+    "fr": "Télécharger",
+    "ar": "تنزيل"
+  },
+  "New name": {
+    "fr": "Nouveau nom",
+    "ar": "الاسم الجديد"
+  },
+  "Photo": {
+    "fr": "Photo",
+    "ar": "صورة"
+  },
+  "That file is over 10 MB. Try a smaller one or a photo instead.": {
+    "fr": "Ce fichier dépasse 10 Mo. Essayez un fichier plus petit ou une photo.",
+    "ar": "حجم هذا الملف أكبر من 10 ميغابايت. جرّب ملفًا أصغر أو صورة بدلًا منه."
+  },
+  "Your files are using all 100 MB. Delete some to add more.": {
+    "fr": "Vos fichiers utilisent les 100 Mo. Supprimez-en pour en ajouter d’autres.",
+    "ar": "ملفاتك تستخدم كامل المساحة البالغة 100 ميغابايت. احذف بعضها لإضافة المزيد."
+  },
+  "Only PDF, JPEG and PNG files can be saved.": {
+    "fr": "Seuls les fichiers PDF, JPEG et PNG peuvent être enregistrés.",
+    "ar": "يمكن حفظ ملفات PDF وJPEG وPNG فقط."
+  },
+  "You’ve added a lot of files today. Try again tomorrow.": {
+    "fr": "Vous avez ajouté beaucoup de fichiers aujourd’hui. Réessayez demain.",
+    "ar": "لقد أضفت ملفات كثيرة اليوم. حاول مرة أخرى غدًا."
+  },
+  "Files aren’t available right now.": {
+    "fr": "Les fichiers ne sont pas disponibles pour le moment.",
+    "ar": "الملفات غير متاحة الآن."
+  },
+  "Sign in again to see your files.": {
+    "fr": "Reconnectez-vous pour voir vos fichiers.",
+    "ar": "سجّل الدخول مرة أخرى لعرض ملفاتك."
+  },
+  "Your account changed in another tab. Reload to continue.": {
+    "fr": "Votre compte a changé dans un autre onglet. Rechargez pour continuer.",
+    "ar": "تغيّر حسابك في علامة تبويب أخرى. أعد التحميل للمتابعة."
+  },
+  "This photo’s format can’t be opened here. Save it as a JPEG and try again.": {
+    "fr": "Le format de cette photo ne peut pas être ouvert ici. Enregistrez-la en JPEG et réessayez.",
+    "ar": "لا يمكن فتح تنسيق هذه الصورة هنا. احفظها بصيغة JPEG وحاول مرة أخرى."
+  },
+  "Couldn’t do that. Check your connection and try again.": {
+    "fr": "Impossible pour le moment. Vérifiez votre connexion et réessayez.",
+    "ar": "تعذّر ذلك. تحقّق من اتصالك وحاول مرة أخرى."
   }
 }
