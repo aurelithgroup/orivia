@@ -15,6 +15,7 @@ import {speaListFiltered} from './orivia-browser-directory.mjs';
 import {readSpeaDirectoryFeed} from './orivia-spea-directory-feed.mjs';
 import {REGULATORS} from './orivia-research-loop.mjs';
 import {runAssistantTurn} from './orivia-assistant.mjs';
+import {handleVoice,voiceAvailable} from './orivia-voice.mjs';
 
 // v3 (founder-approved 18 Oct): OpenAI handles the whole conversation, About me included unless its switch is off.
 // v2 ticks don't carry over: the tester sees the new wording and ticks again.
@@ -59,7 +60,7 @@ export function pilotResearchOptions({env,preferences,ctx},{launchBrowser,fetche
 }
 
 /** Build the pilot Worker. launchBrowser(env) → Puppeteer browser (production: puppeteer.launch(env.BROWSER)). */
-export function createPilotWorker({launchBrowser,fetcher,publicRelease=false}={}){
+export function createPilotWorker({launchBrowser,fetcher,publicRelease=false,voiceConnect}={}){
  return {async fetch(req,env,ctx){
   if(isPublic(env)&&!(publicRelease&&env.PUBLIC_ASSISTANT==='1'))return new Response(JSON.stringify({error:'Pilot is private only'}),{status:404,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
   // Capture the execution context per request; never retain it in module state.
@@ -67,6 +68,8 @@ export function createPilotWorker({launchBrowser,fetcher,publicRelease=false}={}
   // stops OpenAI for the rest of this message instead of being tried again by the next path.
   let shared;const getAI=(e,p)=>shared===undefined?(shared=pilotAI(e,p,{fetcher})):shared;
   const inner=createTrialWorker({
+   // Listen's natural voice: only for people who agreed to OpenAI, only while the voice switch and its limits are set.
+   voice:({env,input,reply})=>providerAllowed(env)&&consentedToOpenAI(input?.preferences,env)?handleVoice(input,env,{reply,...(voiceConnect?{connect:voiceConnect}:{})}):reply({error:'voice_unavailable'},503),
    research:async({env,preferences})=>pilotResearchOptions({env,preferences,ctx},{launchBrowser,fetcher,getAI}),
    assistant:({env,preferences})=>{const ai=getAI(env,preferences);if(!ai)return null;
     return ({messages,profile,context,localNow,orgContext,reserve,onProgress})=>runAssistantTurn({messages,profile,context,localNow,orgContext,calendarChangeUI:preferences?.calendarChangeUI===1,replyLanguage:preferences?.language},env,{ai,reserve,onProgress,...(fetcher?{fetcher}:{})})}
@@ -79,6 +82,7 @@ export function createPilotWorker({launchBrowser,fetcher,publicRelease=false}={}
    body.providerPilot=pilotAvailable(env)?(env.PRODUCTION_CONSENT==='1'?{provider:'OpenAI',consent:PRODUCTION_CONSENT,heading:PRODUCTION_CONSENT_HEADING,text:PRODUCTION_CONSENT_TEXT,agree:PRODUCTION_CONSENT_AGREE}:{provider:'OpenAI',consent:isPublic(env)?PUBLIC_CONSENT:PILOT_CONSENT,text:isPublic(env)?PUBLIC_CONSENT_TEXT:PILOT_CONSENT_TEXT}):null;
    body.publicAssistant=isPublic(env)&&publicRelease&&env.PUBLIC_ASSISTANT==='1';
    body.research={...(body.research||{}),browserDirectory:env.BROWSER_DIRECTORY==='1'&&!!env.BROWSER};
+   body.naturalVoice=providerAllowed(env)&&voiceAvailable(env);
    return new Response(JSON.stringify(body),{status:200,headers:res.headers});
   }
   return res;

@@ -2254,5 +2254,17 @@
   "another chat": {
     "fr": "une autre discussion",
     "ar": "محادثة أخرى"
+  },
+  "Reading with an AI-generated voice (OpenAI).": {
+    "fr": "Lecture avec une voix générée par IA (OpenAI).",
+    "ar": "تتم القراءة بصوت مُولَّد بالذكاء الاصطناعي (OpenAI)."
+  },
+  "Natural voice for Listen": {
+    "fr": "Voix naturelle pour Écouter",
+    "ar": "صوت طبيعي لميزة الاستماع"
+  },
+  "Replies you tap Listen on are read by an AI-generated voice from OpenAI. Only that reply’s text is sent. Off: your phone’s own voice reads them.": {
+    "fr": "Les réponses que vous écoutez sont lues par une voix générée par IA d’OpenAI. Seul le texte de cette réponse est envoyé. Désactivé : la voix de votre téléphone les lit.",
+    "ar": "تُقرأ الردود التي تضغط على «استمع» فيها بصوت مُولَّد بالذكاء الاصطناعي من OpenAI. يُرسَل نص ذلك الرد فقط. عند الإيقاف: يقرؤها صوت هاتفك."
   }
 }

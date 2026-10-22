@@ -54,6 +54,10 @@
     "OPENAI_OUTPUT_USD_PER_M": "10",
     "PILOT_OPENAI_DAY_USD": "5",
     "PILOT_OPENAI_MONTH_USD": "20",
+    // Natural voice for Listen (founder-approved 22 Oct): $1/day and $5/month of its own, also counted inside the OpenAI
+    // limits above. gpt-realtime-2.1-mini prices checked 22 Oct (USD per 1M tokens). Pilot only until the founder says so.
+    "VOICE_ENABLED": "1", "VOICE_DAY_USD": "1", "VOICE_MONTH_USD": "5",
+    "VOICE_TEXT_IN_USD_PER_M": "0.6", "VOICE_TEXT_OUT_USD_PER_M": "2.4", "VOICE_AUDIO_OUT_USD_PER_M": "20",
     "BROWSER_DAY_SECONDS": "0",
     "BROWSER_MONTH_SECONDS": "0"
   },

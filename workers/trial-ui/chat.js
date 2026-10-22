@@ -859,14 +859,43 @@ function bestVoice(l){
 }
 function voicesReady(){return new Promise(res=>{const now=speechSynthesis.getVoices();if(now.length)return res();let done=false;const fin=()=>{if(!done){done=true;res()}};speechSynthesis.addEventListener('voiceschanged',fin,{once:true});setTimeout(fin,1200)})}
 let speakingBtn=null,speakRun=0;
-function stopSpeaking(){if(!canSpeak)return;speakRun++;speechSynthesis.cancel();if(speakingBtn){speakingBtn.setAttribute('aria-pressed','false');speakingBtn.textContent=uiText('▶ Listen');speakingBtn=null}}
+// Natural voice (OpenAI), when the server offers it, the person agreed to OpenAI and hasn't turned it off in Settings.
+// Only the text of the reply being read is sent, a piece at a time; the next piece is fetched while one plays.
+let naturalVoiceServer=false,voicePlayer=null,voiceRequests=new Set();
+const SILENT_WAV='data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAwF0AAIC7AAACABAAZGF0YTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+function naturalVoiceOn(){return naturalVoiceServer&&readSettings().naturalVoice!==false&&!!pilotConsent()}
+// iPhones only let audio play from a tap: start the one player during the tap, then reuse it for the voice.
+function unlockPlayer(){const a=voicePlayer||(voicePlayer=new Audio());try{a.src=SILENT_WAV;a.play().catch(()=>{})}catch(_){}return a}
+function voicePiece(text,lang){const c=new AbortController();voiceRequests.add(c);
+ return fetch('/v1/voice',{method:'POST',signal:c.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,language:lang,preferences:{providerConsent:pilotConsent()}})})
+  .then(r=>r.ok&&String(r.headers.get('Content-Type')).startsWith('audio/')?r.blob():null).catch(()=>null).finally(()=>voiceRequests.delete(c))}
+function playPiece(blob,run){return new Promise(res=>{const a=voicePlayer,url=URL.createObjectURL(blob);let over=false;const done=ok=>{if(over)return;over=true;URL.revokeObjectURL(url);a.onended=a.onerror=a.onpause=null;res(ok)};
+ a.onended=()=>done(true);a.onerror=()=>done(false);a.onpause=()=>{if(run!==speakRun)done(true)};a.src=url;a.play().catch(()=>done(false))})}
+// Returns the text it could not read ('' when done or stopped).
+async function naturalSpeak(text,lang,run){
+ const parts=(window.OriviaVoiceText?.chunks?window.OriviaVoiceText.chunks(text,600):[text]).filter(x=>x.trim());
+ let next=voicePiece(parts[0],lang);
+ for(let i=0;i<parts.length;i++){
+  const blob=await next;if(run!==speakRun)return '';
+  if(!blob)return parts.slice(i).join(' ');
+  next=i+1<parts.length?voicePiece(parts[i+1],lang):null;
+  if(i===0)$('status').textContent=uiText('Reading with an AI-generated voice (OpenAI).');
+  const ok=await playPiece(blob,run);if(run!==speakRun)return '';if(!ok)return parts.slice(i).join(' ');
+ }
+ stopSpeaking();return '';
+}
+function stopSpeaking(){if(!canSpeak)return;speakRun++;speechSynthesis.cancel();for(const c of voiceRequests)c.abort();voiceRequests.clear();if(voicePlayer){try{voicePlayer.pause()}catch(_){}}if(speakingBtn){speakingBtn.setAttribute('aria-pressed','false');speakingBtn.textContent=uiText('▶ Listen');speakingBtn=null}}
 async function listen(text,btn,{language=null,feedback=null}={}){
  if(speakingBtn===btn){stopSpeaking();return}
  stopSpeaking();stopDictation(false);
- const run=++speakRun,l=language&&VOICE_LOC[language]?language:textLang(text);await voicesReady();if(run!==speakRun)return;const v=bestVoice(l);
- if(!v&&(language||l!=='en')){const target=feedback||$('status');target.textContent=uiText('This phone has no voice for this language yet. You can add one in your phone’s text-to-speech settings.');return}
+ const run=++speakRun,l=language&&VOICE_LOC[language]?language:textLang(text);
+ let clean=text.replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu,'').replace(/\s+/g,' ').trim();
+ // Natural voice first; anything it couldn't read (limit reached, offline, not word for word) goes to the phone's voice.
+ if(naturalVoiceOn()&&clean){unlockPlayer();if(feedback)feedback.textContent='';speakingBtn=btn;btn.setAttribute('aria-pressed','true');btn.textContent=uiText('■ Stop');
+  clean=await naturalSpeak(clean,l,run);if(run!==speakRun||!clean)return}
+ await voicesReady();if(run!==speakRun)return;const v=bestVoice(l);
+ if(!v&&(language||l!=='en')){if(speakingBtn===btn)stopSpeaking();const target=feedback||$('status');target.textContent=uiText('This phone has no voice for this language yet. You can add one in your phone’s text-to-speech settings.');return}
  if(feedback)feedback.textContent='';speakingBtn=btn;btn.setAttribute('aria-pressed','true');btn.textContent=uiText('■ Stop');
- const clean=text.replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu,'').replace(/\s+/g,' ').trim();
  // Ina's lossless chunks (long text without spaces, e.g. Chinese, used to lose its start); the old split only if missing.
  const parts=window.OriviaVoiceText?.chunks?window.OriviaVoiceText.chunks(clean,200).filter(x=>x.trim()):clean.split(/(?<=[.!?。！？।۔])\s+/).flatMap(x=>x.length>220?x.match(/.{1,200}(\s|$)/g):[x]).filter(Boolean);
  parts.forEach((c,i)=>{const u=new SpeechSynthesisUtterance(c);u.lang=v?v.lang:VOICE_LOC[l];if(v)u.voice=v;u.rate=v&&/natural|neural|online|enhanced|premium/i.test(v.name)?1:.95;
@@ -1122,12 +1151,14 @@ function renderSettings(){
  $('tone-note').textContent=TONE_NOTE[s.tone]||'';
  $('app-language').value=$('welcome-language').value=uiLanguage();
  $('set-suggest').checked=s.suggest!==false;
+ $('set-voice').checked=s.naturalVoice!==false;$('voice-row').hidden=!naturalVoiceServer||!pilotConsent();
  const on=aboutMeOn(),p=readProfile(),filled=!!(p&&(p.city||p.who||p.place));$('set-aboutme-use').checked=on;
  $('aboutme-state').textContent=on?(filled?'On: Orivia uses what you saved in My Life':'On, but nothing saved yet. Add details in My Life'):'Off: Orivia doesn’t use My Life details';
 }
 function changeAppLanguage(e){window.OriviaI18n?.setLanguage(e.target.value);writeSettings({language:uiLanguage()});regionNames=makeRegionNames();countryOptions=null;draw();renderEvents();renderUpcoming();renderChats();renderJourneys();loadProfile();renderHome();$('view-title').textContent=uiText(TITLES[lastTab||'chat'])}
 $('app-language').addEventListener('change',changeAppLanguage);$('welcome-language').addEventListener('change',changeAppLanguage);$('app-language').value=$('welcome-language').value=uiLanguage();
 $('set-suggest').addEventListener('change',e=>writeSettings({suggest:e.target.checked}));
+$('set-voice').addEventListener('change',e=>{writeSettings({naturalVoice:e.target.checked});if(!e.target.checked)stopSpeaking()});
 $('set-aboutme').onclick=()=>tab('mylife');
 $('set-aboutme-use').addEventListener('change',e=>{setAboutMe(e.target.checked);renderSettings()});
 $('open-settings').onclick=()=>tab('settings');
@@ -1483,6 +1514,7 @@ function pilotConsent(){if(!pilotOffer)return null;try{return (globalThis.Orivia
 async function loadMode(){
  try{const r=await fetch('/v1/config',{credentials:'same-origin',cache:'no-store'});const d=await r.json();
   setupPilot(d);
+  naturalVoiceServer=d?.naturalVoice===true;
   // Reveal the intro now that its wording is right, and before the human check renders: Turnstile stalls if it starts hidden.
   document.body.dataset.config='ready';
   if(d&&d.mode==='public'){mode='public';document.body.dataset.mode='public';for(const n of document.querySelectorAll('[data-public]'))n.textContent=n.dataset.public;if(!$('intro').hidden&&d.turnstileSiteKey)loadTurnstile(d.turnstileSiteKey);else window.__siteKey=d.turnstileSiteKey}
