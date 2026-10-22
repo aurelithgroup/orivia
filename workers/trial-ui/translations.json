@@ -2799,12 +2799,24 @@
     "fr": "Restaurer",
     "ar": "استعادة"
   },
-  "Sends your choice, your note and the text of this reply, which may include personal details or details from your documents. It’s linked to your account, so it’s deleted with it. The Orivia team’s review list doesn’t show who sent it.": {
-    "fr": "Envoie votre choix, votre note et le texte de cette réponse, qui peut contenir des informations personnelles ou issues de vos documents. C’est lié à votre compte et supprimé avec lui. La liste d’examen de l’équipe Orivia n’indique pas qui l’a envoyé.",
-    "ar": "يُرسل اختيارك وملاحظتك ونص هذا الرد، وقد يتضمن معلومات شخصية أو معلومات من مستنداتك. يرتبط ذلك بحسابك ويُحذف معه. لا تُظهر قائمة المراجعة لدى فريق Orivia هوية المُرسل."
+  "Sends your choice, your note and the text of this reply, which may include personal details or details from your documents. The Orivia team can read your note and the reply. The report is linked to your account and deleted with it; the team’s review list doesn’t show your name or email.": {
+    "fr": "Envoie votre choix, votre note et le texte de cette réponse, qui peut contenir des informations personnelles ou issues de vos documents. L’équipe Orivia peut lire votre note et la réponse. Le signalement est lié à votre compte et supprimé avec lui ; la liste d’examen de l’équipe n’affiche ni votre nom ni votre e-mail.",
+    "ar": "يُرسل اختيارك وملاحظتك ونص هذا الرد، وقد يتضمن معلومات شخصية أو من مستنداتك. يمكن لفريق Orivia قراءة ملاحظتك والرد. يرتبط البلاغ بحسابك ويُحذف معه؛ ولا تعرض قائمة المراجعة لدى الفريق اسمك أو بريدك الإلكتروني."
   },
-  "Sends your choice and your note, not the reply. It’s linked to your account, so it’s deleted with it. The Orivia team’s review list doesn’t show who sent it.": {
-    "fr": "Envoie votre choix et votre note, pas la réponse. C’est lié à votre compte et supprimé avec lui. La liste d’examen de l’équipe Orivia n’indique pas qui l’a envoyé.",
-    "ar": "يُرسل اختيارك وملاحظتك، وليس الرد. يرتبط ذلك بحسابك ويُحذف معه. لا تُظهر قائمة المراجعة لدى فريق Orivia هوية المُرسل."
+  "Sends your choice and your note, not the reply. The Orivia team can read your note. The report is linked to your account and deleted with it; the team’s review list doesn’t show your name or email.": {
+    "fr": "Envoie votre choix et votre note, pas la réponse. L’équipe Orivia peut lire votre note. Le signalement est lié à votre compte et supprimé avec lui ; la liste d’examen de l’équipe n’affiche ni votre nom ni votre e-mail.",
+    "ar": "يُرسل اختيارك وملاحظتك، وليس الرد. يمكن لفريق Orivia قراءة ملاحظتك. يرتبط البلاغ بحسابك ويُحذف معه؛ ولا تعرض قائمة المراجعة لدى الفريق اسمك أو بريدك الإلكتروني."
+  },
+  "Couldn’t confirm whether this was received. Try again: it won’t be sent twice.": {
+    "fr": "Impossible de confirmer la réception. Réessayez : il ne sera pas envoyé deux fois.",
+    "ar": "تعذّر التأكد من الاستلام. حاول مرة أخرى: لن يُرسل مرتين."
+  },
+  "Shortlisted": {
+    "fr": "Présélectionné",
+    "ar": "في القائمة المختصرة"
+  },
+  "Couldn’t save this change on this device. Nothing was removed or restored.": {
+    "fr": "Impossible d’enregistrer ce changement sur cet appareil. Rien n’a été retiré ni restauré.",
+    "ar": "تعذّر حفظ هذا التغيير على هذا الجهاز. لم تتم إزالة أو استعادة أي شيء."
   }
 }

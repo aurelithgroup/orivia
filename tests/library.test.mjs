@@ -21,7 +21,7 @@ assert.ok(lib.includes('for(const chat of store.chats)for(const t of chat.turns|
 // automatic discovery writes the account's Library state (store.library) once. It never touches a chat, message, card or
 // file, and nothing is sent. Behaviour: tests/library-discoveries.test.mjs.
 const hide=lib.slice(lib.indexOf('function setDiscoveryHidden('),lib.indexOf('function libraryShortlists('));
-assert.ok(hide.startsWith('function setDiscoveryHidden(key,hidden){store.library=')&&!/delete |fetch\(|setItem|save\(|turns|meta/.test(hide),'the only write is the Library state');
+assert.ok(hide.startsWith('function setDiscoveryHidden(key,hidden){const before=store.library;store.library=')&&!/delete |fetch\(|setItem|save\(|turns|meta/.test(hide),'the only write is the Library state');
 assert.equal((hide.match(/persist\(/g)||[]).length,1);
 assert.doesNotMatch(lib.replace(hide,''),/setItem|persist\(|save\(|delete |fetch\(/,'otherwise the Library never writes, deletes or sends');
 // Compare and Use in Chat only prepare; the person sends.

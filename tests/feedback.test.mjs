@@ -62,6 +62,25 @@ assert.ok(pui.includes("api('/api/account/feedback/queue')")&&pui.includes("Repo
 assert.ok(handler.indexOf('feedbackRoute(url.pathname)')>handler.indexOf("getSession({headers:req.headers});if(!session?.user?.id)return json({error:'sign_in_required'},401)"),'feedback routes sit behind the session check');
 console.log('Feedback client and console wiring: pass.');
 // Disclosures match storage (Ina, review of 5569f60): linked to the account; an included reply may hold personal/document details.
-assert.ok(chat.includes('It’s linked to your account, so it’s deleted with it.')&&chat.includes('which may include personal details or details from your documents'));
+assert.ok(chat.includes('The report is linked to your account and deleted with it')&&chat.includes('The Orivia team can read your note')&&chat.includes('which may include personal details or details from your documents'));
 assert.ok(!/or your name\.|never who sent it/.test(chat+pui),'no claim that feedback is unlinked from the person');
 console.log('Feedback disclosures match what is stored: pass.');
+// Ina finding 4: saved, then the response is lost. Server: the retry with the same request id returns the same receipt
+// and stores nothing new. Client: only a 4xx says "nothing was saved"; a lost response or 5xx says it couldn't confirm.
+{const sql2=new DatabaseSync(':memory:');sql2.exec('PRAGMA foreign_keys=ON;'+['schema','organisations','feedback'].map(n=>fs.readFileSync('workers/accounts/'+n+'.sql','utf8')).join('\n'));
+ sql2.prepare('INSERT INTO user(id,name,email,emailVerified,createdAt,updatedAt) VALUES (?,?,?,?,?,?)').run('lena','Lena','lena@example.test',1,now,now);
+ const st=(s,a=[])=>({bind:(...v)=>st(s,v),run:async()=>sql2.prepare(s).run(...a),first:async()=>sql2.prepare(s).get(...a)||null,all:async()=>({results:sql2.prepare(s).all(...a)})});
+ const env2={ACCOUNTS_DB:{prepare:s=>st(s)}},body={requestId:'fb-lost-0001',category:'technical',note:'Lost response'};
+ const send=()=>handleFeedbackRequest(new Request('https://p/api/account/feedback/report',{method:'POST',body:JSON.stringify(body)}),env2,{owner:'lena',verified:true,json,readJson});
+ await send(); // saved; the client never sees this response
+ const retry=await (await send()).json();
+ assert.equal(retry.repeat,true);assert.equal(sql2.prepare('SELECT COUNT(*) AS n FROM feedback_reports').get().n,1,'saved once despite the retry');}
+{const src=chat.slice(chat.indexOf('function feedbackApi('),chat.indexOf('function feedbackControls('));
+ const make=fetchImpl=>new Function('window','fetch','uiText','AbortSignal',src+';return {feedbackApi,feedbackError}')({OriviaAccounts:{user:{id:'u1'}}},fetchImpl,s=>s,{timeout:()=>undefined});
+ const msg=async fetchImpl=>{const f=make(fetchImpl);try{await f.feedbackApi('report','POST',{});return 'ok'}catch(e){return f.feedbackError(e)}};
+ assert.match(await msg(()=>Promise.reject(new TypeError('Failed to fetch'))),/Couldn’t confirm whether this was received/,'lost response');
+ assert.match(await msg(async()=>new Response('{"error":"feedback_unavailable"}',{status:503})),/Couldn’t confirm/,'server error may follow a save');
+ assert.match(await msg(async()=>new Response('{"error":"invalid_category"}',{status:400})),/Nothing was saved/,'a refusal proves nothing was saved');
+ assert.equal(await msg(async()=>new Response('{"receipt":"FB-1"}',{status:201})),'ok');
+ assert.ok(/const requestId=[^;]*;\s*form\.onsubmit/.test(chat.replace(/\r\n/g,'\n'))||chat.indexOf("const requestId='fb-'")<chat.indexOf('form.onsubmit=async'),'the request id is made once per form, so Try again reuses it');}
+console.log('Feedback lost-response handling (server idempotent, client says it could not confirm): pass.');

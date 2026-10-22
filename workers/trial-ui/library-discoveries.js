@@ -9,6 +9,7 @@
  'use strict';
  const PAGE=30;
  function key(name,src){return String(name||'').trim().toLowerCase().replace(/\s+/g,' ')+'|'+String(src&&src.host||'').toLowerCase()}
+ function legacyHidden(chats){const out=[];for(const c of Array.isArray(chats)?chats:[])for(const t of Array.isArray(c.turns)?c.turns:[])if(t&&t.meta&&Array.isArray(t.meta.hiddenDiscoveries))for(const k of t.meta.hiddenDiscoveries)if(typeof k==='string')out.push(k);return out}
  function normLibrary(v){const hidden=v&&Array.isArray(v.hidden)?v.hidden.filter(k=>typeof k==='string'&&k.length<=400):[];return {hidden:[...new Set(hidden)]}}
  // chats: store.chats; h: {safeSources,safeDestinations,safeOrgs,placeIdentity}. Returns {shown,hidden} (both complete).
  function collect(chats,library,h){
@@ -17,9 +18,9 @@
   for(const chat of ordered)for(const t of (Array.isArray(chat.turns)?chat.turns:[]).slice().reverse()){
    if(!t||t.role!=='assistant'||!t.meta)continue;const srcs=h.safeSources(t.meta.sources);if(!srcs.length)continue;
    for(const d of h.safeDestinations(t.meta.destinations,srcs)){const k=key(d.name,d.src),fav=Array.isArray(t.meta.savedPlaces)&&t.meta.savedPlaces.includes(h.placeIdentity(d));
-    if(!seen.has(k))seen.set(k,{key:k,name:d.name,detail:d.address||'',kind:'place',src:d.src,chatId:chat.id,chatTitle:chat.title||'',favourite:fav});else if(fav)seen.get(k).favourite=true}
-   for(const o of h.safeOrgs(t.meta.organisations,srcs)){if(o.fixture)continue;const k=key(o.name,o.src);
-    if(!seen.has(k))seen.set(k,{key:k,name:o.name,detail:o.src.host||'',kind:'service',src:o.src,chatId:chat.id,chatTitle:chat.title||'',favourite:false})}
+    if(!seen.has(k))seen.set(k,{key:k,name:d.name,detail:d.address||'',kind:'place',src:d.src,chatId:chat.id,chatTitle:chat.title||'',favourite:fav,shortlisted:false});else if(fav)seen.get(k).favourite=true}
+   for(const o of h.safeOrgs(t.meta.organisations,srcs)){if(o.fixture)continue;const k=key(o.name,o.src),listed=Array.isArray(t.meta.shortlist)&&t.meta.shortlist.includes(o.id);
+    if(!seen.has(k))seen.set(k,{key:k,name:o.name,detail:o.src.host||'',kind:'service',src:o.src,chatId:chat.id,chatTitle:chat.title||'',favourite:false,shortlisted:listed});else if(listed)seen.get(k).shortlisted=true}
   }
   const all=[...seen.values()];return {shown:all.filter(x=>!hidden.has(x.key)),hidden:all.filter(x=>hidden.has(x.key))};
  }
@@ -27,5 +28,5 @@
  function hide(library,k){const l=normLibrary(library);if(!l.hidden.includes(k))l.hidden.push(k);return l}
  function restore(library,k){const l=normLibrary(library);l.hidden=l.hidden.filter(x=>x!==k);return l}
  function page(list,shown){const n=Math.max(PAGE,Number(shown)||PAGE);return {items:list.slice(0,n),more:Math.max(0,list.length-n),next:n+PAGE}}
- root.OriviaDiscoveries={key,normLibrary,collect,hide,restore,page,PAGE};
+ root.OriviaDiscoveries={key,legacyHidden,normLibrary,collect,hide,restore,page,PAGE};
 })(typeof window!=='undefined'?window:globalThis);

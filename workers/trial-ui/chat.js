@@ -51,7 +51,7 @@ function loadChats(){
  let raw=null;try{raw=(globalThis.OriviaAccountStorage?.storage||localStorage).getItem(chatsKey)}catch(_){}
  if(raw){
   let d=null;try{d=JSON.parse(raw)}catch(_){}
-  if(d&&Array.isArray(d.chats))store={chats:d.chats.map(normChat).filter(Boolean),active:typeof d.active==='string'?d.active:null,library:window.OriviaDiscoveries?window.OriviaDiscoveries.normLibrary(d.library):{hidden:Array.isArray(d.library?.hidden)?d.library.hidden.filter(k=>typeof k==='string'):[]}};
+  if(d&&Array.isArray(d.chats))store={chats:d.chats.map(normChat).filter(Boolean),active:typeof d.active==='string'?d.active:null,library:window.OriviaDiscoveries?window.OriviaDiscoveries.normLibrary(d.library||{hidden:window.OriviaDiscoveries.legacyHidden(d.chats)}):{hidden:Array.isArray(d.library?.hidden)?d.library.hidden.filter(k=>typeof k==='string'):[]}};
   else{ // unreadable: keep an untouched copy before anything new is written; if that fails, don't write at all
    try{if((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(chatsBackupKey)===null)(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(chatsBackupKey,raw)}catch(_){storeLocked=true}
    if(!storeLocked)storageWarn('Your earlier saved chats couldn’t be read. A copy has been kept on this device, and new chats will be saved separately.');
@@ -93,7 +93,10 @@ function libItem(node,kind,text){node.dataset.libKind=kind;node.dataset.libText=
 const discoveryHelpers={safeSources:x=>safeSources(x),safeDestinations:(x,y)=>safeDestinations(x,y),safeOrgs:(x,y)=>safeOrgs(x,y),placeIdentity:d=>placeIdentity(d)};
 let discoveryShown=0;
 function libraryDiscoveries(){return window.OriviaDiscoveries.collect(store.chats,store.library,discoveryHelpers)}
-function setDiscoveryHidden(key,hidden){store.library=hidden?window.OriviaDiscoveries.hide(store.library,key):window.OriviaDiscoveries.restore(store.library,key);persist();renderLibraryView()}
+function setDiscoveryHidden(key,hidden){const before=store.library;store.library=hidden?window.OriviaDiscoveries.hide(store.library,key):window.OriviaDiscoveries.restore(store.library,key);
+ // If the device can't save, undo it on screen too, so the Library never shows a removal that won't survive a reload.
+ if(!persist()){store.library=before;discoveryNote=uiText('Couldn’t save this change on this device. Nothing was removed or restored.')}else discoveryNote='';renderLibraryView()}
+let discoveryNote='';
 function libraryShortlists(){
  const out=[];
  for(const chat of store.chats)for(const t of chat.turns||[]){
@@ -121,12 +124,13 @@ function renderLibraryView(){
   s.append(libItem(card,'shortlists',(chat.title||'')+' '+names.join(' ')))}
  if(!lists.length)s.append(el('p','tiny',uiText('No shortlists yet. When Orivia shows you options in chat, add the ones you like to a shortlist.')));
  const pg=$('lib-places');pg.replaceChildren();const disc=libraryDiscoveries(),found=disc.shown,pageOf=window.OriviaDiscoveries.page(found,discoveryShown);
- for(const x of pageOf.items){const card=el('article','lib-short');const title=el('strong','',(x.favourite?'♥ ':'')+x.name);title.dir='auto';
+ for(const x of pageOf.items){const card=el('article','lib-short');const title=el('strong','',(x.favourite?'♥ ':'')+x.name);title.dir='auto';if(x.shortlisted)title.append(' ',el('span','chip lib-flag',uiText('Shortlisted')));
   card.append(title,el('p','tiny',[x.detail,uiText(x.kind==='place'?'Place':'Service'),uiText('from')+' '+(x.chatTitle||uiText('Chat'))].filter(Boolean).join(' · ')));
   const row=el('div','attach-row');const site=el('a','btn quiet small',uiText('Source')+' · '+x.src.host);site.href=x.src.url;site.target='_blank';site.rel='noopener noreferrer';
   row.append(attachButton('Open chat',()=>openChat(x.chatId)),site);
   const rm=attachButton('Remove from Library',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=uiText('Tap again to remove');return}setDiscoveryHidden(x.key,true)});row.append(rm);
   card.append(row);pg.append(libItem(card,'places',x.name+' '+x.detail+' '+x.src.host))}
+ if(discoveryNote){const n=el('p','hint',discoveryNote);n.setAttribute('role','status');pg.prepend(n)}
  if(pageOf.more){const more=attachButton(uiText('Show more')+' ('+pageOf.more+')',()=>{discoveryShown=pageOf.next;renderLibraryView()});more.classList.add('lib-more');pg.append(more)}
  if(!found.length)pg.append(el('p','tiny',uiText('Places and services Orivia recommends from official or organisation sources are kept here automatically.')));
  if(disc.hidden.length){const box=el('details','lib-removed');box.append(el('summary','tiny',uiText('Removed from Library')+' ('+disc.hidden.length+')'));
@@ -657,8 +661,12 @@ function draw({newReply=null,scroll=false}={}){
 /* Reply feedback (ORI-CHAT-007/008): optional thumbs and Report a problem. Signed-in only, sent to the Orivia team's
    review queue; guests are told to sign in, never shown a false success. The reply text goes only if ticked. */
 function feedbackApi(path,method,body){const u=window.OriviaAccounts?.user;if(!u)return Promise.reject(Object.assign(Error('sign_in'),{code:'sign_in'}));
- return fetch('/api/account/feedback/'+path,{method,credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(12000),headers:{'X-Orivia-Account':u.id,'Content-Type':'application/json'},body:JSON.stringify(body)}).then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(d.error||'failed'),{code:d.error||'failed'});return d})}
-function feedbackError(e){return e&&e.code==='sign_in'?uiText('Sign in to send feedback to the Orivia team.'):uiText('Couldn’t send. Nothing was saved. Try again.')}
+ return fetch('/api/account/feedback/'+path,{method,credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(12000),headers:{'X-Orivia-Account':u.id,'Content-Type':'application/json'},body:JSON.stringify(body)}).then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(d.error||'failed'),{code:d.error||'failed',status:r.status});return d},e=>{throw Object.assign(e instanceof Error?e:Error('network'),{code:'network'})})}
+// Only a 4xx refusal proves nothing was saved. A lost response, timeout or server error may come after the save, so say
+// we couldn't confirm; a retry reuses the same request id, so it is never saved twice (Ina's finding 4).
+function feedbackError(e){if(e&&e.code==='sign_in')return uiText('Sign in to send feedback to the Orivia team.');
+ if(e&&e.status>=400&&e.status<500)return uiText('Couldn’t send. Nothing was saved. Try again.');
+ return uiText('Couldn’t confirm whether this was received. Try again: it won’t be sent twice.')}
 function feedbackControls(t,replyId,actions,more,p){
  const status=document.createElement('span');status.className='fb-status tiny';status.setAttribute('role','status');
  const thumb=(value,label,glyph)=>{const btn=document.createElement('button');btn.type='button';btn.className='fb-thumb';btn.textContent=glyph;btn.setAttribute('aria-label',uiText(label));btn.setAttribute('aria-pressed',String(t.meta?.rating===value));
@@ -670,7 +678,7 @@ function feedbackControls(t,replyId,actions,more,p){
   const cat=document.createElement('select');cat.setAttribute('aria-label',uiText('What went wrong?'));for(const [v,l] of [['inaccurate','Inaccurate information'],['unsafe','Unsafe answer'],['privacy','Privacy issue'],['technical','Technical problem'],['other','Something else']]){const o=document.createElement('option');o.value=v;o.textContent=uiText(l);cat.append(o)}
   const note=document.createElement('textarea');note.maxLength=1000;note.rows=3;note.placeholder=uiText('What happened? (optional)');note.setAttribute('aria-label',uiText('What happened? (optional)'));
   const inc=document.createElement('input');inc.type='checkbox';inc.id='fb-inc-'+replyId.replace(/[^A-Za-z0-9]/g,'');const lab=document.createElement('label');lab.htmlFor=inc.id;lab.textContent=' '+uiText('Include the text of this reply');
-  const preview=document.createElement('p');preview.className='tiny muted';const sync=()=>{preview.textContent=inc.checked?uiText('Sends your choice, your note and the text of this reply, which may include personal details or details from your documents. It’s linked to your account, so it’s deleted with it. The Orivia team’s review list doesn’t show who sent it.'):uiText('Sends your choice and your note, not the reply. It’s linked to your account, so it’s deleted with it. The Orivia team’s review list doesn’t show who sent it.')};inc.onchange=sync;sync();
+  const preview=document.createElement('p');preview.className='tiny muted';const sync=()=>{preview.textContent=inc.checked?uiText('Sends your choice, your note and the text of this reply, which may include personal details or details from your documents. The Orivia team can read your note and the reply. The report is linked to your account and deleted with it; the team’s review list doesn’t show your name or email.'):uiText('Sends your choice and your note, not the reply. The Orivia team can read your note. The report is linked to your account and deleted with it; the team’s review list doesn’t show your name or email.')};inc.onchange=sync;sync();
   const send=document.createElement('button');send.type='submit';send.className='btn small';send.textContent=uiText('Send report');
   const cancel=document.createElement('button');cancel.type='button';cancel.className='btn quiet small';cancel.textContent=uiText('Cancel');cancel.onclick=()=>form.remove();
   const out=document.createElement('p');out.className='tiny';out.setAttribute('role','status');const requestId='fb-'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));

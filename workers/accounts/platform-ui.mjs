@@ -141,7 +141,7 @@ export function mountPlatform(){
    return h('div',{class:'item',style:'align-items:flex-start'},h('div',{class:'grow stack'},h('div',null,h('strong',null,CAT[r.category]||r.category),' ',chip(r.status==='open'?'Open':'Reviewed',r.status==='open'?'c-warn':'c-ok'),' ',h('span',{class:'small muted'},r.receipt+' · '+new Date(r.createdAt).toLocaleString())),
     r.note?h('p',{class:'small'},r.note):h('p',{class:'small muted'},'No note.'),r.replyText?h('details',null,h('summary',{class:'small'},'Reply they included'),h('p',{class:'small',style:'white-space:pre-wrap'},r.replyText)):null),btn)});
   return panel(h('div',{class:'row'},h('h3',{class:'grow'},'Feedback from Chat'),chip('Live','c-ok')),
-   h('p',{class:'small muted'},'Last '+d.ratings.days+' days: '+d.ratings.up+' helpful, '+d.ratings.down+' not helpful'+(reasons?' ('+reasons+')':'')+'. Reports are stored with the sender’s account (and deleted with it); this list doesn’t show who sent them. An included reply can contain personal or document details, so treat reports as private.'),
+   h('p',{class:'small muted'},'Last '+d.ratings.days+' days: '+d.ratings.up+' helpful, '+d.ratings.down+' not helpful'+(reasons?' ('+reasons+')':'')+'. Reports are stored with the sender’s account (and deleted with it); this list omits their name and email. Notes and any included reply are written by the person and can contain personal or document details: treat them as private.'),
    rows.length?h('div',{class:'list'},rows):empty('No reports yet','Problems people report from a Chat reply appear here.'));
  }
  async function ownerView(){
