@@ -59,3 +59,6 @@ The founder dislikes the citation numbers. Cleo has changed her own files:
     4. a failed or stopped reading puts the message and file back in the box.
   - Photo previews in the bubble come from memory for this session, or from the private account file route for Your files. Otherwise the bubble shows a file card; nothing is stored.
   - The person's document is no longer drawn as a web source (no circle, no link). The reply shows "Based on your document: name" instead.
+- **Later on 22 Oct:**
+  - Documents are part of the conversation, at the founder's request. The label and ✕ are gone; every document sent in a chat stays with it (never replaced), and the newest 3 (about 24,000 characters) go with each message; the notice wording is updated accordingly.
+  - The alert sender used `redirect:'error'`, which Workers reject, so nothing was ever sent. It is fixed, and the real-device test passed (7 accepted, shown on the founder's phone, tap opened Orivia).

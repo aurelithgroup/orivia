@@ -244,3 +244,8 @@ Order (Cleo, one step at a time):
   - one synthetic test alert to the founder's phone from the pilot;
   - then a fresh production opt-in, after Privacy approval;
   - never reuse the old registrations.
+- **Real-device alert passed on the pilot (22 Oct).**
+  - Earlier attempts were all `uncertain` because the sender used fetch `redirect:'error'`, which Workers reject before sending anything; this also explains production's 12 old `uncertain` rows.
+  - Fixed in `35ba639`.
+  - After the fix: 7 attempted and 7 accepted. The founder's phone showed the test alert, and tapping it opened Orivia.
+  - Production push stays off until Files and Privacy are approved; it will then use a fresh production opt-in.
