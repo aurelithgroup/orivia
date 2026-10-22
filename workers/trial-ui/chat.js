@@ -171,14 +171,9 @@ function renderAttachmentPreview(){
  card.append(x);box.replaceChildren(card);box.hidden=false;
 }
 function setPendingAttachment(blob,name,fileId){pendingAttachment={blob,name:String(name||'Document').slice(0,120),type:blob.type==='application/pdf'?'application/pdf':blob.type==='image/png'?'image/png':'image/jpeg',...(fileId?{fileId}:{}),read:false};closeAttach();renderAttachmentPreview();$('status').textContent=uiText('Attached. Nothing has been sent yet.');$('msg').focus()}
-async function openAttach(){
- const p=$('attach-panel');if(!p)return;if(!p.hidden){closeAttach();return}
- const gen=attachGeneration;
- const menu=el('div','attach-menu');menu.append(attachButton('Camera',()=>$('attach-camera').click()),attachButton('Photos',()=>$('attach-photo').click()),attachButton('Files',()=>$('attach-file').click()));
- p.replaceChildren(menu);p.hidden=false;$('attach').setAttribute('aria-expanded','true');menu.querySelector('button')?.focus();
- try{const {files}=await window.OriviaFiles.list();if(gen!==attachGeneration||p.hidden||!files.length)return;const list=el('div','attach-list');list.append(el('strong','',uiText('Your files')));
-  for(const f of files.slice(0,30))list.append(attachButton(f.name,async()=>{const g=attachGeneration;try{const blob=await window.OriviaFiles.blob(f.id);if(g===attachGeneration&&blob)setPendingAttachment(blob,f.name,f.id)}catch(_){if(g===attachGeneration)$('status').textContent=uiText('Couldn’t open that file.')}}));p.append(list)}catch(_){}
-}
+// + opens the device picker straight away; the phone itself offers camera, photo library and files. (Saved files are
+// used from the Library with Use in Chat.)
+function openAttach(){if(attachOp||attachConfirm)return;closeAttach();$('attach-file').click()}
 async function attachFrom(input){const f=input.files&&input.files[0];input.value='';if(!f)return;const g=attachGeneration;
  try{const prepared=await window.OriviaFiles.prepare(f);if(g===attachGeneration)setPendingAttachment(prepared.blob,prepared.name)}
  catch(e){if(g===attachGeneration)$('status').textContent=uiText(e?.message==='file_too_large'?'That file is over 10 MB. Try a smaller one or a photo instead.':e?.message==='unsupported_type'?'Only PDF, JPEG and PNG files can be saved.':'This photo’s format can’t be opened here. Save it as a JPEG and try again.')}}
@@ -597,7 +592,8 @@ function draw({newReply=null,scroll=false}={}){
  for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant')+(t===newReply?' reply-arriving':'');const b=document.createElement('b');b.textContent=uiText(t.role==='user'?'You':'Orivia');const txt=document.createElement('span');
   const srcs=t.role==='assistant'?safeSources(t.meta&&t.meta.sources):[];
   if(srcs.length)txt.append(...citedText(t.content,srcs));else txt.textContent=t.content;p.append(b,txt);
-  if(t.role==='user'&&t.meta?.attachment&&typeof t.meta.attachment.name==='string'){const chip=el('span','message-attachment',(t.meta.attachment.type==='application/pdf'?'PDF':uiText('Photo'))+' · '+t.meta.attachment.name);p.append(chip)}
+  // (draw() has its own local `el`, so the chip is built directly.)
+  if(t.role==='user'&&t.meta?.attachment&&typeof t.meta.attachment.name==='string'){const chip=document.createElement('span');chip.className='message-attachment';chip.textContent=(t.meta.attachment.type==='application/pdf'?'PDF':uiText('Photo'))+' · '+t.meta.attachment.name;p.append(document.createElement('br'),chip)}
   const cards=t.role==='assistant'&&t.meta&&t.meta.organisations?orgCards(t,srcs):null;
   if(cards){p.append(cards);p.classList.add('has-cards')}
   if(t.role==='assistant'&&t.meta&&safeDraft(t.meta.draft))p.append(draftBox(t));
@@ -1313,7 +1309,7 @@ function changeAppLanguage(e){window.OriviaI18n?.setLanguage(e.target.value);wri
 $('app-language').addEventListener('change',changeAppLanguage);$('welcome-language').addEventListener('change',changeAppLanguage);$('app-language').value=$('welcome-language').value=uiLanguage();
 $('set-suggest').addEventListener('change',e=>writeSettings({suggest:e.target.checked}));
 $('life-library-open')?.addEventListener('click',()=>tab('library'));
-$('attach').addEventListener('click',openAttach);for(const id of ['attach-camera','attach-photo','attach-file'])$(id).addEventListener('change',e=>attachFrom(e.target));
+$('attach').addEventListener('click',openAttach);$('attach-file').addEventListener('change',e=>attachFrom(e.target));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('attach-panel').hidden&&!attachOp&&!attachConfirm){closeAttach();$('attach').focus()}});
 $('set-voice').addEventListener('change',e=>{writeSettings({naturalVoice:e.target.checked});if(!e.target.checked)stopSpeaking()});
 $('set-aboutme').onclick=()=>tab('mylife');

@@ -97,7 +97,7 @@ assert.ok(chat.includes("attachButton(first?'I understand. Use this in my chat':
 assert.ok(chat.includes("if(pendingAttachment&&!(await readPendingAttachment()))return;"),'reading happens on Send, after the notice');
 assert.ok(chat.includes("const ok=await confirmAttach(a.blob,a.name);if(ok&&pendingAttachment===a)a.read=true;"),'one reading per draft');
 assert.ok(chat.includes("turns.push({role:'user',content:text.slice(0,900),...(sentAttachment?{meta:{attachment:sentAttachment}}:{})});"),'the attachment travels inside the person message');
-assert.ok(chat.includes("const chip=el('span','message-attachment'"),'shown inside that message');
+assert.ok(chat.includes("chip.className='message-attachment'"),'shown inside that message');
 assert.ok(!/id="msg"[^>]*required/.test(page),'a message can be only an attachment');
 {const vt=new Function(chat.split(String.fromCharCode(10)).find(l=>l.startsWith("const validTurn="))+';return validTurn')();
  assert.ok(vt({role:'user',content:'',meta:{attachment:{name:'Lease.pdf'}}}));assert.ok(!vt({role:'user',content:''}));assert.ok(!vt({role:'assistant',content:'',meta:{attachment:{name:'x'}}}));
@@ -106,7 +106,7 @@ assert.ok(!/id="msg"[^>]*required/.test(page),'a message can be only an attachme
 assert.ok(chat.includes("...(chatDocument()&&pilotConsent()?{document:{name:chatDocument().name,kind:chatDocument().kind||'',text:chatDocument().text}}:{}),"),'the transcript goes with messages');
 assert.ok(chat.includes("function attachAllowed(){return documentsServer&&!!pilotConsent()}"));
 assert.ok(!chat.includes('delete x.document'),'never removes another chat document');
-assert.match(page,/<button id="attach" class="compose-plus" type="button" aria-label="Add an attachment"/);
+assert.match(page,/<button id="attach" class="compose-plus" type="button" aria-label="Add a photo or file"/);
 assert.ok(chat.includes("It doesn’t check whether a document is genuine or valid."));
 // Ina's review #2 and #3, on the real readAttached code: late results never cross chats/accounts; nothing is evicted.
 {const a=chat.indexOf('/* Files to Chat (step 7)'),b=chat.indexOf('var pendingDocument=null;');const block=chat.slice(a,b)+'var pendingDocument=null;';
@@ -137,4 +137,20 @@ assert.ok(chat.includes("It doesn’t check whether a document is genuine or val
   const before=JSON.stringify(h.ctx.store.chats);p=h.ctx.readAttached(new Blob(['x']),'one more');await tick();h.answer(h.ok(heavy,'more'));await p;
   assert.equal(JSON.stringify(h.ctx.store.chats),before,'over the backup size: refused, nothing changed');}
 }
+// Founder test 22 Oct: drawing a message with an attachment crashed (draw() has a local `el`), so nothing was shown or
+// sent. Run the real draw() on such a message.
+{const a=chat.indexOf('function draw({newReply=null,scroll=false}={}){'),b=chat.indexOf('\n}\n',a)+3;const src=chat.slice(a,b);
+ const mk=tag=>({tag,className:'',textContent:'',children:[],classList:{add(){},toggle(){}},append(...v){this.children.push(...v)},replaceChildren(...v){this.children=v},setAttribute(){},style:{}});
+ const nodes={history:mk('div'),empty:mk('div'),'chat-scroll':Object.assign(mk('div'),{scrollTop:0,scrollHeight:0})};
+ const ctx={document:{createElement:mk},$:id=>nodes[id]||mk('div'),uiText:t=>t,window:{},renderedChat:null,store:{active:'c1'},nearChatBottom:()=>true,safeSources:()=>[],citedText:()=>[],
+  turns:[{role:'user',content:'What does this say about the deposit?',meta:{attachment:{name:'Lease.pdf',type:'application/pdf'}}},{role:'user',content:'',meta:{attachment:{name:'Photo 22-10.jpg',type:'image/jpeg'}}}]};
+ vm.createContext(ctx);vm.runInContext(src+';this.draw=draw;',ctx);
+ assert.doesNotThrow(()=>ctx.draw({scroll:true}));
+ const bubbles=nodes.history.children;assert.equal(bubbles.length,2);
+ const chips=bubbles.flatMap(p=>p.children.filter(c=>c.className==='message-attachment').map(c=>c.textContent));
+ assert.deepEqual(chips,['PDF · Lease.pdf','Photo · Photo 22-10.jpg'],'the attachment shows inside the person’s own message');}
+// + opens the device picker directly (one input: photos, camera and files as the phone offers them).
+assert.ok(chat.includes("function openAttach(){if(attachOp||attachConfirm)return;closeAttach();$('attach-file').click()}"));
+assert.match(page,/<input type="file" id="attach-file" accept="image\/\*,application\/pdf" hidden>/);
+assert.ok(!page.includes('id="attach-camera"')&&!page.includes('id="attach-photo"'));
 console.log('Files to Chat: read once inside the OpenAI limits, labelled evidence, figures from the document only, gates, app wiring.');

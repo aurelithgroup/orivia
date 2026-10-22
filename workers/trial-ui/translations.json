@@ -2574,5 +2574,9 @@
   "Turn on the OpenAI research test in Settings to use documents in chat.": {
     "fr": "Activez le test de recherche OpenAI dans les paramètres pour utiliser des documents dans une discussion.",
     "ar": "فعّل اختبار البحث عبر OpenAI في الإعدادات لاستخدام المستندات في المحادثة."
+  },
+  "Add a photo or file": {
+    "fr": "Ajouter une photo ou un fichier",
+    "ar": "إضافة صورة أو ملف"
   }
 }
