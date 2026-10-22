@@ -331,3 +331,27 @@ Order (Cleo, one step at a time):
   - `platform.js` has the paused state;
   - progress refuses signed-out requests;
   - Files is still on, and device push is still refused (503).
+
+## Chat refresh released to myorivia.app (22 Oct, Cleo, founder-approved)
+
+- **What it is:** Ina's `2f878b2`, integrated onto the current version as `a6823cb` (three-way merge of that commit's own changes; her design-pass base is not merged).
+- **Founder's pilot check passed:** replies, Sources, Copy, Listen, Stop, attachments, desktop sidebar search and the phone keyboard.
+- **Includes:**
+  - reading space, open assistant replies and quieter user bubbles;
+  - the unified composer;
+  - a persistent desktop chat sidebar with search;
+  - compact Sources;
+  - Copy, Listen and Select reply;
+  - consistent radii;
+  - identical searches within one message share one request (`searchCacheHits`).
+- **Release-note wording:** replies appear word by word, but this is a progressive reveal of an already-checked reply. It is not live token streaming and does not make answers arrive sooner. Speed claims wait for measured pilot conversations.
+- **Deploys:**
+  - full suite passed (84 checks);
+  - `orivia-production` `b9e32ffc` (rollback `00a555cb`);
+  - no database change; the front door was not redeployed.
+- **Live checks passed:**
+  - routes;
+  - the chat-motion, sidebar and search markup is served, with the 760px reading width;
+  - Files and voice are on; no secrets in `/v1/config`;
+  - device push is still refused (503);
+  - chat still needs the human check.
