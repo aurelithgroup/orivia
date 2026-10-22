@@ -2690,5 +2690,81 @@
   "No chats match your search.": {
     "fr": "Aucune discussion ne correspond à votre recherche.",
     "ar": "لا توجد محادثات تطابق بحثك."
+  },
+  "Helpful": {
+    "fr": "Utile",
+    "ar": "مفيد"
+  },
+  "Not helpful": {
+    "fr": "Pas utile",
+    "ar": "غير مفيد"
+  },
+  "Rating removed.": {
+    "fr": "Note retirée.",
+    "ar": "تمت إزالة التقييم."
+  },
+  "Thanks, your rating was sent.": {
+    "fr": "Merci, votre note a été envoyée.",
+    "ar": "شكرًا، تم إرسال تقييمك."
+  },
+  "Sign in to send feedback to the Orivia team.": {
+    "fr": "Connectez-vous pour envoyer un avis à l’équipe Orivia.",
+    "ar": "سجّل الدخول لإرسال ملاحظاتك إلى فريق Orivia."
+  },
+  "Couldn’t send. Nothing was saved. Try again.": {
+    "fr": "Envoi impossible. Rien n’a été enregistré. Réessayez.",
+    "ar": "تعذّر الإرسال. لم يُحفظ شيء. حاول مرة أخرى."
+  },
+  "Report a problem": {
+    "fr": "Signaler un problème",
+    "ar": "الإبلاغ عن مشكلة"
+  },
+  "What went wrong?": {
+    "fr": "Quel est le problème ?",
+    "ar": "ما المشكلة؟"
+  },
+  "Inaccurate information": {
+    "fr": "Information inexacte",
+    "ar": "معلومات غير دقيقة"
+  },
+  "Unsafe answer": {
+    "fr": "Réponse dangereuse",
+    "ar": "إجابة غير آمنة"
+  },
+  "Privacy issue": {
+    "fr": "Problème de confidentialité",
+    "ar": "مشكلة في الخصوصية"
+  },
+  "Technical problem": {
+    "fr": "Problème technique",
+    "ar": "مشكلة تقنية"
+  },
+  "What happened? (optional)": {
+    "fr": "Que s’est-il passé ? (facultatif)",
+    "ar": "ماذا حدث؟ (اختياري)"
+  },
+  "Include the text of this reply": {
+    "fr": "Inclure le texte de cette réponse",
+    "ar": "تضمين نص هذا الرد"
+  },
+  "Sent: your choice, your note and this one reply. Not the rest of the chat, documents or your name.": {
+    "fr": "Envoyé : votre choix, votre note et cette réponse. Pas le reste de la conversation, ni les documents, ni votre nom.",
+    "ar": "يُرسل: اختيارك وملاحظتك وهذا الرد فقط. لا تُرسل بقية المحادثة أو المستندات أو اسمك."
+  },
+  "Sent: your choice and your note. Not the reply, the rest of the chat, documents or your name.": {
+    "fr": "Envoyé : votre choix et votre note. Pas la réponse, ni le reste de la conversation, ni les documents, ni votre nom.",
+    "ar": "يُرسل: اختيارك وملاحظتك. لا يُرسل الرد أو بقية المحادثة أو المستندات أو اسمك."
+  },
+  "Send report": {
+    "fr": "Envoyer le signalement",
+    "ar": "إرسال البلاغ"
+  },
+  "Sending…": {
+    "fr": "Envoi…",
+    "ar": "جارٍ الإرسال…"
+  },
+  "Report sent to the Orivia team. Reference:": {
+    "fr": "Signalement envoyé à l’équipe Orivia. Référence :",
+    "ar": "تم إرسال البلاغ إلى فريق Orivia. المرجع:"
   }
 }

@@ -1,6 +1,7 @@
 import {handleNotificationRequest} from './notifications.mjs';
 export {runNotificationTick} from './notifications.mjs';
 import {accountTestPage,mountAccountTest} from './test-entry.mjs';
+import {handleFeedbackRequest,feedbackRoute} from './feedback.mjs';
 import {handleOrganisationRequest,organisationRoute,organisationDeletionBlock} from './organisations.mjs';
 import {accountConfig,createAccountAuth} from './auth.mjs';
 import {appHome} from './app-home.mjs';
@@ -50,6 +51,7 @@ export async function handleAccountRequest(req,env,ctx,options={}){
   if((req.method==='PUT'||url.pathname.startsWith('/api/account/notifications')&&!['GET','HEAD'].includes(req.method))&&!expected)return json({error:'account_header_required'},428);
   if(url.pathname.startsWith('/api/account/notifications'))return await handleNotificationRequest(req,env,{session,readJson:boundedJson});
   if(filesRoute(url.pathname))return await handleFileRequest(req,env,{owner,expected,json,readJson:boundedJson});
+  if(feedbackRoute(url.pathname))return await handleFeedbackRequest(req,env,{owner,verified:!!session.user.emailVerified,json,readJson:boundedJson});
   if(url.pathname==='/api/account/session'&&req.method==='GET'){if(ctx?.waitUntil&&env.FILES?.list)ctx.waitUntil(retryFileCleanups(env).catch(()=>{}));return json({user:{id:owner,name:session.user.name,email:session.user.email}})}
   if(url.pathname==='/api/account/sessions'&&req.method==='GET'){
    const sessions=await auth.api.listSessions({headers:req.headers});

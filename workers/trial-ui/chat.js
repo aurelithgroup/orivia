@@ -627,7 +627,8 @@ function draw({newReply=null,scroll=false}={}){
    const copy=document.createElement('button');copy.type='button';copy.textContent=uiText('Copy');copy.setAttribute('aria-label',uiText('Copy reply'));copy.onclick=async()=>{try{await navigator.clipboard.writeText(t.content);copy.textContent=uiText('Copied')}catch(_){copy.textContent=uiText('Could not copy')}};actions.append(copy);
    if('speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent=uiText('▶ Listen');lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label',uiText('Listen to this reply'));lb.onclick=()=>listen(spokenText(t.content),lb,{language:t.meta?.lang||null});actions.append(lb)}
    const more=document.createElement('details'),summary=document.createElement('summary');summary.textContent='⋯';summary.setAttribute('aria-label',uiText('More options'));more.append(summary);
-   const select=document.createElement('button');select.type='button';select.textContent=uiText('Select reply');select.onclick=()=>{window.OriviaChatMotion?.finishAll();const r=document.createRange();r.selectNodeContents(txt);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);more.open=false};more.append(select);actions.append(more);p.append(actions);
+   const select=document.createElement('button');select.type='button';select.textContent=uiText('Select reply');select.onclick=()=>{window.OriviaChatMotion?.finishAll();const r=document.createRange();r.selectNodeContents(txt);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);more.open=false};more.append(select);
+   feedbackControls(t,store.active+':'+turns.indexOf(t),actions,more,p);actions.append(more);p.append(actions);
   }
   el.append(p);
   if(t===newReply&&window.OriviaChatMotion){const extras=[...p.children].filter(n=>n!==txt&&n!==b);extras.forEach(n=>n.classList.add('reply-pending-extra'));txt.classList.add('reply-revealing');
@@ -635,6 +636,33 @@ function draw({newReply=null,scroll=false}={}){
  }
  $('empty').hidden=turns.length>0;
  sc.scrollTop=follow?sc.scrollHeight:previousTop;
+}
+/* Reply feedback (ORI-CHAT-007/008): optional thumbs and Report a problem. Signed-in only, sent to the Orivia team's
+   review queue; guests are told to sign in, never shown a false success. The reply text goes only if ticked. */
+function feedbackApi(path,method,body){const u=window.OriviaAccounts?.user;if(!u)return Promise.reject(Object.assign(Error('sign_in'),{code:'sign_in'}));
+ return fetch('/api/account/feedback/'+path,{method,credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(12000),headers:{'X-Orivia-Account':u.id,'Content-Type':'application/json'},body:JSON.stringify(body)}).then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(d.error||'failed'),{code:d.error||'failed'});return d})}
+function feedbackError(e){return e&&e.code==='sign_in'?uiText('Sign in to send feedback to the Orivia team.'):uiText('Couldn’t send. Nothing was saved. Try again.')}
+function feedbackControls(t,replyId,actions,more,p){
+ const status=document.createElement('span');status.className='fb-status tiny';status.setAttribute('role','status');
+ const thumb=(value,label,glyph)=>{const btn=document.createElement('button');btn.type='button';btn.className='fb-thumb';btn.textContent=glyph;btn.setAttribute('aria-label',uiText(label));btn.setAttribute('aria-pressed',String(t.meta?.rating===value));
+  btn.onclick=async()=>{const next=t.meta?.rating===value?'none':value;try{await feedbackApi('rating','PUT',{replyId,rating:next});const m={...(t.meta||{})};if(next==='none')delete m.rating;else m.rating=next;t.meta=m;persist();
+   for(const x of actions.querySelectorAll('.fb-thumb'))x.setAttribute('aria-pressed',String(x===btn&&next!=='none'));status.textContent=next==='none'?uiText('Rating removed.'):uiText('Thanks, your rating was sent.')}catch(e){status.textContent=feedbackError(e)}};return btn};
+ actions.append(thumb('up','Helpful','👍'),thumb('down','Not helpful','👎'),status);
+ const report=document.createElement('button');report.type='button';report.textContent=uiText('Report a problem');
+ report.onclick=()=>{more.open=false;if(p.querySelector('.fb-form'))return;const form=document.createElement('form');form.className='fb-form';
+  const cat=document.createElement('select');cat.setAttribute('aria-label',uiText('What went wrong?'));for(const [v,l] of [['inaccurate','Inaccurate information'],['unsafe','Unsafe answer'],['privacy','Privacy issue'],['technical','Technical problem'],['other','Something else']]){const o=document.createElement('option');o.value=v;o.textContent=uiText(l);cat.append(o)}
+  const note=document.createElement('textarea');note.maxLength=1000;note.rows=3;note.placeholder=uiText('What happened? (optional)');note.setAttribute('aria-label',uiText('What happened? (optional)'));
+  const inc=document.createElement('input');inc.type='checkbox';inc.id='fb-inc-'+replyId.replace(/[^A-Za-z0-9]/g,'');const lab=document.createElement('label');lab.htmlFor=inc.id;lab.textContent=' '+uiText('Include the text of this reply');
+  const preview=document.createElement('p');preview.className='tiny muted';const sync=()=>{preview.textContent=inc.checked?uiText('Sent: your choice, your note and this one reply. Not the rest of the chat, documents or your name.'):uiText('Sent: your choice and your note. Not the reply, the rest of the chat, documents or your name.')};inc.onchange=sync;sync();
+  const send=document.createElement('button');send.type='submit';send.className='btn small';send.textContent=uiText('Send report');
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='btn quiet small';cancel.textContent=uiText('Cancel');cancel.onclick=()=>form.remove();
+  const out=document.createElement('p');out.className='tiny';out.setAttribute('role','status');const requestId='fb-'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));
+  form.onsubmit=async e=>{e.preventDefault();send.disabled=true;out.textContent=uiText('Sending…');
+   try{const r=await feedbackApi('report','POST',{requestId,category:cat.value,note:note.value,replyId,includeReply:inc.checked,replyText:inc.checked?t.content:undefined});const done=document.createElement('p');done.className='tiny';done.textContent=uiText('Report sent to the Orivia team. Reference:')+' '+r.receipt;form.replaceChildren(done)}
+   catch(err){send.disabled=false;out.textContent=feedbackError(err)}};
+  const row=document.createElement('div');row.className='fb-row';const ir=document.createElement('div');ir.append(inc,lab);row.append(send,cancel);
+  form.append(cat,note,ir,preview,row,out);p.append(form);cat.focus()};
+ more.append(report);
 }
 function loadEvents(){try{const data=JSON.parse((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(eventKey)||'[]');events=Array.isArray(data)?data.filter(e=>e&&typeof e.title==='string'&&typeof e.at==='string'&&typeof e.id==='string').slice(-100):[]}catch(_){events=[]}}
 function storeEvents(){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(eventKey,JSON.stringify(events.slice(-100)))}catch(_){$('reminder-status').textContent=uiText('Unable to save calendar in this browser.')}}

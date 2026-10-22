@@ -131,6 +131,19 @@ export function mountPlatform(){
    h('div',{class:'row'},d.available?go:null,h('button',{class:'btn quiet',type:'button',onclick:()=>{location.hash='';render()}},'Not now')))));
  }
 
+ // Reply feedback queue (ORI-CHAT-007/008): ratings for the last 30 days and reports, with no reporter identity.
+ async function feedbackPanel(){
+  let d;try{d=await api('/api/account/feedback/queue')}catch(e){return panel(h('h3',null,'Feedback from Chat'),h('p',{class:'small muted'},'Feedback isn’t available right now.'))}
+  const CAT={inaccurate:'Inaccurate information',unsafe:'Unsafe answer',privacy:'Privacy issue',technical:'Technical problem',other:'Something else'};
+  const reasons=Object.entries(d.ratings.reasons||{}).map(([k,n])=>k+' '+n).join(', ');
+  const rows=d.reports.map(r=>{const btn=h('button',{class:'btn quiet small',type:'button'},r.status==='open'?'Mark reviewed':'Reopen');
+   btn.onclick=act(btn,async()=>{await api('/api/account/feedback/queue/'+encodeURIComponent(r.id),'POST',{status:r.status==='open'?'reviewed':'open'});await render()});
+   return h('div',{class:'item',style:'align-items:flex-start'},h('div',{class:'grow stack'},h('div',null,h('strong',null,CAT[r.category]||r.category),' ',chip(r.status==='open'?'Open':'Reviewed',r.status==='open'?'c-warn':'c-ok'),' ',h('span',{class:'small muted'},r.receipt+' · '+new Date(r.createdAt).toLocaleString())),
+    r.note?h('p',{class:'small'},r.note):h('p',{class:'small muted'},'No note.'),r.replyText?h('details',null,h('summary',{class:'small'},'Reply they included'),h('p',{class:'small',style:'white-space:pre-wrap'},r.replyText)):null),btn)});
+  return panel(h('div',{class:'row'},h('h3',{class:'grow'},'Feedback from Chat'),chip('Live','c-ok')),
+   h('p',{class:'small muted'},'Last '+d.ratings.days+' days: '+d.ratings.up+' helpful, '+d.ratings.down+' not helpful'+(reasons?' ('+reasons+')':'')+'. Reports show what the person chose to send, never who sent it or the rest of their chat.'),
+   rows.length?h('div',{class:'list'},rows):empty('No reports yet','Problems people report from a Chat reply appear here.'));
+ }
  async function ownerView(){
   const list=(await api('/api/admin/orgs')).organisations;
   const name=h('input',{id:'org-name',required:true,maxlength:120}),slug=h('input',{id:'org-slug',required:true,pattern:'[a-z0-9]+(-[a-z0-9]+)*',maxlength:64}),city=h('input',{id:'org-city',required:true,maxlength:80});
@@ -145,7 +158,8 @@ export function mountPlatform(){
   return [panel(h('div',{class:'row'},h('h2',{class:'grow'},'Orivia management'),chip('Owner','c-ok')),h('p',{class:'small muted'},'You can create organisations and invite each one’s first admin. Member lists, chats and application records aren’t visible here.'),
    list.length?h('div',{class:'list'},rows):empty('No organisations yet','Create one to give its staff a dashboard and its members a space inside their Orivia.')),
    panel(h('h3',null,'Add an organisation'),form),
-   panel(h('div',{class:'row'},h('h3',{class:'grow'},'Not connected yet'),chip('Coming later','c-demo')),h('p',{class:'small muted'},'Partners and sponsorships, costs, support requests and platform counts are designed but not built on the server yet.'))];
+   await feedbackPanel(),
+   panel(h('div',{class:'row'},h('h3',{class:'grow'},'Not connected yet'),chip('Coming later','c-demo')),h('p',{class:'small muted'},'Partners and sponsorships, costs and platform counts are designed but not built on the server yet.'))];
  }
 
  async function staffView(oid,m){
