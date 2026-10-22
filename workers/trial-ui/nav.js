@@ -106,10 +106,17 @@
   }));
   root.replaceChildren(...out);
  }
+ /* One memberships request shared by the menu and the spaces list (reused for 4 seconds, per account). */
+ const shared=new Map();
+ function memberships(id){const hit=shared.get(id);if(hit&&Date.now()-hit.t<4000)return hit.p;
+  const p=fetch('/api/me/memberships',{credentials:'same-origin',cache:'no-store',headers:{'X-Orivia-Account':id},signal:AbortSignal.timeout(12000)}).then(r=>{if(!r.ok){const e=Error('http '+r.status);e.status=r.status;throw e}return r.json()});
+  shared.set(id,{t:Date.now(),p});p.catch(()=>shared.delete(id));return p}
  async function refresh(){
-  try{const s=await fetch('/api/account/session',{credentials:'same-origin',cache:'no-store'});user=s.ok?(await s.json()).user:null}catch(_){user=null}
+  // In the app, the account is the one the app already loaded (no second session request); it calls refresh when that changes.
+  if(inApp()){if(document.body.dataset.entryPending)return user;const u=window.OriviaAccounts.user;user=u?{id:u.id,name:u.name,email:u.email}:null}
+  else{try{const s=await fetch('/api/account/session',{credentials:'same-origin',cache:'no-store'});user=s.ok?(await s.json()).user:null}catch(_){user=null}}
   me=null;loadError=false;
-  if(user){try{me=await api('/api/me/memberships')}catch(_){loadError=true}}
+  if(user){try{me=await memberships(user.id)}catch(_){loadError=true}}
   markSignedIn();render();return user;
  }
  function mount(target){
@@ -128,7 +135,7 @@
   ".onav-item:hover{background:rgba(127,127,127,.12)}.onav-item[aria-current=page]{background:rgba(243,192,74,.18);font-weight:700}.onav-item-note{font-size:12px;opacity:.75}.onav-note{font-size:12px;opacity:.8;margin:4px 10px}"+
   "@media (max-width:560px){header.top .chip{display:none}.onav-btn{max-width:34vw;padding:7px 10px}body[data-nav-signed-in] #open-settings{display:none}header.top{gap:8px}}@media (max-width:420px){header.top .wordmark{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}.onav-btn{max-width:46vw}}.onav-lang{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;font-size:15px}.onav-lang select{font:inherit;font-size:14px;border-radius:8px;padding:4px 6px}";
  document.head.append(style);
- window.OriviaNav={mount,refresh,announce,menuItems,currentSpace,spacePath,onSettings:null};
+ window.OriviaNav={mount,refresh,announce,menuItems,currentSpace,spacePath,memberships,onSettings:null};
  // Any page with a #orivia-nav slot gets the navigation (the app and the dashboards); no inline script needed.
  const auto=()=>{if(document.getElementById('orivia-nav'))mount('orivia-nav')};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',auto);else auto();

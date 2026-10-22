@@ -64,7 +64,7 @@ button:focus-visible,a:focus-visible,textarea:focus-visible,input:focus-visible,
 form#form{display:flex;gap:8px;align-items:flex-end}
 form#form label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 textarea#msg{flex:1;min-width:0;resize:none;max-height:140px;padding:11px 14px;border:1px solid var(--line);border-radius:22px;background:var(--surface2);color:var(--ink);font:16px/1.4 system-ui,sans-serif}
-#send{width:46px;height:46px;border-radius:50%;border:0;background:var(--amber);color:#1C2733;display:grid;place-items:center;flex:none}
+#send{width:46px;height:46px;border-radius:50%;border:0;background:var(--amber);color:#1C2733;display:grid;place-items:center;flex:none}#send.stopping svg{display:none}#send.stopping::after{content:'';width:14px;height:14px;border-radius:3px;background:currentColor}
 #send svg{width:20px;height:20px}
 #status{font-size:12px;color:var(--muted);padding:4px 6px 0;min-height:18px}
 /* Calendar, journeys, my life */

@@ -1733,6 +1733,9 @@ function cooldown(secs){
 }
 /* Research progress inside the chat: the server streams what Orivia is actually doing ("Searching: …", "Reading 3 pages: …"),
    one line at a time, then the reply. Plain JSON replies (every other path) work as before. */
+/* The send button doubles as Stop while a reply is on its way. */
+var stoppedByPerson=false;
+function sendMode(stopping){const b=$('send');if(!b)return;b.classList.toggle('stopping',stopping);b.disabled=false;b.setAttribute('aria-label',uiText(stopping?'Stop':'Send'))}
 function working(text){
  if(!text){$('working')?.remove();return}
  const sc=$('chat-scroll'),follow=nearChatBottom(sc);
@@ -1752,14 +1755,16 @@ async function readReply(res,chatId){
  return {r:{ok:final.status<400,status:final.status},d:final.body};
 }
 $('form').onsubmit=async e=>{
- e.preventDefault();if(busy||!agreed()||Date.now()<coolUntil)return;
+ e.preventDefault();
+ if(busy){if(activeChatRequest){stoppedByPerson=true;activeChatRequest.abort()}return}
+ if(!agreed()||Date.now()<coolUntil)return;
  if(navigator.onLine===false){showOffline();$('status').textContent=uiText('You’re offline. Your message is still here; send it when you’re back online.');return}
  stopDictation(true);stopSpeaking();
  const text=$('msg').value.trim();if(!text)return;
  $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});save();draw({scroll:true});
  const chatId=store.active,sentTurns=turns.slice(),accountAtSend=globalThis.OriviaAccounts?.epoch||'';
  const controller=new AbortController();activeChatRequest=controller;
- busy=true;$('send').disabled=true;$('status').textContent=uiText('Orivia is thinking…');working('Thinking…');window.oriviaResearchMode=!!pilotConsent();
+ busy=true;stoppedByPerson=false;sendMode(true);$('status').textContent=uiText('Orivia is thinking…');working('Thinking…');window.oriviaResearchMode=!!pilotConsent();
  try{
   const res=await fetch('/v1/chat',{method:'POST',signal:controller.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),...(currentOrgContext()?{orgContext:{org:currentOrgContext().org,content:currentOrgContext().content}}:{}),researchContext:currentResearchContext(sentTurns),language:uiLanguage(),style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
   const {r,d}=await readReply(res,chatId);
@@ -1804,6 +1809,11 @@ $('form').onsubmit=async e=>{
   $('status').textContent=viaTest?(d.liveSources?.length?'Research test (OpenAI) · facts checked against the sources shown.':'Research test (OpenAI).')
    :pilotOffer&&!pilotConsent()?'Basic mode · the OpenAI research test is off on this device (turn it on in Settings).'
    :d.liveSources?.length?'Opened approved source page(s) for this reply. Routes and schedules are not checked.':d.verifiedSources?.length?'Reviewed campus references attached; live pages unavailable.':'AI reply • No approved live sources checked.';
- }catch(_){$('status').textContent=uiText('Could not reach the private AI. Please try again.')}
- finally{if(activeChatRequest===controller)activeChatRequest=null;busy=false;$('send').disabled=Date.now()<coolUntil;working('')}
+ }catch(_){
+  if(controller.signal.aborted&&stoppedByPerson){
+   // Stopped by the person: take back the unanswered question and return it to the box to edit or resend.
+   if(store.active===chatId&&turns.at(-1)?.role==='user'&&turns.at(-1).content===text.slice(0,900)){turns.pop();save();draw()}
+   if(!$('msg').value)$('msg').value=text;grow();$('status').textContent=uiText('Stopped. Your message is back in the box.')
+  }else $('status').textContent=uiText('Could not reach the private AI. Please try again.')}
+ finally{if(activeChatRequest===controller)activeChatRequest=null;busy=false;sendMode(false);$('send').disabled=Date.now()<coolUntil;working('')}
 };

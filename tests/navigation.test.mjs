@@ -61,4 +61,10 @@ assert.ok(spacesJs.includes("'/platform?org='+encodeURIComponent(m.organisationI
 assert.ok(chatJs.includes("addEventListener('controllerchange'")&&chatJs.includes("uiText('Orivia has been updated.')"),'updates offer a reload, never reload under the person');
 assert.ok(chatJs.includes('window.OriviaPresentation?.titleFor?.')&&chatJs.includes('return autoTitle(ts)'),'titles fall back to today’s');
 assert.ok(chatJs.includes('window.OriviaPresentation?.renderSources?.')&&chatJs.includes('if(custom instanceof Node)return custom}catch(_){}'),'sources fall back to today’s rendering');
+// Round 2: one memberships request shared by menu and spaces; the app's menu reuses the app's account; Stop cancels a reply.
+const navJs=fs.readFileSync('workers/trial-ui/nav.js','utf8').replace(/\r\n/g,'\n');
+assert.ok(navJs.includes('if(hit&&Date.now()-hit.t<4000)return hit.p')&&spacesJs.includes('window.OriviaNav.memberships(id)'),'one shared memberships request');
+assert.ok(navJs.includes('if(inApp()){if(document.body.dataset.entryPending)return user;const u=window.OriviaAccounts.user'),'no second session request in the app');
+assert.ok(chatJs.includes('if(busy){if(activeChatRequest){stoppedByPerson=true;activeChatRequest.abort()}return}'),'the send button stops a reply in progress');
+assert.ok(chatJs.includes("uiText('Stopped. Your message is back in the box.')"),'and gives the message back');
 console.log('Navigation: spaces only from server memberships, addressable spaces, text-only menus, sign-out to other tabs, routes agree.');

@@ -175,6 +175,6 @@
  }
  const apiObject={get user(){return user},get epoch(){return scope},storage,open(){user?accountPanel():signIn()},copy:applyCopy,async boot(cb){callbacks=cb;
  // Keep the old welcome hidden until this decides sign-in, guest or the person's own Orivia (no flash of the wrong screen).
- document.body.dataset.entryPending='1';try{config=await api('/api/account/config');if(!config.ui){guest();return}if(config.enabled){try{await loadArrival();await restore();return}catch(e){if(e.status===401){user=null;scope=null;ready=false;paused=false;clearTimeout(timer)}if(e.status!==401){shell('Your account could not be opened','Your saved data has not been changed.');$('account-entry').append(btn('Try again',()=>apiObject.boot(cb)),btn('Continue as a guest',guest,true));return}}}welcome()}catch(_){config={};guest()}finally{delete document.body.dataset.entryPending}}};
+ document.body.dataset.entryPending='1';try{config=await api('/api/account/config');if(!config.ui){guest();return}if(config.enabled){try{await loadArrival();await restore();return}catch(e){if(e.status===401){user=null;scope=null;ready=false;paused=false;clearTimeout(timer)}if(e.status!==401){shell('Your account could not be opened','Your saved data has not been changed.');$('account-entry').append(btn('Try again',()=>apiObject.boot(cb)),btn('Continue as a guest',guest,true));return}}}welcome()}catch(_){config={};guest()}finally{delete document.body.dataset.entryPending;window.OriviaNav?.refresh()}}};
  window.OriviaAccounts=apiObject;
 })();

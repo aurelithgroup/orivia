@@ -2170,5 +2170,9 @@
   "Reload": {
     "fr": "Recharger",
     "ar": "إعادة التحميل"
+  },
+  "Stopped. Your message is back in the box.": {
+    "fr": "Arrêté. Votre message est de nouveau dans la zone de saisie.",
+    "ar": "تم الإيقاف. رسالتك عادت إلى خانة الكتابة."
   }
 }

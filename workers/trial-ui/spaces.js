@@ -91,7 +91,7 @@
  async function refresh(){
   const root=$('home-spaces'),list=$('home-spaces-list'),id=user()?.id;if(!root||!list)return;if(!id){clear();return}const g=++generation;
   root.hidden=false;list.replaceChildren(node('p','tiny','Checking your spaces…'));
-  try{const d=await get('/api/me/memberships',id);if(!current(id,g))return;memberships=Object.assign([...(d.memberships||[])],{loaded:true});queueMicrotask(followAddress);
+  try{const d=await (window.OriviaNav?.memberships?window.OriviaNav.memberships(id):get('/api/me/memberships',id));if(!current(id,g))return;memberships=Object.assign([...(d.memberships||[])],{loaded:true});queueMicrotask(followAddress);
    const out=[];for(const m of d.memberships||[]){if(m.status==='active')out.push(m.role==='student'?card(m.name,'Guides, dates and contacts',()=>openSpace(m)):management(m.name+' · '+t(m.role==='admin'?'Admin':'Editor'),'/platform?org='+encodeURIComponent(m.organisationId)));else if(m.status==='requested'){const p=node('div','dashboard-card');p.append(node('strong','',m.name,true),node('small','','Waiting for approval'));out.push(p)}}
    if((d.platformRoles||[]).includes('owner'))out.push(management('Orivia management','/manage'));
    if(!out.length)out.push(node('p','tiny','No organisations connected yet. An invitation adds one after staff approval.'));
