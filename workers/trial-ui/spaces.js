@@ -11,6 +11,7 @@
  function close(){generation++;const sheet=$('organisation-sheet');if(sheet)sheet.hidden=true;const body=$('organisation-body');if(body)body.replaceChildren();focusBefore?.focus?.();focusBefore=null;}
  function clear(){close();const root=$('home-spaces');if(root)root.hidden=true;$('home-spaces-list')?.replaceChildren();}
  function current(id,g){return user()?.id===id&&generation===g;}
+ async function post(path,id,body){const r=await fetch(path,{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'X-Orivia-Account':id,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('unavailable');return r.json();}
  async function get(path,id){const r=await fetch(path,{credentials:'same-origin',cache:'no-store',headers:{'X-Orivia-Account':id},signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('unavailable');return r.json();}
  function card(name,subtitle,action){const b=node('button','dashboard-card');b.type='button';const copy=node('span','dashboard-copy');copy.append(node('strong','',name,true),node('small','',subtitle));b.append(copy,node('span','dashboard-arrow','›'));b.onclick=action;return b;}
  function management(label,href='/platform'){const a=node('a','dashboard-card',label,true);a.href=href;return a;}
@@ -62,6 +63,10 @@
    const back=node('button','btn quiet small','← My Orivia');back.type='button';back.onclick=()=>{close();leaveAddress()};out.unshift(back);
    out.push(node('p','tiny','Everything below is published by '+org+'. Check dates and requirements with them if anything is unclear.',true));
    const content=d.content||[],byId=new Map(content.map(c=>[c.id,c]));
+   // Progress: the person's own Done marks. The university sees totals only (never names, nothing under the minimum).
+   const prog=d.progress&&d.progress.available?d.progress:null,done=new Set(prog?.done||[]);
+   const doneButton=c=>{const b=node('button','btn quiet small','');b.type='button';const paint=()=>{const on=done.has(c.id);b.textContent=t(on?'Done ✓':'Mark as done');b.setAttribute('aria-pressed',String(on))};paint();
+    b.onclick=async()=>{const want=!done.has(c.id);b.disabled=true;try{await post('/api/me/orgs/'+encodeURIComponent(m.organisationId)+'/progress',id,{contentId:c.id,done:want});if(!current(id,g))return;want?done.add(c.id):done.delete(c.id);paint()}catch(_){if(current(id,g))b.textContent=t('Couldn’t save. Try again.')}finally{b.disabled=false}};return b};
    const groups=[['update','Updates'],['date','Important dates'],['guide','Guides'],['contact','Useful contacts']];
    const link=(label,href,ext)=>{const a=node('a','btn quiet small',label);a.href=href;if(ext){a.target='_blank';a.rel='noopener noreferrer'}return a};
    for(const [kind,label] of groups){
@@ -74,6 +79,7 @@
      item.append(node('p','organisation-text',c.body,true));
      const actions=node('div','org-actions');
      if(kind==='date'&&det.date)actions.append(calendarAction(c,det,m,org));
+     if(prog&&(kind==='guide'||kind==='date'))actions.append(doneButton(c));
      if(kind==='contact'){if(det.phone)actions.append(link('Call','tel:'+det.phone.replace(/[^\d+]/g,'')));if(det.email)actions.append(link('Email','mailto:'+det.email));if(det.website)actions.append(link('Website ↗',det.website,true))}
      if(kind==='guide')actions.append(askAction(c,m,org,actions));
      if(kind==='guide'&&det.sourceUrl)actions.append(link('Source page ↗',det.sourceUrl,true));
@@ -84,7 +90,11 @@
     out.push(group);
    }
    if(!content.length)out.push(node('p','notice','Your organisation hasn’t published anything here yet.'));
-   out.push(node('p','tiny','Application progress is not connected yet.'));
+   if(prog){const share=node('div','org-progress-share'),label=node('p','tiny','',true),toggle=node('button','btn quiet small','');toggle.type='button';let sharing=prog.sharing;
+    const paint=()=>{label.textContent=t(sharing?'Your progress counts towards totals that '+org+' can see, like “18 of 40 students”. They never see your name, and see nothing when fewer than '+prog.minimum+' students share.':'Your progress is private: '+org+' doesn’t count it. Your Done marks still work for you.');toggle.textContent=t(sharing?'Stop sharing my progress':'Share my progress as totals');toggle.setAttribute('aria-pressed',String(sharing))};paint();
+    toggle.onclick=async()=>{toggle.disabled=true;try{await post('/api/me/orgs/'+encodeURIComponent(m.organisationId)+'/progress-sharing',id,{share:!sharing});if(!current(id,g))return;sharing=!sharing;paint()}catch(_){if(current(id,g))label.textContent=t('Couldn’t save. Try again.')}finally{toggle.disabled=false}};
+    share.append(label,toggle);out.push(share)}
+   out.push(node('p','tiny','Application progress from your university’s own systems is not connected yet.'));
    const manage=node('a','btn quiet','Manage membership');manage.href='/platform';out.push(manage);body.replaceChildren(...out);
   }catch(_){if(current(id,g))body.replaceChildren(node('p','notice','This space couldn’t be opened. Your access may have changed. Close it and refresh your spaces.'));}
  }

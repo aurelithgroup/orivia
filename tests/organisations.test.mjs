@@ -53,7 +53,7 @@ assert.equal((await call(aisha,'/api/me/orgs/'+org)).status,403,'pending members
 assert.equal((await call(aisha,'/api/invitations/join','POST',{token:cohort.token})).status,200,'join retry is idempotent');assert.equal(sql.prepare('SELECT uses FROM organisation_invitations WHERE id=?').get(cohort.invitation.id).uses,1);
 assert.equal((await call(editor,'/api/orgs/'+org+'/requests/'+aisha.id+'/decision','POST',{decision:'approve'})).status,403);
 r=await call(mariam,'/api/orgs/'+org+'/requests/'+aisha.id+'/decision','POST',{decision:'approve'});assert.equal(r.status,200,JSON.stringify(r));
-r=await call(aisha,'/api/me/orgs/'+org);assert.equal(r.status,200);assert.equal(r.data.content[0].id,guide);assert.equal(r.data.personalDataShared,false);assert.equal(r.data.progress.available,false);
+r=await call(aisha,'/api/me/orgs/'+org);assert.equal(r.status,200);assert.equal(r.data.content[0].id,guide);assert.equal(r.data.personalDataShared,false);assert.equal(r.data.applicationProgress.available,false);assert.equal(r.data.progress.available,true);assert.equal(r.data.progress.sharing,true);assert.deepEqual(r.data.progress.done,[]);
 assert.equal((await call(aisha,'/api/me/memberships')).data.memberships[0].organisationId,org);
 assert.equal((await call(mariam,'/api/orgs/'+org+'/records')).status,403,'even admin has no application-record privilege');
 // Real personal vault remains private and untouched by organisation actions.
@@ -185,4 +185,39 @@ assert.equal((await call(mariam,'/api/account/vault')).data.revision,0,'role man
  const made=await handleAccountRequest(new Request(origin+'/api/orgs/'+org+'/invitations',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','cf-connecting-ip':'192.0.2.'+(++ip),Cookie:mariam.cookie,'X-Orivia-Account':mariam.id},body:JSON.stringify({role:'student',label:'App home'})}),app,{}, {auth,organisationOptions:{now:()=>stamp}});
  const inv=await made.json();assert.equal(made.status,201,JSON.stringify(inv));assert.equal(inv.joinUrl,origin+'/join/northbay#join='+inv.token,'short university link on myorivia.app');assert.equal(decodeSvg(inv.qrSvg),inv.joinUrl,'the QR code opens the same link');
  r=await call(mariam,'/api/orgs/'+org+'/invitations','POST',{role:'student',label:'Pilot link'});assert.equal(r.data.joinUrl,origin+'/?organisation=northbay#join='+r.data.token,'pilot links are unchanged');}
+
+// Step 9 (22 Oct): staff counts, member search and paging, admin status, and totals-only student progress.
+{sql.prepare("UPDATE organisation_memberships SET status='active',role='student' WHERE org_id=? AND user_id=?").run(org,aisha.id); // she left earlier in this story
+ const st=await call(mariam,'/api/orgs/'+org+'/summary');assert.equal(st.status,200);assert.ok(Number.isInteger(st.data.activity.joinedLast30Days)&&Number.isInteger(st.data.activity.invitationUses)&&Array.isArray(st.data.activity.published));
+ assert.ok(!JSON.stringify(st.data).includes(aisha.email),'counts never name anyone');
+ const own=await call(owner,'/api/admin/orgs');assert.equal(own.data.organisations.find(o=>o.id===org).adminActive,true,'owner sees the admin is active');
+ // Members: search by name/email and pages of 100 with waiting requests first.
+ let ms=await call(mariam,'/api/orgs/'+org+'/members?q=AISHA');assert.equal(ms.status,200);assert.ok(ms.data.members.length>=1&&ms.data.members.every(x=>/aisha/i.test(x.name+x.email)));
+ ms=await call(mariam,'/api/orgs/'+org+'/members?q=%25');assert.equal(ms.data.members.length,0,'search wildcards are literal');
+ const now=new Date().toISOString(),extra=[];
+ for(let i=0;i<120;i++){const uid='bulk-'+i;sql.prepare('INSERT INTO user(id,name,email,emailVerified,createdAt,updatedAt) VALUES (?,?,?,?,?,?)').run(uid,'Student '+i,uid+'@northbay.example',1,now,now);
+  sql.prepare("INSERT INTO organisation_memberships(org_id,user_id,role,status,request_id,created_at,updated_at) VALUES (?,?,'student',?,?,?,?)").run(org,uid,i===119?'requested':'active','req-'+i,Date.now(),Date.now());extra.push(uid)}
+ ms=await call(mariam,'/api/orgs/'+org+'/members');assert.equal(ms.data.members.length,100);assert.equal(ms.data.more,true);assert.equal(ms.data.members[0].status,'requested','waiting requests first');
+ const page2=await call(mariam,'/api/orgs/'+org+'/members?offset='+ms.data.nextOffset);assert.ok(page2.data.members.length>0&&!page2.data.members.some(x=>ms.data.members.some(y=>y.userId===x.userId)),'next page has the rest');
+ // Progress: a student marks a published guide done; only published guides/dates of their own organisation.
+ r=await call(aisha,'/api/me/orgs/'+org+'/progress','POST',{contentId:guide,done:true});assert.equal(r.status,200,JSON.stringify(r));
+ assert.deepEqual((await call(aisha,'/api/me/orgs/'+org)).data.progress.done,[guide]);
+ assert.equal((await call(aisha,'/api/me/orgs/'+org+'/progress','POST',{contentId:'not-a-real-item',done:true})).status,404);
+ assert.equal((await call(mariam,'/api/me/orgs/'+org+'/progress','POST',{contentId:guide,done:true})).status,403,'staff cannot mark student progress');
+ assert.equal((await call(omar,'/api/orgs/'+org+'/progress')).status,403,'non-members see nothing');
+ // Totals only, and only with at least 5 sharing students. Make it exactly 5 sharing: opt everyone else out.
+ const sharingIds=extra.slice(0,4);const keep=[aisha.id,...sharingIds];for(const row of sql.prepare('SELECT user_id FROM organisation_memberships WHERE org_id=?').all(org))if(!keep.includes(row.user_id))sql.prepare('INSERT OR IGNORE INTO organisation_progress_private(org_id,user_id) VALUES (?,?)').run(org,row.user_id);
+ for(const uid of sharingIds.slice(0,2))sql.prepare('INSERT INTO organisation_progress(org_id,user_id,content_id,done_at) VALUES (?,?,?,?)').run(org,uid,guide,Date.now());
+ let pr=await call(mariam,'/api/orgs/'+org+'/progress');assert.equal(pr.status,200);assert.equal(pr.data.progress.shown,true);assert.equal(pr.data.progress.students,5);
+ assert.equal(pr.data.progress.items.find(i=>i.id===guide).done,3,'aisha and two others');
+ assert.ok(!JSON.stringify(pr.data).match(/aisha|bulk-|@/i),'no names, ids or emails');
+ // An opted-out student's mark is never counted; under 5 sharing, nothing is shown.
+ r=await call(aisha,'/api/me/orgs/'+org+'/progress-sharing','POST',{share:false});assert.equal(r.status,200);assert.equal((await call(aisha,'/api/me/orgs/'+org)).data.progress.sharing,false);
+ pr=await call(mariam,'/api/orgs/'+org+'/progress');assert.equal(pr.data.progress.shown,false);assert.equal(pr.data.progress.reason,'fewer_than_minimum');assert.ok(pr.data.progress.items.every(i=>!('done' in i)),'no counts when hidden');
+ r=await call(aisha,'/api/me/orgs/'+org+'/progress-sharing','POST',{share:true});pr=await call(mariam,'/api/orgs/'+org+'/progress');assert.equal(pr.data.progress.shown,true);
+ // Removed members stop counting.
+ sql.prepare("UPDATE organisation_memberships SET status='removed' WHERE org_id=? AND user_id=?").run(org,sharingIds[0]);pr=await call(mariam,'/api/orgs/'+org+'/progress');assert.equal(pr.data.progress.shown,false,'4 sharing: hidden again');
+ // Unmarking works.
+ r=await call(aisha,'/api/me/orgs/'+org+'/progress','POST',{contentId:guide,done:false});assert.deepEqual((await call(aisha,'/api/me/orgs/'+org)).data.progress.done,[]);
+}
 console.log('Organisations: real account sessions and SQL, full owner → admin → invite → request → approval → student flow; forged roles, cross-tenant access, stale writes, expiry/revocation, public-code isolation and personal-vault preservation passed. No real email or deployment.');

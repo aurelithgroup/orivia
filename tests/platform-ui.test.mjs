@@ -18,7 +18,11 @@ assert.match(js,/location\.hash\.match\(\/\^#join=/,'join links read from the fr
 // The space menu comes only from the server's memberships and platform roles
 assert.match(js,/me\.platformRoles\.includes\('owner'\)/);assert.match(js,/me\.memberships\.filter\(m=>m\.status==='active'\)/);
 // Unfinished features are labelled, never filled with sample numbers
-for(const label of ['Not connected yet','Application records need a separate permission','Admin status isn’t shown here yet','Paging isn’t available yet'])assert.ok(js.includes(label),'labelled: '+label);
+for(const label of ['Not connected yet','Application records need a separate permission','Views not tracked'])assert.ok(js.includes(label),'labelled: '+label);
+// Step 9 (22 Oct): built, so no longer labelled unfinished. Progress is totals only, with the minimum stated.
+for(const built of ['Admin status isn’t shown here yet','Paging isn’t available yet'])assert.ok(!js.includes(built),'now built: '+built);
+for(const piece of ["'/members?q='+encodeURIComponent(memberSearch)+'&offset='","'Show more'","o.adminActive?'Admin active'","pre+'/progress'","' students share their progress.","i.done+' of '+pr.students+' students"])assert.ok(js.includes(piece),'step 9: '+piece);
+assert.doesNotMatch(js,/progress[^;]{0,200}(.email|.name)/,'progress never shows names or emails');
 assert.doesNotMatch(js,/1,284|4,920|\$11\.40|Mariam K\.|Aisha R\./,'no demo figures or demo people in the connected version');
 // Distinct pending and expired states; leaving explains downloads
 assert.match(js,/Confirm role change/);assert.match(js,/Allow new join request/);assert.match(js,/At least one active admin must remain/);assert.match(js,/Download QR image/);assert.match(js,/Tap again to withdraw/);assert.match(js,/An admin can withdraw this code/);assert.match(js,/Waiting for approval/);assert.match(js,/Invitation expired/);assert.match(js,/won’t update, so it may go out of date/);

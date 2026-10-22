@@ -48,3 +48,7 @@ CREATE TABLE IF NOT EXISTS organisation_arrivals (
  org_id TEXT PRIMARY KEY REFERENCES organisations(id) ON DELETE CASCADE,
  data TEXT NOT NULL,revision INTEGER NOT NULL DEFAULT 1,updated_at INTEGER NOT NULL
 );
+
+-- Step 9 (22 Oct): student progress, totals only for staff (the Worker also creates these if missing).
+CREATE TABLE IF NOT EXISTS organisation_progress(org_id TEXT NOT NULL, user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE, content_id TEXT NOT NULL, done_at INTEGER NOT NULL, PRIMARY KEY(org_id,user_id,content_id));
+CREATE TABLE IF NOT EXISTS organisation_progress_private(org_id TEXT NOT NULL, user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE, PRIMARY KEY(org_id,user_id));

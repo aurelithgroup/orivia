@@ -2606,5 +2606,29 @@
   "Sign in again, then try once more.": {
     "fr": "Reconnectez-vous, puis réessayez.",
     "ar": "سجّل الدخول مرة أخرى، ثم حاول من جديد."
+  },
+  "Done ✓": {
+    "fr": "Fait ✓",
+    "ar": "تم ✓"
+  },
+  "Mark as done": {
+    "fr": "Marquer comme fait",
+    "ar": "وضع علامة «تم»"
+  },
+  "Couldn’t save. Try again.": {
+    "fr": "Impossible d’enregistrer. Réessayez.",
+    "ar": "تعذّر الحفظ. حاول مرة أخرى."
+  },
+  "Stop sharing my progress": {
+    "fr": "Ne plus partager ma progression",
+    "ar": "إيقاف مشاركة تقدّمي"
+  },
+  "Share my progress as totals": {
+    "fr": "Partager ma progression en totaux",
+    "ar": "مشاركة تقدّمي كأرقام إجمالية"
+  },
+  "Application progress from your university’s own systems is not connected yet.": {
+    "fr": "La progression de votre dossier depuis les systèmes de votre université n’est pas encore connectée.",
+    "ar": "لم يتم ربط تقدّم طلبك من أنظمة جامعتك بعد."
   }
 }

@@ -54,6 +54,7 @@ export function mountPlatform(){
  const $=id=>document.getElementById(id);
  // Where personal Orivia lives on this deployment ('/' on the pilot, '/app' on myorivia.app); set by the server.
   const APP_HOME=document.documentElement.dataset.appHome==='/app'?'/app':'/';
+  let memberSearch='',memberPages=1;
   let user=null,me={platformRoles:[],memberships:[]},space=location.pathname==='/manage'?'owner':(()=>{const o=new URLSearchParams(location.search).get('org');return o&&/^[A-Za-z0-9-]{1,64}$/.test(o)?'org:'+o:'home'})(),tab='overview',flash=null;
  /* ---- tiny DOM helper: text is always text ---- */
  function h(tag,props,...kids){const n=document.createElement(tag);if(props)for(const [k,v] of Object.entries(props)){if(v===undefined||v===null||v===false)continue;if(k==='class')n.className=v;else if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(v===true)n.setAttribute(k,'');else n.setAttribute(k,String(v))}for(const k of kids.flat()){if(k===null||k===undefined||k===false)continue;n.append(k instanceof Node?k:document.createTextNode(String(k)))}return n}
@@ -140,7 +141,7 @@ export function mountPlatform(){
    h('p',{class:'small muted'},'New organisations are marked as demos until a real partnership is agreed.'),h('div',{class:'row'},create));
   const rows=list.map(o=>{const email=h('input',{type:'email',required:true,'aria-label':'First admin’s email for '+o.name,placeholder:'admin@university.example'});const b=h('button',{class:'btn',type:'submit'},'Invite first admin');const result=h('div');
    const f=h('form',{class:'row',style:'align-items:flex-end',onsubmit:act(b,async()=>{const r=await api('/api/admin/orgs/'+encodeURIComponent(o.id)+'/admin-invite','POST',{recipientEmail:email.value,label:'First admin'});result.replaceChildren(secret(r));f.hidden=true})},h('div',{class:'grow'},field('First admin’s email',email)),b);
-   return h('div',{class:'item',style:'align-items:flex-start'},h('div',{class:'grow stack'},h('div',null,h('strong',null,o.name),' ',o.demo?chip('Demo','c-demo'):null,' ',chip(o.status==='active'?'Active':o.status,o.status==='active'?'c-ok':'c-wait')),h('p',{class:'small muted'},o.city+' · /'+o.slug),f,result,h('p',{class:'small muted'},'Admin status isn’t shown here yet. If an admin already exists or was invited, the form says so.')))});
+   return h('div',{class:'item',style:'align-items:flex-start'},h('div',{class:'grow stack'},h('div',null,h('strong',null,o.name),' ',o.demo?chip('Demo','c-demo'):null,' ',chip(o.status==='active'?'Active':o.status,o.status==='active'?'c-ok':'c-wait')),h('p',{class:'small muted'},o.city+' · /'+o.slug),h('div',null,chip(o.adminActive?'Admin active':o.adminInvitePending?'Admin invited, not accepted yet':'No admin yet',o.adminActive?'c-ok':o.adminInvitePending?'c-wait':'c-warn')),o.adminActive?null:f,result))});
   return [panel(h('div',{class:'row'},h('h2',{class:'grow'},'Orivia management'),chip('Owner','c-ok')),h('p',{class:'small muted'},'You can create organisations and invite each one’s first admin. Member lists, chats and application records aren’t visible here.'),
    list.length?h('div',{class:'list'},rows):empty('No organisations yet','Create one to give its staff a dashboard and its members a space inside their Orivia.')),
    panel(h('h3',null,'Add an organisation'),form),
@@ -164,7 +165,13 @@ export function mountPlatform(){
   }
   if(tab==='overview'){
    body=[h('div',{class:'kpis'},h('div',{class:'kpi'},h('span',{class:'small muted'},'Members'),h('strong',null,count('student','active'))),h('div',{class:'kpi'},h('span',{class:'small muted'},'Waiting for approval'),h('strong',null,count('student','requested'))),h('div',{class:'kpi'},h('span',{class:'small muted'},'Staff'),h('strong',null,count('admin','active')+count('editor','active')))),
+    h('div',{class:'kpis'},h('div',{class:'kpi'},h('span',{class:'small muted'},'Joined in the last 30 days'),h('strong',null,summary.activity?.joinedLast30Days??0)),h('div',{class:'kpi'},h('span',{class:'small muted'},'Invitation uses'),h('strong',null,summary.activity?.invitationUses??0)),h('div',{class:'kpi'},h('span',{class:'small muted'},'Published guides and dates'),h('strong',null,(summary.activity?.published||[]).filter(p=>['guide','date'].includes(p.kind)).reduce((a,p)=>a+p.count,0)))),
     count('student','requested')&&admin?h('p',{class:'note'},'Join requests are waiting. Open Members to decide.'):null,
+    await (async()=>{const pr=(await api(pre+'/progress')).progress;
+     const intro=h('p',{class:'small muted'},'Students can mark your guides and key dates as done. You see totals only, never names, and only when at least '+pr.minimum+' students share their progress. Students can switch sharing off.');
+     if(!pr.items.length)return panel(h('h3',null,'Student progress'),intro,h('p',{class:'small muted'},'Publish a guide or key date to see progress here.'));
+     if(!pr.shown)return panel(h('h3',null,'Student progress'),intro,h('p',{class:'note'},'Not shown yet: fewer than '+pr.minimum+' students are sharing their progress.'));
+     return panel(h('h3',null,'Student progress'),intro,h('div',{class:'list'},pr.items.map(i=>{const pct=pr.students?Math.round(i.done/pr.students*100):0;return h('div',{class:'item'},h('div',{class:'grow'},h('strong',null,i.title),h('p',{class:'small muted'},i.done+' of '+pr.students+' students · '+pct+'%')),h('div',{style:'width:120px;height:8px;border-radius:4px;background:var(--line,#ddd);overflow:hidden','aria-hidden':'true'},h('div',{style:'height:100%;width:'+pct+'%;background:var(--ok,#4a8)'})))})))})(),
     h('p',{class:'small muted'},'You’re '+(admin?'an admin: you publish, approve members and manage invitations.':'an editor: you draft guides and make public QR codes. An admin publishes and approves members.'))];
   }
   if(tab==='guides'){
@@ -195,7 +202,11 @@ export function mountPlatform(){
   }
   if(tab==='members'){
    if(!admin)body=[h('div',{class:'note'},'Only admins see members’ names and emails, and approve requests.')];
-   else{const list=(await api(pre+'/members')).members,req=list.filter(x=>x.status==='requested'),act2=list.filter(x=>x.status==='active'),removed=list.filter(x=>x.status==='removed');
+   else{let list=[],more=false;for(let i=0;i<memberPages;i++){const page=await api(pre+'/members?q='+encodeURIComponent(memberSearch)+'&offset='+(i*100));list=list.concat(page.members);more=page.more;if(!page.more)break}
+    const search=h('input',{type:'search',value:memberSearch,maxlength:80,placeholder:'Search by name or email','aria-label':'Search members'}),find=h('button',{class:'btn quiet',type:'submit'},'Search');
+    const searchForm=h('form',{class:'row',onsubmit:e=>{e.preventDefault();memberSearch=search.value.trim();memberPages=1;render()}},h('div',{class:'grow'},search),find,memberSearch?h('button',{class:'btn quiet',type:'button',onclick:()=>{memberSearch='';memberPages=1;render()}},'Clear'):null);
+    const moreButton=more?h('button',{class:'btn quiet',type:'button',onclick:()=>{memberPages++;render()}},'Show more'):null;
+    constreq=list.filter(x=>x.status==='requested'),act2=list.filter(x=>x.status==='active'),removed=list.filter(x=>x.status==='removed');
     const decide=(x,decision)=>{const b=h('button',{class:decision==='approve'?'btn ok':'btn quiet',type:'button'},decision==='approve'?'Approve':'Decline');b.onclick=act(b,async()=>{await api(pre+'/requests/'+encodeURIComponent(x.userId)+'/decision','POST',{decision});flash={kind:'good',text:(x.name||x.email)+(decision==='approve'?' approved.':' declined.')};await render()});return b};
     const roleControls=x=>{const select=h('select',{'aria-label':'Role for '+(x.name||x.email)},['student','editor','admin'].map(role=>h('option',{value:role,selected:x.role===role},role==='student'?'Student':role==='editor'?'Editor':'Admin'))),change=h('button',{class:'btn quiet',type:'button'},'Change role'),hint=h('p',{class:'small muted'});
      select.onchange=()=>{change.dataset.confirm='';change.textContent='Change role';hint.textContent=''};
@@ -203,11 +214,11 @@ export function mountPlatform(){
       await act(change,async()=>{await api(pre+'/members/'+encodeURIComponent(x.userId)+'/role','POST',{role:select.value,expectedRole:x.role,confirm:'change organisation role'});await refreshMe();flash={kind:'good',text:'Role updated. Personal Orivia data is unchanged.'};await render()})()};return h('div',{class:'stack'},h('div',{class:'row'},select,change),hint)};
     const reinstate=x=>{const b=h('button',{class:'btn quiet',type:'button'},'Allow new join request');b.onclick=async()=>{if(b.dataset.confirm!=='yes'){b.dataset.confirm='yes';b.textContent='Confirm: allow a new request';return}await act(b,async()=>{await api(pre+'/members/'+encodeURIComponent(x.userId)+'/reinstate','POST',{confirm:'allow new join request'});flash={kind:'good',text:'They can request to join again using a valid invitation. No access was restored automatically.'};await render()})()};return b};
     const remove=x=>{const b=h('button',{class:'btn danger',type:'button'},'Remove');b.onclick=act(b,async()=>{await api(pre+'/members/'+encodeURIComponent(x.userId),'DELETE',{});flash={kind:'good',text:(x.name||x.email)+' removed. Their personal Orivia is unaffected.'};await render()});return b};
-    body=[h('h3',null,'Join requests'),req.length?h('div',{class:'list'},req.map(x=>h('div',{class:'item'},h('div',{class:'grow'},h('strong',null,x.name||x.email),h('p',{class:'small muted'},x.email)),decide(x,'approve'),decide(x,'decline')))):empty('No requests waiting','Students ask to join by opening a student invitation. You approve each one.'),
+    body=[searchForm,memberSearch?h('p',{class:'small muted'},list.length?'Showing members matching “'+memberSearch+'”.':'No members match “'+memberSearch+'”.'):null,h('h3',null,'Join requests'),req.length?h('div',{class:'list'},req.map(x=>h('div',{class:'item'},h('div',{class:'grow'},h('strong',null,x.name||x.email),h('p',{class:'small muted'},x.email)),decide(x,'approve'),decide(x,'decline')))):empty('No requests waiting','Students ask to join by opening a student invitation. You approve each one.'),
      h('h3',null,'Members and staff'),act2.length?h('div',{class:'list'},act2.map(x=>h('div',{class:'item'},h('div',{class:'grow'},h('strong',null,x.name||x.email),h('p',{class:'small muted'},x.email+' · '+(x.role==='student'?'Member':x.role==='admin'?'Admin':'Editor'))),h('div',{class:'stack'},roleControls(x),x.role==='admin'?null:remove(x))))):h('p',{class:'small muted'},'No members yet.'),
      h('p',{class:'note'},'To hand over: make a trusted member an admin, then change your own role. At least one active admin must remain. Role changes require a sign-in from the last 15 minutes.'),h('a',{href:'/account-test',class:'small'},'Open sign-in / sign-out'),
      h('h3',null,'Removed members'),removed.length?h('div',{class:'list'},removed.map(x=>h('div',{class:'item'},h('div',{class:'grow'},h('strong',null,x.name||x.email),h('p',{class:'small muted'},x.email+' · Removed')),reinstate(x)))):h('p',{class:'small muted'},'No removed members.'),
-     list.length>=200?h('p',{class:'note'},'Showing the first 200. Paging isn’t available yet.'):null];}
+     moreButton];}
   }
   if(tab==='invitations'){
    const parts=[];
@@ -231,7 +242,10 @@ export function mountPlatform(){
      return h('div',{class:'stack'},h('div',{class:'item'},h('div',{class:'grow'},h('strong',null,c.label),' ',chip(c.revoked?'Withdrawn':'Public',c.revoked?'c-warn':'c-ok'),h('p',{class:'small muted'},'Opens public information only. Never grants membership.')),c.revoked?null:show,c.revoked?null:admin?withdraw:h('span',{class:'small muted'},'An admin can withdraw this code.')),out)})):null);
    body=parts;
   }
-  if(tab==='counts')body=[h('div',{class:'row'},h('h3',{class:'grow'},'Counts'),chip('Not connected yet','c-demo')),h('p',{class:'note'},'Counts of QR opens, guide views and joins will appear here once tracking of those actions is built. Orivia won’t read private conversations to fill this page.')];
+  if(tab==='counts'){const a=summary.activity||{},KIND={guide:'Guides',date:'Key dates',contact:'Contacts',update:'Updates'};
+   body=[h('h3',null,'Counts'),h('div',{class:'kpis'},h('div',{class:'kpi'},h('span',{class:'small muted'},'Joined in the last 30 days'),h('strong',null,a.joinedLast30Days??0)),h('div',{class:'kpi'},h('span',{class:'small muted'},'Student invitation uses'),h('strong',null,a.invitationUses??0)),h('div',{class:'kpi'},h('span',{class:'small muted'},'Members'),h('strong',null,count('student','active')))),
+    h('div',{class:'list'},(a.published||[]).map(p=>h('div',{class:'item'},h('div',{class:'grow'},h('strong',null,KIND[p.kind]||p.kind)),h('span',null,p.count+' published')))),
+    h('div',{class:'row'},h('p',{class:'note grow'},'Guide views and QR opens aren’t tracked. Orivia never reads private conversations to fill this page.'),chip('Views not tracked','c-demo'))]}
   if(tab==='records'){let msg='Application records need a separate permission that nobody has yet.';try{await api(pre+'/records')}catch(err){msg=err.message}body=[h('div',{class:'denied'},h('strong',null,'Locked'),h('p',{class:'small'},msg+' Being an admin isn’t enough, and no university system is connected.'))]}
   return [panel(h('div',{class:'row'},h('h2',{class:'grow'},org.name),org.demo?chip('Demo organisation','c-demo'):null,chip(admin?'Admin':'Editor','c-ok')),tabBar,...body)];
  }
