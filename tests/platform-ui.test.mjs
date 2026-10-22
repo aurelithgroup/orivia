@@ -11,7 +11,7 @@ assert.match(js,/'X-Orivia-Account':user\.id/,'every request carries the signed-
 assert.match(js,/credentials:'same-origin'/);
 // Only endpoints in Ina's contract (docs/organisation-backend.md)
 const used=[...js.matchAll(/'(\/api\/[a-z/]+)/g)].map(m=>m[1]);
-const allowed=['/api/account/session','/api/me/memberships','/api/me/orgs/','/api/admin/orgs','/api/admin/orgs/','/api/orgs/','/api/invitations/inspect','/api/invitations/join','/api/public/codes/','/api/account/feedback/queue'];
+const allowed=['/api/account/session','/api/me/memberships','/api/me/orgs/','/api/admin/orgs','/api/admin/orgs/','/api/orgs/','/api/invitations/inspect','/api/invitations/join','/api/public/codes/','/api/account/feedback/queue','/api/admin/overview'];
 for(const u of used)assert.ok(allowed.some(a=>u===a||u.startsWith(a)),'unexpected endpoint '+u);
 assert.doesNotMatch(js,/\/api\/invitations\/[^ij']/,'invitation tokens never go in a URL');
 assert.match(js,/location\.hash\.match\(\/\^#join=/,'join links read from the fragment');

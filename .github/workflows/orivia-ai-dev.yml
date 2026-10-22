@@ -172,6 +172,7 @@ jobs:
           node tests/week-swipe-links.test.mjs
           node --experimental-sqlite tests/feedback.test.mjs
           node tests/library-discoveries.test.mjs
+          node --experimental-sqlite tests/owner-overview.test.mjs
       - name: "Shared navigation and space addresses"
         run: node tests/navigation.test.mjs
       - name: "myorivia.app production entry gates"

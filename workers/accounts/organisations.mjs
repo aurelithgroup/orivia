@@ -2,6 +2,7 @@ import QRCode from 'qrcode/lib/core/qrcode.js';
 import SVG from 'qrcode/lib/renderer/svg-tag.js';
 import {platformPage,mountPlatform} from './platform-ui.mjs';
 import {appHome} from './app-home.mjs';
+import {ownerOverview,ownerOrganisations} from './owner-overview.mjs';
 import {normaliseDetails,parseDetails,DetailsError} from './content-details.mjs';
 /* Plain page for /manage when the visitor isn't the owner account. No organisation or account details. */
 const manageRefusal=(signedOut,home)=>'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orivia management</title><style>body{font-family:system-ui,sans-serif;max-width:520px;margin:15vh auto;padding:0 20px;line-height:1.5;color:#1C2733;background:#F7F8FA}a{color:#7A5300}@media (prefers-color-scheme:dark){body{color:#E8EDF3;background:#0E1620}a{color:#F3C04A}}</style></head><body><h1>Orivia management</h1><p>'+(signedOut?'Sign in to Orivia with the management account, then open this page again.':'This page is only for Orivia’s management account.')+'</p><p><a href="'+home+'">'+(signedOut?'Go to sign-in':'Back to Orivia')+'</a></p></body></html>';
@@ -81,10 +82,11 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
    return json({invitation:{id:inv,role,label,expiresAt:at+life*1000,maxUses:max},joinUrl:link,token:raw,qrSvg:await qr(link)},201);
   };
   if(path==='/api/me/memberships'&&req.method==='GET')return json({platformRoles:(await all('SELECT role FROM platform_roles WHERE user_id=?',actor)).map(r=>r.role),memberships:(await all("SELECT m.org_id,m.role,m.status,o.name,o.slug,o.demo FROM organisation_memberships m JOIN organisations o ON o.id=m.org_id WHERE m.user_id=? AND m.status IN ('active','requested') AND o.status='active'",actor)).map(m=>({organisationId:m.org_id,name:m.name,slug:m.slug,demo:!!m.demo,role:m.role,status:m.status}))});
+  // Founder overview: defined counts and authoritative budgets only (owner-overview.mjs). Owners only.
+  if(path==='/api/admin/overview'){await requireOwner();if(req.method!=='GET')deny(405,'method_not_allowed');return json(await ownerOverview(env,{now:clock}))}
   if(path==='/api/admin/orgs'){
-   await requireOwner();if(req.method==='GET'){const now=clock();return json({organisations:await Promise.all((await all('SELECT * FROM organisations ORDER BY created_at DESC LIMIT 100')).map(async o=>({...publicOrg(o),status:o.status,
-    adminActive:!!await q("SELECT 1 AS yes FROM organisation_memberships WHERE org_id=? AND role='admin' AND status='active'",o.id).first(),
-    adminInvitePending:!!await q("SELECT 1 AS yes FROM organisation_invitations WHERE org_id=? AND role='admin' AND revoked=0 AND uses<max_uses AND expires_at>?",o.id,now).first()})))})}
+   // Owner directory: optional ?q= search (name, web name, city) with operational totals; no member names or emails.
+   await requireOwner();if(req.method==='GET')return json({organisations:await ownerOrganisations(db,{q:url.searchParams.get('q')||'',now:clock})});
    if(req.method==='POST'){const b=await body(['name','slug','city','demo']);const name=text(b.name,2,120),slug=text(b.slug,3,64);if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||typeof b.demo!=='boolean')deny(400,'invalid_organisation');if(await q('SELECT id FROM organisations WHERE slug=?',slug).first())deny(409,'slug_exists');const oid=id();await db.batch([q('INSERT INTO organisations(id,slug,name,city,demo,created_by,created_at) VALUES (?,?,?,?,?,?,?)',oid,slug,name,text(b.city,1,100),Number(b.demo),actor,clock()),audit(actor,oid,'organisation.created',oid)]);return json({organisation:publicOrg(await org(oid))},201)}
   }
   let m=path.match(/^\/api\/admin\/orgs\/([^/]+)\/admin-invite$/);

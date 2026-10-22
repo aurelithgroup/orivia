@@ -34,6 +34,7 @@ form{display:flex;flex-direction:column;gap:12px}form.row{flex-direction:row}.st
 .tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px}
 .tab{background:transparent;border:1px solid transparent;border-radius:999px;padding:8px 14px;cursor:pointer;min-height:40px;color:var(--muted)}
 .tab[aria-selected="true"]{background:var(--surface2);border-color:var(--line);color:var(--ink);font-weight:700}
+.defs dl{margin:8px 0 0;display:grid;gap:2px}.defs dt{font-weight:700;margin-top:6px}.defs dd{margin:0}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.kpi{background:var(--surface2);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:4px}.kpi strong{font-size:26px;font-variant-numeric:tabular-nums}
 .note{background:var(--surface2);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--muted)}
 .notice{border-radius:12px;padding:12px 14px;font-size:14px}.notice.err{background:var(--warnSoft);color:var(--warn)}.notice.good{background:var(--okSoft);color:var(--ok)}
@@ -144,22 +145,58 @@ export function mountPlatform(){
    h('p',{class:'small muted'},'Last '+d.ratings.days+' days: '+d.ratings.up+' helpful, '+d.ratings.down+' not helpful'+(reasons?' ('+reasons+')':'')+'. Reports are stored with the sender’s account (and deleted with it); this list omits their name and email. Notes and any included reply are written by the person and can contain personal or document details: treat them as private.'),
    rows.length?h('div',{class:'list'},rows):empty('No reports yet','Problems people report from a Chat reply appear here.'));
  }
+ // Founder overview (ORI-OWNER-001/002/007/009): real counts with definitions, budgets from the server's own meters or
+ // "Unavailable", an organisation directory with search and direct actions. Never chats, files, student marks or identities.
+ let ownerQuery='';
  async function ownerView(){
-  const list=(await api('/api/admin/orgs')).organisations;
+  let ov=null,ovError=false;try{ov=await api('/api/admin/overview')}catch(_){ovError=true}
+  let list=[],listError=false;try{list=(await api('/api/admin/orgs?q='+encodeURIComponent(ownerQuery))).organisations}catch(_){listError=true}
+  const D=ov?ov.definitions:{};
+  const defs=[];const kpi=(label,value,def,link)=>{defs.push(h('div',null,h('dt',null,label),h('dd',{class:'small muted'},def)));return h('div',{class:'kpi'},h('span',{class:'small muted'},label),h('strong',null,value==null?'Unavailable':String(value)),value==null?h('span',{class:'small muted'},'Not available from the server right now.'):null,link||null)};
+  const jump=(id,text)=>h('a',{href:'#'+id,class:'small'},text);
+  const overview=ov?panel(h('div',{class:'row'},h('h2',{class:'grow'},'Overview'),chip('Live data','c-ok')),
+   h('p',{class:'small muted'},'Counted by the server just now ('+new Date(ov.generatedAt).toLocaleString()+'). Member names, chats, files and student progress aren’t shown here.'),
+   h('div',{class:'kpis'},
+    kpi('Organisations',ov.counts.organisations.total,D.organisations,[h('span',{class:'small muted'},ov.counts.organisations.active+' active · '+ov.counts.organisations.paused+' paused · '+ov.counts.organisations.demo+' demo'),jump('owner-directory','See organisations')]),
+    kpi('Active students',ov.counts.activeStudents,D.activeStudents),
+    kpi('Active staff',ov.counts.activeStaff,D.activeStaff),
+    kpi('Join requests waiting',ov.counts.joinRequests,D.joinRequests+' Each organisation’s admins approve their own.',jump('owner-directory','See which organisations')),
+    kpi('Open invitations',ov.counts.openInvitations,D.openInvitations),
+    kpi('Published content',ov.counts.publishedContent,D.publishedContent),
+    kpi('Drafts',ov.counts.draftContent,D.draftContent),
+    kpi('Feedback to review',ov.counts.feedbackOpen,D.feedbackOpen,jump('owner-feedback','Open the feedback list'))),
+   h('details',{class:'defs'},h('summary',{class:'small'},'What these numbers mean'),h('dl',{class:'small'},defs)))
+   :panel(h('h2',null,'Overview'),h('p',{class:'small muted'},ovError?'The overview couldn’t be loaded. Nothing is shown rather than a guess. Reload to try again.':'Loading…'));
+  const money=(v,unit)=>unit==='USD'?'$'+Number(v).toFixed(2):String(v);
+  const budgets=ov?panel(h('h3',null,'Budgets and usage'),h('p',{class:'small muted'},D.budgets),
+   h('div',{class:'list'},ov.budgets.map(b=>h('div',{class:'item',style:'align-items:flex-start'},h('div',{class:'grow stack'},h('div',null,h('strong',null,b.label),' ',b.status==='available'?chip('Server meter','c-ok'):chip('Unavailable','c-wait')),
+    b.status==='available'?h('p',{class:'small'},'Today '+money(b.day.used,b.unit)+' of '+money(b.day.limit,b.unit)+' · This month '+money(b.month.used,b.unit)+' of '+money(b.month.limit,b.unit)):h('p',{class:'small muted'},'Unavailable: no limit is configured here, or its counter can’t be read. No estimate is shown.'),
+    b.scope?h('p',{class:'small muted'},b.scope):null))))):null;
+  // Directory with search and per-organisation actions.
+  const search=h('input',{type:'search',style:'width:100%',value:ownerQuery,maxlength:80,'aria-label':'Search organisations by name, web name or city',placeholder:'Search by name, web name or city'});
+  const go=h('button',{class:'btn quiet',type:'submit'},'Search');
+  const searchForm=h('form',{class:'row',role:'search',onsubmit:act(go,async()=>{ownerQuery=search.value.trim();await render()})},h('div',{class:'grow',style:'min-width:0'},search),go,ownerQuery?h('button',{class:'btn quiet',type:'button',onclick:async()=>{ownerQuery='';await render()}},'Clear'):null);
   const name=h('input',{id:'org-name',required:true,maxlength:120}),slug=h('input',{id:'org-slug',required:true,pattern:'[a-z0-9]+(-[a-z0-9]+)*',maxlength:64}),city=h('input',{id:'org-city',required:true,maxlength:80});
   name.oninput=()=>{if(!slug.dataset.touched)slug.value=String(name.value).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,64)};slug.oninput=()=>{slug.dataset.touched='1'};
   const create=h('button',{class:'btn',type:'submit'},'Create organisation');
   const form=h('form',{onsubmit:act(create,async()=>{const r=await api('/api/admin/orgs','POST',{name:name.value,slug:slug.value,city:city.value,demo:true});flash={kind:'good',text:r.organisation.name+' created. Invite its first admin next.'};await render()})},
    h('div',{class:'row'},h('div',{class:'grow'},field('Name',name)),h('div',{class:'grow'},field('Web name',slug,'Lowercase letters, numbers and hyphens'))),field('City',city),
    h('p',{class:'small muted'},'New organisations are marked as demos until a real partnership is agreed.'),h('div',{class:'row'},create));
+  const staffOf=id=>me.memberships.find(m=>m.organisationId===id&&m.status==='active'&&m.role!=='student');
   const rows=list.map(o=>{const email=h('input',{type:'email',required:true,'aria-label':'First admin’s email for '+o.name,placeholder:'admin@university.example'});const b=h('button',{class:'btn',type:'submit'},'Invite first admin');const result=h('div');
    const f=h('form',{class:'row',style:'align-items:flex-end',onsubmit:act(b,async()=>{const r=await api('/api/admin/orgs/'+encodeURIComponent(o.id)+'/admin-invite','POST',{recipientEmail:email.value,label:'First admin'});result.replaceChildren(secret(r));f.hidden=true})},h('div',{class:'grow'},field('First admin’s email',email)),b);
-   return h('div',{class:'item',style:'align-items:flex-start'},h('div',{class:'grow stack'},h('div',null,h('strong',null,o.name),' ',o.demo?chip('Demo','c-demo'):null,' ',chip(o.status==='active'?'Active':o.status,o.status==='active'?'c-ok':'c-wait')),h('p',{class:'small muted'},o.city+' · /'+o.slug),h('div',null,chip(o.adminActive?'Admin active':o.adminInvitePending?'Admin invited, not accepted yet':'No admin yet',o.adminActive?'c-ok':o.adminInvitePending?'c-wait':'c-warn')),o.adminActive?null:f,result))});
-  return [panel(h('div',{class:'row'},h('h2',{class:'grow'},'Orivia management'),chip('Owner','c-ok')),h('p',{class:'small muted'},'You can create organisations and invite each one’s first admin. Member lists, chats and application records aren’t visible here.'),
-   list.length?h('div',{class:'list'},rows):empty('No organisations yet','Create one to give its staff a dashboard and its members a space inside their Orivia.')),
-   panel(h('h3',null,'Add an organisation'),form),
-   await feedbackPanel(),
-   panel(h('div',{class:'row'},h('h3',{class:'grow'},'Not connected yet'),chip('Coming later','c-demo')),h('p',{class:'small muted'},'Partners and sponsorships, costs and platform counts are designed but not built on the server yet.'))];
+   const t=o.totals||{};const mine=staffOf(o.id);
+   const open=mine?h('button',{class:'btn quiet small',type:'button',onclick:()=>{space='org:'+o.id;tab='overview';flash=null;render()}},'Open its dashboard'):h('span',{class:'small muted'},'Its dashboard is for its own staff.');
+   return h('div',{class:'item',id:'org-'+o.slug,style:'align-items:flex-start'},h('div',{class:'grow stack'},h('div',null,h('strong',null,o.name),' ',o.demo?chip('Demo','c-demo'):null,' ',chip(o.status==='active'?'Active':o.status,o.status==='active'?'c-ok':'c-wait'),t.requests?' ':null,t.requests?chip(t.requests+' waiting to join','c-warn'):null),
+    h('p',{class:'small muted'},o.city+' · /'+o.slug+' · '+(t.students||0)+' students, '+(t.staff||0)+' staff, '+(t.published||0)+' published, '+(t.drafts||0)+' drafts'),
+    h('div',null,chip(o.adminActive?'Admin active':o.adminInvitePending?'Admin invited, not accepted yet':'No admin yet',o.adminActive?'c-ok':o.adminInvitePending?'c-wait':'c-warn')),o.adminActive?null:f,result,open))});
+  const fb=await feedbackPanel();fb.id='owner-feedback';
+  const dir=panel(h('div',{class:'row'},h('h3',{class:'grow'},'Organisations'),h('span',{class:'small muted'},list.length+(list.length===100?'+':'')+' shown')),searchForm,
+   listError?h('p',{class:'small muted'},'Organisations couldn’t be loaded. Reload to try again.'):list.length?h('div',{class:'list'},rows):ownerQuery?empty('No matches','No organisation’s name, web name or city contains “'+ownerQuery+'”.'):empty('No organisations yet','Create one to give its staff a dashboard and its members a space inside their Orivia.'));
+  dir.id='owner-directory';
+  return [panel(h('div',{class:'row'},h('h2',{class:'grow'},'Orivia management'),chip('Owner','c-ok')),h('p',{class:'small muted'},'Platform totals, budgets, organisations and Chat feedback. Member lists, chats, files and student progress aren’t visible here.')),
+   overview,budgets,dir,panel(h('h3',null,'Add an organisation'),form),fb,
+   panel(h('div',{class:'row'},h('h3',{class:'grow'},'Not connected yet'),chip('Coming later','c-demo')),h('p',{class:'small muted'},'Partners and sponsorships, communications, releases and privacy requests are designed but not built on the server yet.'))].filter(Boolean);
  }
 
  async function staffView(oid,m){
