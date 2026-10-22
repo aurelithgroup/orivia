@@ -2466,5 +2466,41 @@
   "Your saved chats are too large to keep another document. Remove a document from an older chat (✕ on its label) or delete chats you no longer need, then try again. Nothing was changed.": {
     "fr": "Vos discussions enregistrées sont trop volumineuses pour garder un autre document. Retirez un document d’une ancienne discussion (✕ sur son étiquette) ou supprimez les discussions inutiles, puis réessayez. Rien n’a été modifié.",
     "ar": "محادثاتك المحفوظة كبيرة جدًا للاحتفاظ بمستند آخر. أزل مستندًا من محادثة أقدم (✕ على تسميته) أو احذف المحادثات التي لم تعد تحتاجها، ثم حاول مرة أخرى. لم يتغيّر شيء."
+  },
+  "Add an attachment": {
+    "fr": "Ajouter une pièce jointe",
+    "ar": "إضافة مرفق"
+  },
+  "Camera": {
+    "fr": "Appareil photo",
+    "ar": "الكاميرا"
+  },
+  "Photos": {
+    "fr": "Photos",
+    "ar": "الصور"
+  },
+  "Files": {
+    "fr": "Fichiers",
+    "ar": "الملفات"
+  },
+  "Selected image": {
+    "fr": "Image sélectionnée",
+    "ar": "الصورة المحددة"
+  },
+  "Remove attachment": {
+    "fr": "Retirer la pièce jointe",
+    "ar": "إزالة المرفق"
+  },
+  "Attached. Nothing has been sent yet.": {
+    "fr": "Pièce jointe ajoutée. Rien n’a encore été envoyé.",
+    "ar": "تمت الإضافة. لم يُرسَل شيء بعد."
+  },
+  "Your draft is still here.": {
+    "fr": "Votre brouillon est toujours là.",
+    "ar": "مسودتك لا تزال هنا."
+  },
+  "Orivia read the first part of your document (it’s long).": {
+    "fr": "Orivia a lu le début de votre document (il est long).",
+    "ar": "قرأت أوريفيا الجزء الأول من مستندك (فهو طويل)."
   }
 }

@@ -92,11 +92,21 @@ assert.equal(verifyReply({action:'reply',sentences:[{text:'Rent increases are ca
 
 // The app: explicit "Use this in my chat", transcript (never the file) with messages, removable label, kept per chat.
 const chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace(/\r\n/g,'\n'),page=fs.readFileSync('workers/trial-ui/page.html','utf8');
-assert.ok(chat.includes("attachButton(first?'I understand. Use this in my chat':'Use this in my chat',()=>readAttached(blob,name),'btn small')"),'nothing is sent before the explicit tap');
+assert.ok(chat.includes("attachButton(first?'I understand. Use this in my chat':'Use this in my chat',async()=>{attachConfirm=null;resolve(await readAttached(blob,name))},'btn small')"),'nothing is sent before the explicit tap');
+// Ina's composer: choosing only previews; Send reads first; declined or failed keeps the draft and file; shown in the message.
+assert.ok(chat.includes("if(pendingAttachment&&!(await readPendingAttachment()))return;"),'reading happens on Send, after the notice');
+assert.ok(chat.includes("const ok=await confirmAttach(a.blob,a.name);if(ok&&pendingAttachment===a)a.read=true;"),'one reading per draft');
+assert.ok(chat.includes("turns.push({role:'user',content:text.slice(0,900),...(sentAttachment?{meta:{attachment:sentAttachment}}:{})});"),'the attachment travels inside the person message');
+assert.ok(chat.includes("const chip=el('span','message-attachment'"),'shown inside that message');
+assert.ok(!/id="msg"[^>]*required/.test(page),'a message can be only an attachment');
+{const vt=new Function(chat.split(String.fromCharCode(10)).find(l=>l.startsWith("const validTurn="))+';return validTurn')();
+ assert.ok(vt({role:'user',content:'',meta:{attachment:{name:'Lease.pdf'}}}));assert.ok(!vt({role:'user',content:''}));assert.ok(!vt({role:'assistant',content:'',meta:{attachment:{name:'x'}}}));
+ const cm=new Function(chat.split(String.fromCharCode(10)).find(l=>l.startsWith("function chatMessages(turns){")).split(' // only the active chat')[0]+';return chatMessages')();
+ const m=cm([{role:'user',content:'',meta:{attachment:{name:'Lease.pdf'}}}]);assert.equal(m[0].content,'Please help me with the document I shared (Lease.pdf).','internal prompt, not saved as the person words');}
 assert.ok(chat.includes("...(chatDocument()&&pilotConsent()?{document:{name:chatDocument().name,kind:chatDocument().kind||'',text:chatDocument().text}}:{}),"),'the transcript goes with messages');
 assert.ok(chat.includes("function attachAllowed(){return documentsServer&&!!pilotConsent()}"));
 assert.ok(!chat.includes('delete x.document'),'never removes another chat document');
-assert.match(page,/<button id="attach" type="button" aria-label="Use a document in this chat"/);
+assert.match(page,/<button id="attach" class="compose-plus" type="button" aria-label="Add an attachment"/);
 assert.ok(chat.includes("It doesn’t check whether a document is genuine or valid."));
 // Ina's review #2 and #3, on the real readAttached code: late results never cross chats/accounts; nothing is evicted.
 {const a=chat.indexOf('/* Files to Chat (step 7)'),b=chat.indexOf('var pendingDocument=null;');const block=chat.slice(a,b)+'var pendingDocument=null;';
