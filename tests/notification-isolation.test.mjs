@@ -37,3 +37,8 @@ const push=body=>new Promise(res=>listeners.push({data:{json:()=>({body})},waitU
 await push('Your visa appointment at 10:00 with passport number X1234567');await push('Vous avez un rappel ou une actualité dans Orivia.');
 assert.deepEqual(shown,['You have a reminder or update in Orivia.','Vous avez un rappel ou une actualité dans Orivia.']);
 console.log('Notification isolation: pilot scheduler bound to the pilot database, honest counters, generic lock-screen text only.');
+// The bell shows a red dot while anything is unread; opening the inbox marks it read and clears the dot.
+{const nj=fs.readFileSync('workers/trial-ui/notifications.js','utf8'),pg=fs.readFileSync('workers/trial-ui/page.html','utf8');
+ assert.ok(nj.includes("bell.classList.toggle('has-unread',n>0)")&&nj.includes("list.filter(x=>x&&!x.read_at)"),'dot from unread notifications');
+ assert.ok(nj.includes(".then(()=>{if(owner()===id)unreadDot([])})"),'cleared after the inbox marks them read');
+ assert.ok(pg.includes('#open-notifications.has-unread::after{'),'the dot is drawn on the bell');}
