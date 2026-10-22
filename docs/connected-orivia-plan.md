@@ -230,3 +230,17 @@ Order (Cleo, one step at a time):
   - chat still needs the human check;
   - device push still refused (503).
 - Process note: the pilot deploy script used to copy settings only from the live pilot. It now also adds settings that are new in `workers/pilot/wrangler.jsonc`; it never changes existing ones.
+
+## Notification scheduler moved off production (22 Oct, Cleo, founder-approved)
+
+- Ina's live check (docs/ina-notification-isolation-handoff.md) found `orivia-notifications-private` running every minute against **production's** accounts database.
+- **Done:**
+  - its cron trigger was removed (rollback: `* * * * *`);
+  - its code, settings and data are unchanged (4 old registrations, 12 deliveries all `uncertain`, none retried or deleted).
+- The pilot now runs its own scheduler: an every-minute cron on `orivia-research-pilot`.
+  - It runs only when `NOTIFICATION_SCHEDULER=pilot` and `ACCOUNTS_DB_EXPECTED` names the pilot test database.
+  - The deploy script refuses if that setting doesn't match the real binding, and the database was checked before the cron was added.
+- Production device push stays off. Next:
+  - one synthetic test alert to the founder's phone from the pilot;
+  - then a fresh production opt-in, after Privacy approval;
+  - never reuse the old registrations.
