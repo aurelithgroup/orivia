@@ -589,7 +589,7 @@ function draw({newReply=null,scroll=false}={}){
  const follow=scroll||renderedChat!==store.active||nearChatBottom(sc);
  renderedChat=store.active;
  const el=$('history');el.replaceChildren();
- for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant')+(t===newReply?' reply-arriving':'');const b=document.createElement('b');b.textContent=uiText(t.role==='user'?'You':'Orivia');const txt=document.createElement('span');
+ for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant')+(t===newReply?' reply-arriving':'');const b=document.createElement('b');b.textContent=uiText(t.role==='user'?'You':'Orivia');b.className='sr-only';const txt=document.createElement('span');
   const allSrcs=t.role==='assistant'?safeSources(t.meta&&t.meta.sources):[],docSrcs=allSrcs.filter(s=>s.category==='document'),srcs=allSrcs.filter(s=>s.category!=='document');
   if(srcs.length)txt.append(...citedText(t.content,srcs));
   if(t.role==='user'&&t.meta?.documentContext){const dc=t.meta.documentContext,n=document.createElement('p');n.className='doc-note';n.textContent=dc.used<dc.total?uiText('Orivia used your most recent documents in this chat:')+' '+dc.used+' '+uiText('of')+' '+dc.total+'.':uiText('Orivia used the first part of your documents in this chat (they’re long).');p.append(n)}else txt.textContent=t.content;p.append(b,txt);
@@ -636,6 +636,11 @@ let weekOffset=0,selectedDay=null;
 const dayKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const startOfDay=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x};
 function removeEvent(id){events=events.filter(x=>x.id!==id);storeEvents();renderEvents();renderUpcoming()}
+// Explicit calendar choices for the agenda; no event leaves Orivia until a link is chosen.
+function calendarChoices(e){
+ const link=(label,url,external)=>{const a=el('a','dev',uiText(label));a.href=url;a.setAttribute('aria-label',uiText(label)+': '+e.title);if(external){a.target='_blank';a.rel='noopener noreferrer'}return a};
+ return [link('Google Calendar ↗',googleEvent(e),true),link('Outlook (calendar file)',deviceCalendarUrl(e)),link('Apple Calendar (calendar file)',deviceCalendarUrl(e))];
+}
 function eventRow(e,past){
  const d=new Date(e.at),row=el('article','ev'+(past?' past':''));
  const t=el('div','t');const time=d.toLocaleTimeString(uiLanguage(),{hour:'numeric',minute:'2-digit'});const m=time.match(/^(.*?)\s*([AaPp]\.?[Mm]\.?)$/);
@@ -643,11 +648,15 @@ function eventRow(e,past){
  const b=el('div','b');b.append(el('strong','',e.title),el('span','tiny',d.toLocaleDateString(uiLanguage(),{weekday:'short',day:'numeric',month:'short'})+' · saved in Orivia'));
  const acts=el('div','acts');
  if(!past){
-  // The right button for this device (no surprise file download on Android or computers); see calendarLinks.
-  for(const a of calendarLinks(e)){a.addEventListener('click',()=>{setTimeout(()=>{note.hidden=false;note.textContent=uiText('It’s only in your calendar after you tap Save or Add there.')},300)});acts.append(a)}
+  const options=el('details','calendar-options'),summary=el('summary','',uiText('Add to calendar'));options.append(summary);
+  // Keep existing device-aware links; Outlook and Apple use the standard calendar file.
+  const links=calendarChoices(e);
+  for(const a of links){a.addEventListener('click',()=>{options.open=false;setTimeout(()=>{note.hidden=false;note.textContent=uiText('It’s only in your calendar after you tap Save or Add there.')},300)});options.append(a)}
+  acts.append(options);
  }
+ const more=el('details','calendar-options'),moreSummary=el('summary','','⋯');moreSummary.setAttribute('aria-label',uiText('More options')+': '+e.title);more.append(moreSummary);
  const rm=button('Remove','danger',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=uiText('Tap again to remove');return}removeEvent(e.id)});
- acts.append(rm);
+ more.append(rm);acts.append(more);
  const note=el('p','hint');note.hidden=true;note.setAttribute('role','status');
  if(!past&&typeof e.alarm==='number')b.append(el('span','tiny','Alert: '+(ALARMS.find(([m])=>m===e.alarm)||[,'30 minutes before'])[1].toLowerCase()));
  b.append(acts,note);row.append(t,b);return row;
@@ -819,7 +828,7 @@ function renderInstall(){const box=$('install-box');if(!box)return;box.replaceCh
  const standalone=window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true;
  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
  if(standalone){box.append(el('p','tiny',uiText('Orivia is installed on this device.')));return}
- if(installPrompt){const b=el('button','btn',uiText('Install Orivia'));b.type='button';b.onclick=async()=>{const p=installPrompt;installPrompt=null;try{await p.prompt();await p.userChoice}catch(_){}renderInstall()};box.append(b,el('p','tiny',uiText('Opens like an app from your home screen. Chat still needs a connection.')));return}
+ if(installPrompt){const b=el('button','btn',uiText('Add to home screen'));b.type='button';b.onclick=async()=>{const p=installPrompt;installPrompt=null;try{await p.prompt();await p.userChoice}catch(_){}renderInstall()};box.append(b,el('p','tiny',uiText('Opens like an app from your home screen. Chat still needs a connection.')));return}
  box.append(el('p','tiny',uiText(ios?'On iPhone or iPad: open Orivia in Safari, tap Share, then Add to Home Screen.':'In Chrome or Edge, open the browser menu and choose Install app or Add to Home screen.')),el('p','tiny',uiText('Chat still needs a connection.')));
 }
 var guidesReturnTab='home';
@@ -1935,7 +1944,7 @@ function working(text){
  if(!text){$('working')?.remove();return}
  const sc=$('chat-scroll'),follow=nearChatBottom(sc);
  let w=$('working');
- if(!w){w=document.createElement('div');w.id='working';w.className='bubble assistant';const b=document.createElement('b');b.textContent=uiText('Orivia');const s=document.createElement('span');s.setAttribute('aria-live','polite');s.style.opacity='0.75';s.style.fontStyle='italic';w.append(b,s);$('history').append(w)}
+ if(!w){w=document.createElement('div');w.id='working';w.className='bubble assistant';const b=document.createElement('b');b.textContent=uiText('Orivia');b.className='sr-only';const s=document.createElement('span');s.setAttribute('aria-live','polite');s.style.opacity='0.75';s.style.fontStyle='italic';w.append(b,s);$('history').append(w)}
  w.querySelector('span').textContent=(window.OriviaI18n?.progress(text)??String(text)).slice(0,180);if(follow)sc.scrollTop=sc.scrollHeight;
 }
 async function readReply(res,chatId){

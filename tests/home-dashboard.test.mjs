@@ -24,10 +24,10 @@ assert.ok(js.includes("back-chat').onclick=()=>tab(guidesReturnTab||'mylife')"),
 assert.match(html,/id="settings-help"/);assert.match(html,/id="tab-help"/);
 assert.match(js,/draw\(\);tab\('home'\)/);assert.match(js,/newChat\(\);input.value='';ask\(text,true\)/,'home starts a new chat and sends through the normal handler');
 assert.match(js,/if\(which==='home'\)renderHome\(\)/);assert.match(js,/renderSavedPlaces\(\);renderLifeSummary\(\)/);
-assert.match(html,/Added by you · not linked/);assert.match(html,/Accounts and sync are coming later/);
+assert.match(html,/Added by you · not linked/);assert.match(html,/Sign in to keep your chats and plans in your account/);
 const dashboard=js.slice(js.indexOf('function dashboardRecords('),js.indexOf('/* Switching sections:'));
 assert.ok(!/\bfetch\(|innerHTML|localStorage\.(setItem|removeItem)|navigator\.geolocation/.test(dashboard),'dashboard does not request services, inject HTML, mutate storage or collect location');
-const dict=JSON.parse(fs.readFileSync('workers/trial-ui/translations.json','utf8'));for(const label of ['Home','Coming up','Your next step','Pick up where you left off','Your personal space','Added by you · not linked','Help and support','Good morning'])for(const lang of ['fr','ar'])assert.ok(dict[label]?.[lang],label+' translated in '+lang);
+const dict=JSON.parse(fs.readFileSync('workers/trial-ui/translations.json','utf8'));for(const label of ['Home','Coming up','Your next step','Recent chats','Your personal space','Added by you · not linked','Help and support','Good morning'])for(const lang of ['fr','ar'])assert.ok(dict[label]?.[lang],label+' translated in '+lang);
 console.log('Dashboard: shared records, chronological reminders, active journeys, archived chat exclusion, empty states, no record mutations, four-tab navigation, guides on Home and My Life, and translations passed');
 
 // Exercise the real Home submit handler: fresh chat, normal send, one submit, and retained drafts on blocking states.

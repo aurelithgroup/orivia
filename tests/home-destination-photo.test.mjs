@@ -10,7 +10,7 @@ const ctx=vm.createContext({$:get,DESTINATION_PHOTOS:photos,uiText:v=>v});vm.run
 assert.equal(ctx.homeCountry({here:'uae',dest:'uk'}),'uae');
 assert.equal(ctx.homeCountry({here:'away',dest:'uk',originCountry:'AE'}),'uk','upcoming destination, never origin');
 assert.equal(ctx.homeCountry({here:'away',dest:'unsure'}),null);assert.equal(ctx.homeCountry({}),null);assert.equal(ctx.homeCountry({here:'other'}),null);
-ctx.renderHomeDestination({here:'uae'});assert.equal(get('home-destination-photo').src,photos.uae.image);assert.equal(get('home-destination-photo').hidden,false);assert.equal(get('home-destination-caption').textContent,'Dubai · United Arab Emirates');assert.ok(get('home-welcome').classList.items.has('has-destination'));
+ctx.renderHomeDestination({here:'uae'});assert.equal(get('home-destination-photo').src,photos.uae.image);assert.equal(get('home-destination-photo').hidden,false);assert.equal(get('home-destination-caption').textContent,'United Arab Emirates');assert.ok(get('home-welcome').classList.items.has('has-destination'));
 ctx.renderHomeDestination({here:'away',dest:'uk'});assert.equal(get('home-destination-photo').src,photos.uk.image);assert.equal(get('home-greeting').textContent,'Your next chapter: United Kingdom');
 ctx.renderHomeDestination({});assert.equal(get('home-destination-photo').hidden,true);assert.equal(get('home-destination-photo').src,'');assert.equal(get('home-destination-caption').hidden,true);assert.equal(get('home-photo-credit').hidden,true);
 ctx.renderHomeDestination({here:'uk'});get('home-destination-photo').onerror();assert.equal(get('home-destination-photo').hidden,true);assert.ok(!get('home-welcome').classList.items.has('has-destination'),'readable navy fallback after image failure');

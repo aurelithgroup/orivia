@@ -195,7 +195,7 @@ form.stack{display:flex;flex-direction:column;gap:10px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 /* Header stays on one line on phones: each screen has its own heading */
 .chip{white-space:nowrap}
-@media (max-width:440px){header.top .top-title{display:none}header.top .gear{margin-inline-start:auto}}
+@media (max-width:440px){header.top .top-title{display:none}header.top .gear{margin-inline-start:0}}
 #cal-add{white-space:nowrap;flex:none}
 .toggle span{flex:1 1 200px;min-width:0}
 /* My Life */
@@ -509,6 +509,17 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
 
 .account-sync-banner{padding:10px 16px;background:var(--amberSoft);font-size:13px;display:flex;gap:12px;align-items:center}.account-sync-banner span{flex:1}.auth-entry{position:relative}body[data-account-flow="on"] header.top{display:none}.auth-entry:has(.auth-cover)>.auth-brand{position:absolute;z-index:3;top:18px;inset-inline-start:16px;background:transparent}
 .organisation-sheet{max-height:88dvh;overflow:auto}.organisation-sheet>.row{justify-content:space-between}.organisation-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}.organisation-group{display:grid;gap:12px;margin-block:20px}#home-spaces a{text-decoration:none}#home-spaces-list .dashboard-card{display:flex;justify-content:space-between}
+
+/* Approved design pass: one visual hierarchy, quiet secondary actions. */
+header.top #orivia-nav{margin-inline-start:auto;flex:0 1 auto;min-width:0}
+header.top .gear{flex-shrink:0}header.top .brand{flex-shrink:0}
+#calendar-panel .jhead h2,#settings-view>.pad>h2,#empty>h2{font-family:Georgia,"Times New Roman",serif;font-size:32px;font-weight:500;line-height:1.2}
+.calendar-options{position:relative}.calendar-options>summary{list-style:none;cursor:pointer;min-height:44px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);font-size:13px;color:var(--ink)}
+.calendar-options>summary::-webkit-details-marker{display:none}.calendar-options>summary:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.calendar-options[open]{flex-basis:100%}.calendar-options .dev,.calendar-options button{display:block;margin-top:6px;min-height:44px;padding:10px 12px;font-size:13px}
+.calendar-options a{color:var(--ink);background:var(--surface2);border-radius:9px;text-decoration:none}.calendar-options button{border:0;border-radius:9px;background:var(--surface2)}
+@media(max-width:440px){header.top{gap:6px;padding-inline:10px}header.top .brand{gap:5px}.brand .wordmark{font-size:15px}header.top .gear{width:34px;min-width:34px;margin-inline:0}.dashboard-head .ask{flex-shrink:0}}
+
 </style></head>
 <body><div class="app">
 <header class="top"><button type="button" id="open-chats" class="gear menu-btn" aria-label="Chats" aria-haspopup="dialog" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button><span class="brand" role="group" aria-label="Orivia"><svg class="brand-mark" viewBox="0 0 306 310" aria-hidden="true"><path fill="currentColor" d="M0 0 L0 168 C0 248 60 302 136 308 L136 160 C136 70 78 4 0 0 Z"/><path fill="var(--amber)" d="M160 308 L160 190 C160 108 222 44 306 40 L306 172 C306 254 240 302 160 308 Z"/></svg><button type="button" id="brand-home" class="wordmark" aria-label="Home" style="border:0;background:none;color:inherit;padding:0;cursor:pointer">ORIVIA</button></span><span class="chip" data-public="Beta">Private AI trial</span><span class="top-title" id="view-title"></span><div id="orivia-nav" class="onav-slot"></div><button type="button" id="open-notifications" class="gear" aria-label="Notifications" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button><button type="button" id="open-settings" class="gear" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>
@@ -553,8 +564,8 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
   <section id="home-spaces" class="dashboard-section" hidden aria-labelledby="home-spaces-title"><div class="dashboard-head"><h2 id="home-spaces-title">Your spaces</h2></div><div id="home-spaces-list" class="list"></div></section>
   <section class="dashboard-section" aria-labelledby="home-coming-title"><div class="dashboard-head"><h2 id="home-coming-title">Coming up</h2><button type="button" class="ask" id="home-calendar">View calendar →</button></div><div id="home-coming" class="list"></div></section>
   <section class="dashboard-section" aria-labelledby="home-next-title"><div class="dashboard-head"><h2 id="home-next-title">Your guides</h2><button type="button" class="ask" id="home-all-guides">All your guides →</button></div><div id="home-journey" class="list"></div></section>
-  <section class="dashboard-section" aria-labelledby="home-recent-title"><div class="dashboard-head"><h2 id="home-recent-title">Pick up where you left off</h2><button type="button" class="ask" id="home-all-chats">All chats →</button></div><div id="home-recent" class="list"></div></section>
-  <p class="life-bottom-note" data-device-copy="Saved on this device. Accounts and sync are coming later." data-account-copy="Your chats and plans are saved to your private account.">Saved on this device. Accounts and sync are coming later.</p>
+  <section class="dashboard-section" aria-labelledby="home-recent-title"><div class="dashboard-head"><h2 id="home-recent-title">Recent chats</h2><button type="button" class="ask" id="home-all-chats">All chats →</button></div><div id="home-recent" class="list"></div></section>
+  <p class="life-bottom-note" data-device-copy="Sign in to keep your chats and plans in your account." data-account-copy="Your chats and plans are saved to your private account.">Sign in to keep your chats and plans in your account.</p>
  </div></section>
  <section id="calendar-panel" class="view" hidden><div class="pad section" style="overflow:auto">
   <div class="jhead"><div><h2>Calendar</h2><p class="notice">Your reminders and important dates. Saved on this device.</p></div><button id="cal-add" type="button" class="btn small">+ Add</button></div>
@@ -642,10 +653,10 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
  <section id="settings-view" class="view" hidden><div class="pad section" style="overflow:auto">
   <div class="jhead"><button type="button" class="ask" id="settings-back">← Back</button></div>
   <h2>Settings</h2>
-  <button type="button" class="link-card" id="account-open-settings" hidden>Your account</button>
-  <button type="button" class="link-card" id="notifications-settings">Notifications and alerts</button>
+  <button type="button" class="link-card" id="account-open-settings" hidden>Your account <span aria-hidden="true">›</span></button>
+  <button type="button" class="link-card" id="notifications-settings">Notifications and alerts <span aria-hidden="true">›</span></button>
   <button type="button" class="link-card" id="settings-help">Help and support <span aria-hidden="true">›</span></button>
-  <section class="set-group"><h3>App language</h3><label for="app-language">App language</label><select id="app-language" aria-label="App language"><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option></select></section>
+  <section class="set-group"><h3>App language</h3><label for="app-language" class="sr-only">App language</label><select id="app-language" aria-label="App language"><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option></select></section>
   <section class="set-group"><h3>Install Orivia</h3><div id="install-box"></div></section>
   <section class="set-group"><h3>Appearance</h3>
    <div class="set-row"><span>Theme</span><div class="seg" id="set-theme" role="radiogroup" aria-label="Theme"></div></div>

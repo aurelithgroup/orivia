@@ -2642,5 +2642,33 @@
   "Before your first document: when you tap Use this in my chat, Orivia sends this file to OpenAI to count its size and, if today’s budget allows, to read its text. Each new attempt sends it again. OpenAI doesn’t keep it for later use through Orivia, but may hold it for a limited time for abuse checks.": {
     "fr": "Avant votre premier document : quand vous touchez « Utiliser dans ma discussion », Orivia envoie ce fichier à OpenAI pour en mesurer la taille et, si le budget du jour le permet, en lire le texte. Chaque nouvelle tentative l’envoie à nouveau. OpenAI ne le conserve pas pour une utilisation ultérieure via Orivia, mais peut le garder pendant une durée limitée pour la détection des abus.",
     "ar": "قبل أول مستند لك: عندما تضغط «استخدمه في محادثتي» ترسل أوريفيا هذا الملف إلى OpenAI لقياس حجمه، ثم لقراءة نصّه إذا سمحت ميزانية اليوم. وكل محاولة جديدة ترسله مرة أخرى. لا تحتفظ به OpenAI لاستخدامه لاحقًا عبر أوريفيا، لكنها قد تحتفظ به لفترة محدودة لرصد إساءة الاستخدام."
+  },
+  "Recent chats": {
+    "fr": "Discussions récentes",
+    "ar": "المحادثات الأخيرة"
+  },
+  "Sign in to keep your chats and plans in your account.": {
+    "fr": "Connectez-vous pour conserver vos discussions et vos projets dans votre compte.",
+    "ar": "سجّل الدخول لحفظ محادثاتك وخططك في حسابك."
+  },
+  "Add to calendar": {
+    "fr": "Ajouter au calendrier",
+    "ar": "إضافة إلى التقويم"
+  },
+  "More options": {
+    "fr": "Plus d’options",
+    "ar": "المزيد من الخيارات"
+  },
+  "Add to home screen": {
+    "fr": "Ajouter à l’écran d’accueil",
+    "ar": "إضافة إلى الشاشة الرئيسية"
+  },
+  "Outlook (calendar file)": {
+    "fr": "Outlook (fichier calendrier)",
+    "ar": "Outlook (ملف تقويم)"
+  },
+  "Apple Calendar (calendar file)": {
+    "fr": "Calendrier Apple (fichier calendrier)",
+    "ar": "تقويم Apple (ملف تقويم)"
   }
 }
