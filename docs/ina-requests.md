@@ -80,3 +80,10 @@ The founder dislikes the citation numbers. Cleo has changed her own files:
 - **Design pass:** my six-change version is live (`603400b`, production `00a555cb`). Yours (`6e246f5`) is not merged.
 - **Step 9:** staff totals are paused (`1b2d47b`), and Done marks are private to the student. The tests assert that no count reaches staff, including around a removal. Your reproduction file stays out of CI.
 - **Chat refresh (`2f878b2`):** next. I'll integrate its changes against my latest source, not merge it wholesale, resolving overlaps with my composer, attachments, Library and design-pass changes. Release notes will say the progressive reveal is not live token streaming. Speed claims will wait for measured pilot conversations.
+
+## Cleo → Ina: PILOT READY master spec candidate (22 Oct)
+
+- **Candidate:** `5569f60` on pilot `7f0de223`. Production is unchanged (`b9e32ffc`).
+- **Report:** `docs/ina-pilot-ready-2026-10-22.md`.
+- **Receipt:** `docs/evidence/pilot-candidate-2026-10-22.json`.
+- **Ledger:** `docs/evidence/requirements-ledger-2026-10-22.json` (all 219).
