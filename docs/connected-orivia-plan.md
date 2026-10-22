@@ -155,3 +155,24 @@ Production stays as released until the founder's acceptance checks pass on the p
 1. The founder's acceptance checks on the pilot (student side, logout across tabs, a real guide chat, install on a phone).
 2. Apply `content-details-migration.sql` to the production accounts database.
 3. Deploy production from this branch and re-run the release checks.
+
+## Release runbook: connected foundation to myorivia.app (prepared 22 Oct)
+
+The founder's acceptance checks passed on the pilot (student flow, Refresh/Back, guide chat, calendar, cross-tab sign-out, phone install). The founder approved the letter-circle citations. Waiting for: Ina's "Source n" change (docs/ina-requests.md) and Ina's independent review of permissions, data preservation and the migration.
+
+Order (Cleo, one step at a time):
+1. Merge Ina's commit; full suite; pilot deploy and quick check.
+2. **Rollback points:**
+   - production `fe28a2ae`;
+   - front door `0fe7fcb0`;
+   - the production accounts database: back up with a D1 time-travel bookmark before step 3.
+3. Production accounts DB: `ALTER TABLE organisation_content ADD COLUMN details TEXT` (additive; existing rows keep NULL). Checked today: the column isn't there yet.
+4. Deploy `orivia-production` from the branch (dry run builds: 4.09 MB).
+5. Deploy `orivia-front-door` (new app paths: `/app/space/*`, `/orivia-nav.js`, `/orivia-sw.js`, `/manifest.webmanifest`, `/app-icons/*`). The dry run builds.
+6. **Checks on myorivia.app:**
+   - automatic route, policy and refusal checks (as in the 21 Oct release);
+   - the founder's account opens `/manage` from the switcher;
+   - Northbay's staff and student spaces;
+   - the manifest and app worker;
+   - no secrets in `/v1/config`.
+7. Ina rechecks the live version; the founder confirms it feels like one app.
