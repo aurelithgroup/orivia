@@ -183,7 +183,8 @@ assert.match(page,/<input type="file" id="attach-file" accept="image\/\*,applica
 assert.ok(!page.includes('id="attach-camera"')&&!page.includes('id="attach-photo"'));
 // The person’s own document is a plain note under the reply: no circle in the text, not in the web sources list.
 assert.ok(chat.includes("docSrcs=allSrcs.filter(s=>s.category==='document'),srcs=allSrcs.filter(s=>s.category!=='document')")&&chat.includes("note.className='doc-note'"));
-assert.ok(chat.includes("const DOCUMENT_CONSENT='orivia-document-consent-v2-2026-10-22'"),'new acknowledgement after the conversation change');
+assert.ok(chat.includes("const DOCUMENT_CONSENT='orivia-document-consent-v3-2026-10-22'"),'v3: counting then reading (Ina e1b10eb)');
+assert.ok(chat.includes('Orivia sends this file to OpenAI to count its size and, if today’s budget allows, to read its text.')&&!chat.includes('to OpenAI to read its text. Each new attempt'),'the file goes to count, then (if allowed) to read');
 assert.ok(chat.includes('Orivia sends the text of your 3 most recent documents in this chat (about 24,000 characters together)'),'the limit is stated');
 assert.ok(chat.includes("...(d.document.truncated?{partial:true}:{})")&&chat.includes("Orivia could read only the first part of this document"),'a partial reading is shown');
 assert.ok(chat.includes("me.meta={...(me.meta||{}),documentContext:{used:ctx.used,total:ctx.total,cut:ctx.cut}}")&&chat.includes("Orivia used your most recent documents in this chat:"),'left-out documents are shown');

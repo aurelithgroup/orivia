@@ -137,7 +137,7 @@ $('lib-clear')?.addEventListener('click',()=>{$('lib-search').value='';applyLibr
 }
 /* Files to Chat (step 7) with Ina's approved composer (22 Oct): + opens Camera, Photos, Files and Your files. Choosing
    only shows a removable preview above the message; nothing is sent. On Send, the file-reading notice appears (fuller the
-   first time, DOCUMENT_CONSENT); only after "Use this in my chat" is the file sent to OpenAI to read its text. That text
+   first time, DOCUMENT_CONSENT); only after "Use this in my chat" is the file sent to OpenAI: to count its size, then (if the budget allows) to read its text. That text
    stays with this chat (private account or this browser) and goes with each message here until the label's ✕. A reading
    belongs to the account and chat it started in: switching chat or account, New chat, signing out or clearing data
    cancels it, and a late result is dropped (Ina's review). The attachment shows inside the person's own message. */
@@ -145,7 +145,7 @@ var documentsServer=false,attachOp=null,attachGeneration=0,pendingAttachment=nul
 const attachmentPreviews=new Map(); // message attachment id → image URL for this page session only (nothing stored)
 // From the Library: a saved file becomes this chat's pending attachment (preview only; nothing is sent).
 if(typeof window!=='undefined'&&window.OriviaFiles)window.OriviaFiles.useInChat=async f=>{if(!attachAllowed()){$('status').textContent=uiText('Turn on the OpenAI research test in Settings to use documents in chat.');return}const g=attachGeneration;try{const blob=await window.OriviaFiles.blob(f.id);if(blob&&g===attachGeneration){tab('chat');setPendingAttachment(blob,f.name,f.id)}}catch(_){$('status').textContent=uiText('Couldn’t open that file.')}};
-const DOCUMENT_CONSENT='orivia-document-consent-v2-2026-10-22',DOC_ACK_KEY='orivia-document-consent';
+const DOCUMENT_CONSENT='orivia-document-consent-v3-2026-10-22',DOC_ACK_KEY='orivia-document-consent';
 const DOC_SPACE=800000; // bytes of saved chats (with documents) we keep under the 1 MB account backup
 /** Documents sent in this chat, newest first. */
 function chatDocuments(){const c=activeChat();const list=c?(Array.isArray(c.documents)?c.documents:[]):pendingDocuments;return list.filter(d=>d&&typeof d.text==='string').slice().sort((a,b)=>(b.addedAt||0)-(a.addedAt||0))}
@@ -183,7 +183,7 @@ function confirmAttach(blob,name){
  return new Promise(resolve=>{
   const p=$('attach-panel');if(!p)return resolve(false);p.hidden=false;const first=!docAcknowledged();attachConfirm=resolve;
   const card=el('div','');card.append(el('strong','',name));
-  if(first)card.append(el('p','tiny',uiText('Before your first document: when you tap Use this in my chat, Orivia sends this file to OpenAI to read its text. Each new attempt sends it again. OpenAI doesn’t keep it for later use through Orivia, but may hold it for a limited time for abuse checks.')),
+  if(first)card.append(el('p','tiny',uiText('Before your first document: when you tap Use this in my chat, Orivia sends this file to OpenAI to count its size and, if today’s budget allows, to read its text. Each new attempt sends it again. OpenAI doesn’t keep it for later use through Orivia, but may hold it for a limited time for abuse checks.')),
    el('p','tiny',uiText('The text Orivia reads becomes part of this conversation: it’s kept with the chat (in your private account if you’re signed in, otherwise in this browser). With each message here, Orivia sends the text of your 3 most recent documents in this chat (about 24,000 characters together), so you can ask follow-up questions. Deleting the chat removes it; a file saved in your Library is separate.')));
   card.append(el('p','tiny',uiText('Orivia can misread documents, so check important details against the original. It doesn’t check whether a document is genuine or valid.')));
   const done=v=>{if(attachConfirm===resolve){attachConfirm=null;closeAttach();resolve(v)}};

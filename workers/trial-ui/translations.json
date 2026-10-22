@@ -2391,10 +2391,6 @@
     "fr": "Impossible d’ouvrir ce fichier.",
     "ar": "تعذّر فتح هذا الملف."
   },
-  "Orivia will send this file to OpenAI once to read its text, then use that text to answer you in this chat. Orivia can misread documents, so check important details against the original. It doesn’t check whether a document is genuine or valid.": {
-    "fr": "Orivia enverra ce fichier une fois à OpenAI pour en lire le texte, puis utilisera ce texte pour vous répondre dans cette discussion. Orivia peut mal lire un document : vérifiez les détails importants sur l’original. Orivia ne vérifie pas si un document est authentique ou valide.",
-    "ar": "سترسل أوريفيا هذا الملف إلى OpenAI مرة واحدة لقراءة نصّه، ثم تستخدم هذا النص للرد عليك في هذه المحادثة. قد تخطئ أوريفيا في قراءة المستندات، لذا تحقّق من التفاصيل المهمة في النسخة الأصلية. ولا تتحقق أوريفيا من صحة المستند أو صلاحيته."
-  },
   "Use this in my chat": {
     "fr": "Utiliser dans ma discussion",
     "ar": "استخدمه في محادثتي"
@@ -2442,10 +2438,6 @@
   "Orivia has stopped using that document in this chat. Earlier messages stay as they are; the file in Your files is not deleted.": {
     "fr": "Orivia n’utilise plus ce document dans cette discussion. Les messages précédents restent tels quels ; le fichier dans Vos fichiers n’est pas supprimé.",
     "ar": "توقفت أوريفيا عن استخدام هذا المستند في هذه المحادثة. تبقى الرسائل السابقة كما هي، ولا يُحذف الملف من «ملفاتك»."
-  },
-  "Before your first document: when you tap Use this in my chat, Orivia sends this file to OpenAI to read its text. Each new attempt sends it again. OpenAI doesn’t keep it for later use through Orivia, but may hold it for a limited time for abuse checks.": {
-    "fr": "Avant votre premier document : quand vous touchez « Utiliser dans ma discussion », Orivia envoie ce fichier à OpenAI pour en lire le texte. Chaque nouvelle tentative l’envoie à nouveau. OpenAI ne le conserve pas pour une utilisation ultérieure via Orivia, mais peut le garder pendant une durée limitée pour la détection des abus.",
-    "ar": "قبل أول مستند لك: عندما تضغط «استخدمه في محادثتي» ترسل أوريفيا هذا الملف إلى OpenAI لقراءة نصّه. وكل محاولة جديدة ترسله مرة أخرى. لا تحتفظ به OpenAI لاستخدامه لاحقًا عبر أوريفيا، لكنها قد تحتفظ به لفترة محدودة لرصد إساءة الاستخدام."
   },
   "The text Orivia reads stays with this chat: in your private account if you’re signed in, otherwise in this browser. It is sent again with each message you send in this chat until you tap ✕ on the document label. Removing the label doesn’t delete earlier messages, and deleting the chat or the file are separate.": {
     "fr": "Le texte lu par Orivia reste avec cette discussion : dans votre compte privé si vous êtes connecté, sinon dans ce navigateur. Il est renvoyé avec chaque message de cette discussion jusqu’à ce que vous touchiez ✕ sur l’étiquette du document. Retirer l’étiquette ne supprime pas les messages précédents ; supprimer la discussion ou le fichier sont des actions distinctes.",
@@ -2646,5 +2638,9 @@
   "Orivia used the first part of your documents in this chat (they’re long).": {
     "fr": "Orivia a utilisé le début de vos documents de cette discussion (ils sont longs).",
     "ar": "استخدمت أوريفيا الجزء الأول من مستنداتك في هذه المحادثة (فهي طويلة)."
+  },
+  "Before your first document: when you tap Use this in my chat, Orivia sends this file to OpenAI to count its size and, if today’s budget allows, to read its text. Each new attempt sends it again. OpenAI doesn’t keep it for later use through Orivia, but may hold it for a limited time for abuse checks.": {
+    "fr": "Avant votre premier document : quand vous touchez « Utiliser dans ma discussion », Orivia envoie ce fichier à OpenAI pour en mesurer la taille et, si le budget du jour le permet, en lire le texte. Chaque nouvelle tentative l’envoie à nouveau. OpenAI ne le conserve pas pour une utilisation ultérieure via Orivia, mais peut le garder pendant une durée limitée pour la détection des abus.",
+    "ar": "قبل أول مستند لك: عندما تضغط «استخدمه في محادثتي» ترسل أوريفيا هذا الملف إلى OpenAI لقياس حجمه، ثم لقراءة نصّه إذا سمحت ميزانية اليوم. وكل محاولة جديدة ترسله مرة أخرى. لا تحتفظ به OpenAI لاستخدامه لاحقًا عبر أوريفيا، لكنها قد تحتفظ به لفترة محدودة لرصد إساءة الاستخدام."
   }
 }
