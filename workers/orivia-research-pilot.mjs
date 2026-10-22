@@ -17,6 +17,7 @@ import {REGULATORS} from './orivia-research-loop.mjs';
 import {runAssistantTurn} from './orivia-assistant.mjs';
 import {handleVoice,voiceAvailable} from './orivia-voice.mjs';
 import {handleDocument,documentAvailable} from './orivia-document.mjs';
+import {filesAvailable} from './accounts/files.mjs';
 
 // v3 (founder-approved 18 Oct): OpenAI handles the whole conversation, About me included unless its switch is off.
 // v2 ticks don't carry over: the tester sees the new wording and ticks again.
@@ -87,6 +88,7 @@ export function createPilotWorker({launchBrowser,fetcher,publicRelease=false,voi
    body.research={...(body.research||{}),browserDirectory:env.BROWSER_DIRECTORY==='1'&&!!env.BROWSER};
    body.naturalVoice=providerAllowed(env)&&voiceAvailable(env);
    body.documents=providerAllowed(env)&&documentAvailable(env);
+   body.files=filesAvailable(env);
    return new Response(JSON.stringify(body),{status:200,headers:res.headers});
   }
   return res;

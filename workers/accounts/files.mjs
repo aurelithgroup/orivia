@@ -83,16 +83,19 @@ const CLEANUP='CREATE TABLE IF NOT EXISTS file_cleanup(user_id TEXT PRIMARY KEY,
 export async function markFileCleanup(env,owner,now=new Date()){await env.ACCOUNTS_DB.prepare(CLEANUP).run();await env.ACCOUNTS_DB.prepare('INSERT INTO file_cleanup(user_id,created_at) VALUES (?,?) ON CONFLICT(user_id) DO NOTHING').bind(owner,now.toISOString()).run()}
 export async function cancelFileCleanup(env,owner){await env.ACCOUNTS_DB.prepare('DELETE FROM file_cleanup WHERE user_id=?').bind(owner).run()}
 /** Try to remove every stored file; true when none is left (the record is then removed). */
+const accountExists=async(env,owner)=>!!await env.ACCOUNTS_DB.prepare('SELECT 1 AS yes FROM user WHERE id=?').bind(owner).first();
+/** Remove the files only once the account is confirmed gone. 'kept' when it still exists (nothing is deleted). */
 export async function finishFileCleanup(env,owner,now=new Date()){
- try{await deleteAllFiles(env,owner);await cancelFileCleanup(env,owner);return true}
+ try{if(await accountExists(env,owner))return 'kept';await deleteAllFiles(env,owner);await cancelFileCleanup(env,owner);return true}
  catch(e){await env.ACCOUNTS_DB.prepare('UPDATE file_cleanup SET attempts=attempts+1,last_attempt=?,last_error=? WHERE user_id=?').bind(now.toISOString(),String(e?.name||'error').replace(/[^A-Za-z]/g,'').slice(0,40),owner).run().catch(()=>{});return false}
 }
-/** Bounded retries of earlier cleanups: at most 3 per call, each at most every 5 minutes, up to 50 attempts. */
+/** Bounded retries of earlier cleanups: at most 3 per call, each at most every 5 minutes, up to 50 attempts. A record whose
+ *  account still exists after 10 minutes is a deletion that never completed: it is cancelled and every file is kept. */
 export async function retryFileCleanups(env,{now=new Date(),limit=3}={}){
  if(!env?.FILES?.list||!env?.ACCOUNTS_DB?.prepare)return 0;await env.ACCOUNTS_DB.prepare(CLEANUP).run();
  const due=new Date(now.getTime()-300000).toISOString();
- const rows=(await env.ACCOUNTS_DB.prepare('SELECT user_id FROM file_cleanup WHERE attempts<50 AND (last_attempt IS NULL OR last_attempt<?) ORDER BY created_at LIMIT ?').bind(due,limit).all()).results||[];
- let done=0;for(const r of rows)if(await finishFileCleanup(env,r.user_id,now))done++;return done;
+ const rows=(await env.ACCOUNTS_DB.prepare('SELECT user_id,created_at FROM file_cleanup WHERE attempts<50 AND (last_attempt IS NULL OR last_attempt<?) AND created_at<? ORDER BY created_at LIMIT ?').bind(due,due,limit).all()).results||[];
+ let done=0;for(const r of rows){const out=await finishFileCleanup(env,r.user_id,now);if(out===true)done++;else if(out==='kept'&&r.created_at<new Date(now.getTime()-600000).toISOString())await cancelFileCleanup(env,r.user_id).catch(()=>{})}return done;
 }
 /** Remove every stored file of an account (throws if storage fails, so the cleanup record stays). */
 export async function deleteAllFiles(env,owner){

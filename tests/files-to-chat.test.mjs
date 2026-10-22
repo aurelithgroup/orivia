@@ -18,10 +18,10 @@ const quiet={log:()=>{}};
 const JPG=new Uint8Array([0xFF,0xD8,0xFF,0xE0,0,16,74,70,73,70,0,1]);
 const pdf=pages=>new TextEncoder().encode('%PDF-1.7\n'+Array.from({length:pages},(_,i)=>(i+1)+' 0 obj <</Type /Page /Parent 99 0 R>> endobj\n').join('')+'99 0 obj <</Type /Pages /Count '+pages+'>> endobj\n%%EOF');
 const TRANSCRIPT='TENANCY CONTRACT\nLandlord: Al Noor Properties\nAnnual rent: AED 52,000\nPayable in 4 cheques\nStart date: 1 November 2026';
-function openai({status=200,body}={}){const calls=[];
- const fetcher=async(url,init)=>{calls.push({url,body:JSON.parse(init.body)});
+function openai({status=200,body,count=3000}={}){const calls=[],counts=[];
+ const fetcher=async(url,init)=>{if(String(url).endsWith('/v1/responses/input_tokens')){counts.push(JSON.parse(init.body));return count?Response.json({object:'response.input_tokens',input_tokens:count}):new Response('{}',{status:500})}calls.push({url,body:JSON.parse(init.body)});
   return status!==200?new Response('{}',{status}):Response.json(body||{status:'completed',usage:{input_tokens:3100,output_tokens:420},output:[{type:'message',role:'assistant',content:[{type:'output_text',text:JSON.stringify({kind:'tenancy contract',language:'en',text:TRANSCRIPT,unreadable:false})}]}]})};
- return {calls,fetcher}}
+ return {calls,counts,fetcher}}
 const env0={OPENAI_PILOT:'1',DOCUMENTS_ENABLED:'1',OPENAI_API_KEY:'test-key',OPENAI_INPUT_USD_PER_M:'2',OPENAI_OUTPUT_USD_PER_M:'10',PILOT_OPENAI_DAY_USD:'5',PILOT_OPENAI_MONTH_USD:'20',SEARCH_POOL:'pilot'};
 const post=(bytes,headers={})=>new Request('https://pilot.example/v1/document',{method:'POST',headers:{'X-File-Name':encodeURIComponent('Lease.jpg'),'X-Orivia-Document-Consent':DOCUMENT_CONSENT,...headers},body:bytes});
 
@@ -64,6 +64,22 @@ for(const bad of [encryptedPdf(),brokenPdf(),new TextEncoder().encode('%PDF-1.4\
  sql.prepare("UPDATE trial_usage SET calls=? WHERE day LIKE 'document:%'").run(DOCUMENT_LIMITS.dayReads);
  assert.equal((await handleDocument(post(JPG),{...env0,BUDGET_DB:db},{reply,fetcher:openai().fetcher,...quiet})).status,429);}
 
+// Ina recheck #3: the reservation is OpenAI's own count of this exact request (plus 10% and the output cap); no count,
+// nothing sent; a dense document that doesn't fit what's left of the budget is refused before sending.
+{const {db,sql}=d1();const o=openai({count:0});
+ assert.equal((await handleDocument(post(JPG),{...env0,BUDGET_DB:db},{reply,fetcher:o.fetcher,...quiet})).status,503);assert.equal(o.calls.length,0,'no count: nothing sent');}
+{const {db,sql}=d1();const o=openai({status:500,count:12345});await handleDocument(post(JPG),{...env0,BUDGET_DB:db},{reply,fetcher:o.fetcher,...quiet});
+ assert.deepEqual(o.counts[0].input,o.calls[0].body.input,'the count is of the very request that is sent');
+ const reserved=sql.prepare("SELECT day_amount FROM spend_meter WHERE id='openai'").get().day_amount;
+ assert.equal(reserved,Math.ceil((Math.ceil(12345*1.1)+200+64)*2+DOCUMENT_LIMITS.outputTokens*10),'unknown outcome keeps exactly the counted reservation');}
+{const {db,sql}=d1();const o=openai({count:3000000});const r=await handleDocument(post(pdf(1)),{...env0,BUDGET_DB:db},{reply,fetcher:o.fetcher,...quiet});
+ assert.equal(r.status,429,'a text-dense page beyond the remaining budget is refused');assert.equal(o.calls.length,0);}
+// Ina recheck #2: inflation stops at the running limit, across several streams.
+{const zlib=await import('node:zlib');const big=zlib.deflateSync(Buffer.alloc(3*1024*1024,65));
+ const stream=n=>Buffer.concat([Buffer.from(n+' 0 obj\n<< /Type /ObjStm /N 1 /First 2 /Filter /FlateDecode /Length '+big.length+' >>\nstream\n','latin1'),big,Buffer.from('\nendstream\nendobj\n','latin1')]);
+ const bomb=new Uint8Array(Buffer.concat([Buffer.from('%PDF-1.5\n','latin1'),stream(1),stream(2),Buffer.from('%%EOF\n','latin1')]));
+ assert.equal(await pdfPages(bomb,{maxInflated:5*1024*1024}),null,'refused when two streams together pass the limit');
+ assert.equal(await pdfPages(bomb,{maxInflated:1024*1024}),null,'refused inside the first stream');}
 // What comes back with a chat message is bounded and plain.
 assert.equal(cleanDocument({name:'x',text:'short'}),null);assert.equal(cleanDocument({name:'<b>Lease</b>',text:'a'.repeat(20000)}).text.length,12000);
 assert.equal(cleanDocument({name:'<b>Lease</b>',text:'Long enough text'}).name,' b Lease /b'.trim());
@@ -167,4 +183,9 @@ assert.match(page,/<input type="file" id="attach-file" accept="image\/\*,applica
 assert.ok(!page.includes('id="attach-camera"')&&!page.includes('id="attach-photo"'));
 // The person’s own document is a plain note under the reply: no circle in the text, not in the web sources list.
 assert.ok(chat.includes("docSrcs=allSrcs.filter(s=>s.category==='document'),srcs=allSrcs.filter(s=>s.category!=='document')")&&chat.includes("note.className='doc-note'"));
+assert.ok(chat.includes("const DOCUMENT_CONSENT='orivia-document-consent-v2-2026-10-22'"),'new acknowledgement after the conversation change');
+assert.ok(chat.includes('Orivia sends the text of your 3 most recent documents in this chat (about 24,000 characters together)'),'the limit is stated');
+assert.ok(chat.includes("...(d.document.truncated?{partial:true}:{})")&&chat.includes("Orivia could read only the first part of this document"),'a partial reading is shown');
+assert.ok(chat.includes("me.meta={...(me.meta||{}),documentContext:{used:ctx.used,total:ctx.total,cut:ctx.cut}}")&&chat.includes("Orivia used your most recent documents in this chat:"),'left-out documents are shown');
+assert.ok(!chat.includes('✕ on its label'),'no mention of the removed label');
 console.log('Files to Chat: read once inside the OpenAI limits, labelled evidence, figures from the document only, gates, app wiring.');

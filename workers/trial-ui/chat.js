@@ -25,7 +25,7 @@ function autoTitle(ts){const u=(ts.find(t=>t.role==='user')||{}).content||'New c
 function normChat(c){
  if(!c||typeof c!=='object'||typeof c.id!=='string')return null;
  const ts=Array.isArray(c.turns)?c.turns.filter(validTurn).map(t=>({role:t.role,content:String(t.content).slice(0,t.role==='assistant'?4000:2000),...(t.meta&&typeof t.meta==='object'?{meta:t.meta}:{})})):[];
- return {id:c.id.slice(0,24),title:String(c.title||autoTitle(ts)).slice(0,80),titled:!!c.titled,created:Number(c.created)||Date.now(),updated:Number(c.updated)||Date.now(),pinned:!!c.pinned,archived:!!c.archived,turns:ts,...(c.orgContext&&typeof c.orgContext==='object'&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.org))&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.content))?{orgContext:{org:String(c.orgContext.org),content:String(c.orgContext.content),title:String(c.orgContext.title||'').slice(0,150),orgName:String(c.orgContext.orgName||'').slice(0,80)}}:{}),...(()=>{const list=(Array.isArray(c.documents)?c.documents:c.document?[c.document]:[]).filter(d=>d&&typeof d==='object'&&typeof d.text==='string'&&d.text.trim()).map(d=>({...(typeof d.id==='string'?{id:d.id.slice(0,40)}:{}),name:String(d.name||'Document').slice(0,120),kind:String(d.kind||'').slice(0,80),text:d.text.slice(0,12000),addedAt:Number(d.addedAt)||Date.now()}));return list.length?{documents:list}:{}})()};
+ return {id:c.id.slice(0,24),title:String(c.title||autoTitle(ts)).slice(0,80),titled:!!c.titled,created:Number(c.created)||Date.now(),updated:Number(c.updated)||Date.now(),pinned:!!c.pinned,archived:!!c.archived,turns:ts,...(c.orgContext&&typeof c.orgContext==='object'&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.org))&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.content))?{orgContext:{org:String(c.orgContext.org),content:String(c.orgContext.content),title:String(c.orgContext.title||'').slice(0,150),orgName:String(c.orgContext.orgName||'').slice(0,80)}}:{}),...(()=>{const list=(Array.isArray(c.documents)?c.documents:c.document?[c.document]:[]).filter(d=>d&&typeof d==='object'&&typeof d.text==='string'&&d.text.trim()).map(d=>({...(typeof d.id==='string'?{id:d.id.slice(0,40)}:{}),name:String(d.name||'Document').slice(0,120),kind:String(d.kind||'').slice(0,80),text:d.text.slice(0,12000),addedAt:Number(d.addedAt)||Date.now(),...(d.partial?{partial:true}:{})}));return list.length?{documents:list}:{}})()};
 }
 let storeLocked=false; // saved chats exist but couldn't be read or backed up: never overwrite them
 function storageWarn(msg){
@@ -85,7 +85,9 @@ function newChat(ctx=null){closeHandoff();stopSpeaking();stopDictation(false);pe
    records that already exist (Files storage, saved guides with their progress, shortlists inside chats); nothing is
    copied, moved or deleted here, and nothing is sent anywhere by looking. "Use in Chat" and "Compare in Chat" only
    prepare the chat; the person still sends (and a file still goes through the reading notice). */
-let libFilter='all';
+let libFilter='all',filesServer=false;
+// Where Files is switched off, the Library is guides and shortlists only (no Files tab, no file actions).
+function showLibraryFiles(){const tab=$('lib-tab-files'),group=$('files-title')?.closest('section');if(tab)tab.hidden=!filesServer;if(group)group.hidden=!filesServer;if(!filesServer&&libFilter==='files')libFilter='all'}
 function libItem(node,kind,text){node.dataset.libKind=kind;node.dataset.libText=String(text||'').toLowerCase();return node}
 function libraryShortlists(){
  const out=[];
@@ -97,7 +99,7 @@ function libraryShortlists(){
  return out;
 }
 function renderLibrary(){
- mountLibrary();const done=window.OriviaFiles?.render?.();
+ mountLibrary();showLibraryFiles();const done=filesServer?window.OriviaFiles?.render?.():null;
  // Guides & journeys: the person's saved guides, newest first, with their progress (the same cards as before).
  const d=readJourneys(),items=Object.entries(d).filter(([k,v])=>JID.test(k)&&v&&typeof v.title==='string').sort((a,b)=>String(b[1].updated).localeCompare(String(a[1].updated)));
  const g=$('lib-guides');g.replaceChildren();
@@ -119,7 +121,7 @@ function applyLibraryFilter(){
  const q=$('lib-search').value.trim().toLowerCase();let shown=0;
  for(const row of document.querySelectorAll('#files-list .file-row'))if(!row.dataset.libKind)libItem(row,'files',row.querySelector('strong')?.textContent);
  for(const [kind,id] of [['files','files-title'],['guides','lib-guides-group'],['shortlists','lib-shortlists-group']]){
-  const group=kind==='files'?$('files-title').closest('section'):$(id);const on=libFilter==='all'||libFilter===kind;group.hidden=!on;
+  const group=kind==='files'?$('files-title').closest('section'):$(id);const on=(libFilter==='all'||libFilter===kind)&&(kind!=='files'||filesServer);group.hidden=!on;
   let visible=0;for(const item of group.querySelectorAll('[data-lib-kind]')){const hit=!q||item.dataset.libText.includes(q);item.hidden=!hit;if(hit)visible++}
   if(on)shown+=visible;
  }
@@ -143,12 +145,14 @@ var documentsServer=false,attachOp=null,attachGeneration=0,pendingAttachment=nul
 const attachmentPreviews=new Map(); // message attachment id → image URL for this page session only (nothing stored)
 // From the Library: a saved file becomes this chat's pending attachment (preview only; nothing is sent).
 if(typeof window!=='undefined'&&window.OriviaFiles)window.OriviaFiles.useInChat=async f=>{if(!attachAllowed()){$('status').textContent=uiText('Turn on the OpenAI research test in Settings to use documents in chat.');return}const g=attachGeneration;try{const blob=await window.OriviaFiles.blob(f.id);if(blob&&g===attachGeneration){tab('chat');setPendingAttachment(blob,f.name,f.id)}}catch(_){$('status').textContent=uiText('Couldn’t open that file.')}};
-const DOCUMENT_CONSENT='orivia-document-consent-v1-2026-10-22',DOC_ACK_KEY='orivia-document-consent';
+const DOCUMENT_CONSENT='orivia-document-consent-v2-2026-10-22',DOC_ACK_KEY='orivia-document-consent';
 const DOC_SPACE=800000; // bytes of saved chats (with documents) we keep under the 1 MB account backup
 /** Documents sent in this chat, newest first. */
 function chatDocuments(){const c=activeChat();const list=c?(Array.isArray(c.documents)?c.documents:[]):pendingDocuments;return list.filter(d=>d&&typeof d.text==='string').slice().sort((a,b)=>(b.addedAt||0)-(a.addedAt||0))}
 /** What goes with a message: the newest 3 documents, about 24,000 characters together. */
 function documentsForMessage(){const out=[];let total=0;for(const d of chatDocuments().slice(0,3)){const room=24000-total;if(room<200)break;const text=d.text.slice(0,room);total+=text.length;out.push({name:d.name,kind:d.kind||'',text})}return out}
+/** How much of this chat's documents a message can carry: shown in the person's message when something is left out. */
+function documentContext(){const all=chatDocuments(),sent=documentsForMessage(),cut=sent.some((d,i)=>d.text.length<all[i].text.length);return {total:all.length,used:sent.length,cut}}
 function attachAllowed(){return documentsServer&&!!pilotConsent()}
 function docAcknowledged(){try{return (globalThis.OriviaAccountStorage?.storage||localStorage).getItem(DOC_ACK_KEY)===DOCUMENT_CONSENT}catch(_){return false}}
 /** Cancel any reading in progress and forget it (its late result or error must not touch the screen or saved chats). */
@@ -180,7 +184,7 @@ function confirmAttach(blob,name){
   const p=$('attach-panel');if(!p)return resolve(false);p.hidden=false;const first=!docAcknowledged();attachConfirm=resolve;
   const card=el('div','');card.append(el('strong','',name));
   if(first)card.append(el('p','tiny',uiText('Before your first document: when you tap Use this in my chat, Orivia sends this file to OpenAI to read its text. Each new attempt sends it again. OpenAI doesn’t keep it for later use through Orivia, but may hold it for a limited time for abuse checks.')),
-   el('p','tiny',uiText('The text Orivia reads becomes part of this conversation: it’s kept with the chat (in your private account if you’re signed in, otherwise in this browser) and sent with your later messages here, so you can ask follow-up questions. Deleting the chat removes it; a file saved in your Library is separate.')));
+   el('p','tiny',uiText('The text Orivia reads becomes part of this conversation: it’s kept with the chat (in your private account if you’re signed in, otherwise in this browser). With each message here, Orivia sends the text of your 3 most recent documents in this chat (about 24,000 characters together), so you can ask follow-up questions. Deleting the chat removes it; a file saved in your Library is separate.')));
   card.append(el('p','tiny',uiText('Orivia can misread documents, so check important details against the original. It doesn’t check whether a document is genuine or valid.')));
   const done=v=>{if(attachConfirm===resolve){attachConfirm=null;closeAttach();resolve(v)}};
   const row=el('div','attach-row');row.append(attachButton(first?'I understand. Use this in my chat':'Use this in my chat',()=>{try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(DOC_ACK_KEY,DOCUMENT_CONSENT)}catch(_){}done(true)},'btn small'),attachButton('Cancel',()=>{done(false);$('status').textContent=uiText('Your draft is still here.')}));card.append(row);p.replaceChildren(card);
@@ -196,11 +200,11 @@ async function readAttached(blob,name){
   if(!live())return false;
   if(!r.ok||!d.document||typeof d.document.text!=='string'){const why=d&&d.error;
    return (uiText(why==='too_many_pages'?'Orivia can read up to 10 pages. Try a shorter document, or a photo of the page you need.':why==='pdf_unreadable'?'Orivia can’t safely count the pages in this PDF (it may be protected or unusual). Take photos of the pages you need instead.':why==='unreadable'?'Orivia couldn’t read any text in that file. Try a clearer photo.':why==='budget_limit'||why==='daily_limit'?'Orivia has read as many documents as it can today. Try again tomorrow.':why==='human_check'?'Please confirm you’re human again, then try once more.':'Orivia couldn’t read that document. Please try again.'))}
-  const doc={id:newId(),name:String(d.document.name||name).slice(0,120),kind:String(d.document.kind||'').slice(0,80),text:d.document.text.slice(0,12000),addedAt:Date.now()};
+  const doc={id:newId(),name:String(d.document.name||name).slice(0,120),kind:String(d.document.kind||'').slice(0,80),text:d.document.text.slice(0,12000),addedAt:Date.now(),...(d.document.truncated?{partial:true}:{})};
   // Never remove another chat's document to make room: if saved chats would outgrow the account backup, say so instead.
   const c=op.newChat?null:store.chats.find(x=>x.id===op.chatId);if(!op.newChat&&!c)return false;
   const size=new TextEncoder().encode(JSON.stringify(store.chats)).length+new TextEncoder().encode(JSON.stringify(doc)).length;
-  if(size>DOC_SPACE)return uiText('Your saved chats are too large to keep another document. Remove a document from an older chat (✕ on its label) or delete chats you no longer need, then try again. Nothing was changed.');
+  if(size>DOC_SPACE)return uiText('Your saved chats are too large to keep another document. Delete chats you no longer need, then try again. Nothing was changed.');
   if(c){c.documents=[...(Array.isArray(c.documents)?c.documents:[]),doc];persist()}else pendingDocuments=[...pendingDocuments,doc];
   attachOp=null;renderDocContext();
   return true;
@@ -585,13 +589,14 @@ function draw({newReply=null,scroll=false}={}){
  const el=$('history');el.replaceChildren();
  for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant')+(t===newReply?' reply-arriving':'');const b=document.createElement('b');b.textContent=uiText(t.role==='user'?'You':'Orivia');const txt=document.createElement('span');
   const allSrcs=t.role==='assistant'?safeSources(t.meta&&t.meta.sources):[],docSrcs=allSrcs.filter(s=>s.category==='document'),srcs=allSrcs.filter(s=>s.category!=='document');
-  if(srcs.length)txt.append(...citedText(t.content,srcs));else txt.textContent=t.content;p.append(b,txt);
+  if(srcs.length)txt.append(...citedText(t.content,srcs));
+  if(t.role==='user'&&t.meta?.documentContext){const dc=t.meta.documentContext,n=document.createElement('p');n.className='doc-note';n.textContent=dc.used<dc.total?uiText('Orivia used your most recent documents in this chat:')+' '+dc.used+' '+uiText('of')+' '+dc.total+'.':uiText('Orivia used the first part of your documents in this chat (they’re long).');p.append(n)}else txt.textContent=t.content;p.append(b,txt);
   // (draw() has its own local `el`, so the chip is built directly.)
   if(t.role==='user'&&t.meta?.attachment&&typeof t.meta.attachment.name==='string'){const at=t.meta.attachment,card=document.createElement('div');card.className='message-attachment';
    const url=at.type!=='application/pdf'&&(attachmentPreviews.get(at.id)||(at.fileId&&globalThis.OriviaAccounts?.user?'/api/account/files/'+encodeURIComponent(at.fileId):''));
    const fileCard=()=>{card.className='message-attachment is-file';const icon=document.createElement('span');icon.className='compose-file-icon';icon.textContent=at.type==='application/pdf'?'PDF':uiText('Photo');const nm=document.createElement('strong');nm.className='compose-file-name';nm.textContent=at.name;card.replaceChildren(icon,nm)};
    if(url){card.className='message-attachment is-photo';const img=document.createElement('img');img.src=url;img.alt=uiText('Your photo')+': '+at.name;img.loading='lazy';img.onerror=fileCard;card.append(img)}else fileCard();
-   p.prepend(card)}
+   p.prepend(card);if(at.partial){const n=document.createElement('p');n.className='doc-note';n.textContent=uiText('Orivia could read only the first part of this document (it’s long).');card.after(n)}}
   const cards=t.role==='assistant'&&t.meta&&t.meta.organisations?orgCards(t,srcs):null;
   if(cards){p.append(cards);p.classList.add('has-cards')}
   if(t.role==='assistant'&&t.meta&&safeDraft(t.meta.draft))p.append(draftBox(t));
@@ -1667,7 +1672,7 @@ function pilotConsent(){if(!pilotOffer)return null;try{return (globalThis.Orivia
 async function loadMode(){
  try{const r=await fetch('/v1/config',{credentials:'same-origin',cache:'no-store'});const d=await r.json();
   setupPilot(d);
-  naturalVoiceServer=d?.naturalVoice===true;documentsServer=d?.documents===true;try{renderDocContext()}catch(_){}
+  naturalVoiceServer=d?.naturalVoice===true;documentsServer=d?.documents===true;filesServer=d?.files===true;try{showLibraryFiles()}catch(_){}try{renderDocContext()}catch(_){}
   // Reveal the intro now that its wording is right, and before the human check renders: Turnstile stalls if it starts hidden.
   document.body.dataset.config='ready';
   if(d&&d.mode==='public'){mode='public';document.body.dataset.mode='public';for(const n of document.querySelectorAll('[data-public]'))n.textContent=n.dataset.public;if(!$('intro').hidden&&d.turnstileSiteKey)loadTurnstile(d.turnstileSiteKey);else window.__siteKey=d.turnstileSiteKey}
@@ -1982,8 +1987,10 @@ $('form').onsubmit=async e=>{
    activeChatRequest=null;busy=false;sendMode(false);working('');document.removeEventListener('visibilitychange',away);return;
   }
   readFirst.read=true;activeChatRequest=controller;working('Thinking…');$('status').textContent=uiText('Orivia is thinking…');
+  const latest=chatDocuments()[0];if(latest?.partial&&turns.at(-1)?.meta?.attachment){turns.at(-1).meta.attachment.partial=true;save();draw()}
  }
  try{
+  {const ctx=chatDocuments().length?documentContext():null,me=turns.at(-1);if(ctx&&(ctx.used<ctx.total||ctx.cut)&&me?.role==='user'){me.meta={...(me.meta||{}),documentContext:{used:ctx.used,total:ctx.total,cut:ctx.cut}};save();draw()}}
   const res=await fetch('/v1/chat',{method:'POST',signal:controller.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),...(currentOrgContext()?{orgContext:{org:currentOrgContext().org,content:currentOrgContext().content}}:{}),...(chatDocuments().length&&pilotConsent()?{documents:documentsForMessage()}:{}),researchContext:currentResearchContext(sentTurns),language:uiLanguage(),style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
   const {r,d}=await readReply(res,chatId);
   if((globalThis.OriviaAccounts?.epoch||'')!==accountAtSend)return;

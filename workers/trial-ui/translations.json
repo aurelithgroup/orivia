@@ -2463,10 +2463,6 @@
     "fr": "Orivia ne peut pas compter de façon sûre les pages de ce PDF (il est peut-être protégé ou inhabituel). Prenez plutôt en photo les pages utiles.",
     "ar": "لا تستطيع أوريفيا عدّ صفحات ملف PDF هذا بشكل موثوق (قد يكون محميًا أو غير معتاد). التقط صورًا للصفحات التي تحتاجها بدلًا من ذلك."
   },
-  "Your saved chats are too large to keep another document. Remove a document from an older chat (✕ on its label) or delete chats you no longer need, then try again. Nothing was changed.": {
-    "fr": "Vos discussions enregistrées sont trop volumineuses pour garder un autre document. Retirez un document d’une ancienne discussion (✕ sur son étiquette) ou supprimez les discussions inutiles, puis réessayez. Rien n’a été modifié.",
-    "ar": "محادثاتك المحفوظة كبيرة جدًا للاحتفاظ بمستند آخر. أزل مستندًا من محادثة أقدم (✕ على تسميته) أو احذف المحادثات التي لم تعد تحتاجها، ثم حاول مرة أخرى. لم يتغيّر شيء."
-  },
   "Add an attachment": {
     "fr": "Ajouter une pièce jointe",
     "ar": "إضافة مرفق"
@@ -2587,10 +2583,6 @@
     "fr": "D’après votre document :",
     "ar": "استنادًا إلى مستندك:"
   },
-  "The text Orivia reads becomes part of this conversation: it’s kept with the chat (in your private account if you’re signed in, otherwise in this browser) and sent with your later messages here, so you can ask follow-up questions. Deleting the chat removes it; a file saved in your Library is separate.": {
-    "fr": "Le texte lu par Orivia fait partie de cette discussion : il est conservé avec elle (dans votre compte privé si vous êtes connecté, sinon dans ce navigateur) et envoyé avec vos messages suivants ici, pour que vous puissiez poser d’autres questions. Supprimer la discussion le supprime ; un fichier enregistré dans votre bibliothèque est distinct.",
-    "ar": "يصبح النص الذي تقرؤه أوريفيا جزءًا من هذه المحادثة: يُحفظ معها (في حسابك الخاص إذا كنت مسجّلًا الدخول، وإلا ففي هذا المتصفح) ويُرسَل مع رسائلك التالية هنا لتتمكن من طرح أسئلة متابعة. حذف المحادثة يحذفه، أما الملف المحفوظ في مكتبتك فمنفصل."
-  },
   "unread": {
     "fr": "non lues",
     "ar": "غير مقروءة"
@@ -2630,5 +2622,29 @@
   "Application progress from your university’s own systems is not connected yet.": {
     "fr": "La progression de votre dossier depuis les systèmes de votre université n’est pas encore connectée.",
     "ar": "لم يتم ربط تقدّم طلبك من أنظمة جامعتك بعد."
+  },
+  "The text Orivia reads becomes part of this conversation: it’s kept with the chat (in your private account if you’re signed in, otherwise in this browser). With each message here, Orivia sends the text of your 3 most recent documents in this chat (about 24,000 characters together), so you can ask follow-up questions. Deleting the chat removes it; a file saved in your Library is separate.": {
+    "fr": "Le texte lu par Orivia fait partie de cette discussion : il est conservé avec elle (dans votre compte privé si vous êtes connecté, sinon dans ce navigateur). À chaque message ici, Orivia envoie le texte de vos 3 documents les plus récents de cette discussion (environ 24 000 caractères au total), pour que vous puissiez poser d’autres questions. Supprimer la discussion le supprime ; un fichier enregistré dans votre bibliothèque est distinct.",
+    "ar": "يصبح النص الذي تقرؤه أوريفيا جزءًا من هذه المحادثة: يُحفظ معها (في حسابك الخاص إذا كنت مسجّلًا الدخول، وإلا ففي هذا المتصفح). ومع كل رسالة هنا، ترسل أوريفيا نص أحدث 3 مستندات في هذه المحادثة (نحو 24,000 حرف معًا) لتتمكن من طرح أسئلة متابعة. حذف المحادثة يحذفه، أما الملف المحفوظ في مكتبتك فمنفصل."
+  },
+  "Your saved chats are too large to keep another document. Delete chats you no longer need, then try again. Nothing was changed.": {
+    "fr": "Vos discussions enregistrées sont trop volumineuses pour garder un autre document. Supprimez les discussions inutiles, puis réessayez. Rien n’a été modifié.",
+    "ar": "محادثاتك المحفوظة كبيرة جدًا للاحتفاظ بمستند آخر. احذف المحادثات التي لم تعد تحتاجها، ثم حاول مرة أخرى. لم يتغيّر شيء."
+  },
+  "Orivia could read only the first part of this document (it’s long).": {
+    "fr": "Orivia n’a pu lire que le début de ce document (il est long).",
+    "ar": "لم تتمكن أوريفيا من قراءة سوى الجزء الأول من هذا المستند (فهو طويل)."
+  },
+  "Orivia used your most recent documents in this chat:": {
+    "fr": "Orivia a utilisé vos documents les plus récents de cette discussion :",
+    "ar": "استخدمت أوريفيا أحدث مستنداتك في هذه المحادثة:"
+  },
+  "of": {
+    "fr": "sur",
+    "ar": "من"
+  },
+  "Orivia used the first part of your documents in this chat (they’re long).": {
+    "fr": "Orivia a utilisé le début de vos documents de cette discussion (ils sont longs).",
+    "ar": "استخدمت أوريفيا الجزء الأول من مستنداتك في هذه المحادثة (فهي طويلة)."
   }
 }

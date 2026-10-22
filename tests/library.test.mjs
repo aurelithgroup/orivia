@@ -26,3 +26,6 @@ assert.ok(files.includes("window.OriviaFiles?.useInChat&&b('Use in Chat'"));
 const tr=JSON.parse(fs.readFileSync('workers/trial-ui/translations.json','utf8'));
 for(const k of ['Library','Search your Library','Guides & journeys','Shortlists','Compare in Chat','Use in Chat','Continue where you left off','Clear search'])assert.ok(tr[k]?.fr&&tr[k]?.ar,k);
 console.log('Library: five tabs, files moved with the same ids, a view over saved guides and chat shortlists, nothing written or sent.');
+// Where Files is switched off (production until it's released), the Library has no Files tab or section.
+assert.ok(chat.includes("function showLibraryFiles(){const tab=$('lib-tab-files'),group=$('files-title')?.closest('section');if(tab)tab.hidden=!filesServer;if(group)group.hidden=!filesServer;")&&chat.includes("filesServer=d?.files===true;"));
+assert.ok(fs.readFileSync('workers/orivia-research-pilot.mjs','utf8').includes('body.files=filesAvailable(env);'),'the server says whether Files is on');

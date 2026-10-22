@@ -70,10 +70,10 @@ export async function handleAccountRequest(req,env,ctx,options={}){
    return row?json({revision:row.revision,updatedAt:now}):json({error:'sync_conflict'},409);}
   if(url.pathname==='/api/account'&&req.method==='DELETE'){const body=await boundedJson(req,100);if(body?.confirm!=='delete my account')return json({error:'confirmation_required'},400);if(env.ORGANISATIONS_ENABLED==='1'){const blocked=await organisationDeletionBlock(env.ACCOUNTS_DB,owner);if(blocked)return json({error:blocked},409)}// Stored files: the cleanup record is written first, so a storage failure can't leave files behind unnoticed.
    const files=!!env.FILES?.list;if(files)await markFileCleanup(env,owner);
-   const res=await auth.api.deleteUser({headers:req.headers,body:{callbackURL:c.origin+appHome(env)},asResponse:true});
+   let res;try{res=await auth.api.deleteUser({headers:req.headers,body:{callbackURL:c.origin+appHome(env)},asResponse:true})}catch(e){if(files)await cancelFileCleanup(env,owner).catch(()=>{});throw e}
    if(!res.ok){if(files)await cancelFileCleanup(env,owner).catch(()=>{});return res}
    if(!files)return res;
-   const done=await finishFileCleanup(env,owner);let result={};try{result=await res.clone().json()}catch(_){}
+   const done=(await finishFileCleanup(env,owner))===true;let result={};try{result=await res.clone().json()}catch(_){}
    const headers=new Headers(res.headers);headers.set('Content-Type','application/json');headers.delete('Content-Length');
    // filesPending: the account is deleted, but some stored files are still being removed (retried automatically).
    return new Response(JSON.stringify({...(result&&typeof result==='object'?result:{}),filesPending:!done}),{status:res.status,headers});}

@@ -84,13 +84,28 @@ assert.ok(handlerSrc.includes('filesPending:!done'),'the response says when file
 // Wiring: the routes sit behind the session check; account deletion removes the files.
 const handler=fs.readFileSync('workers/accounts/handler.mjs','utf8').replace(/\r\n/g,'\n');
 assert.ok(handler.indexOf('if(filesRoute(url.pathname))')>handler.indexOf("if(!session?.user?.id)return json({error:'sign_in_required'},401)"),'after the session check');
-assert.ok(handler.includes('const done=await finishFileCleanup(env,owner)'));
+assert.ok(handler.includes('const done=(await finishFileCleanup(env,owner))===true;'));
+// Ina recheck #1 (her reproduction): a cleanup record for an account that still exists (deletion threw, failed or the
+// process stopped) must never delete its files. After 10 minutes the stale record is cancelled; files stay.
+{sql.prepare('INSERT INTO user(id,name,email,emailVerified,createdAt,updatedAt) VALUES (?,?,?,?,?,?)').run('still-active','s','s@example.test',1,now,now);
+ objects.set('u/still-active/private-0001',{bytes:PDF,type:'application/pdf'});
+ await markFileCleanup(env,'still-active');
+ assert.equal(await finishFileCleanup(env,'still-active'),'kept','account exists: nothing deleted');
+ assert.equal(await retryFileCleanups(env,{now:new Date(Date.now()+400000)}),0);assert.ok(objects.has('u/still-active/private-0001'),'kept on retry');
+ assert.equal(sql.prepare("SELECT COUNT(*) n FROM file_cleanup WHERE user_id='still-active'").get().n,1,'record kept for a while (a deletion may still be finishing)');
+ await retryFileCleanups(env,{now:new Date(Date.now()+900000)});
+ assert.ok(objects.has('u/still-active/private-0001'),'still kept');assert.equal(sql.prepare("SELECT COUNT(*) n FROM file_cleanup WHERE user_id='still-active'").get().n,0,'stale record cancelled');
+ // Concurrent: a retry running while the account is being deleted keeps the files; the deletion's own cleanup then removes them.
+ await markFileCleanup(env,'still-active');await retryFileCleanups(env,{now:new Date(Date.now()+400000)});assert.ok(objects.has('u/still-active/private-0001'));
+ sql.prepare("DELETE FROM user WHERE id='still-active'").run();assert.equal(await finishFileCleanup(env,'still-active'),true);assert.ok(!objects.has('u/still-active/private-0001'),'removed once the account is gone');}
+// If the auth deletion throws or fails, the record is cancelled (files kept).
+assert.ok(handler.includes("catch(e){if(files)await cancelFileCleanup(env,owner).catch(()=>{});throw e}")&&handler.includes("if(!res.ok){if(files)await cancelFileCleanup(env,owner).catch(()=>{});return res}"));
 
 // The app: text only, photos re-saved as JPEG, camera only on tap, guests stay in this browser, refreshes with My Life.
 const files=fs.readFileSync('workers/trial-ui/files.js','utf8'),page=fs.readFileSync('workers/trial-ui/page.html','utf8'),chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace(/\r\n/g,'\n');
 assert.doesNotMatch(files,/innerHTML|insertAdjacentHTML/);assert.match(files,/c\.toBlob\(r,'image\/jpeg',q\)/);assert.match(files,/indexedDB\.open\('orivia-files',1\)/);
 assert.match(page,/<input type="file" id="files-camera-input" accept="image\/\*" capture="environment" hidden>/);
-assert.ok(chat.includes("if(which==='library')try{renderLibrary()}catch(_){}")&&chat.includes('const done=window.OriviaFiles?.render?.();'),'files refresh when the Library opens');
+assert.ok(chat.includes("if(which==='library')try{renderLibrary()}catch(_){}")&&chat.includes('const done=filesServer?window.OriviaFiles?.render?.():null;'),'files refresh when the Library opens');
 assert.ok(fs.readFileSync('workers/orivia-ai-private-trial.mjs','utf8').includes('window.OriviaFiles='),'shipped in /chat.js');
 // Run the client module in a sandbox: a PDF passes through untouched; a non-image, non-PDF is refused.
 {const ctx={window:{},document:{getElementById:()=>null},crypto,Blob,URL,indexedDB:null,createImageBitmap:async()=>{throw Error('x')}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(files,ctx);
