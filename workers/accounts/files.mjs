@@ -22,7 +22,7 @@ const SCHEMA=['CREATE TABLE IF NOT EXISTS account_files(id TEXT PRIMARY KEY, use
 const schemaReady=new WeakSet(); // tables created once per database binding in this isolate
 const key=(owner,id)=>'u/'+owner+'/'+id;
 const view=r=>({id:r.id,name:r.name,type:r.type,size:r.size,createdAt:r.created_at});
-async function readBody(req,max){
+export async function readBody(req,max){
  if(!req.body)return new Uint8Array(0);const reader=req.body.getReader(),parts=[];let size=0;
  while(true){const {value,done}=await reader.read();if(done)break;size+=value.byteLength;if(size>max){try{await reader.cancel()}catch(_){}throw Error('body_too_large')}parts.push(value)}
  const out=new Uint8Array(size);let o=0;for(const p of parts){out.set(p,o);o+=p.byteLength}return out;
@@ -76,8 +76,26 @@ export async function handleFileRequest(req,env,{owner,expected,json,readJson,no
  }
  return json({error:'not_found'},404);
 }
-/** After the account itself is deleted: remove every stored file (the rows go with the account). */
+/* Account deletion: a cleanup record is written BEFORE the account is deleted and has no link to it, so it survives the
+   deletion. It is removed only once every stored file is gone; until then bounded retries run (on later app loads), and
+   the files stay unreachable because only a signed-in owner can open them. */
+const CLEANUP='CREATE TABLE IF NOT EXISTS file_cleanup(user_id TEXT PRIMARY KEY, created_at TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, last_attempt TEXT, last_error TEXT)';
+export async function markFileCleanup(env,owner,now=new Date()){await env.ACCOUNTS_DB.prepare(CLEANUP).run();await env.ACCOUNTS_DB.prepare('INSERT INTO file_cleanup(user_id,created_at) VALUES (?,?) ON CONFLICT(user_id) DO NOTHING').bind(owner,now.toISOString()).run()}
+export async function cancelFileCleanup(env,owner){await env.ACCOUNTS_DB.prepare('DELETE FROM file_cleanup WHERE user_id=?').bind(owner).run()}
+/** Try to remove every stored file; true when none is left (the record is then removed). */
+export async function finishFileCleanup(env,owner,now=new Date()){
+ try{await deleteAllFiles(env,owner);await cancelFileCleanup(env,owner);return true}
+ catch(e){await env.ACCOUNTS_DB.prepare('UPDATE file_cleanup SET attempts=attempts+1,last_attempt=?,last_error=? WHERE user_id=?').bind(now.toISOString(),String(e?.name||'error').replace(/[^A-Za-z]/g,'').slice(0,40),owner).run().catch(()=>{});return false}
+}
+/** Bounded retries of earlier cleanups: at most 3 per call, each at most every 5 minutes, up to 50 attempts. */
+export async function retryFileCleanups(env,{now=new Date(),limit=3}={}){
+ if(!env?.FILES?.list||!env?.ACCOUNTS_DB?.prepare)return 0;await env.ACCOUNTS_DB.prepare(CLEANUP).run();
+ const due=new Date(now.getTime()-300000).toISOString();
+ const rows=(await env.ACCOUNTS_DB.prepare('SELECT user_id FROM file_cleanup WHERE attempts<50 AND (last_attempt IS NULL OR last_attempt<?) ORDER BY created_at LIMIT ?').bind(due,limit).all()).results||[];
+ let done=0;for(const r of rows)if(await finishFileCleanup(env,r.user_id,now))done++;return done;
+}
+/** Remove every stored file of an account (throws if storage fails, so the cleanup record stays). */
 export async function deleteAllFiles(env,owner){
- if(!env?.FILES?.list||!/^[A-Za-z0-9_-]{1,128}$/.test(String(owner)))return;
+ if(!env?.FILES?.list)throw Error('StorageUnavailable');if(!/^[A-Za-z0-9_-]{1,128}$/.test(String(owner)))return;
  let cursor;do{const page=await env.FILES.list({prefix:'u/'+owner+'/',cursor});const keys=page.objects.map(o=>o.key);if(keys.length)await env.FILES.delete(keys);cursor=page.truncated?page.cursor:undefined}while(cursor);
 }

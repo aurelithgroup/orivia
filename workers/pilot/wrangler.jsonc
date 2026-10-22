@@ -36,6 +36,8 @@
   "r2_buckets": [{ "binding": "FILES", "bucket_name": "orivia-files-pilot" }],
   "vars": {
     "FILES_ENABLED": "1",
+    // Device alerts: this Worker runs its own scheduler on its own test database (the deploy script checks the id).
+    "NOTIFICATION_SCHEDULER": "pilot", "ACCOUNTS_DB_EXPECTED": "8cd85061-ce42-4fa7-8dd7-a4b01f36800a",
     // Files to Chat (step 7): one reading per chosen document, inside the OpenAI limits; 30 readings a day on the pilot.
     "DOCUMENTS_ENABLED": "1",
     "PRIVATE_HOST": "orivia-research-pilot.habeebahsallah27.workers.dev",

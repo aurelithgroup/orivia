@@ -4,7 +4,9 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
-import {handleDocument,cleanDocument,pdfPages,DOCUMENT_LIMITS} from '../workers/orivia-document.mjs';
+import {handleDocument,cleanDocument,pdfPages,DOCUMENT_LIMITS,DOCUMENT_CONSENT} from '../workers/orivia-document.mjs';
+import {plainPdf,objectStreamPdf,encryptedPdf,brokenPdf} from './fixtures/make-pdf.mjs';
+import vm from 'node:vm';
 import {runAssistantTurn,verifyReply} from '../workers/orivia-assistant.mjs';
 import {createPilotWorker,PILOT_CONSENT} from '../workers/orivia-research-pilot.mjs';
 
@@ -21,9 +23,24 @@ function openai({status=200,body}={}){const calls=[];
   return status!==200?new Response('{}',{status}):Response.json(body||{status:'completed',usage:{input_tokens:3100,output_tokens:420},output:[{type:'message',role:'assistant',content:[{type:'output_text',text:JSON.stringify({kind:'tenancy contract',language:'en',text:TRANSCRIPT,unreadable:false})}]}]})};
  return {calls,fetcher}}
 const env0={OPENAI_PILOT:'1',DOCUMENTS_ENABLED:'1',OPENAI_API_KEY:'test-key',OPENAI_INPUT_USD_PER_M:'2',OPENAI_OUTPUT_USD_PER_M:'10',PILOT_OPENAI_DAY_USD:'5',PILOT_OPENAI_MONTH_USD:'20',SEARCH_POOL:'pilot'};
-const post=(bytes,headers={})=>new Request('https://pilot.example/v1/document',{method:'POST',headers:{'X-File-Name':encodeURIComponent('Lease.jpg'),...headers},body:bytes});
+const post=(bytes,headers={})=>new Request('https://pilot.example/v1/document',{method:'POST',headers:{'X-File-Name':encodeURIComponent('Lease.jpg'),'X-Orivia-Document-Consent':DOCUMENT_CONSENT,...headers},body:bytes});
 
-assert.equal(pdfPages(pdf(3)),3);assert.equal(pdfPages(pdf(1)),1);
+assert.equal(await pdfPages(pdf(3)),3);assert.equal(await pdfPages(pdf(1)),1);
+// Ina's review #1: page counts fail closed. Pages hidden in a compressed object stream are counted; anything uncertain is null.
+assert.equal(await pdfPages(plainPdf(4)),4);assert.equal(await pdfPages(objectStreamPdf(11)),11);assert.equal(await pdfPages(objectStreamPdf(3)),3);
+for(const bad of [encryptedPdf(),brokenPdf(),new TextEncoder().encode('%PDF-1.4\n%%EOF')])assert.equal(await pdfPages(bad),null);
+{const {db}=d1();const o=openai();
+ let r=await handleDocument(post(objectStreamPdf(11)),{...env0,BUDGET_DB:db},{reply,fetcher:o.fetcher,...quiet});assert.equal(r.status,413,'11 compressed pages refused');
+ for(const bad of [encryptedPdf(),brokenPdf()]){r=await handleDocument(post(bad),{...env0,BUDGET_DB:db},{reply,fetcher:o.fetcher,...quiet});assert.equal(r.status,422);assert.equal((await r.json()).error,'pdf_unreadable')}
+ assert.equal(o.calls.length,0,'nothing reached the provider');
+ assert.equal((await handleDocument(post(objectStreamPdf(2)),{...env0,BUDGET_DB:db},{reply,fetcher:o.fetcher,...quiet})).status,200);
+ // Ina's review #5: no Content-Length and a body over 10 MB: refused while reading, nothing sent.
+ const big=new Uint8Array(DOCUMENT_LIMITS.bytes+5);big.set(JPG);let sent=0;
+ const stream=new ReadableStream({pull(c){if(sent>=big.length)return c.close();const n=Math.min(1<<20,big.length-sent);c.enqueue(big.subarray(sent,sent+n));sent+=n}});
+ r=await handleDocument(new Request('https://pilot.example/v1/document',{method:'POST',headers:{'X-Orivia-Document-Consent':DOCUMENT_CONSENT},body:stream,duplex:'half'}),{...env0,BUDGET_DB:db},{reply,fetcher:o.fetcher,...quiet});
+ assert.equal(r.status,413);assert.equal(o.calls.length,1);
+ // The document-specific acknowledgement is required.
+ assert.equal((await handleDocument(new Request('https://pilot.example/v1/document',{method:'POST',body:JPG}),{...env0,BUDGET_DB:db},{reply,fetcher:o.fetcher,...quiet})).status,403);}
 
 // One reading: the image goes once, in detail, not stored by OpenAI; the transcript comes back; the cost is settled.
 {const {db,sql}=d1();const o=openai();const res=await handleDocument(post(JPG),{...env0,BUDGET_DB:db},{reply,fetcher:o.fetcher,...quiet});
@@ -75,10 +92,39 @@ assert.equal(verifyReply({action:'reply',sentences:[{text:'Rent increases are ca
 
 // The app: explicit "Use this in my chat", transcript (never the file) with messages, removable label, kept per chat.
 const chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace(/\r\n/g,'\n'),page=fs.readFileSync('workers/trial-ui/page.html','utf8');
-assert.ok(chat.includes("attachButton('Use this in my chat',()=>readAttached(blob,name),'btn small')"),'nothing is sent before the explicit tap');
+assert.ok(chat.includes("attachButton(first?'I understand. Use this in my chat':'Use this in my chat',()=>readAttached(blob,name),'btn small')"),'nothing is sent before the explicit tap');
 assert.ok(chat.includes("...(chatDocument()&&pilotConsent()?{document:{name:chatDocument().name,kind:chatDocument().kind||'',text:chatDocument().text}}:{}),"),'the transcript goes with messages');
 assert.ok(chat.includes("function attachAllowed(){return documentsServer&&!!pilotConsent()}"));
-assert.ok(chat.includes("slice(8).forEach(x=>delete x.document)"),'only 8 chats keep a document');
+assert.ok(!chat.includes('delete x.document'),'never removes another chat document');
 assert.match(page,/<button id="attach" type="button" aria-label="Use a document in this chat"/);
 assert.ok(chat.includes("It doesn’t check whether a document is genuine or valid."));
+// Ina's review #2 and #3, on the real readAttached code: late results never cross chats/accounts; nothing is evicted.
+{const a=chat.indexOf('/* Files to Chat (step 7)'),b=chat.indexOf('var pendingDocument=null;');const block=chat.slice(a,b)+'var pendingDocument=null;';
+ function harness(){
+  const nodes=new Map(),node=()=>({hidden:true,textContent:'',children:[],dataset:{},replaceChildren(...v){this.children=v},append(...v){this.children.push(...v)},setAttribute(){},focus(){},click(){}});
+  let resolve;const ctx={console,TextEncoder,AbortController,JSON,Date,Error,
+   $:id=>{if(!nodes.has(id))nodes.set(id,node());return nodes.get(id)},el:(t,c,x)=>({tag:t,textContent:x||'',append(){},setAttribute(){}}),
+   uiText:t=>t,persisted:0,store:{active:'c1',chats:[{id:'c1',turns:[]},{id:'c2',turns:[]}]},pilotConsent:()=>({openai:'consent'}),
+   localStorage:{getItem:()=>null,setItem(){}},window:{},
+   fetch:(url,init)=>new Promise((res,rej)=>{resolve=v=>v instanceof Error?rej(v):res(v);init.signal?.addEventListener('abort',()=>rej(Object.assign(Error('aborted'),{name:'AbortError'})))})};
+  ctx.globalThis=ctx;ctx.OriviaAccounts={epoch:'acct-A'};ctx.activeChat=()=>ctx.store.chats.find(c=>c.id===ctx.store.active)||null;ctx.persist=()=>{ctx.persisted++};
+  vm.createContext(ctx);vm.runInContext(block+';this.readAttached=readAttached;this.cancelAttach=cancelAttach;this.getPending=()=>pendingDocument;',ctx);
+  const ok=(text='Annual rent AED 52,000 payable in 4 cheques',name='Lease.jpg')=>({ok:true,json:async()=>({document:{name,kind:'tenancy contract',text}})});
+  return {ctx,ok,answer:v=>resolve(v)};
+ }
+ const tick=()=>new Promise(r=>setTimeout(r,0));
+ {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'Lease.jpg');await tick();h.answer(h.ok());await p;assert.equal(h.ctx.store.chats[0].document.name,'Lease.jpg','normal: lands on its chat')}
+ {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.store.active='c2';h.answer(h.ok());await p;assert.ok(!h.ctx.store.chats.some(c=>c.document),'switched chat: dropped')}
+ {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.OriviaAccounts.epoch='acct-B';h.answer(h.ok());await p;assert.ok(!h.ctx.store.chats.some(c=>c.document),'another account: dropped')}
+ {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.cancelAttach();await p;assert.ok(!h.ctx.store.chats.some(c=>c.document));assert.equal(h.ctx.getPending(),null,'sign-out (leave) aborts')}
+ {const h=harness();h.ctx.store.active=null;const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.cancelAttach();h.answer(h.ok());await p;assert.equal(h.ctx.getPending(),null,'new empty chat then another: dropped')}
+ {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.store.chats.shift();h.ctx.store.active=null;h.answer(h.ok());await p;assert.equal(h.ctx.getPending(),null,'chat deleted: dropped')}
+ {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.store.active='c2';h.answer(Error('network'));await p;assert.equal(h.ctx.$('attach-panel').children.length,1,'late error: no message on the other chat')}
+ {const h=harness();const heavy='عقد إيجار سنوي ٥٢٬٠٠٠ درهم '.repeat(300);h.ctx.store.chats=Array.from({length:9},(_,i)=>({id:'k'+i,turns:[],...(i<8?{document:{name:'d'+i,text:heavy,addedAt:i}}:{})}));h.ctx.store.active='k8';
+  let p=h.ctx.readAttached(new Blob(['x']),'ninth');await tick();h.answer(h.ok(heavy,'ninth'));await p;
+  assert.equal(h.ctx.store.chats.filter(c=>c.document).length,9,'nine attachments: none evicted');
+  const huge='é'.repeat(12000);h.ctx.store.chats.push(...Array.from({length:40},(_,i)=>({id:'z'+i,turns:[],document:{name:'z',text:huge}})),{id:'last',turns:[]});h.ctx.store.active='last';
+  const before=JSON.stringify(h.ctx.store.chats);p=h.ctx.readAttached(new Blob(['x']),'one more');await tick();h.answer(h.ok(heavy,'more'));await p;
+  assert.equal(JSON.stringify(h.ctx.store.chats),before,'over the backup size: refused, nothing changed');}
+}
 console.log('Files to Chat: read once inside the OpenAI limits, labelled evidence, figures from the document only, gates, app wiring.');

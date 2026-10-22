@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {DatabaseSync} from 'node:sqlite';
-import {handleFileRequest,deleteAllFiles,fileType,cleanName,filesRoute,FILE_LIMITS} from '../workers/accounts/files.mjs';
+import {handleFileRequest,deleteAllFiles,fileType,cleanName,filesRoute,FILE_LIMITS,markFileCleanup,finishFileCleanup,retryFileCleanups} from '../workers/accounts/files.mjs';
 
 const sql=new DatabaseSync(':memory:');sql.exec('PRAGMA foreign_keys=ON;'+fs.readFileSync('workers/accounts/schema.sql','utf8'));
 const stmt=(s,a=[])=>({bind:(...v)=>stmt(s,v),run:async()=>sql.prepare(s).run(...a),first:async()=>sql.prepare(s).get(...a)||null,all:async()=>({results:sql.prepare(s).all(...a)})});
@@ -65,10 +65,26 @@ assert.equal((await call('alice','DELETE','/api/account/files/'+a2.id)).status,2
 sql.prepare("DELETE FROM user WHERE id='alice'").run();await deleteAllFiles(env,'alice');
 assert.equal([...objects.keys()].filter(k=>k.startsWith('u/alice/')).length,0);assert.equal(sql.prepare("SELECT COUNT(*) n FROM account_files WHERE user_id='alice'").get().n,0);
 
+// Ina's review #4: storage fails during account deletion. The cleanup record (written first, not linked to the account)
+// survives, says it is pending, and a later bounded retry removes the files.
+{sql.prepare('INSERT INTO user(id,name,email,emailVerified,createdAt,updatedAt) VALUES (?,?,?,?,?,?)').run('carol','carol','carol@example.test',1,now,now);
+ const r1=await call('carol','POST','/api/account/files',PDF);assert.equal(r1.status,201);const cid=(await r1.json()).file.id;
+ await markFileCleanup(env,'carol');sql.prepare("DELETE FROM user WHERE id='carol'").run();
+ const broken={...env,FILES:{...FILES,list:async()=>{throw Error('R2 down')}}};
+ assert.equal(await finishFileCleanup(broken,'carol'),false,'failure reported, not hidden');
+ assert.ok(objects.has('u/carol/'+cid),'file still stored');
+ let row=sql.prepare("SELECT attempts,last_error FROM file_cleanup WHERE user_id='carol'").get();assert.equal(row.attempts,1);assert.equal(row.last_error,'Error');
+ assert.equal((await call('carol','GET','/api/account/files/'+cid)).status,404,'unreachable meanwhile (its record went with the account)');
+ assert.equal(await retryFileCleanups(env,{now:new Date(Date.now()+60000)}),0,'not retried within 5 minutes');
+ assert.equal(await retryFileCleanups(env,{now:new Date(Date.now()+600000)}),1,'retried later');
+ assert.ok(!objects.has('u/carol/'+cid));assert.equal(sql.prepare("SELECT COUNT(*) n FROM file_cleanup").get().n,0,'record removed once done');}
+const handlerSrc=fs.readFileSync('workers/accounts/handler.mjs','utf8').replace(/\r\n/g,'\n');
+assert.ok(handlerSrc.indexOf('await markFileCleanup(env,owner)')<handlerSrc.indexOf('auth.api.deleteUser('),'record written before the account is deleted');
+assert.ok(handlerSrc.includes('filesPending:!done'),'the response says when files are still being removed');
 // Wiring: the routes sit behind the session check; account deletion removes the files.
 const handler=fs.readFileSync('workers/accounts/handler.mjs','utf8').replace(/\r\n/g,'\n');
 assert.ok(handler.indexOf('if(filesRoute(url.pathname))')>handler.indexOf("if(!session?.user?.id)return json({error:'sign_in_required'},401)"),'after the session check');
-assert.ok(handler.includes('if(res.ok)await deleteAllFiles(env,owner)'));
+assert.ok(handler.includes('const done=await finishFileCleanup(env,owner)'));
 
 // The app: text only, photos re-saved as JPEG, camera only on tap, guests stay in this browser, refreshes with My Life.
 const files=fs.readFileSync('workers/trial-ui/files.js','utf8'),page=fs.readFileSync('workers/trial-ui/page.html','utf8'),chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace(/\r\n/g,'\n');

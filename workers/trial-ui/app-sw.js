@@ -21,5 +21,6 @@ self.addEventListener('fetch',e=>{
   catch(err){const hit=await caches.match(page?HOME:p);if(hit)return hit;throw err}})());
 });
 // Device alerts (only when switched on): generic text, opening the app.
-self.addEventListener('push',event=>{let d={};try{d=event.data.json()}catch(_){}event.waitUntil(self.registration.showNotification('Orivia',{body:typeof d.body==='string'?d.body.slice(0,180):'You have an update in Orivia.',tag:typeof d.tag==='string'?d.tag:'orivia',data:{url:HOME}}))});
+const GENERIC=['You have a reminder or update in Orivia.','Vous avez un rappel ou une actualité dans Orivia.','لديك تذكير أو تحديث في أوريفيا.'];
+self.addEventListener('push',event=>{let d={};try{d=event.data.json()}catch(_){}event.waitUntil(self.registration.showNotification('Orivia',{body:GENERIC.includes(d.body)?d.body:GENERIC[0],tag:typeof d.tag==='string'?d.tag:'orivia',data:{url:HOME}}))});
 self.addEventListener('notificationclick',event=>{event.notification.close();event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{const c=list.find(c=>new URL(c.url).origin===self.location.origin);return c?c.focus():self.clients.openWindow(HOME)}))});

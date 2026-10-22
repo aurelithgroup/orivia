@@ -2434,5 +2434,37 @@
   "Your document": {
     "fr": "Votre document",
     "ar": "مستندك"
+  },
+  "Your account is deleted. Some of your stored files are still being removed. Orivia will keep trying automatically, and nobody can open them in the meantime.": {
+    "fr": "Votre compte est supprimé. Certains de vos fichiers enregistrés sont encore en cours de suppression. Orivia continuera automatiquement, et personne ne peut les ouvrir entre-temps.",
+    "ar": "تم حذف حسابك. لا يزال جارٍ حذف بعض ملفاتك المحفوظة. ستواصل أوريفيا المحاولة تلقائيًا، ولا يمكن لأحد فتحها في هذه الأثناء."
+  },
+  "Orivia has stopped using that document in this chat. Earlier messages stay as they are; the file in Your files is not deleted.": {
+    "fr": "Orivia n’utilise plus ce document dans cette discussion. Les messages précédents restent tels quels ; le fichier dans Vos fichiers n’est pas supprimé.",
+    "ar": "توقفت أوريفيا عن استخدام هذا المستند في هذه المحادثة. تبقى الرسائل السابقة كما هي، ولا يُحذف الملف من «ملفاتك»."
+  },
+  "Before your first document: when you tap Use this in my chat, Orivia sends this file to OpenAI to read its text. Each new attempt sends it again. OpenAI doesn’t keep it for later use through Orivia, but may hold it for a limited time for abuse checks.": {
+    "fr": "Avant votre premier document : quand vous touchez « Utiliser dans ma discussion », Orivia envoie ce fichier à OpenAI pour en lire le texte. Chaque nouvelle tentative l’envoie à nouveau. OpenAI ne le conserve pas pour une utilisation ultérieure via Orivia, mais peut le garder pendant une durée limitée pour la détection des abus.",
+    "ar": "قبل أول مستند لك: عندما تضغط «استخدمه في محادثتي» ترسل أوريفيا هذا الملف إلى OpenAI لقراءة نصّه. وكل محاولة جديدة ترسله مرة أخرى. لا تحتفظ به OpenAI لاستخدامه لاحقًا عبر أوريفيا، لكنها قد تحتفظ به لفترة محدودة لرصد إساءة الاستخدام."
+  },
+  "The text Orivia reads stays with this chat: in your private account if you’re signed in, otherwise in this browser. It is sent again with each message you send in this chat until you tap ✕ on the document label. Removing the label doesn’t delete earlier messages, and deleting the chat or the file are separate.": {
+    "fr": "Le texte lu par Orivia reste avec cette discussion : dans votre compte privé si vous êtes connecté, sinon dans ce navigateur. Il est renvoyé avec chaque message de cette discussion jusqu’à ce que vous touchiez ✕ sur l’étiquette du document. Retirer l’étiquette ne supprime pas les messages précédents ; supprimer la discussion ou le fichier sont des actions distinctes.",
+    "ar": "يبقى النص الذي تقرؤه أوريفيا مع هذه المحادثة: في حسابك الخاص إذا كنت مسجّلًا الدخول، وإلا ففي هذا المتصفح. ويُرسَل مجددًا مع كل رسالة ترسلها في هذه المحادثة حتى تضغط ✕ على تسمية المستند. إزالة التسمية لا تحذف الرسائل السابقة، وحذف المحادثة أو الملف إجراءان منفصلان."
+  },
+  "Orivia can misread documents, so check important details against the original. It doesn’t check whether a document is genuine or valid.": {
+    "fr": "Orivia peut mal lire un document : vérifiez les détails importants sur l’original. Orivia ne vérifie pas si un document est authentique ou valide.",
+    "ar": "قد تخطئ أوريفيا في قراءة المستندات، لذا تحقّق من التفاصيل المهمة في النسخة الأصلية. ولا تتحقق أوريفيا من صحة المستند أو صلاحيته."
+  },
+  "I understand. Use this in my chat": {
+    "fr": "J’ai compris. Utiliser dans ma discussion",
+    "ar": "فهمت. استخدمه في محادثتي"
+  },
+  "Orivia can’t safely count the pages in this PDF (it may be protected or unusual). Take photos of the pages you need instead.": {
+    "fr": "Orivia ne peut pas compter de façon sûre les pages de ce PDF (il est peut-être protégé ou inhabituel). Prenez plutôt en photo les pages utiles.",
+    "ar": "لا تستطيع أوريفيا عدّ صفحات ملف PDF هذا بشكل موثوق (قد يكون محميًا أو غير معتاد). التقط صورًا للصفحات التي تحتاجها بدلًا من ذلك."
+  },
+  "Your saved chats are too large to keep another document. Remove a document from an older chat (✕ on its label) or delete chats you no longer need, then try again. Nothing was changed.": {
+    "fr": "Vos discussions enregistrées sont trop volumineuses pour garder un autre document. Retirez un document d’une ancienne discussion (✕ sur son étiquette) ou supprimez les discussions inutiles, puis réessayez. Rien n’a été modifié.",
+    "ar": "محادثاتك المحفوظة كبيرة جدًا للاحتفاظ بمستند آخر. أزل مستندًا من محادثة أقدم (✕ على تسميته) أو احذف المحادثات التي لم تعد تحتاجها، ثم حاول مرة أخرى. لم يتغيّر شيء."
   }
 }
