@@ -2186,5 +2186,73 @@
   "Tap to dictate. Hold or hover to choose language.": {
     "fr": "Appuyez pour dicter. Maintenez le bouton ou survolez-le pour choisir la langue.",
     "ar": "اضغط للإملاء. اضغط مطولاً أو مرّر المؤشر لاختيار اللغة."
+  },
+  "Couldn’t copy": {
+    "fr": "Impossible de copier",
+    "ar": "تعذّر النسخ"
+  },
+  "Unable to save calendar in this browser.": {
+    "fr": "Impossible d’enregistrer le calendrier dans ce navigateur.",
+    "ar": "تعذّر حفظ التقويم في هذا المتصفح."
+  },
+  "It’s only in your calendar after you tap Save or Add there.": {
+    "fr": "Il n’apparaît dans votre calendrier qu’après avoir touché Enregistrer ou Ajouter.",
+    "ar": "لن يظهر في تقويمك إلا بعد أن تضغط على حفظ أو إضافة هناك."
+  },
+  "Tap again to end this session": {
+    "fr": "Touchez à nouveau pour terminer cette session",
+    "ar": "اضغط مرة أخرى لإنهاء هذه الجلسة"
+  },
+  "Tap again: removes it and its progress from this device": {
+    "fr": "Touchez à nouveau : cela le supprime, avec sa progression, de cet appareil",
+    "ar": "اضغط مرة أخرى: سيُحذف مع تقدّمه من هذا الجهاز"
+  },
+  "Please choose a time in the future, within the next year.": {
+    "fr": "Choisissez une heure à venir, dans l’année qui vient.",
+    "ar": "يرجى اختيار وقت في المستقبل خلال السنة القادمة."
+  },
+  "Try again": {
+    "fr": "Réessayer",
+    "ar": "حاول مرة أخرى"
+  },
+  "Checking again…": {
+    "fr": "Nouvelle vérification…",
+    "ar": "جارٍ التحقق مرة أخرى…"
+  },
+  "Open Orivia full screen": {
+    "fr": "Ouvrir Orivia en plein écran",
+    "ar": "افتح أوريفيا بملء الشاشة"
+  },
+  "Confirming your check with Orivia…": {
+    "fr": "Confirmation de votre vérification auprès d’Orivia…",
+    "ar": "جارٍ تأكيد التحقق مع أوريفيا…"
+  },
+  "Thanks, you’re all set.": {
+    "fr": "Merci, tout est prêt.",
+    "ar": "شكرًا، كل شيء جاهز."
+  },
+  "Please allow browser storage before starting Orivia.": {
+    "fr": "Autorisez le stockage du navigateur avant de démarrer Orivia.",
+    "ar": "يرجى السماح بتخزين المتصفح قبل بدء أوريفيا."
+  },
+  "Tap again to delete this chat": {
+    "fr": "Touchez à nouveau pour supprimer cette discussion",
+    "ar": "اضغط مرة أخرى لحذف هذه المحادثة"
+  },
+  "This reminder changed again, so Undo won’t overwrite it. Open My calendar to review it.": {
+    "fr": "Ce rappel a de nouveau changé, donc Annuler ne l’écrasera pas. Ouvrez Mon calendrier pour le vérifier.",
+    "ar": "تغيّر هذا التذكير مرة أخرى، لذا لن تُلغي ميزة التراجع التغيير. افتح تقويمي لمراجعته."
+  },
+  "That local time is unavailable on this date. Choose another time.": {
+    "fr": "Cette heure locale n’existe pas à cette date. Choisissez une autre heure.",
+    "ar": "هذا الوقت المحلي غير متاح في هذا التاريخ. اختر وقتًا آخر."
+  },
+  "Orivia replied in “{chat}”.": {
+    "fr": "Orivia a répondu dans « {chat} ».",
+    "ar": "ردّت أوريفيا في «{chat}»."
+  },
+  "another chat": {
+    "fr": "une autre discussion",
+    "ar": "محادثة أخرى"
   }
 }

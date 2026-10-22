@@ -243,7 +243,7 @@ function reachOut(o,mode,onClose){
   if(m==='email'){const d=emailDraft(o);
    panel.append(el('p','tiny',uiText('Orivia drafts it. You check it and send it from your own email app.')));
    const pre=el('div','org-draft');pre.append(el('div','org-subject','Subject: '+d.subject),el('div','org-body',d.body));panel.append(pre);
-   const row=el('div','org-row');row.append(actLink('Open draft in my email app',mailHref(o),'mail','btn org-primary'),button('Copy','btn quiet small',async e=>{try{await navigator.clipboard.writeText('Subject: '+d.subject+'\n\n'+d.body);e.target.textContent=uiText('Copied')}catch(_){e.target.textContent='Couldn’t copy'}}));panel.append(row);
+   const row=el('div','org-row');row.append(actLink('Open draft in my email app',mailHref(o),'mail','btn org-primary'),button('Copy','btn quiet small',async e=>{try{await navigator.clipboard.writeText('Subject: '+d.subject+'\n\n'+d.body);e.target.textContent=uiText('Copied')}catch(_){e.target.textContent=uiText('Couldn’t copy')}}));panel.append(row);
   }else{
    const ol=el('ol','org-script');for(const line of phoneScript(o))ol.append(el('li','','“'+line+'”'));panel.append(ol);
    if(o.contacts.phone){const row=el('div','org-row');row.append(actLink('Call '+o.contacts.phone.value,telHref(o.contacts.phone.value),'phone','btn org-primary'));panel.append(row)}
@@ -464,13 +464,13 @@ function draw({newReply=null,scroll=false}={}){
    const rb=researchBlock(srcs,t.meta.research);
    p.append(rb);
   }
-  if(t.role==='assistant'&&'speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent=uiText('▶ Listen');lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label','Listen to this reply');lb.onclick=()=>listen(spokenText(t.content),lb);p.append(document.createElement('br'),lb)}
+  if(t.role==='assistant'&&'speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent=uiText('▶ Listen');lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label','Listen to this reply');lb.onclick=()=>listen(spokenText(t.content),lb,{language:t.meta?.lang||null});p.append(document.createElement('br'),lb)}
   el.append(p)}
  $('empty').hidden=turns.length>0;
  sc.scrollTop=follow?sc.scrollHeight:previousTop;
 }
 function loadEvents(){try{const data=JSON.parse((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(eventKey)||'[]');events=Array.isArray(data)?data.filter(e=>e&&typeof e.title==='string'&&typeof e.at==='string'&&typeof e.id==='string').slice(-100):[]}catch(_){events=[]}}
-function storeEvents(){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(eventKey,JSON.stringify(events.slice(-100)))}catch(_){$('reminder-status').textContent='Unable to save calendar in this browser.'}}
+function storeEvents(){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(eventKey,JSON.stringify(events.slice(-100)))}catch(_){$('reminder-status').textContent=uiText('Unable to save calendar in this browser.')}}
 function googleEvent(e){
  const start=new Date(e.at);
  const end=new Date(start.getTime()+30*60000);
@@ -496,7 +496,7 @@ function eventRow(e,past){
  const acts=el('div','acts');
  if(!past){
   // The right button for this device (no surprise file download on Android or computers); see calendarLinks.
-  for(const a of calendarLinks(e)){a.addEventListener('click',()=>{setTimeout(()=>{note.hidden=false;note.textContent='It’s only in your calendar after you tap Save or Add there.'},300)});acts.append(a)}
+  for(const a of calendarLinks(e)){a.addEventListener('click',()=>{setTimeout(()=>{note.hidden=false;note.textContent=uiText('It’s only in your calendar after you tap Save or Add there.')},300)});acts.append(a)}
  }
  const rm=button('Remove','danger',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=uiText('Tap again to remove');return}removeEvent(e.id)});
  acts.append(rm);
@@ -835,7 +835,7 @@ $('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.
 $('end-session').onclick=async()=>{
  if(globalThis.OriviaAccounts?.user){globalThis.OriviaAccounts.open();return}
  const b=$('end-session');
- if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to end this session';setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('End session')},4000);return}
+ if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent=uiText('Tap again to end this session');setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('End session')},4000);return}
  stopSpeaking();stopDictation(false);
  try{await fetch('/v1/end',{method:'POST',credentials:'same-origin'})}catch(_){}
  store.active=null;persist(); // saved chats stay; the welcome screen opens to a new chat
@@ -1235,7 +1235,7 @@ function journeyCard(o,ctx,extra={}){
   if(status!=='done')menu.append(button('Mark completed','btn quiet small',()=>setJourney(o.id,{status:'done'})));
   const rm=button('Remove','btn text small danger',()=>{
    const hasProgress=Object.keys(mine.stepStatus||{}).length>0||status==='done';
-   if(hasProgress&&rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent='Tap again: removes it and its progress from this device';return}
+   if(hasProgress&&rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=uiText('Tap again: removes it and its progress from this device');return}
    removeJourney(o.id);
   });
   menu.append(rm);card.append(menu);
@@ -1402,7 +1402,7 @@ $('reminder-form').addEventListener('submit',event=>{
  const title=$('reminder-title').value.trim().slice(0,100);
  const at=new Date($('reminder-date').value+'T'+($('reminder-time').value||'09:00'));
  if(!title||!Number.isFinite(at.getTime())||at.getTime()<Date.now()+60000||at.getTime()>Date.now()+366*86400000){
-  $('reminder-status').textContent='Please choose a time in the future, within the next year.';return
+  $('reminder-status').textContent=uiText('Please choose a time in the future, within the next year.');return
  }
  const alarm=Number($('reminder-alarm').value);
  const saved={id:'evt-'+Date.now()+'-'+Math.random().toString(36).slice(2),title,at:at.toISOString(),alarm:ALARMS.some(([m])=>m===alarm)?alarm:30};
@@ -1425,18 +1425,18 @@ function enterApp(){
 function humanFailed(msg){
  humanOk=false;humanState='failed';startRequested=false;
  const n=$('human-note');n.replaceChildren(document.createTextNode(msg+' '));
- const b=document.createElement('button');b.type='button';b.className='ask';b.textContent='Try again';
- b.onclick=()=>{humanState='checking';n.textContent='Checking again…';try{window.turnstile.reset('#human-check')}catch(_){humanFailed('Couldn’t restart the check. Please reload Orivia.')}};n.append(b);
+ const b=document.createElement('button');b.type='button';b.className='ask';b.textContent=uiText('Try again');
+ b.onclick=()=>{humanState='checking';n.textContent=uiText('Checking again…');try{window.turnstile.reset('#human-check')}catch(_){humanFailed('Couldn’t restart the check. Please reload Orivia.')}};n.append(b);
  const f=framedFullScreen();if(f)n.append(' ',f);
 }
 /* Inside the website preview some browsers (notably iPhone Safari) won't keep the human-check cookie. Offer the full app. */
-function framedFullScreen(){if(window.top===window)return null;const a=document.createElement('a');a.href=(location.pathname.startsWith('/app')?'/app':'/');a.target='_blank';a.rel='noopener';a.className='ask';a.textContent='Open Orivia full screen';return a}
+function framedFullScreen(){if(window.top===window)return null;const a=document.createElement('a');a.href=(location.pathname.startsWith('/app')?'/app':'/');a.target='_blank';a.rel='noopener';a.className='ask';a.textContent=uiText('Open Orivia full screen');return a}
 function loadTurnstile(siteKey){
  humanOk=false;humanState='checking';window.__siteKey=siteKey;$('human-check').hidden=false;$('human-note').hidden=false;
  const go=()=>window.turnstile.render('#human-check',{sitekey:siteKey,'error-callback':code=>{humanFailed('The check couldn’t load (code: '+String(code).slice(0,12)+').');return true},callback:async token=>{
-  const attempt=++humanAttempt;humanOk=false;humanState='verifying';$('human-note').textContent='Confirming your check with Orivia…';
+  const attempt=++humanAttempt;humanOk=false;humanState='verifying';$('human-note').textContent=uiText('Confirming your check with Orivia…');
   try{const r=await fetch('/v1/human',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({token}),signal:AbortSignal.timeout(15000)});if(attempt!==humanAttempt)return;humanOk=r.ok;
-   if(r.ok){humanState='verified';$('human-note').textContent='Thanks, you’re all set.';if(startRequested)enterApp();return}
+   if(r.ok){humanState='verified';$('human-note').textContent=uiText('Thanks, you’re all set.');if(startRequested)enterApp();return}
    const d=await r.json().catch(()=>({}));const code=Array.isArray(d.codes)&&d.codes.length?' (code: '+d.codes.join(', ')+')':(r.status===403&&d.error==='Origin not allowed'?' (code: origin)':' (code: '+r.status+')');
    humanFailed('That check didn’t work'+code+'.');
   }catch(_){if(attempt===humanAttempt)humanFailed('Couldn’t confirm the check with Orivia. Please try again.')}
@@ -1536,7 +1536,7 @@ queueMicrotask(()=>{
 });
 $('start').onclick=()=>{
  if(!$('consent').checked)return;
- if(publicProviderOffered&&pilotOffer){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(pilotKey,pilotOffer);$('set-pilot').checked=true}catch(_){$('human-note').textContent='Please allow browser storage before starting Orivia.';return}}
+ if(publicProviderOffered&&pilotOffer){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(pilotKey,pilotOffer);$('set-pilot').checked=true}catch(_){$('human-note').textContent=uiText('Please allow browser storage before starting Orivia.');return}}
  if(!humanOk){
   if(humanState==='failed')return; // keep the actual error and Try again button
   startRequested=true;$('human-note').textContent=humanState==='verifying'?'Confirming your check with Orivia… We’ll open it when this finishes.':'Please complete the quick check above. We’ll open Orivia when it’s confirmed.';return
@@ -1544,7 +1544,7 @@ $('start').onclick=()=>{
  enterApp()};
 $('clear').onclick=()=>{
  if(busy)return;const b=$('clear');
- if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete this chat';setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('Delete this chat')},4000);return}
+ if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent=uiText('Tap again to delete this chat');setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('Delete this chat')},4000);return}
  store.chats=store.chats.filter(c=>c.id!==store.active);store.active=null;persist();turns=[];clearChatCards();draw();renderChats();b.dataset.sure='';b.textContent=uiText('Delete this chat');tab('chat')};
 // A proposal only. Saved events are never sent to the model and never changed by this module.
 function safeCalendarChange(v){
@@ -1594,7 +1594,7 @@ function calendarChangeBox(t){
      if(current){fail.textContent='A reminder with that ID already exists. Nothing was overwritten.';return}
      list.push({...state.before});
     }else{
-     if(!current||calendarSnapshot(current)!==calendarSnapshot(state.after)){fail.textContent='This reminder changed again, so Undo won’t overwrite it. Open My calendar to review it.';return}
+     if(!current||calendarSnapshot(current)!==calendarSnapshot(state.after)){fail.textContent=uiText('This reminder changed again, so Undo won’t overwrite it. Open My calendar to review it.');return}
      list[list.indexOf(current)]={...state.before};
     }
     commitCalendarChanges(list);state.status='undone';t.content=uiText('Undid that change in Orivia’s calendar on this device.');save();draw();
@@ -1633,7 +1633,7 @@ function calendarChangeBox(t){
     if(proposal.kind==='update'){
      const at=new Date(date.value+'T'+time.value);
      if(!title.value.trim()||!date.value||!time.value||!Number.isFinite(at.getTime())||dayKey(at)!==date.value||at.getTime()<Date.now()+60000||at.getTime()>Date.now()+366*86400000){fail.textContent=uiText('Choose a title and a future date and time within the next year.');return}
-     const pad=n=>String(n).padStart(2,'0');if(pad(at.getHours())+':'+pad(at.getMinutes())!==time.value){fail.textContent='That local time is unavailable on this date. Choose another time.';return}
+     const pad=n=>String(n).padStart(2,'0');if(pad(at.getHours())+':'+pad(at.getMinutes())!==time.value){fail.textContent=uiText('That local time is unavailable on this date. Choose another time.');return}
      after={...current,title:title.value.trim().slice(0,100),at:at.toISOString()};fresh[fresh.indexOf(current)]=after;
     }else fresh.splice(fresh.indexOf(current),1);
     commitCalendarChanges(fresh);state.before={...current};state.after=after;state.status='applied';t.content=uiText(proposal.kind==='delete'?'Deleted the selected reminder from Orivia’s calendar on this device.':'Updated the selected reminder in Orivia’s calendar on this device.');save();draw();
@@ -1791,6 +1791,8 @@ $('form').onsubmit=async e=>{
   const meta={};const change=safeCalendarChange(d.calendarChange);if(change)meta.calendarChange={proposal:change,status:'pending'};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
   if(vetted.length&&Array.isArray(d.organisations)){const orgs=d.organisations.slice(0,8);if(safeOrgs(orgs,vetted).length){meta.organisations=JSON.parse(JSON.stringify(orgs));if(['list','single','choose'].includes(d.cardMode))meta.cardMode=d.cardMode}}
   const dr=safeDraft(d.draft);if(dr)meta.draft=dr;
+  // The language the reply was written in (from the server), so Listen picks the right voice instead of guessing.
+  if(typeof d.replyLanguage==='string'&&Object.hasOwn(VOICE_LOC,d.replyLanguage))meta.lang=d.replyLanguage;
   const showMessage=safeShowMessage(d.showMessage);if(showMessage)meta.showMessage=showMessage;
   const destinations=safeDestinations(d.destinations,vetted);if(destinations.length)meta.destinations=destinations.map(({src,...d})=>d);
   // A reminder Orivia set from the conversation: saved now (the reply says so), with Undo under the reply.
@@ -1798,7 +1800,7 @@ $('form').onsubmit=async e=>{
   const answer={role:'assistant',content:(change?uiText(d.reply):d.reply).slice(0,4000),...(Object.keys(meta).length?{meta}:{})};
   if(store.active!==chatId){ // they switched chats while Orivia was replying: file the answer in its own chat
    const c=store.chats.find(x=>x.id===chatId);if(c){c.turns=[...c.turns,answer];c.updated=Date.now();persist();renderChats()}
-   $('status').textContent='Orivia replied in “'+(c?c.title:'another chat')+'”.';return;
+   $('status').textContent=uiText('Orivia replied in “{chat}”.').replace('{chat}',c?c.title:uiText('another chat'));return;
   }
   turns.push(answer);save();draw({newReply:answer});
   $('guide-offer')?.remove();

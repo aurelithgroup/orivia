@@ -9,7 +9,7 @@ function setup(){
  const node=()=>({hidden:false,checked:false,textContent:'',children:[],replaceChildren(...v){this.children=v},append(v){this.children.push(v)}});
  const $=id=>{if(!nodes.has(id))nodes.set(id,node());return nodes.get(id)};
  let opts,resolveCheck,shown=0;const saved=new Map();
- const ctx=vm.createContext({$,ck:'consent',show:()=>shown++,AbortSignal,queueMicrotask,sessionStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},
+ const ctx=vm.createContext({$,uiText:t=>t,ck:'consent',show:()=>shown++,AbortSignal,queueMicrotask,sessionStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},
  location:{pathname:'/'},localStorage:{getItem:k=>saved.get('local:'+k)??null,setItem:(k,v)=>saved.set('local:'+k,v),removeItem:k=>saved.delete('local:'+k)},
  document:{body:{dataset:{}},querySelectorAll:()=>[],createTextNode:t=>({textContent:t}),createElement:node,head:{append(){}}},
  window:{turnstile:{render:(_id,o)=>{opts=o},reset(){}}},

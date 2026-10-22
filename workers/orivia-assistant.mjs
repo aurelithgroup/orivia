@@ -230,7 +230,7 @@ export function verifyReply(reply,ledger,{region='',conversation='',replyLanguag
    // A rule or a regulator's status holds only where that government or regulator has authority.
    else if(region&&['official_rule','regulatory_status','official_listing'].includes(kind)&&fit.length&&fit.every(e=>regionOf(e.url)&&regionOf(e.url)!==region))
     errors.push(`sentence ${i+1}: a ${kind} claim for someone in the ${REGION_NAME[region]} cannot rest on ${REGION_NAME[regionOf(fit[0].url)]} official pages (use them only as general information, kind "general", and say whose guidance it is)`);
-   if(kind==='organisation_fact'&&evs.length&&!evs.some(e=>['government','regulator'].includes(e.kind)||ownSite(e,s.org||'')||ownSite(e,orgNamesIn(text,reply))))errors.push(`sentence ${i+1}: an organisation fact must come from that organisation's own site (set "org" to its name) or an official page`);
+   if(kind==='organisation_fact'&&evs.length&&!evs.some(e=>['government','regulator'].includes(e.kind)||ownSite(e,s.org||'')||ownSite(e,orgNamesIn(text,reply))))errors.push(`sentence ${i+1}: an organisation fact must come from that organisation's own site (set "org" to its name) or an official page. If you only have a listing or another site, use kind "listing" (it proves only that the name is listed) or remove the sentence`);
   }
   for(const f of facts)if(evs.length&&!factInEvidence(f,evs))errors.push(`sentence ${i+1}: ${f.type} "${f.value}" is not in the cited evidence`);
   evs.forEach(use);
@@ -346,7 +346,7 @@ You work in steps. Each step, return ONE JSON object and nothing else:
    - {"tool":"read_page","url":"https://...","focus":"<what you need from it, e.g. admissions contact>"}  any public https page; read official pages and an organisation's own pages (including /contact, /admissions) directly by URL
    - {"tool":"official_directory","directory":"sharjah_private_schools","curriculum":"british|american|indian|ib|french|german|moe|..."}  SPEA's complete official list for one curriculum
 2) {"action":"ask","question":"<one short question>","memory":{...}}  only when you truly cannot proceed; never ask permission to research what they already asked for. Never ask two questions in a row: if your previous message was a question and they answered even partly, work with what they gave (say what an exact answer would still need). Ask for the least personal detail that works (an area or postcode district, not a full address).
-3) {"action":"reply","sentences":[...],"organisations":[...],"memory":{...}}
+3) {"action":"reply","language":"<the language you wrote the reply in: en, fr, ar, fil, hi, ur, zh, bn, ml, ru or other>","sentences":[...],"organisations":[...],"memory":{...}}
 
 Any topic is in scope: health, documents, visas, housing, banking, transport, work, study, shopping, utilities, everyday problems. Shape the research to the request:
 - "Where can I go / find me a …": name specific places that fit the person's place and situation (for example open now, walk-in, accepts people without insurance). Prefer an official directory of licensed places, then each place's own website for address, phone and hours. Give a few good options with sourced details rather than a long unchecked list.
@@ -455,19 +455,40 @@ function profileFacts(p){
 
 // Health or safety words in the person's recent messages: the limit reply then adds the emergency numbers.
 const URGENT=/\b(hospital|a&e|emergency|ambulance|urgent|doctor|clinic|fever|pain|bleed\w*|vomit\w*|sick|ill|injur\w*|breath\w*|faint\w*|chest|unconscious|pregnan\w*|overdose|suicid\w*|self[- ]harm|danger|unsafe|attack\w*)\b/i;
-export function limitReply(msgs,region,memory,{metrics}={}){
+// Replies the code writes itself, in French and Arabic (the model's own replies already follow reply_language).
+const CODE_TEXT={
+ fr:{limit:'J’ai utilisé l’allocation de recherche du jour pour ce test privé : je ne peux pas vérifier de sources pour le moment, et je ne vais pas deviner de noms, de numéros ou de contacts.',
+  later:' Reposez-moi la question demain et je reprendrai à partir d’ici.',
+  incomplete:'Je n’ai pas pu préparer une réponse vérifiable à partir des sources, donc je ne vais pas deviner. Pouvez-vous m’en dire un peu plus sur ce dont vous avez besoin, ou reposer la question ?',
+  reminder:'C’est fait : j’ai créé ce rappel.',draft:'Voici un message que vous pouvez modifier avant de l’envoyer :',
+  uk:' Si la santé ou la sécurité de quelqu’un est en danger, appelez le 999 maintenant, ou le 111 pour un avis médical urgent qui n’est pas une urgence vitale.',
+  uae:' Si la santé ou la sécurité de quelqu’un est en danger, appelez maintenant le 998 pour une ambulance ou le 999 pour la police.',
+  any:' Si la santé ou la sécurité de quelqu’un est en danger, appelez les secours maintenant : le 998 pour une ambulance aux Émirats, le 999 au Royaume-Uni.'},
+ ar:{limit:'استخدمتُ حصة البحث المخصّصة لهذا اليوم في هذه التجربة الخاصة، لذلك لا أستطيع التحقق من المصادر الآن، ولن أخمّن أسماء أو أرقامًا أو جهات اتصال.',
+  later:' اسألني مرة أخرى غدًا وسأكمل من هنا.',
+  incomplete:'لم أتمكن من إعداد إجابة يمكنني التحقق منها من المصادر، لذلك لن أخمّن. هل يمكنك أن تخبرني بالمزيد عمّا تحتاجه، أو أن تسألني مرة أخرى؟',
+  reminder:'تم: ضبطتُ هذا التذكير.',draft:'إليك رسالة يمكنك تعديلها قبل إرسالها:',
+  uk:' إذا كانت صحة أحد أو سلامته في خطر، اتصل بالرقم 999 الآن، أو 111 للحصول على استشارة طبية عاجلة في غير حالات الطوارئ.',
+  uae:' إذا كانت صحة أحد أو سلامته في خطر، اتصل الآن بالرقم 998 للإسعاف أو 999 للشرطة.',
+  any:' إذا كانت صحة أحد أو سلامته في خطر، اتصل بخدمات الطوارئ الآن: 998 للإسعاف في الإمارات، و999 في المملكة المتحدة.'}};
+export const codeText=(language,key)=>CODE_TEXT[language]?.[key]||'';
+// The language the model says it wrote in, for Listen; only codes the app has a voice setting for.
+const REPLY_LANGS=['en','fr','ar','fil','hi','ur','zh','bn','ml','ru'];
+export const replyLang=x=>typeof x==='string'&&REPLY_LANGS.includes(x.trim().toLowerCase())?x.trim().toLowerCase():'';
+export function limitReply(msgs,region,memory,{metrics,language='en'}={}){
  const recent=(msgs||[]).filter(m=>m.role==='user').slice(-3).map(m=>m.content).join(' ');
  const help=!URGENT.test(recent)?'':region==='uk'?' If anyone’s health or safety is at risk, call 999 now, or 111 for urgent medical advice that isn’t an emergency.'
   :region==='uae'?' If anyone’s health or safety is at risk, call 998 for an ambulance or 999 for the police now.'
   :' If anyone’s health or safety is at risk, call the emergency services now: 998 for an ambulance in the UAE, 999 in the UK.';
- const reply='I’ve used up today’s research allowance for this private test, so I can’t check sources for this right now, and I won’t guess names, numbers or contacts.'+help+' Ask me again tomorrow and I’ll pick up from here.';
+ const reply=codeText(language,'limit')?codeText(language,'limit')+(help?codeText(language,region==='uk'?'uk':region==='uae'?'uae':'any'):'')+codeText(language,'later')
+  :'I’ve used up today’s research allowance for this private test, so I can’t check sources for this right now, and I won’t guess names, numbers or contacts.'+help+' Ask me again tomorrow and I’ll pick up from here.';
  return {reply,verifiedSources:[],liveSources:[],actions:[],liveInformation:false,liveJourneyData:false,
   research:{status:'limit-reached',applicability:'needs-review',claims:[],unresolved:[],assistant:true,progress:[],taskContext:{task:{assistant:cleanMemory(memory)}},process:{metrics}}};
 }
-export function incompleteReply(done,memory,ledger,{metrics}={}){
+export function incompleteReply(done,memory,ledger,{metrics,language='en'}={}){
  const n=(k,one,many)=>k===1?one:k+' '+many;
  const did=[done?.searches?'searched '+(done.searches===1?'once':done.searches===2?'twice':done.searches+' times'):'',done?.pages?'read '+n(done.pages,'one page',' pages'.trim()):''].filter(Boolean).join(' and ');
- const reply=(did?'I '+did+', but I':'I')+' couldn’t put together an answer I could check against the sources, so I won’t guess. Could you tell me a little more about what you need, or ask me again?';
+ const reply=codeText(language,'incomplete')||(did?'I '+did+', but I':'I')+' couldn’t put together an answer I could check against the sources, so I won’t guess. Could you tell me a little more about what you need, or ask me again?';
  const keep=(ledger||[]).filter(e=>e.from==='this-turn').slice(-ASSISTANT_LIMITS.memoryEvidence).map(e=>({url:e.url,title:e.title,excerpt:e.excerpt.slice(0,ASSISTANT_LIMITS.memoryExcerpt),checkedAt:e.checkedAt}));
  return {reply,verifiedSources:[],liveSources:[],actions:[],liveInformation:false,liveJourneyData:false,
   research:{status:'incomplete',applicability:'needs-review',claims:[],unresolved:[],assistant:true,progress:[],taskContext:{task:{assistant:cleanMemory({...memory,evidence:keep.length?keep:memory?.evidence})}},process:{metrics}}};
@@ -576,7 +597,7 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
   const mem=p.memory&&typeof p.memory==='object'?p.memory:{};
   if(p.action==='ask'){
    const q=str(p.question,400);if(!q){failures.push('empty-question');continue}
-   steps.push({action:'ask'});result={kind:'ask',text:q,mem};break;
+   steps.push({action:'ask'});result={kind:'ask',text:q,mem,lang:replyLang(p.language)};break;
   }
   report(rejection?'Rechecking the details against the sources':'Checking every fact against the sources');
   const checked=verifyReply(p,ledger,{region,conversation:said,replyLanguage,today:here.date});
@@ -584,19 +605,20 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
    // Out of retries (or of steps): keep the sentences that passed and say plainly that some details were left out.
    // A rewrite that fails for exactly the same reasons won't improve with another try: keep what passed now.
    const codes=checked.errors.map(errorCode).sort().join(','),stuck=codes===lastCodes;lastCodes=codes;
-   if(stuck||failures.filter(f=>f==='reply-rejected').length>=3||maxCalls-call<=1){const kept=salvageReply(p,ledger,region,checked.errors,said,here.date);if(kept){steps.push({action:'reply',verified:true,salvaged:true});result={kind:'reply',checked:kept,mem};break}result=null;break}
+   if(stuck||failures.filter(f=>f==='reply-rejected').length>=3||maxCalls-call<=1){const kept=salvageReply(p,ledger,region,checked.errors,said,here.date);if(kept){steps.push({action:'reply',verified:true,salvaged:true});result={kind:'reply',checked:kept,mem,lang:replyLang(p.language)};break}result=null;break}
    rejection=checked.errors;continue}
-  steps.push({action:'reply',verified:true});result={kind:'reply',checked,mem};
+  steps.push({action:'reply',verified:true});result={kind:'reply',checked,mem,lang:replyLang(p.language)};
  }
  const elapsedMs=Date.now()-started;
  const metrics={...timing.timings,modelCalls:steps.length+failures.filter(f=>f.startsWith('model:')).length,searches:tools.used.searches,fetches:tools.used.fetches,evidence:ledger.length,elapsedMs};
  try{console.log(JSON.stringify({event:'orivia-assistant',outcome:result?result.kind:budgetOut?'limit':steps.length?'incomplete':'fallback',steps:steps.map(s=>s.action+(s.verified?':verified':s.rejected?':rejected':'')),
   tools:steps.flatMap(s=>(s.results||[]).map(r=>r.tool+':'+r.status)),failures,rejectedFor:steps.flatMap(s=>s.codes||[]).slice(0,16),...metrics}))}catch(_){}
  // Out of money: an honest reply that keeps the conversation's memory, never a hand-over to a path that may answer off-topic.
- if(!result&&budgetOut)return limitReply(msgs,region,memory,{metrics});
+ const codeLang=['en','fr','ar'].includes(replyLanguage)?replyLanguage:'en';
+ if(!result&&budgetOut)return limitReply(msgs,region,memory,{metrics,language:codeLang});
  // No checked answer after real work: say so plainly (and keep what was read for the next message) rather than hand the
  // person to a path that answers without sources. Only when the model never answered at all does the normal flow take over.
- if(!result&&steps.length)return incompleteReply(done,memory,ledger,{metrics});
+ if(!result&&steps.length)return incompleteReply(done,memory,ledger,{metrics,language:codeLang});
  if(!result)return null;
 
  // Memory for the next turn: the model's notes (cleaned) plus the evidence it chose to keep and everything it cited.
@@ -608,7 +630,8 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
  const nextMemory=cleanMemory({...memory,...result.mem,evidence:kept.length?kept:memory.evidence});
  const taskContext={task:{assistant:nextMemory}};
  const progress=steps.filter(s=>s.note).map(s=>s.note).slice(0,6);
- if(result.kind==='ask')return {reply:result.text,verifiedSources:[],liveSources:[],actions:[],liveInformation:false,liveJourneyData:false,
+ const spoken=result.lang?{replyLanguage:result.lang}:{};
+ if(result.kind==='ask')return {...spoken,reply:result.text,verifiedSources:[],liveSources:[],actions:[],liveInformation:false,liveJourneyData:false,
   research:{status:'needs-context',applicability:'needs-review',claims:[],unresolved:[],assistant:true,progress,taskContext,process:{metrics}}};
  const view=render(result.checked,{region});
  const plannedTrip=planTrip(msgs);
@@ -621,7 +644,7 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
   return {text:s.text.slice(0,300),sourceId:i>=0?view.liveSources[i].id:'',quote:quote.slice(0,520)}}).filter(c=>c.sourceId&&c.quote);
  // One bounded, optional raster preview per reply; never sent to the model or search provider.
  if(view.destinations?.length){const place=view.destinations[0],ev=ledger.find(e=>e.url===view.liveSources.find(s=>s.id===place.sourceId)?.url);if(ev?.placeImage){const image=await loadPlacePhoto(ev.placeImage,ev.url,{fetcher});if(image)place.image=image}}
- return {...(result.checked.reminder?{reminder:result.checked.reminder}:{}),reply:view.text||(result.checked.reminder&&!result.checked.draft?'Done: I’ve set that reminder.':'')||(result.checked.draft?'Here’s a message you can edit before you send it:':''),...(result.checked.draft?{draft:result.checked.draft}:{}),...(result.checked.showMessage?{showMessage:result.checked.showMessage}:{}),destinations:view.destinations,verifiedSources:[],liveSources:view.liveSources,actions:[],liveInformation:view.liveSources.length>0,liveJourneyData:false,
+ return {...spoken,...(result.checked.reminder?{reminder:result.checked.reminder}:{}),reply:view.text||(result.checked.reminder&&!result.checked.draft?codeText(codeLang,'reminder')||'Done: I’ve set that reminder.':'')||(result.checked.draft?codeText(codeLang,'draft')||'Here’s a message you can edit before you send it:':''),...(result.checked.draft?{draft:result.checked.draft}:{}),...(result.checked.showMessage?{showMessage:result.checked.showMessage}:{}),destinations:view.destinations,verifiedSources:[],liveSources:view.liveSources,actions:[],liveInformation:view.liveSources.length>0,liveJourneyData:false,
   organisations:view.organisations,cardMode:view.organisations.length>1?'list':'single',
   research:{status:view.liveSources.length?'evidence-found':'answered',applicability:'needs-review',claims,unresolved:(Array.isArray(result.mem.open)?result.mem.open:[]).map(x=>str(x,40)).filter(Boolean).slice(0,6),
    assistant:true,progress,taskContext,process:{metrics}}};

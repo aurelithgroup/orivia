@@ -158,7 +158,9 @@ jobs:
           node tests/chat-presentation.test.mjs
           node tests/ina-voice-text.test.mjs
       - name: "Answer accuracy: figures stay with their subject"
-        run: node tests/answer-accuracy.test.mjs
+        run: |
+          node tests/answer-accuracy.test.mjs
+          node tests/reply-language.test.mjs
       - name: "Shared navigation and space addresses"
         run: node tests/navigation.test.mjs
       - name: "myorivia.app production entry gates"
