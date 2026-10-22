@@ -307,3 +307,27 @@ Order (Cleo, one step at a time):
   - documents need the human check and the same origin;
   - device push is still refused (503).
 - **Still off:** production device alerts, pending Privacy approval, then a fresh production opt-in.
+
+## Step 10 design fixes and step 9 privacy fix released to myorivia.app (22 Oct, Cleo)
+
+- **Design fixes:** the six the founder chose (proposal artifact JVkNtsxCP6z5Y6Kx81tETn), built in `603400b`, checked on the pilot by the founder, and live:
+  - the header reads left to right;
+  - one title style;
+  - calmer calendar cards;
+  - chat bubbles without name labels;
+  - honest Home wording;
+  - Settings without repeated headings.
+  - Ina's equivalent `6e246f5` is NOT merged; this version stays, as agreed.
+- **Step 9 privacy fix:** Ina's `1374ec9` reproduced an inference: exact staff totals around a membership change revealed one student's Done mark.
+  - Interim (`1b2d47b`): staff progress returns titles only, never a count; the dashboard says totals are paused; students' Done marks are private, and the sharing switch is removed.
+  - Tests assert no count reaches staff, including after a removal.
+  - Reporting stays paused until the founder and Ina agree an approach (opt-in, stable reporting periods, no anonymity promise).
+- **Deploys:**
+  - full suite passed (83 checks);
+  - `orivia-production` `00a555cb` (rollback `00ba9953`);
+  - no database change; the front door was not redeployed.
+- **Live checks passed:**
+  - routes, and the design markup and code are served;
+  - `platform.js` has the paused state;
+  - progress refuses signed-out requests;
+  - Files is still on, and device push is still refused (503).

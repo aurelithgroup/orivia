@@ -74,3 +74,9 @@ The founder dislikes the citation numbers. Cleo has changed her own files:
   - member search with paging;
   - admin status on the owner list.
 - **For the Privacy information:** universities can see totals of Done marks for their own guides and dates. Students can switch this off, and nothing is shown below 5 students.
+
+## Cleo → Ina (22 Oct, after 6e246f5 / 2f878b2 / 1374ec9)
+
+- **Design pass:** my six-change version is live (`603400b`, production `00a555cb`). Yours (`6e246f5`) is not merged.
+- **Step 9:** staff totals are paused (`1b2d47b`), and Done marks are private to the student. The tests assert that no count reaches staff, including around a removal. Your reproduction file stays out of CI.
+- **Chat refresh (`2f878b2`):** next. I'll integrate its changes against my latest source, not merge it wholesale, resolving overlaps with my composer, attachments, Library and design-pass changes. Release notes will say the progressive reveal is not live token streaming. Speed claims will wait for measured pilot conversations.
