@@ -1066,7 +1066,7 @@ $('about-done').onclick=()=>{aboutEditing=false;aboutSkipped=true;loadProfile();
 $('place-form').addEventListener('submit',e=>{e.preventDefault();saveProfile({place:$('p-place').value.trim()})});
 $('p-place').addEventListener('change',e=>saveProfile({place:e.target.value.trim()}));
 function profileForAI(){const p=readProfile();if(!p||p.use===false)return undefined;const out={};for(const k of ['city','movingTo','movedFrom','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
-$('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent=uiText('Tap again to delete');setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('Clear saved data')},4000);return}try{cancelAttach()}catch(_){}try{(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(profileKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(eventKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(journeysKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(chatsKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(chatsBackupKey)}catch(_){}storeLocked=false;storageWarn('');store={chats:[],active:null};turns=[];clearChatCards();draw();renderChats();events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent=uiText('Cleared')};
+$('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent=uiText('Tap again to delete');setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('Clear saved data')},4000);return}try{cancelAttach()}catch(_){}resetVoiceSession();try{(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(profileKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(eventKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(journeysKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(chatsKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(chatsBackupKey)}catch(_){}storeLocked=false;storageWarn('');store={chats:[],active:null};turns=[];clearChatCards();draw();renderChats();events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent=uiText('Cleared')};
 /* End session: back to the welcome screen. Clears this conversation and the human check; keeps journeys, calendar and My Life. */
 $('end-session').onclick=async()=>{
  if(globalThis.OriviaAccounts?.user){globalThis.OriviaAccounts.open();return}
@@ -1118,21 +1118,33 @@ function unlockPlayer(){const a=voicePlayer||(voicePlayer=new Audio());try{a.src
 /* Audio already generated in this session is reused (replay, or the same reply again) instead of paying for it twice.
    Memory only: never stored, keyed by account so another account never hears it, at most 24 pieces / 8 MB.
    A request for the same piece that is still in flight is shared rather than sent again. */
-const voiceCache=new Map(),voiceInflight=new Map();let voiceCacheBytes=0;
+const voiceCache=new Map(),voiceInflight=new Map();let voiceCacheBytes=0,voiceSession=0,voiceURL=null;
 const voiceKey=(text,lang)=>(globalThis.OriviaAccounts?.epoch||'guest')+'|'+lang+'|'+text;
 function voiceRemember(k,blob){if(!blob||blob.size>4e6||!k.startsWith((globalThis.OriviaAccounts?.epoch||'guest')+'|'))return;if(voiceCache.has(k))return;voiceCache.set(k,blob);voiceCacheBytes+=blob.size;
  while(voiceCache.size>24||voiceCacheBytes>8e6){const [old,b]=voiceCache.entries().next().value;voiceCache.delete(old);voiceCacheBytes-=b.size}}
 let voiceCacheEpoch=null;
+/* Account exit, account change, sign-out and Clear saved data (Ina, review of 8af0b96): unlike Stop, nothing of this
+   session's voice survives. Invalidates the run, stops playback, aborts requests, empties the cache and in-flight map,
+   and releases the playing audio URL. A response that arrives later belongs to an old session: never cached or played. */
+function resetVoiceSession(){voiceSession++;speakRun++;listenTiming.t0=0;
+ try{if(canSpeak)speechSynthesis.cancel()}catch(_){}
+ for(const c of voiceRequests){try{c.abort()}catch(_){}}voiceRequests.clear();voiceInflight.clear();voiceCache.clear();voiceCacheBytes=0;voiceCacheEpoch=null;
+ if(voicePlayer){try{voicePlayer.onended=voicePlayer.onerror=voicePlayer.onpause=null;voicePlayer.pause();voicePlayer.removeAttribute('src');voicePlayer.load()}catch(_){}}
+ if(voiceURL){try{URL.revokeObjectURL(voiceURL)}catch(_){}voiceURL=null}
+ if(speakingBtn){speakingBtn.setAttribute('aria-pressed','false');speakingBtn.textContent=uiText('▶ Listen');speakingBtn=null}
+ const st=$('status');if(st&&st.dataset.preparing==='1'){st.textContent='';delete st.dataset.preparing}}
+// Read-only counts for reviewers' checks (no audio, no text).
+window.OriviaVoiceDebug=()=>({cached:voiceCache.size,bytes:voiceCacheBytes,inflight:voiceInflight.size,requests:voiceRequests.size,activeURL:!!voiceURL,session:voiceSession});
 function voicePiece(text,lang){const epoch=globalThis.OriviaAccounts?.epoch||'guest';if(epoch!==voiceCacheEpoch){for(const c of voiceRequests)c.abort();voiceRequests.clear();voiceCache.clear();voiceCacheBytes=0;voiceInflight.clear();voiceCacheEpoch=epoch}
- const k=voiceKey(text,lang);
+ const k=voiceKey(text,lang),session=voiceSession;
  if(voiceCache.has(k)){listenTiming.cached++;return Promise.resolve(voiceCache.get(k))}
  if(voiceInflight.has(k))return voiceInflight.get(k);
- const p=voiceFetch(text,lang).then(b=>{voiceRemember(k,b);return b}).finally(()=>voiceInflight.delete(k));voiceInflight.set(k,p);return p}
+ const p=voiceFetch(text,lang).then(b=>{if(session!==voiceSession)return null;voiceRemember(k,b);return b}).finally(()=>{if(voiceInflight.get(k)===p)voiceInflight.delete(k)});voiceInflight.set(k,p);return p}
 function voiceFetch(text,lang){const c=new AbortController();voiceRequests.add(c);
  return fetch('/v1/voice',{method:'POST',signal:c.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,language:lang,preferences:{providerConsent:pilotConsent()}})})
   // A failed piece remembers why (a safe code such as voice_limit), so the person can tell us what happened.
   .then(async r=>{if(r.ok&&String(r.headers.get('Content-Type')).startsWith('audio/'))return r.blob();let e='';try{e=String((await r.json()).error||'')}catch(_){}voiceError=(/^[a-z_]{3,40}$/.test(e)?e:'http_'+r.status);return null}).catch(()=>{voiceError=voiceError||'offline';return null}).finally(()=>voiceRequests.delete(c))}
-function playPiece(blob,run,first){return new Promise(res=>{const a=voicePlayer,url=URL.createObjectURL(blob);let over=false;if(first)a.addEventListener('playing',()=>{if(run===speakRun)listenStarted(first)},{once:true});const done=ok=>{if(over)return;over=true;URL.revokeObjectURL(url);a.onended=a.onerror=a.onpause=null;res(ok)};
+function playPiece(blob,run,first){return new Promise(res=>{if(run!==speakRun)return res(false);const a=voicePlayer,url=URL.createObjectURL(blob);voiceURL=url;let over=false;if(first)a.addEventListener('playing',()=>{if(run===speakRun)listenStarted(first)},{once:true});const done=ok=>{if(over)return;over=true;URL.revokeObjectURL(url);if(voiceURL===url)voiceURL=null;a.onended=a.onerror=a.onpause=null;res(ok)};
  a.onended=()=>done(true);a.onerror=()=>done(false);a.onpause=()=>{if(run!==speakRun)done(true)};a.src=url;a.play().catch(()=>done(false))})}
 // Returns the text it could not read ('' when done or stopped).
 async function naturalSpeak(text,lang,run){
@@ -1831,10 +1843,10 @@ async function authorizeOnboardingStart(){
 queueMicrotask(()=>{
  if(!window.OriviaAccounts){modeReady.then(()=>{if(agreed())show()});return}
  window.OriviaAccounts.boot({photos:()=>DESTINATION_PHOTOS,
-  leave(){try{cancelAttach()}catch(_){}releaseOnboardingConsent();stopSpeaking();stopDictation(false);closeHandoff()},
+  leave(){try{cancelAttach()}catch(_){}releaseOnboardingConsent();resetVoiceSession();stopDictation(false);closeHandoff()},
   cancelReply(){activeChatRequest?.abort()},
   mountStart:mountOnboardingConsent,authorizeStart:authorizeOnboardingStart,
-  reload(){turns=[];storeLocked=false;$('msg').value='';$('home-question').value='';clearChatCards();loadEvents();show();window.OriviaAccounts.copy()}
+  reload(){resetVoiceSession();turns=[];storeLocked=false;$('msg').value='';$('home-question').value='';clearChatCards();loadEvents();show();window.OriviaAccounts.copy()}
  });
 });
 $('start').onclick=()=>{

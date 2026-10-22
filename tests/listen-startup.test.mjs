@@ -7,7 +7,7 @@ const chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace(/\r\n/g,'\
 const block=chat.slice(chat.indexOf('const voiceCache=new Map()'),chat.indexOf('function voiceFetch('));
 assert.ok(block.length>300,'cache block found');
 const make=()=>{const g={OriviaAccounts:{epoch:'acct-A'}},calls=[],aborted=[];let pending=[];
- const api=new Function('globalThis','listenTiming','voiceRequests','voiceFetch',block+';return {voicePiece,voiceCache,get bytes(){return voiceCacheBytes}}')(g,{cached:0},{[Symbol.iterator]:function*(){},clear(){}},(text,lang)=>{calls.push(text);return new Promise(r=>pending.push(()=>r(new Blob([text.padEnd(10,'.')]))))});
+ const api=new Function('globalThis','listenTiming','voiceRequests','voiceFetch','window','$','uiText','speechSynthesis','canSpeak',block+';return {voicePiece,voiceCache,get bytes(){return voiceCacheBytes}}')(g,{cached:0},{[Symbol.iterator]:function*(){},clear(){}},(text,lang)=>{calls.push(text);return new Promise(r=>pending.push(()=>r(new Blob([text.padEnd(10,'.')]))))},{},()=>null,s=>s,{cancel(){}},true);
  return {g,calls,api,flush:async()=>{const p=pending;pending=[];p.forEach(f=>f());await new Promise(r=>setTimeout(r,0))}}};
 // In-flight sharing: two requests for the same piece while it is generating → one generation.
 let t=make();const a=t.api.voicePiece('Hello there.','en'),b=t.api.voicePiece('Hello there.','en');
