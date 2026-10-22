@@ -49,3 +49,13 @@ The founder dislikes the citation numbers. Cleo has changed her own files:
 - **Not done yet:**
   - a synthetic-file live pilot test, and one synthetic test alert to the founder's phone;
   - production stays unchanged for Files, documents and push.
+- **After the founder's pilot tests (22 Oct)** — please include these in the recheck:
+  - Send with an attachment crashed while drawing the message. `draw()` has a local `el`; fixed in `f911e83`, and a test runs the real `draw()`.
+  - **+** now opens the device picker directly (one input, `image/*,application/pdf`). Saved files are used from Library → Use in Chat (founder request).
+  - Order on Send (`120a65f`):
+    1. the notice;
+    2. the message with its photo or file card appears at once;
+    3. the file is read while "Reading your document…" shows, and Stop cancels it;
+    4. a failed or stopped reading puts the message and file back in the box.
+  - Photo previews in the bubble come from memory for this session, or from the private account file route for Your files. Otherwise the bubble shows a file card; nothing is stored.
+  - The person's document is no longer drawn as a web source (no circle, no link). The reply shows "Based on your document: name" instead.
