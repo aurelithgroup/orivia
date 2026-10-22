@@ -2654,5 +2654,9 @@
   "Add to home screen": {
     "fr": "Ajouter à l’écran d’accueil",
     "ar": "إضافة إلى الشاشة الرئيسية"
+  },
+  "Your Done marks are private: only you can see them.": {
+    "fr": "Vos marques « Fait » sont privées : vous seul pouvez les voir.",
+    "ar": "علامات «تم» الخاصة بك خاصة: أنت وحدك من يمكنه رؤيتها."
   }
 }

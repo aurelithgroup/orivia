@@ -30,3 +30,5 @@ assert.match(js,/Confirm role change/);assert.match(js,/Allow new join request/)
 assert.equal((platformPage.match(/<script/g)||[]).length,2);assert.match(platformPage,/<script src="\/orivia-nav\.js"><\/script><script src="\/platform\.js">/,'shared navigation, then the dashboard, both same-origin');assert.match(platformPage,/<script src="\/platform\.js"><\/script>/);
 assert.doesNotMatch(platformPage,/https?:\/\//,'no third-party resources');assert.match(platformPage,/integration preview/);
 console.log('Organisation dashboards (connected): session-only roles, contract endpoints only, plain-text content, unfinished features labelled, no demo data: passed');
+// Ina 1374ec9: staff progress totals are paused; the dashboard says so and shows no counts.
+assert.ok(js.includes("pr.reason==='reporting_paused'")&&js.includes('Totals are paused while we agree how to report them'),'paused reporting is explained');

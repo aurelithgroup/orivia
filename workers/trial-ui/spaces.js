@@ -90,10 +90,8 @@
     out.push(group);
    }
    if(!content.length)out.push(node('p','notice','Your organisation hasn’t published anything here yet.'));
-   if(prog){const share=node('div','org-progress-share'),label=node('p','tiny','',true),toggle=node('button','btn quiet small','');toggle.type='button';let sharing=prog.sharing;
-    const paint=()=>{label.textContent=t(sharing?'Your progress counts towards totals that '+org+' can see, like “18 of 40 students”. They never see your name, and see nothing when fewer than '+prog.minimum+' students share.':'Your progress is private: '+org+' doesn’t count it. Your Done marks still work for you.');toggle.textContent=t(sharing?'Stop sharing my progress':'Share my progress as totals');toggle.setAttribute('aria-pressed',String(sharing))};paint();
-    toggle.onclick=async()=>{toggle.disabled=true;try{await post('/api/me/orgs/'+encodeURIComponent(m.organisationId)+'/progress-sharing',id,{share:!sharing});if(!current(id,g))return;sharing=!sharing;paint()}catch(_){if(current(id,g))label.textContent=t('Couldn’t save. Try again.')}finally{toggle.disabled=false}};
-    share.append(label,toggle);out.push(share)}
+   // Done marks are private to the student (staff totals are paused; Ina 1374ec9).
+   if(prog)out.push(node('p','tiny','Your Done marks are private: only you can see them.'));
    out.push(node('p','tiny','Application progress from your university’s own systems is not connected yet.'));
    const manage=node('a','btn quiet','Manage membership');manage.href='/platform';out.push(manage);body.replaceChildren(...out);
   }catch(_){if(current(id,g))body.replaceChildren(node('p','notice','This space couldn’t be opened. Your access may have changed. Close it and refresh your spaces.'));}

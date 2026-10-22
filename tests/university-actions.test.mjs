@@ -61,5 +61,5 @@ console.log('University actions: labelled content, buttons only for supplied det
 // Step 9 (22 Oct): students mark guides and key dates done; sharing is theirs to switch off; staff see totals only.
 {const sp=fs.readFileSync('workers/trial-ui/spaces.js','utf8').replace(/\r\n/g,'\n');
  assert.ok(sp.includes("if(prog&&(kind==='guide'||kind==='date'))actions.append(doneButton(c));"),'Done on guides and key dates only');
- assert.ok(sp.includes("'/progress-sharing',id,{share:!sharing}")&&sp.includes('They never see your name'),'a clear sharing switch');
+assert.ok(!sp.includes('progress-sharing')&&sp.includes('Your Done marks are private: only you can see them.'),'no sharing switch; marks are private (staff totals paused)');
  assert.ok(sp.includes("if(!current(id,g))return;want?done.add(c.id):done.delete(c.id)"),'a late answer from another space or account is ignored');}

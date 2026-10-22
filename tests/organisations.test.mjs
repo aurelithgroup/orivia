@@ -53,7 +53,7 @@ assert.equal((await call(aisha,'/api/me/orgs/'+org)).status,403,'pending members
 assert.equal((await call(aisha,'/api/invitations/join','POST',{token:cohort.token})).status,200,'join retry is idempotent');assert.equal(sql.prepare('SELECT uses FROM organisation_invitations WHERE id=?').get(cohort.invitation.id).uses,1);
 assert.equal((await call(editor,'/api/orgs/'+org+'/requests/'+aisha.id+'/decision','POST',{decision:'approve'})).status,403);
 r=await call(mariam,'/api/orgs/'+org+'/requests/'+aisha.id+'/decision','POST',{decision:'approve'});assert.equal(r.status,200,JSON.stringify(r));
-r=await call(aisha,'/api/me/orgs/'+org);assert.equal(r.status,200);assert.equal(r.data.content[0].id,guide);assert.equal(r.data.personalDataShared,false);assert.equal(r.data.applicationProgress.available,false);assert.equal(r.data.progress.available,true);assert.equal(r.data.progress.sharing,true);assert.deepEqual(r.data.progress.done,[]);
+r=await call(aisha,'/api/me/orgs/'+org);assert.equal(r.status,200);assert.equal(r.data.content[0].id,guide);assert.equal(r.data.personalDataShared,false);assert.equal(r.data.applicationProgress.available,false);assert.equal(r.data.progress.available,true);assert.equal(r.data.progress.private,true);assert.deepEqual(r.data.progress.done,[]);
 assert.equal((await call(aisha,'/api/me/memberships')).data.memberships[0].organisationId,org);
 assert.equal((await call(mariam,'/api/orgs/'+org+'/records')).status,403,'even admin has no application-record privilege');
 // Real personal vault remains private and untouched by organisation actions.
@@ -208,15 +208,12 @@ assert.equal((await call(mariam,'/api/account/vault')).data.revision,0,'role man
  // Totals only, and only with at least 5 sharing students. Make it exactly 5 sharing: opt everyone else out.
  const sharingIds=extra.slice(0,4);const keep=[aisha.id,...sharingIds];for(const row of sql.prepare('SELECT user_id FROM organisation_memberships WHERE org_id=?').all(org))if(!keep.includes(row.user_id))sql.prepare('INSERT OR IGNORE INTO organisation_progress_private(org_id,user_id) VALUES (?,?)').run(org,row.user_id);
  for(const uid of sharingIds.slice(0,2))sql.prepare('INSERT INTO organisation_progress(org_id,user_id,content_id,done_at) VALUES (?,?,?,?)').run(org,uid,guide,Date.now());
- let pr=await call(mariam,'/api/orgs/'+org+'/progress');assert.equal(pr.status,200);assert.equal(pr.data.progress.shown,true);assert.equal(pr.data.progress.students,5);
- assert.equal(pr.data.progress.items.find(i=>i.id===guide).done,3,'aisha and two others');
+ // Staff totals are paused (Ina 1374ec9): before and after a removal, staff receive titles only, never a count.
+ const noCounts=pr=>{assert.equal(pr.status,200);assert.equal(pr.data.progress.shown,false);assert.equal(pr.data.progress.reason,'reporting_paused');assert.ok(!/"(done|students|minimum)"/.test(JSON.stringify(pr.data)),'no counts')};
+ let pr=await call(mariam,'/api/orgs/'+org+'/progress');noCounts(pr);assert.ok(pr.data.progress.items.some(i=>i.id===guide));
  assert.ok(!JSON.stringify(pr.data).match(/aisha|bulk-|@/i),'no names, ids or emails');
- // An opted-out student's mark is never counted; under 5 sharing, nothing is shown.
- r=await call(aisha,'/api/me/orgs/'+org+'/progress-sharing','POST',{share:false});assert.equal(r.status,200);assert.equal((await call(aisha,'/api/me/orgs/'+org)).data.progress.sharing,false);
- pr=await call(mariam,'/api/orgs/'+org+'/progress');assert.equal(pr.data.progress.shown,false);assert.equal(pr.data.progress.reason,'fewer_than_minimum');assert.ok(pr.data.progress.items.every(i=>!('done' in i)),'no counts when hidden');
- r=await call(aisha,'/api/me/orgs/'+org+'/progress-sharing','POST',{share:true});pr=await call(mariam,'/api/orgs/'+org+'/progress');assert.equal(pr.data.progress.shown,true);
- // Removed members stop counting.
- sql.prepare("UPDATE organisation_memberships SET status='removed' WHERE org_id=? AND user_id=?").run(org,sharingIds[0]);pr=await call(mariam,'/api/orgs/'+org+'/progress');assert.equal(pr.data.progress.shown,false,'4 sharing: hidden again');
+ sql.prepare("UPDATE organisation_memberships SET status='removed' WHERE org_id=? AND user_id=?").run(org,sharingIds[0]);noCounts(await call(mariam,'/api/orgs/'+org+'/progress'));
+ assert.equal((await call(aisha,'/api/me/orgs/'+org)).data.progress.private,true,'the student is told their marks are private');
  // Unmarking works.
  r=await call(aisha,'/api/me/orgs/'+org+'/progress','POST',{contentId:guide,done:false});assert.deepEqual((await call(aisha,'/api/me/orgs/'+org)).data.progress.done,[]);
 }
