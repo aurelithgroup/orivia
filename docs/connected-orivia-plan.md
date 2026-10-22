@@ -249,3 +249,7 @@ Order (Cleo, one step at a time):
   - Fixed in `35ba639`.
   - After the fix: 7 attempted and 7 accepted. The founder's phone showed the test alert, and tapping it opened Orivia.
   - Production push stays off until Files and Privacy are approved; it will then use a fresh production opt-in.
+- **Step 8 accepted on the pilot (22 Oct, founder):**
+  - device alerts enable on the phone, the test alert arrives and tapping it opens Orivia;
+  - the bell shows a red dot until the inbox is opened.
+  - Fixes on the way: a new device replaces the oldest registration (max 3) instead of `device_limit` (`78a5afa`); unread dot (`bab347f`).
