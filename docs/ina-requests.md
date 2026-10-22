@@ -62,3 +62,15 @@ The founder dislikes the citation numbers. Cleo has changed her own files:
 - **Later on 22 Oct:**
   - Documents are part of the conversation, at the founder's request. The label and ✕ are gone; every document sent in a chat stays with it (never replaced), and the newest 3 (about 24,000 characters) go with each message; the notice wording is updated accordingly.
   - The alert sender used `redirect:'error'`, which Workers reject, so nothing was ever sent. It is fixed, and the real-device test passed (7 accepted, shown on the founder's phone, tap opened Orivia).
+
+## Step 9 for review: student progress, totals only (Cleo, 22 Oct, founder-approved)
+
+- **What students do:** in their university space, students can tap **Mark as done** on published guides and key dates. That mark is stored with the university's records, in `organisation_progress`.
+- **What staff see:** per-item totals only, for example "18 of 40 students". Totals are shown only when at least 5 active students share; otherwise the panel says "Not shown yet". No names, ids or emails are included, and individual marks are never shown.
+- **Opting out:** sharing is on by default. Each student can switch it off in their space (`organisation_progress_private`); their marks still work for them but never count.
+- **When rows stop counting, or go:** rows from removed or departed members stop counting. Rows are deleted with the account (foreign key).
+- **Also built in step 9 (no new personal data):**
+  - joins and invitation-use counts;
+  - member search with paging;
+  - admin status on the owner list.
+- **For the Privacy information:** universities can see totals of Done marks for their own guides and dates. Students can switch this off, and nothing is shown below 5 students.
