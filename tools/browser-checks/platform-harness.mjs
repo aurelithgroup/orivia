@@ -22,6 +22,17 @@ const api={
  '/api/me/memberships':role==='owner'?{platformRoles:['owner'],memberships:[]}:{platformRoles:[],memberships:[{organisationId:'org-nb',name:'Northbay University',slug:'northbay',demo:true,role:'admin',status:'active'}]},
  '/api/admin/overview':overview,
  '/api/account/feedback/queue':{ratings:{days:30,up:3,down:1,reasons:{inaccurate:1}},reports:[{id:'r1',receipt:'FB-00000001',category:'technical',note:'The map link didn’t open.',replyText:null,status:'open',createdAt:T-day}]}};
+const iso=k=>new Date(T+k*day).toISOString().slice(0,10);
+const empty=process.argv[3]==='empty';
+globalThis.orgApi=(oid,tail)=>{if(oid!=='org-nb')return null;
+ if(tail==='summary')return {organisation:{id:'org-nb',slug:'northbay',name:'Northbay University',city:'Sharjah',demo:true},counts:[{role:'student',status:'active',count:42},{role:'student',status:'requested',count:empty?0:2},{role:'admin',status:'active',count:1}],activity:{joinedLast30Days:5,invitationUses:7,published:[{kind:'guide',count:1},{kind:'date',count:1}]},
+  tasks:empty?{pendingJoins:0,drafts:{total:0,items:[]},upcomingDates:[],pastDates:[],datesWithoutDate:[],contactsMissingDetails:[],publishedContacts:1,today:iso(0)}:
+   {pendingJoins:2,drafts:{total:1,items:[{id:'c2',kind:'guide',title:'Housing guide'}]},upcomingDates:[{id:'c3',kind:'date',title:'Visa medical',date:iso(3),time:null}],pastDates:[{id:'c5',kind:'date',title:'Orientation week',date:iso(-4)}],datesWithoutDate:[],contactsMissingDetails:[{id:'c4',kind:'contact',title:'International office'}],publishedContacts:1,today:iso(0)},
+  analytics:{available:false,reason:'views_not_tracked'},applicationRecordsAvailable:false};
+ if(tail==='content')return {content:[...content,{id:'c5',kind:'date',title:'Orientation week',body:'Welcome events',details:{date:iso(-4)},visibility:'members',status:'published',revision:1,updatedAt:T-5*day}]};
+ if(tail==='progress')return {progress:{shown:false,reason:'reporting_paused',items:[]}};
+ if(tail.startsWith('members'))return {members:[{userId:'u9',name:'Sara Example',email:'sara@example.test',role:'student',status:'requested'}],more:false};
+ return null};
 http.createServer((req,res)=>{const u=new URL(req.url,'http://x');const send=(code,type,body)=>{res.writeHead(code,{'Content-Type':type,'Cache-Control':'no-store'});res.end(body)};
  if(u.pathname==='/manage'||u.pathname==='/platform')return send(200,'text/html; charset=utf-8',platformPage.replace('<html','<html data-app-home="/"'));
  if(u.pathname==='/platform.js')return send(200,'application/javascript','(function(){const __name=f=>f;('+mountPlatform.toString()+')()})();');

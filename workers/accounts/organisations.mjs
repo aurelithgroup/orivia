@@ -38,6 +38,25 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
  const arrival=async oid=>{const row=await q('SELECT data,revision FROM organisation_arrivals WHERE org_id=?',oid).first();return row?{...JSON.parse(row.data),revision:row.revision}:null};
  const publicOrg=o=>({id:o.id,slug:o.slug,name:o.name,city:o.city,demo:!!o.demo});
  const content=c=>({id:c.id,kind:c.kind,title:c.title,body:c.body,details:parseDetails(c.details),visibility:c.visibility,status:c.status,revision:c.revision,updatedAt:c.updated_at});
+ /* University overview action queue (Ina's priority 3): from this organisation's own records only, each item names the
+    workflow that resolves it. Dates compare by calendar day (UTC today), so a date today counts as upcoming. */
+ const staffTasks=async oid=>{
+  const today=new Date(clock()).toISOString().slice(0,10),soon=new Date(clock()+30*86400000).toISOString().slice(0,10);
+  const pendingJoins=(await q("SELECT COUNT(*) AS n FROM organisation_memberships WHERE org_id=? AND role='student' AND status='requested'",oid).first()).n;
+  const rows=await all("SELECT id,kind,title,status,details FROM organisation_content WHERE org_id=? ORDER BY updated_at DESC LIMIT 500",oid);
+  const brief=c=>({id:c.id,kind:c.kind,title:c.title});
+  const drafts=rows.filter(c=>c.status==='draft');
+  const dated=rows.filter(c=>c.kind==='date'&&c.status==='published').map(c=>({...brief(c),date:parseDetails(c.details)?.date||null,time:parseDetails(c.details)?.time||null}));
+  const contacts=rows.filter(c=>c.kind==='contact'&&c.status==='published');
+  const missing=contacts.filter(c=>{const d=parseDetails(c.details)||{};return !d.phone&&!d.email&&!d.website});
+  return {pendingJoins,
+   drafts:{total:drafts.length,items:drafts.slice(0,10).map(brief)},
+   upcomingDates:dated.filter(d=>d.date&&d.date>=today&&d.date<=soon).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,10),
+   pastDates:dated.filter(d=>d.date&&d.date<today).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10),
+   datesWithoutDate:dated.filter(d=>!d.date).slice(0,10),
+   contactsMissingDetails:missing.slice(0,10).map(brief),
+   publishedContacts:contacts.length,today};
+ };
  try{
   if(!db?.prepare||!db?.batch)deny(503,'organisation_storage_unavailable');
   if(req.method==='GET'&&path==='/manage'){
@@ -124,7 +143,7 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
     const activity={joinedLast30Days:(await q("SELECT COUNT(*) AS n FROM organisation_memberships WHERE org_id=? AND role='student' AND status IN ('active','requested') AND created_at>?",oid,since).first()).n,
      invitationUses:(await q("SELECT COALESCE(SUM(uses),0) AS n FROM organisation_invitations WHERE org_id=? AND role='student'",oid).first()).n,
      published:await all("SELECT kind,COUNT(*) AS count FROM organisation_content WHERE org_id=? AND status='published' GROUP BY kind",oid)};
-    return json({organisation:publicOrg(await org(oid)),counts,activity,analytics:{available:false,reason:'views_not_tracked'},applicationRecordsAvailable:false})}
+    return json({organisation:publicOrg(await org(oid)),counts,activity,tasks:await staffTasks(oid),analytics:{available:false,reason:'views_not_tracked'},applicationRecordsAvailable:false})}
    // Paused (Ina 1374ec9): exact totals let an admin infer one student's mark by comparing before and after a membership
    // change. Until a reporting approach is agreed, staff get the item titles only and never any count.
    if(tail==='progress'&&req.method==='GET'){await member(oid,'org.view');
