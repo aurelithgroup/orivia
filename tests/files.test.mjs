@@ -90,7 +90,7 @@ assert.ok(handler.includes('const done=await finishFileCleanup(env,owner)'));
 const files=fs.readFileSync('workers/trial-ui/files.js','utf8'),page=fs.readFileSync('workers/trial-ui/page.html','utf8'),chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace(/\r\n/g,'\n');
 assert.doesNotMatch(files,/innerHTML|insertAdjacentHTML/);assert.match(files,/c\.toBlob\(r,'image\/jpeg',q\)/);assert.match(files,/indexedDB\.open\('orivia-files',1\)/);
 assert.match(page,/<input type="file" id="files-camera-input" accept="image\/\*" capture="environment" hidden>/);
-assert.ok(chat.includes("if(which==='mylife')try{window.OriviaFiles?.render()}catch(_){}"));
+assert.ok(chat.includes("if(which==='library')try{renderLibrary()}catch(_){}")&&chat.includes('const done=window.OriviaFiles?.render?.();'),'files refresh when the Library opens');
 assert.ok(fs.readFileSync('workers/orivia-ai-private-trial.mjs','utf8').includes('window.OriviaFiles='),'shipped in /chat.js');
 // Run the client module in a sandbox: a PDF passes through untouched; a non-image, non-PDF is refused.
 {const ctx={window:{},document:{getElementById:()=>null},crypto,Blob,URL,indexedDB:null,createImageBitmap:async()=>{throw Error('x')}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(files,ctx);

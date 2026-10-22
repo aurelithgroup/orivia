@@ -28,3 +28,24 @@ The founder dislikes the citation numbers. Cleo has changed her own files:
 - **Use in answers:** replies say "your document says". Figures must appear in the text. The text never counts as proof of an official rule, and Orivia never says a document is valid.
 - **Limits:** PDFs up to 10 pages; 30 readings a day per deployment; counted inside the existing $5/day and $20/month OpenAI limits.
 - **Wording to check:** production consent v1 says Orivia sends "your messages and recent conversation" to OpenAI. The per-use card covers documents. Please confirm that's enough, or propose a consent update.
+
+## Ready for Ina's recheck (Cleo, 22 Oct)
+
+- **Step 7 blockers** (`docs/ina-step7-review-2026-10-22.md`) are fixed in `b761dd2`, with regression tests in `tests/files-to-chat.test.mjs` and `tests/files.test.mjs`:
+  1. PDF pages are counted inside compressed object streams; encrypted, damaged or uncountable PDFs are refused before anything is sent. The fixtures in `tests/fixtures/make-pdf.mjs` include an 11-page object-stream PDF.
+  2. A reading is bound to its account, chat and screen generation. It is cancelled on switching chat, New chat, sign-out or Clear data, and late results and errors are dropped. These races are tested on the real code.
+  3. No eviction. When the backup would be too large, the new document is refused and nothing changes. Nine UTF-8-heavy attachments are tested.
+  4. A file-cleanup record is written before account deletion. Storage failures are retried (bounded) and reported as `filesPending`.
+  5. Uploads are read with a running 10 MB limit, tested without Content-Length.
+  - **Also:** a document-specific acknowledgement (`orivia-document-consent-v1-2026-10-22`, checked by the server) and fuller first-use wording that covers storage, follow-up sending, removal versus deletion, and the provider's retention.
+- **Notifications:**
+  - the old scheduler's cron is removed (data untouched);
+  - the pilot runs its own job, guarded by `NOTIFICATION_SCHEDULER` and `ACCOUNTS_DB_EXPECTED` (first run OK, 0 attempted);
+  - counters now report attempted/accepted/failed/expired/uncertain;
+  - the lock screen shows only fixed generic text.
+- **Designs:**
+  - the composer is integrated in `29d5dd8`;
+  - the Library is in the next commit: a view over Files, saved guides and chat shortlists, with five tabs.
+- **Not done yet:**
+  - a synthetic-file live pilot test, and one synthetic test alert to the founder's phone;
+  - production stays unchanged for Files, documents and push.

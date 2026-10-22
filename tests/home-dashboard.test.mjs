@@ -17,7 +17,7 @@ assert.equal(before,JSON.stringify({data,chats,journeys}),'dashboard must not mu
 assert.equal(reads,1);
 ctx.events=[];ctx.store={chats:[]};ctx.readJourneys=()=>({});const empty=ctx.dashboardRecords(now);assert.equal(empty.active,null);assert.equal(empty.upcoming.length,0);assert.equal(empty.recent.length,0);
 const nav=html.slice(html.indexOf('<nav class="bottom"'),html.indexOf('</nav>'));
-assert.deepEqual([...nav.matchAll(/data-tab="([^"]+)"/g)].map(x=>x[1]),['home','chat','mylife','calendar'],'founder decision 21 Oct: Home, Chat, My Life, Calendar (Files later)');
+assert.deepEqual([...nav.matchAll(/data-tab="([^"]+)"/g)].map(x=>x[1]),['home','chat','library','mylife','calendar'],'founder decision 22 Oct (Ina\'s approved Library): Home, Chat, Library, My Life, Calendar');
 assert.ok(html.includes('<h2 id="home-next-title">Your guides</h2><button type="button" class="ask" id="home-all-guides">All your guides →</button>'),'saved guides have a home on Home');
 assert.ok(html.includes('<strong>Your guides</strong><small id="life-journey-count">'),'and in My Life');
 assert.ok(js.includes("back-chat').onclick=()=>tab(guidesReturnTab||'mylife')"),'Back returns where the person came from');

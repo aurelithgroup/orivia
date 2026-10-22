@@ -2502,5 +2502,77 @@
   "Orivia read the first part of your document (it’s long).": {
     "fr": "Orivia a lu le début de votre document (il est long).",
     "ar": "قرأت أوريفيا الجزء الأول من مستندك (فهو طويل)."
+  },
+  "Library": {
+    "fr": "Bibliothèque",
+    "ar": "المكتبة"
+  },
+  "Your files, guides and shortlists in one place.": {
+    "fr": "Vos fichiers, guides et listes de choix au même endroit.",
+    "ar": "ملفاتك وأدلتك وقوائمك المختصرة في مكان واحد."
+  },
+  "Your files, guides and shortlists": {
+    "fr": "Vos fichiers, guides et listes de choix",
+    "ar": "ملفاتك وأدلتك وقوائمك المختصرة"
+  },
+  "All": {
+    "fr": "Tout",
+    "ar": "الكل"
+  },
+  "Shortlists": {
+    "fr": "Listes de choix",
+    "ar": "القوائم المختصرة"
+  },
+  "Search your Library": {
+    "fr": "Rechercher dans votre bibliothèque",
+    "ar": "ابحث في مكتبتك"
+  },
+  "Guides & journeys": {
+    "fr": "Guides et parcours",
+    "ar": "الأدلة والرحلات"
+  },
+  "Options you shortlisted in chat. Removing one here doesn’t change the chat or its sources.": {
+    "fr": "Options ajoutées à votre liste de choix dans une discussion. En retirer une ici ne modifie ni la discussion ni ses sources.",
+    "ar": "خيارات أضفتها إلى قائمتك المختصرة في المحادثة. إزالة أحدها هنا لا تغيّر المحادثة ولا مصادرها."
+  },
+  "Nothing in your Library matches that.": {
+    "fr": "Rien dans votre bibliothèque ne correspond.",
+    "ar": "لا يوجد في مكتبتك ما يطابق ذلك."
+  },
+  "Clear search": {
+    "fr": "Effacer la recherche",
+    "ar": "مسح البحث"
+  },
+  "No saved guides yet. Ask Orivia what you need help with, or explore guides from Home.": {
+    "fr": "Aucun guide enregistré pour l’instant. Demandez à Orivia ce dont vous avez besoin, ou explorez les guides depuis l’accueil.",
+    "ar": "لا توجد أدلة محفوظة بعد. اسأل أوريفيا عمّا تحتاج إليه، أو استكشف الأدلة من الصفحة الرئيسية."
+  },
+  "Continue where you left off": {
+    "fr": "Reprendre là où vous vous êtes arrêté",
+    "ar": "تابع من حيث توقفت"
+  },
+  "Open chat": {
+    "fr": "Ouvrir la discussion",
+    "ar": "فتح المحادثة"
+  },
+  "Compare in Chat": {
+    "fr": "Comparer dans la discussion",
+    "ar": "قارن في المحادثة"
+  },
+  "Please compare my shortlist:": {
+    "fr": "Peux-tu comparer ma liste de choix :",
+    "ar": "يرجى مقارنة قائمتي المختصرة:"
+  },
+  "No shortlists yet. When Orivia shows you options in chat, add the ones you like to a shortlist.": {
+    "fr": "Aucune liste de choix pour l’instant. Quand Orivia vous montre des options dans une discussion, ajoutez celles qui vous plaisent.",
+    "ar": "لا توجد قوائم مختصرة بعد. عندما تعرض عليك أوريفيا خيارات في المحادثة، أضف ما يعجبك منها إلى قائمة مختصرة."
+  },
+  "Use in Chat": {
+    "fr": "Utiliser dans la discussion",
+    "ar": "استخدمه في المحادثة"
+  },
+  "Turn on the OpenAI research test in Settings to use documents in chat.": {
+    "fr": "Activez le test de recherche OpenAI dans les paramètres pour utiliser des documents dans une discussion.",
+    "ar": "فعّل اختبار البحث عبر OpenAI في الإعدادات لاستخدام المستندات في المحادثة."
   }
 }

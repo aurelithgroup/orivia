@@ -5,7 +5,7 @@ let turns=[],busy=false,events=[],activeChatRequest=null;
 const $=id=>document.getElementById(id);
 function uiText(value){return window.OriviaI18n?.text(value)??value}
 function uiLanguage(){return window.OriviaI18n?.language()||'en'}
-const TITLES={home:'',chat:'',calendar:'Calendar',journeys:'Your guides',mylife:'My Life',guide:'Your guides',settings:'Settings'};
+const TITLES={home:'',chat:'',library:'Library',calendar:'Calendar',journeys:'Your guides',mylife:'My Life',guide:'Your guides',settings:'Settings'};
 function show(){
  $('intro').hidden=true;$('workspace').hidden=false;$('nav').hidden=false;$('open-settings').hidden=false;$('open-chats').hidden=false;
  loadChats();const c=activeChat();turns=c?c.turns.slice():[];
@@ -81,6 +81,58 @@ function save(){
 function clearChatCards(){resources([]);for(const id of ['guide-offer','remember-card','inline-calendar'])$(id)?.remove();$('status').textContent=''}
 function openChat(id){closeHandoff();stopSpeaking();stopDictation(false);pendingOrgContext=null;pendingDocument=null;pendingAttachment=null;cancelAttach();renderAttachmentPreview();store.active=id;persist();const c=activeChat();turns=c?c.turns.slice():[];clearChatCards();draw();closeChats();tab('chat');renderOrgContext()}
 function newChat(ctx=null){closeHandoff();stopSpeaking();stopDictation(false);pendingOrgContext=ctx;pendingDocument=null;pendingAttachment=null;cancelAttach();renderAttachmentPreview();store.active=null;persist();turns=[];clearChatCards();draw();closeChats();tab('chat');renderOrgContext();$('msg').focus()}
+/* Library (Ina's design, 22 Oct): one place for the person's files, guides & journeys and shortlists. A view over the
+   records that already exist (Files storage, saved guides with their progress, shortlists inside chats); nothing is
+   copied, moved or deleted here, and nothing is sent anywhere by looking. "Use in Chat" and "Compare in Chat" only
+   prepare the chat; the person still sends (and a file still goes through the reading notice). */
+let libFilter='all';
+function libItem(node,kind,text){node.dataset.libKind=kind;node.dataset.libText=String(text||'').toLowerCase();return node}
+function libraryShortlists(){
+ const out=[];
+ for(const chat of store.chats)for(const t of chat.turns||[]){
+  if(t.role!=='assistant'||!Array.isArray(t.meta?.shortlist)||!t.meta.shortlist.length)continue;
+  const orgs=safeOrgs(t.meta.organisations,safeSources(t.meta.sources)),picked=orgs.filter(o=>t.meta.shortlist.includes(o.id));
+  if(picked.length)out.push({chat,names:picked.map(o=>o.name)});
+ }
+ return out;
+}
+function renderLibrary(){
+ mountLibrary();const done=window.OriviaFiles?.render?.();
+ // Guides & journeys: the person's saved guides, newest first, with their progress (the same cards as before).
+ const d=readJourneys(),items=Object.entries(d).filter(([k,v])=>JID.test(k)&&v&&typeof v.title==='string').sort((a,b)=>String(b[1].updated).localeCompare(String(a[1].updated)));
+ const g=$('lib-guides');g.replaceChildren();
+ for(const [id,v] of items)g.append(libItem(journeyCard({id,title:v.title,steps:v.steps},'mine'),'guides',v.title));
+ if(!items.length)g.append(el('p','tiny',uiText('No saved guides yet. Ask Orivia what you need help with, or explore guides from Home.')));
+ const cont=items.find(([,v])=>v.status==='active'),c=$('lib-continue');
+ if(cont){c.replaceChildren(el('h2','',uiText('Continue where you left off')),journeyCard({id:cont[0],title:cont[1].title,steps:cont[1].steps},'mine'));c.hidden=false}else{c.hidden=true;c.replaceChildren()}
+ // Shortlists: from the chats they were made in (opening the chat shows them with their sources).
+ const s=$('lib-shortlists');s.replaceChildren();const lists=libraryShortlists();
+ for(const {chat,names} of lists){const card=el('article','lib-short');card.append(el('strong','',chat.title||uiText('Chat')),el('p','tiny',names.join(' · ')+' · '+new Date(chat.updated||chat.created||Date.now()).toLocaleDateString()));
+  const row=el('div','attach-row');row.append(attachButton('Open chat',()=>openChat(chat.id)),attachButton('Compare in Chat',()=>{openChat(chat.id);$('msg').value=uiText('Please compare my shortlist:')+' '+names.join(', ');grow();$('msg').focus()}));card.append(row);
+  s.append(libItem(card,'shortlists',(chat.title||'')+' '+names.join(' ')))}
+ if(!lists.length)s.append(el('p','tiny',uiText('No shortlists yet. When Orivia shows you options in chat, add the ones you like to a shortlist.')));
+ $('lib-count-guides').textContent=items.length||'';$('lib-count-shortlists').textContent=lists.length||'';
+ Promise.resolve(done).then(()=>{const n=document.querySelectorAll('#files-list .file-row').length;$('lib-count-files').textContent=n||'';$('lib-count-all').textContent=(n+items.length+lists.length)||'';applyLibraryFilter()});
+ applyLibraryFilter();
+}
+function applyLibraryFilter(){
+ const q=$('lib-search').value.trim().toLowerCase();let shown=0;
+ for(const row of document.querySelectorAll('#files-list .file-row'))if(!row.dataset.libKind)libItem(row,'files',row.querySelector('strong')?.textContent);
+ for(const [kind,id] of [['files','files-title'],['guides','lib-guides-group'],['shortlists','lib-shortlists-group']]){
+  const group=kind==='files'?$('files-title').closest('section'):$(id);const on=libFilter==='all'||libFilter===kind;group.hidden=!on;
+  let visible=0;for(const item of group.querySelectorAll('[data-lib-kind]')){const hit=!q||item.dataset.libText.includes(q);item.hidden=!hit;if(hit)visible++}
+  if(on)shown+=visible;
+ }
+ $('lib-continue').hidden=!!q||!['all','guides'].includes(libFilter)||!$('lib-continue').children.length;
+ $('lib-empty').hidden=!q||shown>0;
+}
+function mountLibrary(){if(mountLibrary.done)return;mountLibrary.done=true;
+for(const b of document.querySelectorAll('.lib-tabs [role=tab]'))b.addEventListener('click',()=>{libFilter=b.dataset.lib;for(const x of document.querySelectorAll('.lib-tabs [role=tab]')){const on=x===b;x.setAttribute('aria-selected',String(on));x.tabIndex=on?0:-1}applyLibraryFilter()});
+document.querySelector('.lib-tabs')?.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;const t=[...document.querySelectorAll('.lib-tabs [role=tab]')],i=t.indexOf(document.activeElement);if(i<0)return;e.preventDefault();
+ const rtl=document.documentElement.dir==='rtl',step=(e.key==='ArrowRight')!==rtl?1:-1,n=e.key==='Home'?0:e.key==='End'?t.length-1:(i+step+t.length)%t.length;t[n].focus();t[n].click()});
+$('lib-search')?.addEventListener('input',applyLibraryFilter);
+$('lib-clear')?.addEventListener('click',()=>{$('lib-search').value='';applyLibraryFilter();$('lib-search').focus()});
+}
 /* Files to Chat (step 7) with Ina's approved composer (22 Oct): + opens Camera, Photos, Files and Your files. Choosing
    only shows a removable preview above the message; nothing is sent. On Send, the file-reading notice appears (fuller the
    first time, DOCUMENT_CONSENT); only after "Use this in my chat" is the file sent to OpenAI to read its text. That text
@@ -88,6 +140,8 @@ function newChat(ctx=null){closeHandoff();stopSpeaking();stopDictation(false);pe
    belongs to the account and chat it started in: switching chat or account, New chat, signing out or clearing data
    cancels it, and a late result is dropped (Ina's review). The attachment shows inside the person's own message. */
 var documentsServer=false,attachOp=null,attachGeneration=0,pendingAttachment=null,attachPreviewURL=null;
+// From the Library: a saved file becomes this chat's pending attachment (preview only; nothing is sent).
+if(typeof window!=='undefined'&&window.OriviaFiles)window.OriviaFiles.useInChat=async f=>{if(!attachAllowed()){$('status').textContent=uiText('Turn on the OpenAI research test in Settings to use documents in chat.');return}const g=attachGeneration;try{const blob=await window.OriviaFiles.blob(f.id);if(blob&&g===attachGeneration){tab('chat');setPendingAttachment(blob,f.name,f.id)}}catch(_){$('status').textContent=uiText('Couldn’t open that file.')}};
 const DOCUMENT_CONSENT='orivia-document-consent-v1-2026-10-22',DOC_ACK_KEY='orivia-document-consent';
 const DOC_SPACE=800000; // bytes of saved chats (with documents) we keep under the 1 MB account backup
 function chatDocument(){const c=activeChat();const d=c?c.document:pendingDocument;return d&&typeof d.text==='string'?d:null}
@@ -730,10 +784,10 @@ $('life-places-open').onclick=()=>{const box=$('saved-places-section');box.hidde
 if(window.OriviaNav)window.OriviaNav.onSettings=()=>tab('settings');
 try{if(new URLSearchParams(location.search).get('view')==='settings')queueMicrotask(()=>{tab('settings');history.replaceState(null,'',location.pathname)})}catch(_){}
 function tab(which){
- const views={home:'home',chat:'chat',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view',settings:'settings-view'};
+ const views={home:'home',chat:'chat',library:'library',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view',settings:'settings-view'};
  if(!views[which])return;
  if(which==='chat')try{renderOrgContext()}catch(_){}
- if(which==='mylife')try{window.OriviaFiles?.render()}catch(_){}
+ if(which==='library')try{renderLibrary()}catch(_){}
  if(which!=='settings')lastTab=which;
  if(!['journeys','guide','settings'].includes(which))guidesReturnTab=which;
  if(which!=='chat'){try{stopSpeaking();stopDictation(true);closeMicLanguageMenu()}catch(_){}}
@@ -1258,6 +1312,7 @@ function renderSettings(){
 function changeAppLanguage(e){window.OriviaI18n?.setLanguage(e.target.value);writeSettings({language:uiLanguage()});regionNames=makeRegionNames();countryOptions=null;draw();renderEvents();renderUpcoming();renderChats();renderJourneys();loadProfile();renderHome();$('view-title').textContent=uiText(TITLES[lastTab||'chat'])}
 $('app-language').addEventListener('change',changeAppLanguage);$('welcome-language').addEventListener('change',changeAppLanguage);$('app-language').value=$('welcome-language').value=uiLanguage();
 $('set-suggest').addEventListener('change',e=>writeSettings({suggest:e.target.checked}));
+$('life-library-open')?.addEventListener('click',()=>tab('library'));
 $('attach').addEventListener('click',openAttach);for(const id of ['attach-camera','attach-photo','attach-file'])$(id).addEventListener('change',e=>attachFrom(e.target));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('attach-panel').hidden&&!attachOp&&!attachConfirm){closeAttach();$('attach').focus()}});
 $('set-voice').addEventListener('change',e=>{writeSettings({naturalVoice:e.target.checked});if(!e.target.checked)stopSpeaking()});

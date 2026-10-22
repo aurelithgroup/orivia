@@ -72,7 +72,8 @@
    const save=el('button','btn small',t('Save'));save.type='submit';form.append(input,save);
    form.onsubmit=async e=>{e.preventDefault();const v=input.value.trim();if(!v)return;try{await store().rename(f.id,v);await render()}catch(err){say(why(err),true)}};
    info.replaceChildren(form);input.focus()});
-  actions.append(b('Open',()=>open(f,false)),b('Download',()=>open(f,true)),ren,del);
+  const use=window.OriviaFiles?.useInChat&&b('Use in Chat',()=>window.OriviaFiles.useInChat(f));
+  actions.append(b('Open',()=>open(f,false)),...(use?[use]:[]),b('Download',()=>open(f,true)),ren,del);
   li.append(icon,info,actions);return li;
  }
  let rendering=0;

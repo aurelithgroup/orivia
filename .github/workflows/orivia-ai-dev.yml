@@ -165,6 +165,7 @@ jobs:
           node --experimental-sqlite tests/files.test.mjs
           node --experimental-sqlite tests/files-to-chat.test.mjs
           node --experimental-sqlite tests/notification-isolation.test.mjs
+          node tests/library.test.mjs
       - name: "Shared navigation and space addresses"
         run: node tests/navigation.test.mjs
       - name: "myorivia.app production entry gates"
