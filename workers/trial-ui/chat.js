@@ -140,6 +140,7 @@ $('lib-clear')?.addEventListener('click',()=>{$('lib-search').value='';applyLibr
    belongs to the account and chat it started in: switching chat or account, New chat, signing out or clearing data
    cancels it, and a late result is dropped (Ina's review). The attachment shows inside the person's own message. */
 var documentsServer=false,attachOp=null,attachGeneration=0,pendingAttachment=null,attachPreviewURL=null;
+const attachmentPreviews=new Map(); // message attachment id → image URL for this page session only (nothing stored)
 // From the Library: a saved file becomes this chat's pending attachment (preview only; nothing is sent).
 if(typeof window!=='undefined'&&window.OriviaFiles)window.OriviaFiles.useInChat=async f=>{if(!attachAllowed()){$('status').textContent=uiText('Turn on the OpenAI research test in Settings to use documents in chat.');return}const g=attachGeneration;try{const blob=await window.OriviaFiles.blob(f.id);if(blob&&g===attachGeneration){tab('chat');setPendingAttachment(blob,f.name,f.id)}}catch(_){$('status').textContent=uiText('Couldn’t open that file.')}};
 const DOCUMENT_CONSENT='orivia-document-consent-v1-2026-10-22',DOC_ACK_KEY='orivia-document-consent';
@@ -177,7 +178,7 @@ function openAttach(){if(attachOp||attachConfirm)return;closeAttach();$('attach-
 async function attachFrom(input){const f=input.files&&input.files[0];input.value='';if(!f)return;const g=attachGeneration;
  try{const prepared=await window.OriviaFiles.prepare(f);if(g===attachGeneration)setPendingAttachment(prepared.blob,prepared.name)}
  catch(e){if(g===attachGeneration)$('status').textContent=uiText(e?.message==='file_too_large'?'That file is over 10 MB. Try a smaller one or a photo instead.':e?.message==='unsupported_type'?'Only PDF, JPEG and PNG files can be saved.':'This photo’s format can’t be opened here. Save it as a JPEG and try again.')}}
-/** On Send: the notice, then (only if accepted) one reading. Resolves true when the chat has the document's text. */
+/** On Send: the reading notice (fuller the first time). Resolves true when the person accepts; nothing is read here. */
 function confirmAttach(blob,name){
  return new Promise(resolve=>{
   const p=$('attach-panel');if(!p)return resolve(false);p.hidden=false;const first=!docAcknowledged();attachConfirm=resolve;
@@ -185,8 +186,8 @@ function confirmAttach(blob,name){
   if(first)card.append(el('p','tiny',uiText('Before your first document: when you tap Use this in my chat, Orivia sends this file to OpenAI to read its text. Each new attempt sends it again. OpenAI doesn’t keep it for later use through Orivia, but may hold it for a limited time for abuse checks.')),
    el('p','tiny',uiText('The text Orivia reads stays with this chat: in your private account if you’re signed in, otherwise in this browser. It is sent again with each message you send in this chat until you tap ✕ on the document label. Removing the label doesn’t delete earlier messages, and deleting the chat or the file are separate.')));
   card.append(el('p','tiny',uiText('Orivia can misread documents, so check important details against the original. It doesn’t check whether a document is genuine or valid.')));
-  const done=v=>{if(attachConfirm===resolve){attachConfirm=null;resolve(v)}};
-  const row=el('div','attach-row');row.append(attachButton(first?'I understand. Use this in my chat':'Use this in my chat',async()=>{attachConfirm=null;resolve(await readAttached(blob,name))},'btn small'),attachButton('Cancel',()=>{done(false);closeAttach();$('status').textContent=uiText('Your draft is still here.')}));card.append(row);p.replaceChildren(card);
+  const done=v=>{if(attachConfirm===resolve){attachConfirm=null;closeAttach();resolve(v)}};
+  const row=el('div','attach-row');row.append(attachButton(first?'I understand. Use this in my chat':'Use this in my chat',()=>{try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(DOC_ACK_KEY,DOCUMENT_CONSENT)}catch(_){}done(true)},'btn small'),attachButton('Cancel',()=>{done(false);$('status').textContent=uiText('Your draft is still here.')}));card.append(row);p.replaceChildren(card);
  });
 }
 async function readAttached(blob,name){
@@ -194,29 +195,26 @@ async function readAttached(blob,name){
  // What this reading belongs to: the account (or guest), this exact chat, and this generation of the screen.
  const op={gen:attachGeneration,epoch:globalThis.OriviaAccounts?.epoch||'guest',chatId:store.active,newChat:!store.active,controller:new AbortController()};attachOp=op;
  const live=()=>attachOp===op&&op.gen===attachGeneration&&(globalThis.OriviaAccounts?.epoch||'guest')===op.epoch&&store.active===op.chatId;
- try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(DOC_ACK_KEY,DOCUMENT_CONSENT)}catch(_){}
- const p=$('attach-panel');p.replaceChildren(el('p','tiny',uiText('Reading your document…')));
  try{const r=await fetch('/v1/document',{method:'POST',signal:op.controller.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':blob.type||'application/octet-stream','X-File-Name':encodeURIComponent(name),'X-Orivia-Consent':consent.openai,'X-Orivia-Document-Consent':DOCUMENT_CONSENT},body:blob});
   let d={};try{d=await r.json()}catch(_){}
   if(!live())return false;
   if(!r.ok||!d.document||typeof d.document.text!=='string'){const why=d&&d.error;
-   p.replaceChildren(el('p','tiny',uiText(why==='too_many_pages'?'Orivia can read up to 10 pages. Try a shorter document, or a photo of the page you need.':why==='pdf_unreadable'?'Orivia can’t safely count the pages in this PDF (it may be protected or unusual). Take photos of the pages you need instead.':why==='unreadable'?'Orivia couldn’t read any text in that file. Try a clearer photo.':why==='budget_limit'||why==='daily_limit'?'Orivia has read as many documents as it can today. Try again tomorrow.':why==='human_check'?'Please confirm you’re human again, then try once more.':'Orivia couldn’t read that document. Please try again.')),attachButton('Close',closeAttach));return false}
+   return (uiText(why==='too_many_pages'?'Orivia can read up to 10 pages. Try a shorter document, or a photo of the page you need.':why==='pdf_unreadable'?'Orivia can’t safely count the pages in this PDF (it may be protected or unusual). Take photos of the pages you need instead.':why==='unreadable'?'Orivia couldn’t read any text in that file. Try a clearer photo.':why==='budget_limit'||why==='daily_limit'?'Orivia has read as many documents as it can today. Try again tomorrow.':why==='human_check'?'Please confirm you’re human again, then try once more.':'Orivia couldn’t read that document. Please try again.'))}
   const doc={name:String(d.document.name||name).slice(0,120),kind:String(d.document.kind||'').slice(0,80),text:d.document.text.slice(0,12000),addedAt:Date.now()};
   // Never remove another chat's document to make room: if saved chats would outgrow the account backup, say so instead.
   const c=op.newChat?null:store.chats.find(x=>x.id===op.chatId);if(!op.newChat&&!c)return false;
   const size=new TextEncoder().encode(JSON.stringify(store.chats)).length+new TextEncoder().encode(JSON.stringify(doc)).length-(c&&c.document?new TextEncoder().encode(JSON.stringify(c.document)).length:0);
-  if(size>DOC_SPACE){p.replaceChildren(el('p','tiny',uiText('Your saved chats are too large to keep another document. Remove a document from an older chat (✕ on its label) or delete chats you no longer need, then try again. Nothing was changed.')),attachButton('Close',closeAttach));return false}
+  if(size>DOC_SPACE)return uiText('Your saved chats are too large to keep another document. Remove a document from an older chat (✕ on its label) or delete chats you no longer need, then try again. Nothing was changed.');
   if(c){c.document=doc;persist()}else pendingDocument=doc;
-  attachOp=null;closeAttach();renderDocContext();
-  if(d.document.truncated)$('status').textContent=uiText('Orivia read the first part of your document (it’s long).');
+  attachOp=null;renderDocContext();
   return true;
- }catch(_){if(live())p.replaceChildren(el('p','tiny',uiText('Orivia couldn’t read that document. Please try again.')),attachButton('Close',closeAttach));return false}
+ }catch(_){return live()?uiText('Orivia couldn’t read that document. Please try again.'):false}
  finally{if(attachOp===op)attachOp=null}
 }
 /** Send with an attachment: read it first (once per draft), keep the draft and file if anything is declined or fails. */
 async function readPendingAttachment(){
  const a=pendingAttachment;if(!a)return true;if(a.read)return true;if(!attachAllowed()||attachConfirm||attachOp)return false;
- const ok=await confirmAttach(a.blob,a.name);if(ok&&pendingAttachment===a)a.read=true;return ok&&pendingAttachment===a;
+ const ok=await confirmAttach(a.blob,a.name);return ok&&pendingAttachment===a;
 }
 var pendingDocument=null; // a document chosen before the first message of a new chat
 /* University context (21 Oct): the guide a person chose with 'Ask Orivia about this'. Shown as a removable label; sent as ids
@@ -590,10 +588,14 @@ function draw({newReply=null,scroll=false}={}){
  renderedChat=store.active;
  const el=$('history');el.replaceChildren();
  for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant')+(t===newReply?' reply-arriving':'');const b=document.createElement('b');b.textContent=uiText(t.role==='user'?'You':'Orivia');const txt=document.createElement('span');
-  const srcs=t.role==='assistant'?safeSources(t.meta&&t.meta.sources):[];
+  const allSrcs=t.role==='assistant'?safeSources(t.meta&&t.meta.sources):[],docSrcs=allSrcs.filter(s=>s.category==='document'),srcs=allSrcs.filter(s=>s.category!=='document');
   if(srcs.length)txt.append(...citedText(t.content,srcs));else txt.textContent=t.content;p.append(b,txt);
   // (draw() has its own local `el`, so the chip is built directly.)
-  if(t.role==='user'&&t.meta?.attachment&&typeof t.meta.attachment.name==='string'){const chip=document.createElement('span');chip.className='message-attachment';chip.textContent=(t.meta.attachment.type==='application/pdf'?'PDF':uiText('Photo'))+' · '+t.meta.attachment.name;p.append(document.createElement('br'),chip)}
+  if(t.role==='user'&&t.meta?.attachment&&typeof t.meta.attachment.name==='string'){const at=t.meta.attachment,card=document.createElement('div');card.className='message-attachment';
+   const url=at.type!=='application/pdf'&&(attachmentPreviews.get(at.id)||(at.fileId&&globalThis.OriviaAccounts?.user?'/api/account/files/'+encodeURIComponent(at.fileId):''));
+   const fileCard=()=>{card.className='message-attachment is-file';const icon=document.createElement('span');icon.className='compose-file-icon';icon.textContent=at.type==='application/pdf'?'PDF':uiText('Photo');const nm=document.createElement('strong');nm.className='compose-file-name';nm.textContent=at.name;card.replaceChildren(icon,nm)};
+   if(url){card.className='message-attachment is-photo';const img=document.createElement('img');img.src=url;img.alt=uiText('Your photo')+': '+at.name;img.loading='lazy';img.onerror=fileCard;card.append(img)}else fileCard();
+   p.prepend(card)}
   const cards=t.role==='assistant'&&t.meta&&t.meta.organisations?orgCards(t,srcs):null;
   if(cards){p.append(cards);p.classList.add('has-cards')}
   if(t.role==='assistant'&&t.meta&&safeDraft(t.meta.draft))p.append(draftBox(t));
@@ -601,7 +603,9 @@ function draw({newReply=null,scroll=false}={}){
   if(t.role==='assistant'&&t.meta?.destinations){const dc=destinationCards(t.meta.destinations,srcs,t);if(dc)p.append(dc)}
   if(t.role==='assistant'&&t.meta&&t.meta.reminder&&typeof t.meta.reminder.id==='string')p.append(reminderBox(t));
   if(t.role==='assistant'&&t.meta?.calendarChange){const cb=calendarChangeBox(t);if(cb)p.append(cb)}
-  if(t.role==='assistant'&&(srcs.length||(t.meta&&t.meta.research))){
+  // The person's own document: a plain note, not a web source with a link or a circle.
+  if(docSrcs.length){const note=document.createElement('p');note.className='doc-note';note.textContent=uiText('Based on your document:')+' '+String(docSrcs[0].title||'').replace(/^Your document:\s*/,'');p.append(note)}
+  if(t.role==='assistant'&&(srcs.length||(t.meta&&t.meta.research&&!docSrcs.length))){
    const rb=researchBlock(srcs,t.meta.research);
    p.append(rb);
   }
@@ -1959,14 +1963,30 @@ $('form').onsubmit=async e=>{
  stopDictation(true);stopSpeaking();
  let text=$('msg').value.trim();if(!text&&!pendingAttachment)return;
  // An attachment is read first (notice, then one reading); declined or failed keeps the draft and the file.
- if(pendingAttachment&&!(await readPendingAttachment()))return;
- text=$('msg').value.trim();const sentAttachment=pendingAttachment?{name:pendingAttachment.name,type:pendingAttachment.type,...(pendingAttachment.fileId?{fileId:pendingAttachment.fileId}:{})}:null;
+ const readFirst=pendingAttachment&&!pendingAttachment.read?pendingAttachment:null;
+ if(readFirst&&!(await readPendingAttachment()))return;
+ text=$('msg').value.trim();const sentAttachment=pendingAttachment?{id:newId(),name:pendingAttachment.name,type:pendingAttachment.type,...(pendingAttachment.fileId&&globalThis.OriviaAccounts?.user?{fileId:pendingAttachment.fileId}:{})}:null;
+ if(sentAttachment&&sentAttachment.type!=='application/pdf')attachmentPreviews.set(sentAttachment.id,URL.createObjectURL(pendingAttachment.blob));
+ const attachedFile=pendingAttachment;
  if(!text&&!sentAttachment)return;pendingAttachment=null;renderAttachmentPreview();
  $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900),...(sentAttachment?{meta:{attachment:sentAttachment}}:{})});save();draw({scroll:true});
  const chatId=store.active,sentTurns=turns.slice(),accountAtSend=globalThis.OriviaAccounts?.epoch||'';
  const controller=new AbortController();activeChatRequest=controller;
  let wentAway=document.visibilityState==='hidden';const away=()=>{if(document.visibilityState==='hidden')wentAway=true};document.addEventListener('visibilitychange',away);
  busy=true;stoppedByPerson=false;sendMode(true);$('status').textContent=uiText('Orivia is thinking…');working('Thinking…');window.oriviaResearchMode=!!pilotConsent();
+ // The message is already in the chat; now the file is read (Stop cancels it). If it can't be read, the message and file
+ // go back into the box.
+ if(readFirst){
+  working(uiText('Reading your document…'));$('status').textContent=uiText('Reading your document…');activeChatRequest={abort:()=>cancelAttach()};
+  const result=await readAttached(readFirst.blob,readFirst.name);
+  if(result!==true){
+   if(store.active===chatId&&turns.at(-1)?.role==='user'&&turns.at(-1).meta?.attachment?.id===sentAttachment?.id){turns.pop();save();draw()}
+   if(!$('msg').value)$('msg').value=text;grow();pendingAttachment=attachedFile;renderAttachmentPreview();
+   $('status').textContent=stoppedByPerson?uiText('Stopped. Your message is back in the box.'):result||uiText('Your draft is still here.');
+   activeChatRequest=null;busy=false;sendMode(false);working('');document.removeEventListener('visibilitychange',away);return;
+  }
+  readFirst.read=true;activeChatRequest=controller;working('Thinking…');$('status').textContent=uiText('Orivia is thinking…');
+ }
  try{
   const res=await fetch('/v1/chat',{method:'POST',signal:controller.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),...(currentOrgContext()?{orgContext:{org:currentOrgContext().org,content:currentOrgContext().content}}:{}),...(chatDocument()&&pilotConsent()?{document:{name:chatDocument().name,kind:chatDocument().kind||'',text:chatDocument().text}}:{}),researchContext:currentResearchContext(sentTurns),language:uiLanguage(),style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
   const {r,d}=await readReply(res,chatId);

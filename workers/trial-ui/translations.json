@@ -2578,5 +2578,13 @@
   "Add a photo or file": {
     "fr": "Ajouter une photo ou un fichier",
     "ar": "إضافة صورة أو ملف"
+  },
+  "Your photo": {
+    "fr": "Votre photo",
+    "ar": "صورتك"
+  },
+  "Based on your document:": {
+    "fr": "D’après votre document :",
+    "ar": "استنادًا إلى مستندك:"
   }
 }

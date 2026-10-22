@@ -92,12 +92,12 @@ assert.equal(verifyReply({action:'reply',sentences:[{text:'Rent increases are ca
 
 // The app: explicit "Use this in my chat", transcript (never the file) with messages, removable label, kept per chat.
 const chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace(/\r\n/g,'\n'),page=fs.readFileSync('workers/trial-ui/page.html','utf8');
-assert.ok(chat.includes("attachButton(first?'I understand. Use this in my chat':'Use this in my chat',async()=>{attachConfirm=null;resolve(await readAttached(blob,name))},'btn small')"),'nothing is sent before the explicit tap');
+assert.ok(chat.includes("const readFirst=pendingAttachment&&!pendingAttachment.read?pendingAttachment:null;\n if(readFirst&&!(await readPendingAttachment()))return;"),'nothing is read before the notice is accepted');
 // Ina's composer: choosing only previews; Send reads first; declined or failed keeps the draft and file; shown in the message.
-assert.ok(chat.includes("if(pendingAttachment&&!(await readPendingAttachment()))return;"),'reading happens on Send, after the notice');
-assert.ok(chat.includes("const ok=await confirmAttach(a.blob,a.name);if(ok&&pendingAttachment===a)a.read=true;"),'one reading per draft');
+assert.ok(chat.indexOf("turns.push({role:'user',content:text.slice(0,900)")<chat.indexOf('const result=await readAttached(readFirst.blob,readFirst.name);'),'the message is shown first, then the file is read');
+assert.ok(chat.includes('readFirst.read=true;activeChatRequest=controller;')&&chat.includes('pendingAttachment=attachedFile;renderAttachmentPreview();'),'one reading per draft; a failed reading puts the message and file back');
 assert.ok(chat.includes("turns.push({role:'user',content:text.slice(0,900),...(sentAttachment?{meta:{attachment:sentAttachment}}:{})});"),'the attachment travels inside the person message');
-assert.ok(chat.includes("chip.className='message-attachment'"),'shown inside that message');
+assert.ok(chat.includes("card.className='message-attachment is-photo'")&&chat.includes("attachmentPreviews.set(sentAttachment.id,URL.createObjectURL(pendingAttachment.blob))"),'the photo shows inside the message (this session only)');
 assert.ok(!/id="msg"[^>]*required/.test(page),'a message can be only an attachment');
 {const vt=new Function(chat.split(String.fromCharCode(10)).find(l=>l.startsWith("const validTurn="))+';return validTurn')();
  assert.ok(vt({role:'user',content:'',meta:{attachment:{name:'Lease.pdf'}}}));assert.ok(!vt({role:'user',content:''}));assert.ok(!vt({role:'assistant',content:'',meta:{attachment:{name:'x'}}}));
@@ -129,7 +129,7 @@ assert.ok(chat.includes("It doesn’t check whether a document is genuine or val
  {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.cancelAttach();await p;assert.ok(!h.ctx.store.chats.some(c=>c.document));assert.equal(h.ctx.getPending(),null,'sign-out (leave) aborts')}
  {const h=harness();h.ctx.store.active=null;const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.cancelAttach();h.answer(h.ok());await p;assert.equal(h.ctx.getPending(),null,'new empty chat then another: dropped')}
  {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.store.chats.shift();h.ctx.store.active=null;h.answer(h.ok());await p;assert.equal(h.ctx.getPending(),null,'chat deleted: dropped')}
- {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.store.active='c2';h.answer(Error('network'));await p;assert.equal(h.ctx.$('attach-panel').children.length,1,'late error: no message on the other chat')}
+ {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.store.active='c2';h.answer(Error('network'));assert.equal(await p,false,'late error: nothing to show on the other chat')}
  {const h=harness();const heavy='عقد إيجار سنوي ٥٢٬٠٠٠ درهم '.repeat(300);h.ctx.store.chats=Array.from({length:9},(_,i)=>({id:'k'+i,turns:[],...(i<8?{document:{name:'d'+i,text:heavy,addedAt:i}}:{})}));h.ctx.store.active='k8';
   let p=h.ctx.readAttached(new Blob(['x']),'ninth');await tick();h.answer(h.ok(heavy,'ninth'));await p;
   assert.equal(h.ctx.store.chats.filter(c=>c.document).length,9,'nine attachments: none evicted');
@@ -140,17 +140,20 @@ assert.ok(chat.includes("It doesn’t check whether a document is genuine or val
 // Founder test 22 Oct: drawing a message with an attachment crashed (draw() has a local `el`), so nothing was shown or
 // sent. Run the real draw() on such a message.
 {const a=chat.indexOf('function draw({newReply=null,scroll=false}={}){'),b=chat.indexOf('\n}\n',a)+3;const src=chat.slice(a,b);
- const mk=tag=>({tag,className:'',textContent:'',children:[],classList:{add(){},toggle(){}},append(...v){this.children.push(...v)},replaceChildren(...v){this.children=v},setAttribute(){},style:{}});
+ const mk=tag=>({tag,className:'',textContent:'',children:[],prepend(...v){this.children.unshift(...v)},classList:{add(){},toggle(){}},append(...v){this.children.push(...v)},replaceChildren(...v){this.children=v},setAttribute(){},style:{}});
  const nodes={history:mk('div'),empty:mk('div'),'chat-scroll':Object.assign(mk('div'),{scrollTop:0,scrollHeight:0})};
- const ctx={document:{createElement:mk},$:id=>nodes[id]||mk('div'),uiText:t=>t,window:{},renderedChat:null,store:{active:'c1'},nearChatBottom:()=>true,safeSources:()=>[],citedText:()=>[],
-  turns:[{role:'user',content:'What does this say about the deposit?',meta:{attachment:{name:'Lease.pdf',type:'application/pdf'}}},{role:'user',content:'',meta:{attachment:{name:'Photo 22-10.jpg',type:'image/jpeg'}}}]};
+ const ctx={document:{createElement:mk},$:id=>nodes[id]||mk('div'),uiText:t=>t,window:{},renderedChat:null,store:{active:'c1'},nearChatBottom:()=>true,safeSources:()=>[],citedText:()=>[],attachmentPreviews:new Map([['a2','blob:preview-1']]),globalThis:{},
+  turns:[{role:'user',content:'What does this say about the deposit?',meta:{attachment:{name:'Lease.pdf',type:'application/pdf'}}},{role:'user',content:'',meta:{attachment:{id:'a2',name:'Photo 22-10.jpg',type:'image/jpeg'}}}]};
  vm.createContext(ctx);vm.runInContext(src+';this.draw=draw;',ctx);
  assert.doesNotThrow(()=>ctx.draw({scroll:true}));
  const bubbles=nodes.history.children;assert.equal(bubbles.length,2);
- const chips=bubbles.flatMap(p=>p.children.filter(c=>c.className==='message-attachment').map(c=>c.textContent));
- assert.deepEqual(chips,['PDF · Lease.pdf','Photo · Photo 22-10.jpg'],'the attachment shows inside the person’s own message');}
+ const cards=bubbles.map(p=>p.children.find(c=>String(c.className).startsWith('message-attachment')));
+ assert.equal(cards[0].className,'message-attachment is-file');assert.deepEqual(cards[0].children.map(c=>c.textContent),['PDF','Lease.pdf']);
+ assert.equal(cards[1].className,'message-attachment is-photo','a photo shows as a picture');assert.equal(cards[1].children[0].src,'blob:preview-1');}
 // + opens the device picker directly (one input: photos, camera and files as the phone offers them).
 assert.ok(chat.includes("function openAttach(){if(attachOp||attachConfirm)return;closeAttach();$('attach-file').click()}"));
 assert.match(page,/<input type="file" id="attach-file" accept="image\/\*,application\/pdf" hidden>/);
 assert.ok(!page.includes('id="attach-camera"')&&!page.includes('id="attach-photo"'));
+// The person’s own document is a plain note under the reply: no circle in the text, not in the web sources list.
+assert.ok(chat.includes("docSrcs=allSrcs.filter(s=>s.category==='document'),srcs=allSrcs.filter(s=>s.category!=='document')")&&chat.includes("note.className='doc-note'"));
 console.log('Files to Chat: read once inside the OpenAI limits, labelled evidence, figures from the document only, gates, app wiring.');
