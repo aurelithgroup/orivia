@@ -2822,5 +2822,65 @@
   "Preparing the voice…": {
     "fr": "Préparation de la voix…",
     "ar": "جارٍ تجهيز الصوت…"
+  },
+  "Regenerate": {
+    "fr": "Régénérer",
+    "ar": "إعادة إنشاء الرد"
+  },
+  "Conversation versions": {
+    "fr": "Versions de la conversation",
+    "ar": "نسخ المحادثة"
+  },
+  "Previous version": {
+    "fr": "Version précédente",
+    "ar": "النسخة السابقة"
+  },
+  "Next version": {
+    "fr": "Version suivante",
+    "ar": "النسخة التالية"
+  },
+  "Edit message": {
+    "fr": "Modifier le message",
+    "ar": "تعديل الرسالة"
+  },
+  "Save and send": {
+    "fr": "Enregistrer et envoyer",
+    "ar": "حفظ وإرسال"
+  },
+  "Review reminder": {
+    "fr": "Vérifier le rappel",
+    "ar": "مراجعة التذكير"
+  },
+  "Save reminder": {
+    "fr": "Enregistrer le rappel",
+    "ar": "حفظ التذكير"
+  },
+  "Sends a new conversation version. Previous replies and saved calendar events are kept.": {
+    "fr": "Envoie une nouvelle version de la conversation. Les réponses précédentes et les événements enregistrés sont conservés.",
+    "ar": "ينشئ نسخة جديدة من المحادثة. تبقى الردود السابقة وأحداث التقويم المحفوظة."
+  },
+  "This is a new conversation version. No reminder was added automatically; existing calendar events are unchanged.": {
+    "fr": "Ceci est une nouvelle version. Aucun rappel n’a été ajouté automatiquement ; les événements existants restent inchangés.",
+    "ar": "هذه نسخة جديدة. لم تتم إضافة تذكير تلقائياً؛ أحداث التقويم الحالية لم تتغير."
+  },
+  "Here is the reminder suggested by this version. Review it before saving.": {
+    "fr": "Voici le rappel proposé par cette version. Vérifiez-le avant de l’enregistrer.",
+    "ar": "هذا هو التذكير المقترح في هذه النسخة. راجعه قبل الحفظ."
+  },
+  "Could not change this conversation. Your saved version is kept.": {
+    "fr": "Impossible de modifier cette conversation. Votre version enregistrée est conservée.",
+    "ar": "تعذّر تعديل المحادثة. نسختك المحفوظة باقية."
+  },
+  "This chat has reached its version limit. Start a new chat to continue; all versions are kept.": {
+    "fr": "Cette conversation a atteint sa limite de versions. Ouvrez une nouvelle conversation ; toutes les versions sont conservées.",
+    "ar": "بلغت هذه المحادثة حد النسخ. ابدأ محادثة جديدة للمتابعة؛ جميع النسخ محفوظة."
+  },
+  "Send or remove the attached file before changing a conversation version.": {
+    "fr": "Envoyez ou retirez le fichier joint avant de changer de version.",
+    "ar": "أرسل الملف المرفق أو أزله قبل تغيير نسخة المحادثة."
+  },
+  "Could not save this reminder. Check its date and time.": {
+    "fr": "Impossible d’enregistrer ce rappel. Vérifiez sa date et son heure.",
+    "ar": "تعذّر حفظ التذكير. تحقق من التاريخ والوقت."
   }
 }

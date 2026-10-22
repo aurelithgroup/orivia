@@ -25,7 +25,7 @@ function autoTitle(ts){const u=(ts.find(t=>t.role==='user')||{}).content||'New c
 function normChat(c){
  if(!c||typeof c!=='object'||typeof c.id!=='string')return null;
  const ts=Array.isArray(c.turns)?c.turns.filter(validTurn).map(t=>({role:t.role,content:String(t.content).slice(0,t.role==='assistant'?4000:2000),...(t.meta&&typeof t.meta==='object'?{meta:t.meta}:{})})):[];
- return {id:c.id.slice(0,24),title:String(c.title||autoTitle(ts)).slice(0,80),titled:!!c.titled,created:Number(c.created)||Date.now(),updated:Number(c.updated)||Date.now(),pinned:!!c.pinned,archived:!!c.archived,turns:ts,...(c.orgContext&&typeof c.orgContext==='object'&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.org))&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.content))?{orgContext:{org:String(c.orgContext.org),content:String(c.orgContext.content),title:String(c.orgContext.title||'').slice(0,150),orgName:String(c.orgContext.orgName||'').slice(0,80)}}:{}),...(()=>{const list=(Array.isArray(c.documents)?c.documents:c.document?[c.document]:[]).filter(d=>d&&typeof d==='object'&&typeof d.text==='string'&&d.text.trim()).map(d=>({...(typeof d.id==='string'?{id:d.id.slice(0,40)}:{}),name:String(d.name||'Document').slice(0,120),kind:String(d.kind||'').slice(0,80),text:d.text.slice(0,12000),addedAt:Number(d.addedAt)||Date.now(),...(d.partial?{partial:true}:{})}));return list.length?{documents:list}:{}})()};
+ return {...(window.OriviaVersions?.normalise(c.versions)?{versions:window.OriviaVersions.normalise(c.versions)}:{}),id:c.id.slice(0,24),title:String(c.title||autoTitle(ts)).slice(0,80),titled:!!c.titled,created:Number(c.created)||Date.now(),updated:Number(c.updated)||Date.now(),pinned:!!c.pinned,archived:!!c.archived,turns:ts,...(c.orgContext&&typeof c.orgContext==='object'&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.org))&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.content))?{orgContext:{org:String(c.orgContext.org),content:String(c.orgContext.content),title:String(c.orgContext.title||'').slice(0,150),orgName:String(c.orgContext.orgName||'').slice(0,80)}}:{}),...(()=>{const list=(Array.isArray(c.documents)?c.documents:c.document?[c.document]:[]).filter(d=>d&&typeof d==='object'&&typeof d.text==='string'&&d.text.trim()).map(d=>({...(typeof d.id==='string'?{id:d.id.slice(0,40)}:{}),name:String(d.name||'Document').slice(0,120),kind:String(d.kind||'').slice(0,80),text:d.text.slice(0,12000),addedAt:Number(d.addedAt)||Date.now(),...(d.partial?{partial:true}:{})}));return list.length?{documents:list}:{}})()};
 }
 let storeLocked=false; // saved chats exist but couldn't be read or backed up: never overwrite them
 function storageWarn(msg){
@@ -619,7 +619,7 @@ function draw({newReply=null,scroll=false}={}){
  const sc=$('chat-scroll'),previousTop=sc.scrollTop;
  const follow=scroll||renderedChat!==store.active||nearChatBottom(sc);
  renderedChat=store.active;
- const el=$('history');el.replaceChildren();
+ const el=$('history');el.replaceChildren();renderVersionToolbar(el);
  for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant')+(t===newReply?' reply-arriving':'');const b=document.createElement('b');b.textContent=uiText(t.role==='user'?'You':'Orivia');b.className='sr-only';const txt=document.createElement('span');txt.className='reply-text';
   const allSrcs=t.role==='assistant'?safeSources(t.meta&&t.meta.sources):[],docSrcs=allSrcs.filter(s=>s.category==='document'),srcs=allSrcs.filter(s=>s.category!=='document');
   if(srcs.length)txt.append(...citedText(t.content,srcs));else txt.textContent=t.content;
@@ -636,6 +636,7 @@ function draw({newReply=null,scroll=false}={}){
   if(t.role==='assistant'&&t.meta?.showMessage){const h=showSomeoneBox(t.meta.showMessage);if(h)p.append(h)}
   if(t.role==='assistant'&&t.meta?.destinations){const dc=destinationCards(t.meta.destinations,srcs,t);if(dc)p.append(dc)}
   if(t.role==='assistant'&&t.meta&&t.meta.reminder&&typeof t.meta.reminder.id==='string')p.append(reminderBox(t));
+  if(t.role==='assistant'&&t.meta?.reminderReview)p.append(reminderReviewBox(t));
   if(t.role==='assistant'&&t.meta?.calendarChange){const cb=calendarChangeBox(t);if(cb)p.append(cb)}
   // The person's own document: a plain note, not a web source with a link or a circle.
   if(docSrcs.length){const note=document.createElement('p');note.className='doc-note';note.textContent=uiText('Based on your document:')+' '+String(docSrcs[0].title||'').replace(/^Your document:\s*/,'');p.append(note)}
@@ -643,13 +644,15 @@ function draw({newReply=null,scroll=false}={}){
    const rb=researchBlock(srcs,t.meta.research);
    p.append(rb);
   }
+  if(t.role==='user')renderEditAction(t,p);
   if(t.role==='assistant'){
    const actions=document.createElement('div');actions.className='reply-actions';
    const copy=document.createElement('button');copy.type='button';copy.textContent=uiText('Copy');copy.setAttribute('aria-label',uiText('Copy reply'));copy.onclick=async()=>{try{await navigator.clipboard.writeText(t.content);copy.textContent=uiText('Copied')}catch(_){copy.textContent=uiText('Could not copy')}};actions.append(copy);
    if('speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent=uiText('▶ Listen');lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label',uiText('Listen to this reply'));lb.onclick=()=>listen(spokenText(t.content),lb,{language:t.meta?.lang||null});actions.append(lb)}
    const more=document.createElement('details'),summary=document.createElement('summary');summary.textContent='⋯';summary.setAttribute('aria-label',uiText('More options'));more.append(summary);
    const select=document.createElement('button');select.type='button';select.textContent=uiText('Select reply');select.onclick=()=>{window.OriviaChatMotion?.finishAll();const r=document.createRange();r.selectNodeContents(txt);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);more.open=false};more.append(select);
-   feedbackControls(t,store.active+':'+turns.indexOf(t),actions,more,p);actions.append(more);p.append(actions);
+   const regenerate=document.createElement('button');regenerate.type='button';regenerate.textContent=uiText('Regenerate');regenerate.disabled=busy;regenerate.onclick=()=>replayTurn(turns.indexOf(t)-1);more.append(regenerate);
+   feedbackControls(t,t.meta?.replyRef||store.active+':'+turns.indexOf(t),actions,more,p);actions.append(more);p.append(actions);
   }
   el.append(p);
   if(t===newReply&&window.OriviaChatMotion){const extras=[...p.children].filter(n=>n!==txt&&n!==b);extras.forEach(n=>n.classList.add('reply-pending-extra'));txt.classList.add('reply-revealing');
@@ -658,6 +661,26 @@ function draw({newReply=null,scroll=false}={}){
  $('empty').hidden=turns.length>0;
  sc.scrollTop=follow?sc.scrollHeight:previousTop;
 }
+/* Edit/regenerate preserves the previous conversation. Calendar saves belong to the calendar, not a chat version. */
+function versionStatus(e){$('status').textContent=uiText(e?.message==='version_limit'?'This chat has reached its version limit. Start a new chat to continue; all versions are kept.':'Could not change this conversation. Your saved version is kept.')}
+function renderVersionToolbar(parent){const c=activeChat(),v=c?.versions;if(!v?.items?.length)return;
+ const bar=document.createElement('div');bar.className='reply-actions';bar.setAttribute('aria-label',uiText('Conversation versions'));
+ for(const [label,delta]of [['Previous version',-1],['Next version',1]]){const b=document.createElement('button');b.type='button';b.textContent=uiText(label);b.disabled=busy||!v.items[v.active+delta];b.onclick=()=>{
+  if(busy)return;const old=JSON.parse(JSON.stringify(c));try{c.turns=turns.slice();window.OriviaVersions.select(c,v.active+delta);turns=c.turns.slice();if(!persist())throw Error('save_failed');stopSpeaking();clearChatCards();draw()}catch(e){Object.assign(c,old);turns=c.turns.slice();draw();versionStatus(e)}};bar.append(b)}
+ const n=document.createElement('span');n.textContent=(v.active+1)+' / '+v.items.length;bar.append(n);parent.append(bar)}
+function renderEditAction(t,parent){const b=document.createElement('button');b.type='button';b.className='btn text small';b.textContent=uiText('Edit');b.disabled=busy;b.onclick=()=>{
+ if(busy||parent.querySelector('.message-edit'))return;const form=document.createElement('form');form.className='message-edit';form.style.cssText='display:flex;flex-wrap:wrap;gap:8px;white-space:normal;margin-top:8px';const input=document.createElement('textarea');input.value=t.content;input.maxLength=900;input.style.cssText='width:100%;min-height:84px;box-sizing:border-box;resize:vertical;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit';input.setAttribute('aria-label',uiText('Edit message'));
+ const note=document.createElement('p');note.className='tiny';note.textContent=uiText('Sends a new conversation version. Previous replies and saved calendar events are kept.');
+ const go=document.createElement('button');go.type='submit';go.className='btn small';go.textContent=uiText('Save and send');const cancel=document.createElement('button');cancel.type='button';cancel.textContent=uiText('Cancel');cancel.onclick=()=>form.remove();
+ form.onsubmit=e=>{e.preventDefault();replayTurn(turns.indexOf(t),input.value)};form.append(input,note,go,cancel);parent.append(form);input.focus()};parent.append(b)}
+async function replayTurn(index,text){
+ if(busy||!agreed()||Date.now()<coolUntil)return;
+ if(navigator.onLine===false){showOffline();return}
+ if(pendingAttachment){$('status').textContent=uiText('Send or remove the attached file before changing a conversation version.');return}
+ const c=activeChat();if(!c)return;const old=JSON.parse(JSON.stringify(c)),draft=$('msg').value;
+ try{c.turns=turns.slice();const replay=window.OriviaVersions.fork(c,index,text);turns=c.turns.slice();if(!persist())throw Error('save_failed');draw();await sendChat({preventDefault(){}},replay)}
+ catch(e){Object.assign(c,old);turns=c.turns.slice();draw();versionStatus(e)}finally{if(!$('msg').value)$('msg').value=draft;grow()}}
+
 /* Reply feedback (ORI-CHAT-007/008): optional thumbs and Report a problem. Signed-in only, sent to the Orivia team's
    review queue; guests are told to sign in, never shown a false success. The reply text goes only if ticked. */
 function feedbackApi(path,method,body){const u=window.OriviaAccounts?.user;if(!u)return Promise.reject(Object.assign(Error('sign_in'),{code:'sign_in'}));
@@ -1999,6 +2022,8 @@ function saveChatReminder(r){
  const saved={id:'evt-'+Date.now()+'-'+Math.random().toString(36).slice(2),title:r.title.trim().slice(0,100),at:at.toISOString(),alarm:ALARMS.some(([m])=>m===r.alarm)?r.alarm:30};
  events.push(saved);storeEvents();renderEvents();renderUpcoming();return saved;
 }
+function reminderReviewBox(t){const r=t.meta.reminderReview,box=el('div','event');box.append(el('strong','',uiText('Review reminder')),el('p','tiny',[r.title,r.at||r.date,r.time].filter(Boolean).join(' · ')));
+ box.append(button('Save reminder','btn small',()=>{if(!t.meta.reminderReview)return;const saved=saveChatReminder(r);if(!saved){$('status').textContent=uiText('Could not save this reminder. Check its date and time.');return}t.meta.reminder={id:saved.id,title:saved.title,at:saved.at,alarm:saved.alarm};delete t.meta.reminderReview;save();draw()}));return box}
 function reminderBox(t){
  const saved=t.meta.reminder,live=events.find(e=>e.id===saved.id),r=live||saved,box=el('div','event');box.style.cssText='margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px';
  const when=new Date(r.at).toLocaleString(uiLanguage(),{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
@@ -2081,21 +2106,21 @@ function resendWhenBack(text,chatId){
  const go=()=>{if(document.visibilityState!=='visible')return;document.removeEventListener('visibilitychange',go);setTimeout(()=>{if(!busy&&$('msg').value===text)$('form').requestSubmit()},300)};
  document.addEventListener('visibilitychange',go);go();return true;
 }
-$('form').onsubmit=async e=>{
+async function sendChat(e,replay=null){
  e.preventDefault();
  if(busy){if(activeChatRequest){stoppedByPerson=true;activeChatRequest.abort()}return}
  if(!agreed()||Date.now()<coolUntil)return;
  if(navigator.onLine===false){showOffline();$('status').textContent=uiText('You’re offline. Your message is still here; send it when you’re back online.');return}
  stopDictation(true);stopSpeaking();
- let text=$('msg').value.trim();if(!text&&!pendingAttachment)return;
+ let text=replay?turns.at(-1)?.content||'':$('msg').value.trim();if(!text&&!pendingAttachment)return;
  // An attachment is read first (notice, then one reading); declined or failed keeps the draft and the file.
  const readFirst=pendingAttachment&&!pendingAttachment.read?pendingAttachment:null;
  if(readFirst&&!(await readPendingAttachment()))return;
- text=$('msg').value.trim();const sentAttachment=pendingAttachment?{id:newId(),name:pendingAttachment.name,type:pendingAttachment.type,...(pendingAttachment.fileId&&globalThis.OriviaAccounts?.user?{fileId:pendingAttachment.fileId}:{})}:null;
+ text=replay?turns.at(-1)?.content||'':$('msg').value.trim();const sentAttachment=pendingAttachment?{id:newId(),name:pendingAttachment.name,type:pendingAttachment.type,...(pendingAttachment.fileId&&globalThis.OriviaAccounts?.user?{fileId:pendingAttachment.fileId}:{})}:null;
  if(sentAttachment&&sentAttachment.type!=='application/pdf')attachmentPreviews.set(sentAttachment.id,URL.createObjectURL(pendingAttachment.blob));
  const attachedFile=pendingAttachment;
  if(!text&&!sentAttachment)return;pendingAttachment=null;renderAttachmentPreview();
- $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900),...(sentAttachment?{meta:{attachment:sentAttachment}}:{})});save();draw({scroll:true});
+ if(!replay){$('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900),...(sentAttachment?{meta:{attachment:sentAttachment}}:{})})}save();draw({scroll:true});
  const chatId=store.active,sentTurns=turns.slice(),accountAtSend=globalThis.OriviaAccounts?.epoch||'';
  const controller=new AbortController();activeChatRequest=controller;
  let wentAway=document.visibilityState==='hidden';const away=()=>{if(document.visibilityState==='hidden')wentAway=true};document.addEventListener('visibilitychange',away);
@@ -2121,7 +2146,7 @@ $('form').onsubmit=async e=>{
   if((globalThis.OriviaAccounts?.epoch||'')!==accountAtSend)return;
   if(!r.ok){
    const why=d&&d.error;
-   if(wentAway&&r.status===502&&!why&&resendWhenBack(text,chatId))return;
+   if(!replay&&wentAway&&r.status===502&&!why&&resendWhenBack(text,chatId))return;
    if(r.status===403&&why==='org_context_unavailable'){clearOrgContext('That university guide isn’t available to you any more, so Orivia stopped using it. Send your message again to ask without it.');$('msg').value=$('msg').value||sentTurns.at(-1)?.content||'';return}
    if(r.status===401&&why==='human_check'){const passedBefore=humanOk;$('consent').checked=agreed();try{sessionStorage.removeItem(ck)}catch(_){}$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false;if(window.__siteKey)loadTurnstile(window.__siteKey);$('status').textContent='';
     // Passed the check but the browser didn't keep it (a framed preview in a strict browser): say so instead of looping.
@@ -2136,7 +2161,7 @@ $('form').onsubmit=async e=>{
    if(why==='rate_limit'||(r.status===429&&!why))cooldown(wait||60);
    return}
   if(typeof d.reply!=='string'||!d.reply.trim())throw Error('empty');
-  const meta={};const change=safeCalendarChange(d.calendarChange);if(change)meta.calendarChange={proposal:change,status:'pending'};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
+  const meta={replyRef:newId()};const change=safeCalendarChange(d.calendarChange);if(change)meta.calendarChange={proposal:change,status:'pending'};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
   if(vetted.length&&Array.isArray(d.organisations)){const orgs=d.organisations.slice(0,8);if(safeOrgs(orgs,vetted).length){meta.organisations=JSON.parse(JSON.stringify(orgs));if(['list','single','choose'].includes(d.cardMode))meta.cardMode=d.cardMode}}
   const dr=safeDraft(d.draft);if(dr)meta.draft=dr;
   // The language the reply was written in (from the server), so Listen picks the right voice instead of guessing.
@@ -2144,8 +2169,9 @@ $('form').onsubmit=async e=>{
   const showMessage=safeShowMessage(d.showMessage);if(showMessage)meta.showMessage=showMessage;
   const destinations=safeDestinations(d.destinations,vetted);if(destinations.length)meta.destinations=destinations.map(({src,...d})=>d);
   // A reminder Orivia set from the conversation: saved now (the reply says so), with Undo under the reply.
-  if(!change&&d.reminder&&store.active===chatId){const ev=saveChatReminder(d.reminder);if(ev)meta.reminder={id:ev.id,title:ev.title,at:ev.at,alarm:ev.alarm}}
-  const answer={role:'assistant',content:(change?uiText(d.reply):d.reply).slice(0,4000),...(Object.keys(meta).length?{meta}:{})};
+  if(!replay&&!change&&d.reminder&&store.active===chatId){const ev=saveChatReminder(d.reminder);if(ev)meta.reminder={id:ev.id,title:ev.title,at:ev.at,alarm:ev.alarm}}
+  if(replay&&d.reminder&&typeof d.reminder.title==='string'){const r=d.reminder;meta.reminderReview={title:r.title.slice(0,100),...(typeof r.at==='string'?{at:r.at.slice(0,40)}:{}),...(typeof r.date==='string'?{date:r.date.slice(0,10)}:{}),...(typeof r.time==='string'?{time:r.time.slice(0,5)}:{}),alarm:Number(r.alarm)||30}}
+  const answer={role:'assistant',content:((replay&&d.reminder?uiText('Here is the reminder suggested by this version. Review it before saving.'):change?uiText(d.reply):d.reply)+(replay?'\n\n'+uiText('This is a new conversation version. No reminder was added automatically; existing calendar events are unchanged.'):'')).slice(0,4000),...(Object.keys(meta).length?{meta}:{})};
   if(store.active!==chatId){ // they switched chats while Orivia was replying: file the answer in its own chat
    const c=store.chats.find(x=>x.id===chatId);if(c){c.turns=[...c.turns,answer];c.updated=Date.now();persist();renderChats()}
    $('status').textContent=uiText('Orivia replied in “{chat}”.').replace('{chat}',c?c.title:uiText('another chat'));return;
@@ -2167,6 +2193,7 @@ $('form').onsubmit=async e=>{
    // Stopped by the person: take back the unanswered question and return it to the box to edit or resend.
    if(store.active===chatId&&turns.at(-1)?.role==='user'&&turns.at(-1).content===text.slice(0,900)){turns.pop();save();draw()}
    if(!$('msg').value)$('msg').value=text;grow();$('status').textContent=uiText('Stopped. Your message is back in the box.')
-  }else if(!(wentAway&&resendWhenBack(text,chatId)))$('status').textContent=uiText('Could not reach the private AI. Please try again.')}
+  }else if(!(!replay&&wentAway&&resendWhenBack(text,chatId)))$('status').textContent=uiText('Could not reach the private AI. Please try again.')}
  finally{document.removeEventListener('visibilitychange',away);if(activeChatRequest===controller)activeChatRequest=null;busy=false;sendMode(false);$('send').disabled=Date.now()<coolUntil;working('')}
-};
+}
+$('form').onsubmit=e=>sendChat(e);

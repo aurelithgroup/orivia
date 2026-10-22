@@ -39,7 +39,7 @@ assert.ok(chat.includes('listen(spokenText(t.content),lb,{language:t.meta?.lang|
  assert.equal(latinLang('Para magbukas ng bank account sa UAE, kailangan mo ang iyong pasaporte.'),'fil');
  assert.equal(latinLang('OK'),'','too short to tell');}
 // Phone locked mid-reply: the message is sent again once, when the app is back in front (never in a loop).
-assert.ok(chat.includes("if(wentAway&&r.status===502&&!why&&resendWhenBack(text,chatId))return;"));
-assert.ok(chat.includes("}else if(!(wentAway&&resendWhenBack(text,chatId)))"));
+assert.ok(chat.includes("if(!replay&&wentAway&&r.status===502&&!why&&resendWhenBack(text,chatId))return;"));
+assert.ok(chat.includes("}else if(!(!replay&&wentAway&&resendWhenBack(text,chatId)))"));
 assert.ok(chat.includes("if(autoResent===text||store.active!==chatId"),'only once per message');
 console.log('Reply language: stated by the model for Listen, code-written replies in fr/ar, clearer own-site correction.');

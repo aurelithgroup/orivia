@@ -114,7 +114,7 @@ assert.ok(chat.includes("const readFirst=pendingAttachment&&!pendingAttachment.r
 // Ina's composer: choosing only previews; Send reads first; declined or failed keeps the draft and file; shown in the message.
 assert.ok(chat.indexOf("turns.push({role:'user',content:text.slice(0,900)")<chat.indexOf('const result=await readAttached(readFirst.blob,readFirst.name);'),'the message is shown first, then the file is read');
 assert.ok(chat.includes('readFirst.read=true;activeChatRequest=controller;')&&chat.includes('pendingAttachment=attachedFile;renderAttachmentPreview();'),'one reading per draft; a failed reading puts the message and file back');
-assert.ok(chat.includes("turns.push({role:'user',content:text.slice(0,900),...(sentAttachment?{meta:{attachment:sentAttachment}}:{})});"),'the attachment travels inside the person message');
+assert.ok(chat.includes("turns.push({role:'user',content:text.slice(0,900),...(sentAttachment?{meta:{attachment:sentAttachment}}:{})})}"),'the attachment travels inside the person message');
 assert.ok(chat.includes("card.className='message-attachment is-photo'")&&chat.includes("attachmentPreviews.set(sentAttachment.id,URL.createObjectURL(pendingAttachment.blob))"),'the photo shows inside the message (this session only)');
 assert.ok(!/id="msg"[^>]*required/.test(page),'a message can be only an attachment');
 {const vt=new Function(chat.split(String.fromCharCode(10)).find(l=>l.startsWith("const validTurn="))+';return validTurn')();
@@ -169,7 +169,7 @@ assert.ok(chat.includes("It doesn’t check whether a document is genuine or val
 {const a=chat.indexOf('function draw({newReply=null,scroll=false}={}){'),b=chat.indexOf('\n}\n',a)+3;const src=chat.slice(a,b);
  const mk=tag=>({tag,className:'',textContent:'',children:[],prepend(...v){this.children.unshift(...v)},classList:{add(){},toggle(){}},append(...v){this.children.push(...v)},replaceChildren(...v){this.children=v},setAttribute(){},style:{}});
  const nodes={history:mk('div'),empty:mk('div'),'chat-scroll':Object.assign(mk('div'),{scrollTop:0,scrollHeight:0})};
- const ctx={document:{createElement:mk},$:id=>nodes[id]||mk('div'),uiText:t=>t,window:{},renderedChat:null,store:{active:'c1'},nearChatBottom:()=>true,safeSources:()=>[],citedText:()=>[],attachmentPreviews:new Map([['a2','blob:preview-1']]),globalThis:{},
+ const ctx={renderVersionToolbar(){},renderEditAction(){},document:{createElement:mk},$:id=>nodes[id]||mk('div'),uiText:t=>t,window:{},renderedChat:null,store:{active:'c1'},nearChatBottom:()=>true,safeSources:()=>[],citedText:()=>[],attachmentPreviews:new Map([['a2','blob:preview-1']]),globalThis:{},
   turns:[{role:'user',content:'What does this say about the deposit?',meta:{attachment:{name:'Lease.pdf',type:'application/pdf'}}},{role:'user',content:'',meta:{attachment:{id:'a2',name:'Photo 22-10.jpg',type:'image/jpeg'}}}]};
  vm.createContext(ctx);vm.runInContext(src+';this.draw=draw;',ctx);
  assert.doesNotThrow(()=>ctx.draw({scroll:true}));
