@@ -32,4 +32,14 @@ assert.equal(r.ok,false);assert.ok(r.errors.some(e=>/use kind "listing"/.test(e)
 const chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace(/\r\n/g,'\n');
 assert.ok(chat.includes("if(typeof d.replyLanguage==='string'&&Object.hasOwn(VOICE_LOC,d.replyLanguage))meta.lang=d.replyLanguage;"));
 assert.ok(chat.includes('listen(spokenText(t.content),lb,{language:t.meta?.lang||null})'));
+// Without a stated language, Listen tells French, Filipino and English apart by their common words (not the app's language).
+{const a=chat.indexOf('function latinLang('),b=chat.indexOf('function bestVoice');const latinLang=new Function(chat.slice(a,b)+';return latinLang')();
+ assert.equal(latinLang('Bonjour ! Pour ouvrir un compte bancaire, vous aurez besoin de votre passeport.'),'fr');
+ assert.equal(latinLang('To open a bank account you will need your passport and proof of address.'),'en');
+ assert.equal(latinLang('Para magbukas ng bank account sa UAE, kailangan mo ang iyong pasaporte.'),'fil');
+ assert.equal(latinLang('OK'),'','too short to tell');}
+// Phone locked mid-reply: the message is sent again once, when the app is back in front (never in a loop).
+assert.ok(chat.includes("if(wentAway&&r.status===502&&!why&&resendWhenBack(text,chatId))return;"));
+assert.ok(chat.includes("}else if(!(wentAway&&resendWhenBack(text,chatId)))"));
+assert.ok(chat.includes("if(autoResent===text||store.active!==chatId"),'only once per message');
 console.log('Reply language: stated by the model for Listen, code-written replies in fr/ar, clearer own-site correction.');

@@ -2270,5 +2270,9 @@
   "The natural voice isn’t available right now, so your phone’s voice is reading this.": {
     "fr": "La voix naturelle n’est pas disponible pour le moment : c’est la voix de votre téléphone qui lit.",
     "ar": "الصوت الطبيعي غير متاح الآن، لذلك يقرأ صوت هاتفك هذا الرد."
+  },
+  "Your phone went to sleep before Orivia finished. Sending your message again…": {
+    "fr": "Votre téléphone s’est mis en veille avant la fin de la réponse d’Orivia. Nouvel envoi de votre message…",
+    "ar": "دخل هاتفك في وضع السكون قبل أن تُنهي أوريفيا الرد. جارٍ إرسال رسالتك مرة أخرى…"
   }
 }

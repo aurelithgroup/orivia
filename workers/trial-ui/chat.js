@@ -850,7 +850,14 @@ const VOICE_BAD=/^(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jes
 function textLang(t){ // the language of the reply, from its script
  if(/[؀-ۿ]/.test(t))return /[ٹڈڑںھہے]/.test(t)?'ur':'ar';
  if(/[ഀ-ൿ]/.test(t))return 'ml';if(/[ঀ-৿]/.test(t))return 'bn';if(/[ऀ-ॿ]/.test(t))return 'hi';
- if(/[一-鿿]/.test(t))return 'zh';if(/[Ѐ-ӿ]/.test(t))return 'ru';return ['fr','fil'].includes(uiLanguage())?uiLanguage():'en';
+ if(/[一-鿿]/.test(t))return 'zh';if(/[Ѐ-ӿ]/.test(t))return 'ru';return latinLang(t)||(['fr','fil'].includes(uiLanguage())?uiLanguage():'en');
+}
+function latinLang(t){ // French, Filipino or English from their most common words (only when one clearly leads)
+ const n=re=>(String(t).match(re)||[]).length;
+ const fr=n(/(?:^|[^\p{L}])(le|la|les|des|du|une|est|vous|votre|vos|pour|avec|dans|pas|sont|aux|qui|que|cette|et|au|sur|il|elle)(?=[^\p{L}]|$)/giu)+n(/[éèêàçùâîôœ]/giu);
+ const fil=n(/(?:^|[^\p{L}])(ang|ng|mga|sa|po|ko|mo|ito|para|kung|hindi|naman|lang|ka|siya)(?=[^\p{L}]|$)/giu);
+ const en=n(/(?:^|[^\p{L}])(the|and|you|your|is|are|to|of|for|with|this|that|it|can|will|in|on)(?=[^\p{L}]|$)/giu);
+ const best=Math.max(fr,fil,en);if(best<3)return '';return best===en?'en':best===fr?'fr':'fil';
 }
 function bestVoice(l){
  const want=VOICE_LOC[l].toLowerCase(),pre=l==='zh'?['zh','cmn']:l==='fil'?['fil','tl']:[l];
@@ -1790,6 +1797,15 @@ async function readReply(res,chatId){
  if(!final)return {r:{ok:false,status:502},d:{}};
  return {r:{ok:final.status<400,status:final.status},d:final.body};
 }
+// Once per message: the unanswered question goes back in the box and is sent again when the app is in front again.
+let autoResent='';
+function resendWhenBack(text,chatId){
+ if(autoResent===text||store.active!==chatId||turns.at(-1)?.role!=='user'||turns.at(-1).content!==text.slice(0,900))return false;
+ autoResent=text;turns.pop();save();draw();$('msg').value=text;grow();
+ $('status').textContent=uiText('Your phone went to sleep before Orivia finished. Sending your message again…');
+ const go=()=>{if(document.visibilityState!=='visible')return;document.removeEventListener('visibilitychange',go);setTimeout(()=>{if(!busy&&$('msg').value===text)$('form').requestSubmit()},300)};
+ document.addEventListener('visibilitychange',go);go();return true;
+}
 $('form').onsubmit=async e=>{
  e.preventDefault();
  if(busy){if(activeChatRequest){stoppedByPerson=true;activeChatRequest.abort()}return}
@@ -1800,6 +1816,7 @@ $('form').onsubmit=async e=>{
  $('msg').value='';grow();turns.push({role:'user',content:text.slice(0,900)});save();draw({scroll:true});
  const chatId=store.active,sentTurns=turns.slice(),accountAtSend=globalThis.OriviaAccounts?.epoch||'';
  const controller=new AbortController();activeChatRequest=controller;
+ let wentAway=document.visibilityState==='hidden';const away=()=>{if(document.visibilityState==='hidden')wentAway=true};document.addEventListener('visibilitychange',away);
  busy=true;stoppedByPerson=false;sendMode(true);$('status').textContent=uiText('Orivia is thinking…');working('Thinking…');window.oriviaResearchMode=!!pilotConsent();
  try{
   const res=await fetch('/v1/chat',{method:'POST',signal:controller.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),...(currentOrgContext()?{orgContext:{org:currentOrgContext().org,content:currentOrgContext().content}}:{}),researchContext:currentResearchContext(sentTurns),language:uiLanguage(),style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
@@ -1807,6 +1824,7 @@ $('form').onsubmit=async e=>{
   if((globalThis.OriviaAccounts?.epoch||'')!==accountAtSend)return;
   if(!r.ok){
    const why=d&&d.error;
+   if(wentAway&&r.status===502&&!why&&resendWhenBack(text,chatId))return;
    if(r.status===403&&why==='org_context_unavailable'){clearOrgContext('That university guide isn’t available to you any more, so Orivia stopped using it. Send your message again to ask without it.');$('msg').value=$('msg').value||sentTurns.at(-1)?.content||'';return}
    if(r.status===401&&why==='human_check'){const passedBefore=humanOk;$('consent').checked=agreed();try{sessionStorage.removeItem(ck)}catch(_){}$('workspace').hidden=true;$('nav').hidden=true;$('intro').hidden=false;if(window.__siteKey)loadTurnstile(window.__siteKey);$('status').textContent='';
     // Passed the check but the browser didn't keep it (a framed preview in a strict browser): say so instead of looping.
@@ -1852,6 +1870,6 @@ $('form').onsubmit=async e=>{
    // Stopped by the person: take back the unanswered question and return it to the box to edit or resend.
    if(store.active===chatId&&turns.at(-1)?.role==='user'&&turns.at(-1).content===text.slice(0,900)){turns.pop();save();draw()}
    if(!$('msg').value)$('msg').value=text;grow();$('status').textContent=uiText('Stopped. Your message is back in the box.')
-  }else $('status').textContent=uiText('Could not reach the private AI. Please try again.')}
- finally{if(activeChatRequest===controller)activeChatRequest=null;busy=false;sendMode(false);$('send').disabled=Date.now()<coolUntil;working('')}
+  }else if(!(wentAway&&resendWhenBack(text,chatId)))$('status').textContent=uiText('Could not reach the private AI. Please try again.')}
+ finally{document.removeEventListener('visibilitychange',away);if(activeChatRequest===controller)activeChatRequest=null;busy=false;sendMode(false);$('send').disabled=Date.now()<coolUntil;working('')}
 };
