@@ -46,7 +46,7 @@ function renderSources({sources,claims,research={},language='en'}) {
   // Preserve the original reply's index even if an invalid source was rejected.
   const n=s.sourceIndex+1;
   chips.append(link(s,n,s.host+' ↗'));
-  const entry=node('div',null,'op-entry');entry.append(node('strong',category(s)),node('p',String(s.title||s.host)),link(s,n,w.source+' '+n+' · '+s.host+' ↗'));
+  const entry=node('div',null,'op-entry');entry.append(node('strong',category(s)),node('p',String(s.title||s.host)),link(s,n,s.host+' ↗'));
   if(s.checkedAt&&Number.isFinite(Date.parse(s.checkedAt)))entry.append(node('p',w.opened+' · '+new Date(s.checkedAt).toLocaleString(language), 'op-muted'));
   // Only an unambiguous source id can support a claim. Never use positional fallback.
   if(s.id&&checked.filter(x=>x.id===s.id).length===1)for(const c of Array.isArray(claims)?claims:[]){if(c.sourceId!==s.id||typeof c.text!=='string')continue;const quotes=Array.isArray(c.quotes)&&c.quotes.length?c.quotes:[{quote:c.quote}];const good=quotes.filter(q=>q&&typeof q.quote==='string'&&q.quote.trim());if(!good.length)continue;entry.append(node('p',c.text));for(const q of good){if(typeof q.label==='string'&&q.label)entry.append(node('strong',q.label));entry.append(node('blockquote',q.quote))}}
