@@ -2747,14 +2747,6 @@
     "fr": "Inclure le texte de cette réponse",
     "ar": "تضمين نص هذا الرد"
   },
-  "Sent: your choice, your note and this one reply. Not the rest of the chat, documents or your name.": {
-    "fr": "Envoyé : votre choix, votre note et cette réponse. Pas le reste de la conversation, ni les documents, ni votre nom.",
-    "ar": "يُرسل: اختيارك وملاحظتك وهذا الرد فقط. لا تُرسل بقية المحادثة أو المستندات أو اسمك."
-  },
-  "Sent: your choice and your note. Not the reply, the rest of the chat, documents or your name.": {
-    "fr": "Envoyé : votre choix et votre note. Pas la réponse, ni le reste de la conversation, ni les documents, ni votre nom.",
-    "ar": "يُرسل: اختيارك وملاحظتك. لا يُرسل الرد أو بقية المحادثة أو المستندات أو اسمك."
-  },
   "Send report": {
     "fr": "Envoyer le signalement",
     "ar": "إرسال البلاغ"
@@ -2794,5 +2786,25 @@
   "Kept automatically, privately, from Orivia’s sourced recommendations. Removing one here doesn’t change the chat. ♥ marks your favourites.": {
     "fr": "Conservés automatiquement et en privé à partir des recommandations sourcées d’Orivia. En retirer un ici ne modifie pas la conversation. ♥ indique vos favoris.",
     "ar": "تُحفظ تلقائيًا وبشكل خاص من توصيات Orivia الموثّقة بالمصادر. إزالة عنصر هنا لا تغيّر المحادثة. ♥ تعني مفضلتك."
+  },
+  "Show more": {
+    "fr": "Afficher plus",
+    "ar": "عرض المزيد"
+  },
+  "Removed from Library": {
+    "fr": "Retirés de la bibliothèque",
+    "ar": "المحذوفة من المكتبة"
+  },
+  "Restore": {
+    "fr": "Restaurer",
+    "ar": "استعادة"
+  },
+  "Sends your choice, your note and the text of this reply, which may include personal details or details from your documents. It’s linked to your account, so it’s deleted with it. The Orivia team’s review list doesn’t show who sent it.": {
+    "fr": "Envoie votre choix, votre note et le texte de cette réponse, qui peut contenir des informations personnelles ou issues de vos documents. C’est lié à votre compte et supprimé avec lui. La liste d’examen de l’équipe Orivia n’indique pas qui l’a envoyé.",
+    "ar": "يُرسل اختيارك وملاحظتك ونص هذا الرد، وقد يتضمن معلومات شخصية أو معلومات من مستنداتك. يرتبط ذلك بحسابك ويُحذف معه. لا تُظهر قائمة المراجعة لدى فريق Orivia هوية المُرسل."
+  },
+  "Sends your choice and your note, not the reply. It’s linked to your account, so it’s deleted with it. The Orivia team’s review list doesn’t show who sent it.": {
+    "fr": "Envoie votre choix et votre note, pas la réponse. C’est lié à votre compte et supprimé avec lui. La liste d’examen de l’équipe Orivia n’indique pas qui l’a envoyé.",
+    "ar": "يُرسل اختيارك وملاحظتك، وليس الرد. يرتبط ذلك بحسابك ويُحذف معه. لا تُظهر قائمة المراجعة لدى فريق Orivia هوية المُرسل."
   }
 }

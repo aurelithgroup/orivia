@@ -1,0 +1,56 @@
+{
+ "check": "Ina repro: 105 sourced recommendations in the real app (local harness, headless Chrome, real sanitisers and storage)",
+ "ranAt": "2026-10-22T17:20:48.379Z",
+ "script": "tools/browser-checks/disc3.cjs + cdp-shoot.mjs + app-harness.mjs",
+ "results": {
+  "d3-seed": "seeded 105",
+  "d3-check": {
+   "count": "105",
+   "firstPage": 30,
+   "moreLabel": "Show more (75)",
+   "afterShowMore": 105,
+   "chatFieldDiffs": [
+    "c1.titled:undefined→false",
+    "c1.pinned:undefined→false",
+    "c1.archived:undefined→false",
+    "c2.titled:undefined→false",
+    "c2.pinned:undefined→false",
+    "c2.archived:undefined→false",
+    "c3.titled:undefined→false",
+    "c3.pinned:undefined→false",
+    "c3.archived:undefined→false",
+    "d1.titled:undefined→false",
+    "d1.pinned:undefined→false",
+    "d1.archived:undefined→false"
+   ],
+   "messagesChanged": 0,
+   "chatsIdentical": false,
+   "libraryState": {
+    "hidden": [
+     "service centre 50|icp.gov.ae"
+    ]
+   },
+   "countAfterRemove": "104",
+   "removedSummary": "Removed from Library (1)",
+   "countAfterRestore": "105",
+   "chatsIdenticalAfterRestore": false,
+   "libraryAfterRestore": {
+    "hidden": []
+   }
+  },
+  "d3-remove": {
+   "chatsByteIdentical": true,
+   "library": {
+    "hidden": [
+     "service centre 104|icp.gov.ae"
+    ]
+   }
+  },
+  "d3-reload": {
+   "count": "104",
+   "removed": "Removed from Library (1)",
+   "stillListed": false
+  }
+ },
+ "note": "chatFieldDiffs on the first save are defaults (titled/pinned/archived) added when the app first normalises raw seeded chats; the second removal on already-saved chats is byte-identical (d3-remove)."
+}

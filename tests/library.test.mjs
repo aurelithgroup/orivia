@@ -17,11 +17,12 @@ assert.equal((library.match(/role="tab"/g)||[]).length,5);assert.ok(lib.includes
 // A view over existing records: saved guides from readJourneys (same cards, same progress); shortlists from the chats.
 assert.ok(lib.includes('const d=readJourneys()')&&lib.includes("journeyCard({id,title:v.title,steps:v.steps},'mine')"));
 assert.ok(lib.includes('for(const chat of store.chats)for(const t of chat.turns||[])')&&lib.includes('safeOrgs(t.meta.organisations,safeSources(t.meta.sources))'));
-// One deliberate exception (master spec ORI-LIB-002 / scenario A12): removing an automatic discovery saves a hidden mark
-// on the chats. It only adds to meta.hiddenDiscoveries; it never deletes a chat, card or file, and nothing is sent.
-const hide=lib.slice(lib.indexOf('function hideDiscovery('),lib.indexOf('function libraryShortlists('));
-assert.ok(hide.includes('t.meta.hiddenDiscoveries=[...l]}save();renderLibraryView()}')&&!/delete |fetch\(|setItem|persist\(/.test(hide),'the only write is the hidden-discovery mark');
-assert.equal((hide.match(/save\(/g)||[]).length,1);
+// One deliberate exception (master spec ORI-LIB-002/006, scenario A12; Ina's review of 5569f60): Remove/Restore of an
+// automatic discovery writes the account's Library state (store.library) once. It never touches a chat, message, card or
+// file, and nothing is sent. Behaviour: tests/library-discoveries.test.mjs.
+const hide=lib.slice(lib.indexOf('function setDiscoveryHidden('),lib.indexOf('function libraryShortlists('));
+assert.ok(hide.startsWith('function setDiscoveryHidden(key,hidden){store.library=')&&!/delete |fetch\(|setItem|save\(|turns|meta/.test(hide),'the only write is the Library state');
+assert.equal((hide.match(/persist\(/g)||[]).length,1);
 assert.doesNotMatch(lib.replace(hide,''),/setItem|persist\(|save\(|delete |fetch\(/,'otherwise the Library never writes, deletes or sends');
 // Compare and Use in Chat only prepare; the person sends.
 assert.ok(lib.includes("$('msg').value=uiText('Please compare my shortlist:')")&&!lib.includes('requestSubmit'));

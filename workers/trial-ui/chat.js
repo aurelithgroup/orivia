@@ -18,7 +18,7 @@ function show(){
 const chatsKey='orivia-private-chats-v1',chatsBackupKey='orivia-private-chats-v1-unreadable';
 // Nothing here ever deletes or shortens a conversation on its own. If saving fails, the chat stays on screen,
 // the person is told plainly, and they choose what to delete. Only the latest 12 messages go to the AI.
-let store={chats:[],active:null};
+let store={chats:[],active:null,library:{hidden:[]}};
 const validTurn=x=>x&&['user','assistant'].includes(x.role)&&typeof x.content==='string'&&(x.content.trim()||(x.role==='user'&&x.meta&&x.meta.attachment&&typeof x.meta.attachment.name==='string'));
 const newId=()=>'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 function autoTitle(ts){const u=(ts.find(t=>t.role==='user')||{}).content||'New chat';const t=u.replace(/\s+/g,' ').trim();return t.length>48?t.slice(0,46).replace(/\s\S*$/,'')+'…':t}
@@ -47,11 +47,11 @@ function savedHas(c){
 }
 function legacyId(ts){let h=0;for(const ch of JSON.stringify(ts.map(t=>[t.role,t.content])))h=(h*31+ch.charCodeAt(0))|0;return 'clegacy'+(h>>>0).toString(36)}
 function loadChats(){
- storeLocked=false;store={chats:[],active:null};
+ storeLocked=false;store={chats:[],active:null,library:{hidden:[]}};
  let raw=null;try{raw=(globalThis.OriviaAccountStorage?.storage||localStorage).getItem(chatsKey)}catch(_){}
  if(raw){
   let d=null;try{d=JSON.parse(raw)}catch(_){}
-  if(d&&Array.isArray(d.chats))store={chats:d.chats.map(normChat).filter(Boolean),active:typeof d.active==='string'?d.active:null};
+  if(d&&Array.isArray(d.chats))store={chats:d.chats.map(normChat).filter(Boolean),active:typeof d.active==='string'?d.active:null,library:window.OriviaDiscoveries?window.OriviaDiscoveries.normLibrary(d.library):{hidden:Array.isArray(d.library?.hidden)?d.library.hidden.filter(k=>typeof k==='string'):[]}};
   else{ // unreadable: keep an untouched copy before anything new is written; if that fails, don't write at all
    try{if((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(chatsBackupKey)===null)(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(chatsBackupKey,raw)}catch(_){storeLocked=true}
    if(!storeLocked)storageWarn('Your earlier saved chats couldn’t be read. A copy has been kept on this device, and new chats will be saved separately.');
@@ -89,20 +89,11 @@ let libFilter='all',filesServer=false;
 // Where Files is switched off, the Library is guides and shortlists only (no Files tab, no file actions).
 function showLibraryFiles(){const tab=$('lib-tab-files'),group=$('files-title')?.closest('section');if(tab)tab.hidden=!filesServer;if(group)group.hidden=!filesServer;if(!filesServer&&libFilter==='files')libFilter='all'}
 function libItem(node,kind,text){node.dataset.libKind=kind;node.dataset.libText=String(text||'').toLowerCase();return node}
-function discoveryKey(name,src){return String(name||'').trim().toLowerCase().replace(/\s+/g,' ')+'|'+String(src?.host||'').toLowerCase()}
-function libraryDiscoveries(){
- // Newest mention wins; one entry per name and source site, however often it was recommended.
- const seen=new Map(),hidden=new Set();
- for(const chat of store.chats)for(const t of chat.turns||[])if(Array.isArray(t.meta?.hiddenDiscoveries))for(const k of t.meta.hiddenDiscoveries)hidden.add(k);
- const chats=store.chats.slice().sort((a,b)=>(b.updated||0)-(a.updated||0));
- for(const chat of chats)for(const t of (chat.turns||[]).slice().reverse()){
-  if(t.role!=='assistant'||!t.meta)continue;const srcs=safeSources(t.meta.sources);if(!srcs.length)continue;
-  for(const d of safeDestinations(t.meta.destinations,srcs)){const key=discoveryKey(d.name,d.src),fav=Array.isArray(t.meta.savedPlaces)&&t.meta.savedPlaces.includes(placeIdentity(d));if(!seen.has(key))seen.set(key,{key,name:d.name,detail:d.address||'',kind:'place',src:d.src,chat,turn:t,favourite:fav});else if(fav)seen.get(key).favourite=true}
-  for(const o of safeOrgs(t.meta.organisations,srcs)){if(o.fixture)continue;const key=discoveryKey(o.name,o.src);if(!seen.has(key))seen.set(key,{key,name:o.name,detail:o.src.host||'',kind:'service',src:o.src,chat,turn:t,favourite:false})}
- }
- return [...seen.values()].filter(x=>!hidden.has(x.key)).slice(0,100);
-}
-function hideDiscovery(key){for(const chat of store.chats)for(const t of chat.turns||[]){if(t.role!=='assistant'||!t.meta)continue;const l=new Set(Array.isArray(t.meta.hiddenDiscoveries)?t.meta.hiddenDiscoveries:[]);l.add(key);t.meta.hiddenDiscoveries=[...l]}save();renderLibraryView()}
+// Discoveries come from library-discoveries.js (pure, tested); removal state lives once in store.library, not in chats.
+const discoveryHelpers={safeSources:x=>safeSources(x),safeDestinations:(x,y)=>safeDestinations(x,y),safeOrgs:(x,y)=>safeOrgs(x,y),placeIdentity:d=>placeIdentity(d)};
+let discoveryShown=0;
+function libraryDiscoveries(){return window.OriviaDiscoveries.collect(store.chats,store.library,discoveryHelpers)}
+function setDiscoveryHidden(key,hidden){store.library=hidden?window.OriviaDiscoveries.hide(store.library,key):window.OriviaDiscoveries.restore(store.library,key);persist();renderLibraryView()}
 function libraryShortlists(){
  const out=[];
  for(const chat of store.chats)for(const t of chat.turns||[]){
@@ -129,14 +120,17 @@ function renderLibraryView(){
   const row=el('div','attach-row');row.append(attachButton('Open chat',()=>openChat(chat.id)),attachButton('Compare in Chat',()=>{openChat(chat.id);$('msg').value=uiText('Please compare my shortlist:')+' '+names.join(', ');grow();$('msg').focus()}));card.append(row);
   s.append(libItem(card,'shortlists',(chat.title||'')+' '+names.join(' ')))}
  if(!lists.length)s.append(el('p','tiny',uiText('No shortlists yet. When Orivia shows you options in chat, add the ones you like to a shortlist.')));
- const pg=$('lib-places');pg.replaceChildren();const found=libraryDiscoveries();
- for(const x of found){const card=el('article','lib-short');const title=el('strong','',(x.favourite?'♥ ':'')+x.name);title.dir='auto';
-  card.append(title,el('p','tiny',[x.detail,uiText(x.kind==='place'?'Place':'Service'),uiText('from')+' '+(x.chat.title||uiText('Chat'))].filter(Boolean).join(' · ')));
+ const pg=$('lib-places');pg.replaceChildren();const disc=libraryDiscoveries(),found=disc.shown,pageOf=window.OriviaDiscoveries.page(found,discoveryShown);
+ for(const x of pageOf.items){const card=el('article','lib-short');const title=el('strong','',(x.favourite?'♥ ':'')+x.name);title.dir='auto';
+  card.append(title,el('p','tiny',[x.detail,uiText(x.kind==='place'?'Place':'Service'),uiText('from')+' '+(x.chatTitle||uiText('Chat'))].filter(Boolean).join(' · ')));
   const row=el('div','attach-row');const site=el('a','btn quiet small',uiText('Source')+' · '+x.src.host);site.href=x.src.url;site.target='_blank';site.rel='noopener noreferrer';
-  row.append(attachButton('Open chat',()=>openChat(x.chat.id)),site);
-  const rm=attachButton('Remove from Library',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=uiText('Tap again to remove');return}hideDiscovery(x.key)});row.append(rm);
+  row.append(attachButton('Open chat',()=>openChat(x.chatId)),site);
+  const rm=attachButton('Remove from Library',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=uiText('Tap again to remove');return}setDiscoveryHidden(x.key,true)});row.append(rm);
   card.append(row);pg.append(libItem(card,'places',x.name+' '+x.detail+' '+x.src.host))}
+ if(pageOf.more){const more=attachButton(uiText('Show more')+' ('+pageOf.more+')',()=>{discoveryShown=pageOf.next;renderLibraryView()});more.classList.add('lib-more');pg.append(more)}
  if(!found.length)pg.append(el('p','tiny',uiText('Places and services Orivia recommends from official or organisation sources are kept here automatically.')));
+ if(disc.hidden.length){const box=el('details','lib-removed');box.append(el('summary','tiny',uiText('Removed from Library')+' ('+disc.hidden.length+')'));
+  for(const x of disc.hidden){const row=el('div','attach-row');row.append(el('span','tiny',x.name),attachButton('Restore',()=>setDiscoveryHidden(x.key,false)));box.append(row)}pg.append(box)}
  $('lib-count-places').textContent=found.length||'';
  $('lib-count-guides').textContent=items.length||'';$('lib-count-shortlists').textContent=lists.length||'';
  Promise.resolve(done).then(()=>{const n=document.querySelectorAll('#files-list .file-row').length;$('lib-count-files').textContent=n||'';$('lib-count-all').textContent=(n+items.length+lists.length+found.length)||'';applyLibraryFilter()});
@@ -676,7 +670,7 @@ function feedbackControls(t,replyId,actions,more,p){
   const cat=document.createElement('select');cat.setAttribute('aria-label',uiText('What went wrong?'));for(const [v,l] of [['inaccurate','Inaccurate information'],['unsafe','Unsafe answer'],['privacy','Privacy issue'],['technical','Technical problem'],['other','Something else']]){const o=document.createElement('option');o.value=v;o.textContent=uiText(l);cat.append(o)}
   const note=document.createElement('textarea');note.maxLength=1000;note.rows=3;note.placeholder=uiText('What happened? (optional)');note.setAttribute('aria-label',uiText('What happened? (optional)'));
   const inc=document.createElement('input');inc.type='checkbox';inc.id='fb-inc-'+replyId.replace(/[^A-Za-z0-9]/g,'');const lab=document.createElement('label');lab.htmlFor=inc.id;lab.textContent=' '+uiText('Include the text of this reply');
-  const preview=document.createElement('p');preview.className='tiny muted';const sync=()=>{preview.textContent=inc.checked?uiText('Sent: your choice, your note and this one reply. Not the rest of the chat, documents or your name.'):uiText('Sent: your choice and your note. Not the reply, the rest of the chat, documents or your name.')};inc.onchange=sync;sync();
+  const preview=document.createElement('p');preview.className='tiny muted';const sync=()=>{preview.textContent=inc.checked?uiText('Sends your choice, your note and the text of this reply, which may include personal details or details from your documents. It’s linked to your account, so it’s deleted with it. The Orivia team’s review list doesn’t show who sent it.'):uiText('Sends your choice and your note, not the reply. It’s linked to your account, so it’s deleted with it. The Orivia team’s review list doesn’t show who sent it.')};inc.onchange=sync;sync();
   const send=document.createElement('button');send.type='submit';send.className='btn small';send.textContent=uiText('Send report');
   const cancel=document.createElement('button');cancel.type='button';cancel.className='btn quiet small';cancel.textContent=uiText('Cancel');cancel.onclick=()=>form.remove();
   const out=document.createElement('p');out.className='tiny';out.setAttribute('role','status');const requestId='fb-'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));

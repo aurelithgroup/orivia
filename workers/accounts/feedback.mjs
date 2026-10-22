@@ -1,8 +1,9 @@
 /* Reply feedback (master spec ORI-CHAT-007 rating, ORI-CHAT-008 report a problem, ORI-OWNER feedback queue).
    Signed-in people only: guests are told to sign in rather than shown a false success. Minimal retention: a rating is
    the reply reference, up/down and an optional reason; a report is a category, an optional note and, only when the
-   person ticks it, the text of that one reply. Never the conversation, documents or the person's name or email.
-   Rows go with the account (FK cascade). The owner queue is for verified platform owners and shows no reporter identity. */
+   person ticks it, the text of that one reply (which can itself contain personal or document-derived details). Rows are
+   stored against the account (user_id, so they are deleted with it); the owner queue, for verified platform owners,
+   does not display who sent them. No other conversation text, documents, name or email are stored with feedback. */
 export const feedbackRoute=p=>p==='/api/account/feedback/rating'||p==='/api/account/feedback/report'||p==='/api/account/feedback/queue'||/^\/api\/account\/feedback\/queue\/[A-Za-z0-9-]{1,64}$/.test(p);
 const REASONS=['inaccurate','unhelpful','unsafe','other'],CATEGORIES=['inaccurate','unsafe','privacy','technical','other'];
 const replyRef=v=>typeof v==='string'&&/^[A-Za-z0-9:_-]{1,96}$/.test(v)?v:null;

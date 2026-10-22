@@ -58,6 +58,10 @@ console.log('Feedback: ratings (change/remove), reports (receipt, opt-in reply t
 const chat=fs.readFileSync('workers/trial-ui/chat.js','utf8'),pui=fs.readFileSync('workers/accounts/platform-ui.mjs','utf8'),handler=fs.readFileSync('workers/accounts/handler.mjs','utf8');
 assert.ok(chat.includes("includeReply:inc.checked,replyText:inc.checked?t.content:undefined")&&!/inc\.checked=true/.test(chat));
 assert.ok(chat.includes("uiText('Sign in to send feedback to the Orivia team.')"),'guests are told, not shown success');
-assert.ok(pui.includes("api('/api/account/feedback/queue')")&&pui.includes("never who sent it"));
+assert.ok(pui.includes("api('/api/account/feedback/queue')")&&pui.includes("Reports are stored with the sender’s account"));
 assert.ok(handler.indexOf('feedbackRoute(url.pathname)')>handler.indexOf("getSession({headers:req.headers});if(!session?.user?.id)return json({error:'sign_in_required'},401)"),'feedback routes sit behind the session check');
 console.log('Feedback client and console wiring: pass.');
+// Disclosures match storage (Ina, review of 5569f60): linked to the account; an included reply may hold personal/document details.
+assert.ok(chat.includes('It’s linked to your account, so it’s deleted with it.')&&chat.includes('which may include personal details or details from your documents'));
+assert.ok(!/or your name\.|never who sent it/.test(chat+pui),'no claim that feedback is unlinked from the person');
+console.log('Feedback disclosures match what is stored: pass.');
