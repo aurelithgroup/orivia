@@ -867,7 +867,8 @@ async function listen(text,btn,{language=null,feedback=null}={}){
  if(!v&&(language||l!=='en')){const target=feedback||$('status');target.textContent=uiText('This phone has no voice for this language yet. You can add one in your phone’s text-to-speech settings.');return}
  if(feedback)feedback.textContent='';speakingBtn=btn;btn.setAttribute('aria-pressed','true');btn.textContent=uiText('■ Stop');
  const clean=text.replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu,'').replace(/\s+/g,' ').trim();
- const parts=clean.split(/(?<=[.!?。！？।۔])\s+/).flatMap(x=>x.length>220?x.match(/.{1,200}(\s|$)/g):[x]).filter(Boolean);
+ // Ina's lossless chunks (long text without spaces, e.g. Chinese, used to lose its start); the old split only if missing.
+ const parts=window.OriviaVoiceText?.chunks?window.OriviaVoiceText.chunks(clean,200).filter(x=>x.trim()):clean.split(/(?<=[.!?。！？।۔])\s+/).flatMap(x=>x.length>220?x.match(/.{1,200}(\s|$)/g):[x]).filter(Boolean);
  parts.forEach((c,i)=>{const u=new SpeechSynthesisUtterance(c);u.lang=v?v.lang:VOICE_LOC[l];if(v)u.voice=v;u.rate=v&&/natural|neural|online|enhanced|premium/i.test(v.name)?1:.95;
   if(i===parts.length-1)u.onend=()=>{if(run===speakRun)stopSpeaking()};u.onerror=e=>{if(run===speakRun&&e.error!=='interrupted'&&e.error!=='canceled')stopSpeaking()};speechSynthesis.speak(u)});
 }
@@ -903,7 +904,7 @@ function startDictation(){
  r.lang=dictationLanguage();r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
  $('listening').hidden=false;$('listening-text').textContent=uiText('Starting microphone…');$('mic').setAttribute('aria-pressed','true');
  $('dict-language').disabled=true;$('dict-language-shortcut').disabled=true;$('msg').readOnly=true;$('status').textContent='';
- r.onstart=()=>{if(recog!==r)return;$('listening-text').textContent='Listening · '+(DICT_LANGS.find(([id])=>id===r.lang)?.[1]||r.lang)+' · Stop to edit'};
+ r.onstart=()=>{if(recog!==r)return;$('listening-text').textContent=uiText('Listening')+' · '+(DICT_LANGS.find(([id])=>id===r.lang)?.[1]||r.lang)+' · '+uiText('Stop to edit')};
  r.onresult=e=>{
   if(recog!==r)return;
   let t='';for(const x of e.results)t+=x[0].transcript;
@@ -940,7 +941,7 @@ function setupDictation(){
  const open=focus=>{if(recog)return;menu.hidden=false;mic.setAttribute('aria-expanded','true');if(focus)shortcut.focus()};
  let hold=null,hover=null,leave=null,down=null,held=false,suppressUntil=0;
  const clearHold=()=>{clearTimeout(hold);hold=null};
- mic.title='Tap to dictate. Hold or hover to choose language.';mic.setAttribute('aria-haspopup','dialog');mic.setAttribute('aria-controls','mic-language-menu');mic.setAttribute('aria-expanded','false');
+ mic.title=uiText('Tap to dictate. Hold or hover to choose language.');mic.setAttribute('aria-haspopup','dialog');mic.setAttribute('aria-controls','mic-language-menu');mic.setAttribute('aria-expanded','false');
  mic.addEventListener('pointerenter',e=>{if(e.pointerType!=='mouse')return;clearTimeout(leave);hover=setTimeout(()=>open(false),300)});
  mic.addEventListener('pointerleave',()=>{clearTimeout(hover);leave=setTimeout(()=>{if(!menu.contains(document.activeElement))closeMicLanguageMenu()},200);clearHold()});
  menu.addEventListener('pointerenter',()=>clearTimeout(leave));menu.addEventListener('pointerleave',()=>{leave=setTimeout(()=>{if(!menu.contains(document.activeElement))closeMicLanguageMenu()},200)});
@@ -1735,6 +1736,8 @@ function cooldown(secs){
    one line at a time, then the reply. Plain JSON replies (every other path) work as before. */
 /* The send button doubles as Stop while a reply is on its way. */
 var stoppedByPerson=false;
+// Its own click handler: the empty message box is 'required', so a form submit would never reach the Stop code.
+$('send').addEventListener('click',e=>{if(!busy)return;e.preventDefault();if(activeChatRequest){stoppedByPerson=true;activeChatRequest.abort()}});
 function sendMode(stopping){const b=$('send');if(!b)return;b.classList.toggle('stopping',stopping);b.disabled=false;b.setAttribute('aria-label',uiText(stopping?'Stop':'Send'))}
 function working(text){
  if(!text){$('working')?.remove();return}

@@ -154,7 +154,9 @@ jobs:
       - name: "Installable app: manifest, icons, offline worker"
         run: node --experimental-sqlite tests/installable.test.mjs
       - name: "Chat titles and compact sources (Ina)"
-        run: node tests/chat-presentation.test.mjs
+        run: |
+          node tests/chat-presentation.test.mjs
+          node tests/ina-voice-text.test.mjs
       - name: "Answer accuracy: figures stay with their subject"
         run: node tests/answer-accuracy.test.mjs
       - name: "Shared navigation and space addresses"

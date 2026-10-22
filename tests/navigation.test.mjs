@@ -67,4 +67,5 @@ assert.ok(navJs.includes('if(hit&&Date.now()-hit.t<4000)return hit.p')&&spacesJs
 assert.ok(navJs.includes('if(inApp()){if(document.body.dataset.entryPending)return user;const u=window.OriviaAccounts.user'),'no second session request in the app');
 assert.ok(chatJs.includes('if(busy){if(activeChatRequest){stoppedByPerson=true;activeChatRequest.abort()}return}'),'the send button stops a reply in progress');
 assert.ok(chatJs.includes("uiText('Stopped. Your message is back in the box.')"),'and gives the message back');
+assert.ok(chatJs.includes("$('send').addEventListener('click',e=>{if(!busy)return;e.preventDefault();"),'Stop has its own click handler: the empty, required message box would block a form submit');
 console.log('Navigation: spaces only from server memberships, addressable spaces, text-only menus, sign-out to other tabs, routes agree.');

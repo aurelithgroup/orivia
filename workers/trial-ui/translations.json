@@ -2174,5 +2174,17 @@
   "Stopped. Your message is back in the box.": {
     "fr": "Arrêté. Votre message est de nouveau dans la zone de saisie.",
     "ar": "تم الإيقاف. رسالتك عادت إلى خانة الكتابة."
+  },
+  "Listening": {
+    "fr": "Écoute en cours",
+    "ar": "جارٍ الاستماع"
+  },
+  "Stop to edit": {
+    "fr": "Arrêtez pour modifier",
+    "ar": "أوقف الإملاء للتعديل"
+  },
+  "Tap to dictate. Hold or hover to choose language.": {
+    "fr": "Appuyez pour dicter. Maintenez le bouton ou survolez-le pour choisir la langue.",
+    "ar": "اضغط للإملاء. اضغط مطولاً أو مرّر المؤشر لاختيار اللغة."
   }
 }
