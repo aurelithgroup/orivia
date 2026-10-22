@@ -184,3 +184,22 @@ Order (Cleo, one step at a time):
 - `orivia-production` `569f1f5b` (rollback `fe28a2ae`); all five secrets present. `orivia-front-door` `48958a0e` (rollback `0fe7fcb0`). The first deploy attempt timed out at Cloudflare's API and changed nothing; the retry succeeded.
 - **Live checks passed:** routes, space addresses, `/join` alias, `/manage` refusal when signed out, nav script, app worker, manifest, icons, consent v1, no secrets in `/v1/config`, frame and manifest policies, push refused, human check before any AI call (including guide context), new presentation code live. orivia-beta is unchanged.
 - **Still to do:** the founder's signed-in look ("one connected app"); Ina's live recheck.
+- **Done 22 Oct:** the founder confirmed it feels like one app, with the favicon showing; Ina's live recheck passed.
+
+## Round 2 released to myorivia.app (22 Oct, Cleo)
+
+- What it includes (all passed founder checks on the pilot first):
+  - figures stay with what the source states them for (the nol Gold/Silver fix);
+  - no welcome flash on load, and no "pilot" wording in the university welcome;
+  - one shared memberships request and no second session request on load;
+  - a Stop button that cancels a reply and puts the message back in the box;
+  - letter-circle citations;
+  - Ina's lossless Listen chunks and translated dictation text.
+- Built from `5c7aa33`; full suite passed (76 checks). No database change.
+- `orivia-production` `ae08f8b7` (rollback `569f1f5b`); all five secrets present. The front door was not redeployed, because its paths didn't change; it stays `48958a0e`.
+- **Live checks passed:**
+  - routes, `/manage` refusal when signed out, favicon, app worker and icons;
+  - consent v1, and no secrets in `/v1/config`;
+  - the new Stop, letter and Listen code is in `/chat.js`;
+  - device push refused (503);
+  - human check before any AI call.
