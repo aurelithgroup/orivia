@@ -2766,5 +2766,33 @@
   "Report sent to the Orivia team. Reference:": {
     "fr": "Signalement envoyé à l’équipe Orivia. Référence :",
     "ar": "تم إرسال البلاغ إلى فريق Orivia. المرجع:"
+  },
+  "Places and services": {
+    "fr": "Lieux et services",
+    "ar": "الأماكن والخدمات"
+  },
+  "Place": {
+    "fr": "Lieu",
+    "ar": "مكان"
+  },
+  "Service": {
+    "fr": "Service",
+    "ar": "خدمة"
+  },
+  "from": {
+    "fr": "depuis",
+    "ar": "من"
+  },
+  "Remove from Library": {
+    "fr": "Retirer de la bibliothèque",
+    "ar": "إزالة من المكتبة"
+  },
+  "Places and services Orivia recommends from official or organisation sources are kept here automatically.": {
+    "fr": "Les lieux et services recommandés par Orivia à partir de sources officielles ou d’organismes sont conservés ici automatiquement.",
+    "ar": "تُحفظ هنا تلقائيًا الأماكن والخدمات التي يوصي بها Orivia من مصادر رسمية أو من الجهات."
+  },
+  "Kept automatically, privately, from Orivia’s sourced recommendations. Removing one here doesn’t change the chat. ♥ marks your favourites.": {
+    "fr": "Conservés automatiquement et en privé à partir des recommandations sourcées d’Orivia. En retirer un ici ne modifie pas la conversation. ♥ indique vos favoris.",
+    "ar": "تُحفظ تلقائيًا وبشكل خاص من توصيات Orivia الموثّقة بالمصادر. إزالة عنصر هنا لا تغيّر المحادثة. ♥ تعني مفضلتك."
   }
 }

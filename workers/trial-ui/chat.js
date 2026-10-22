@@ -89,6 +89,20 @@ let libFilter='all',filesServer=false;
 // Where Files is switched off, the Library is guides and shortlists only (no Files tab, no file actions).
 function showLibraryFiles(){const tab=$('lib-tab-files'),group=$('files-title')?.closest('section');if(tab)tab.hidden=!filesServer;if(group)group.hidden=!filesServer;if(!filesServer&&libFilter==='files')libFilter='all'}
 function libItem(node,kind,text){node.dataset.libKind=kind;node.dataset.libText=String(text||'').toLowerCase();return node}
+function discoveryKey(name,src){return String(name||'').trim().toLowerCase().replace(/\s+/g,' ')+'|'+String(src?.host||'').toLowerCase()}
+function libraryDiscoveries(){
+ // Newest mention wins; one entry per name and source site, however often it was recommended.
+ const seen=new Map(),hidden=new Set();
+ for(const chat of store.chats)for(const t of chat.turns||[])if(Array.isArray(t.meta?.hiddenDiscoveries))for(const k of t.meta.hiddenDiscoveries)hidden.add(k);
+ const chats=store.chats.slice().sort((a,b)=>(b.updated||0)-(a.updated||0));
+ for(const chat of chats)for(const t of (chat.turns||[]).slice().reverse()){
+  if(t.role!=='assistant'||!t.meta)continue;const srcs=safeSources(t.meta.sources);if(!srcs.length)continue;
+  for(const d of safeDestinations(t.meta.destinations,srcs)){const key=discoveryKey(d.name,d.src),fav=Array.isArray(t.meta.savedPlaces)&&t.meta.savedPlaces.includes(placeIdentity(d));if(!seen.has(key))seen.set(key,{key,name:d.name,detail:d.address||'',kind:'place',src:d.src,chat,turn:t,favourite:fav});else if(fav)seen.get(key).favourite=true}
+  for(const o of safeOrgs(t.meta.organisations,srcs)){if(o.fixture)continue;const key=discoveryKey(o.name,o.src);if(!seen.has(key))seen.set(key,{key,name:o.name,detail:o.src.host||'',kind:'service',src:o.src,chat,turn:t,favourite:false})}
+ }
+ return [...seen.values()].filter(x=>!hidden.has(x.key)).slice(0,100);
+}
+function hideDiscovery(key){for(const chat of store.chats)for(const t of chat.turns||[]){if(t.role!=='assistant'||!t.meta)continue;const l=new Set(Array.isArray(t.meta.hiddenDiscoveries)?t.meta.hiddenDiscoveries:[]);l.add(key);t.meta.hiddenDiscoveries=[...l]}save();renderLibraryView()}
 function libraryShortlists(){
  const out=[];
  for(const chat of store.chats)for(const t of chat.turns||[]){
@@ -115,14 +129,23 @@ function renderLibraryView(){
   const row=el('div','attach-row');row.append(attachButton('Open chat',()=>openChat(chat.id)),attachButton('Compare in Chat',()=>{openChat(chat.id);$('msg').value=uiText('Please compare my shortlist:')+' '+names.join(', ');grow();$('msg').focus()}));card.append(row);
   s.append(libItem(card,'shortlists',(chat.title||'')+' '+names.join(' ')))}
  if(!lists.length)s.append(el('p','tiny',uiText('No shortlists yet. When Orivia shows you options in chat, add the ones you like to a shortlist.')));
+ const pg=$('lib-places');pg.replaceChildren();const found=libraryDiscoveries();
+ for(const x of found){const card=el('article','lib-short');const title=el('strong','',(x.favourite?'♥ ':'')+x.name);title.dir='auto';
+  card.append(title,el('p','tiny',[x.detail,uiText(x.kind==='place'?'Place':'Service'),uiText('from')+' '+(x.chat.title||uiText('Chat'))].filter(Boolean).join(' · ')));
+  const row=el('div','attach-row');const site=el('a','btn quiet small',uiText('Source')+' · '+x.src.host);site.href=x.src.url;site.target='_blank';site.rel='noopener noreferrer';
+  row.append(attachButton('Open chat',()=>openChat(x.chat.id)),site);
+  const rm=attachButton('Remove from Library',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=uiText('Tap again to remove');return}hideDiscovery(x.key)});row.append(rm);
+  card.append(row);pg.append(libItem(card,'places',x.name+' '+x.detail+' '+x.src.host))}
+ if(!found.length)pg.append(el('p','tiny',uiText('Places and services Orivia recommends from official or organisation sources are kept here automatically.')));
+ $('lib-count-places').textContent=found.length||'';
  $('lib-count-guides').textContent=items.length||'';$('lib-count-shortlists').textContent=lists.length||'';
- Promise.resolve(done).then(()=>{const n=document.querySelectorAll('#files-list .file-row').length;$('lib-count-files').textContent=n||'';$('lib-count-all').textContent=(n+items.length+lists.length)||'';applyLibraryFilter()});
+ Promise.resolve(done).then(()=>{const n=document.querySelectorAll('#files-list .file-row').length;$('lib-count-files').textContent=n||'';$('lib-count-all').textContent=(n+items.length+lists.length+found.length)||'';applyLibraryFilter()});
  applyLibraryFilter();
 }
 function applyLibraryFilter(){
  const q=$('lib-search').value.trim().toLowerCase();let shown=0;
  for(const row of document.querySelectorAll('#files-list .file-row'))if(!row.dataset.libKind)libItem(row,'files',row.querySelector('strong')?.textContent);
- for(const [kind,id] of [['files','files-title'],['guides','lib-guides-group'],['shortlists','lib-shortlists-group']]){
+ for(const [kind,id] of [['files','files-title'],['guides','lib-guides-group'],['places','lib-places-group'],['shortlists','lib-shortlists-group']]){
   const group=kind==='files'?$('files-title').closest('section'):$(id);const on=(libFilter==='all'||libFilter===kind)&&(kind!=='files'||filesServer);group.hidden=!on;
   let visible=0;for(const item of group.querySelectorAll('[data-lib-kind]')){const hit=!q||item.dataset.libText.includes(q);item.hidden=!hit;if(hit)visible++}
   if(on)shown+=visible;
