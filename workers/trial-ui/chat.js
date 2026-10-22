@@ -727,6 +727,16 @@ $('add-sheet').addEventListener('click',e=>{if(e.target.id==='add-sheet')closeAd
 $('reminder-date').addEventListener('input',()=>{for(const x of $('when-quick').children)x.classList.remove('on')});
 $('wk-prev').onclick=()=>{weekOffset--;selectedDay=null;renderEvents()};
 $('wk-next').onclick=()=>{weekOffset++;selectedDay=null;renderEvents()};
+/* ORI-CAL-001: swipe the week strip only. One week per gesture, past a 48px threshold, mostly horizontal (a vertical
+   page scroll never changes week), cancelled by pointercancel. In RTL the strip runs the other way, so a rightward swipe
+   is next week. Arrow buttons stay for keyboard and switch users; a swipe suppresses the day tap it ended on. */
+function weekSwipeStep(dx,dy,rtl){if(Math.abs(dx)<48||Math.abs(dx)<Math.abs(dy)*1.5)return 0;const next=rtl?dx>0:dx<0;return next?1:-1}
+{const strip=$('wk-days');let start=null,swiped=false;
+ strip.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;start={x:e.clientX,y:e.clientY,id:e.pointerId};swiped=false});
+ strip.addEventListener('pointercancel',()=>{start=null});
+ strip.addEventListener('pointerup',e=>{if(!start||e.pointerId!==start.id)return;const step=weekSwipeStep(e.clientX-start.x,e.clientY-start.y,getComputedStyle(strip).direction==='rtl');start=null;
+  if(step){swiped=true;weekOffset+=step;selectedDay=null;renderEvents();const live=$('wk-label');live&&live.setAttribute('aria-live','polite')}});
+ strip.addEventListener('click',e=>{if(swiped){e.stopPropagation();e.preventDefault();swiped=false}},true);}
 function renderUpcoming(){
  loadEvents();const root=$('upcoming');root.replaceChildren();
  const next=events.filter(e=>new Date(e.at).getTime()>Date.now()).sort((a,b)=>a.at.localeCompare(b.at)).slice(0,3);
