@@ -23,6 +23,10 @@
     "PUBLIC_RELEASE": "1", "PUBLIC_BETA": "1", "PUBLIC_HOST": "myorivia.app",
     "OPENAI_PILOT": "1", "OPENAI_INPUT_USD_PER_M": "2", "OPENAI_OUTPUT_USD_PER_M": "10",
     "PILOT_OPENAI_DAY_USD": "5", "PILOT_OPENAI_MONTH_USD": "20",
+    // Natural voice for Listen (founder-approved 22 Oct). Its 'voice' meter is in the shared ledger, so $1/day and $5/month
+    // cover the pilot and production together, and every voice cost also counts inside the OpenAI limits above.
+    "VOICE_ENABLED": "1", "VOICE_DAY_USD": "1", "VOICE_MONTH_USD": "5",
+    "VOICE_TEXT_IN_USD_PER_M": "0.6", "VOICE_TEXT_OUT_USD_PER_M": "2.4", "VOICE_AUDIO_OUT_USD_PER_M": "20",
     "DAILY_CAP": "60", "PERSON_DAILY_CAP": "60", "ASSISTANT_DAILY_CAP": "60",
     "RESEARCH_ENABLED": "1", "RESEARCH_LOOP": "1", "RESEARCH_AGENT": "1", "RESEARCH_AGENT_STEPS": "12",
     "RESEARCH_TURN_FETCHES": "32", "RESEARCH_TURN_SEARCHES": "8", "SPEA_DIRECTORY_FEED": "1",

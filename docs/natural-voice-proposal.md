@@ -1,6 +1,6 @@
 # Natural voice for Listen: capped pilot proposal (22 Oct, Cleo)
 
-Status: **proposal only.** Nothing is built or switched on, and no spending has been approved. It builds on Ina's research in `docs/ina-round2-language-voice-speed-audit.md`.
+Status: **built and released 22 Oct** (founder approved $1/day, $5/month). See docs/connected-orivia-plan.md for the release record.
 
 ## Today
 
