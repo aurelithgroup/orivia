@@ -126,6 +126,8 @@ jobs:
         run: node tests/ai-journey-tools.test.mjs
       - name: "Home dashboard shared records and navigation"
         run: node tests/home-dashboard.test.mjs
+      - name: Checked reply progressive display
+        run: node tests/chat-motion.test.mjs
       - name: "Local destination hero photos and fallback"
         run: node tests/home-destination-photo.test.mjs
       - name: "Organisation spaces inside Home"

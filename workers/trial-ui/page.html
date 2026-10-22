@@ -510,6 +510,42 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
 
 .account-sync-banner{padding:10px 16px;background:var(--amberSoft);font-size:13px;display:flex;gap:12px;align-items:center}.account-sync-banner span{flex:1}.auth-entry{position:relative}body[data-account-flow="on"] header.top{display:none}.auth-entry:has(.auth-cover)>.auth-brand{position:absolute;z-index:3;top:18px;inset-inline-start:16px;background:transparent}
 .organisation-sheet{max-height:88dvh;overflow:auto}.organisation-sheet>.row{justify-content:space-between}.organisation-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}.organisation-group{display:grid;gap:12px;margin-block:20px}#home-spaces a{text-decoration:none}#home-spaces-list .dashboard-card{display:flex;justify-content:space-between}
+/* Calm conversation system: Orivia's identity, spacious reading and restrained controls. */
+:root{--radius-sm:10px;--radius-card:16px;--radius-composer:26px;--reading-width:760px}
+.chat-scroll{padding:28px 20px;gap:28px;scroll-behavior:auto}
+#history{width:100%;max-width:var(--reading-width);margin-inline:auto;display:flex;flex-direction:column;gap:28px}
+.bubble.assistant{max-width:100%;width:100%;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;line-height:1.7;overflow-wrap:break-word}
+.bubble.user{max-width:82%;align-self:flex-end;border:0;border-radius:20px;padding:11px 17px;background:var(--surface2);color:var(--ink);line-height:1.6}
+.bubble.assistant>.reply-text{display:block;white-space:pre-wrap}.reply-text p{margin-block:0 16px}
+.reply-actions{display:flex;align-items:center;gap:5px;margin-top:10px;white-space:normal;color:var(--muted)}
+.reply-actions button,.reply-actions>details>summary{border:0;background:transparent;color:var(--muted);border-radius:8px;padding:7px 9px;font-size:12px;min-height:36px;cursor:pointer;margin:0;list-style:none}
+.reply-actions button:hover,.reply-actions summary:hover{background:var(--surface2);color:var(--ink)}
+.reply-actions>details{position:relative}.reply-actions>details[open]>button{display:block}.reply-actions summary::-webkit-details-marker{display:none}
+@media(hover:hover){.reply-actions{opacity:0;transition:opacity .12s}.bubble:hover .reply-actions,.bubble:focus-within .reply-actions{opacity:1}}
+.reply-pending-extra{display:none!important}.reply-revealing{min-height:1.7em}
+.composer-wrap{border:0;padding:12px 16px max(10px,env(safe-area-inset-bottom));background:var(--surface)}
+#form{max-width:var(--reading-width);margin-inline:auto;border-radius:var(--radius-composer);background:var(--surface2);box-shadow:0 2px 8px #00000005;padding:10px 12px}
+#form:focus-within{border-color:var(--muted);box-shadow:none}#form textarea{min-height:48px;max-height:min(30dvh,220px);padding:8px}
+#status{max-width:var(--reading-width);margin-inline:auto}.compose-controls{padding-top:2px}
+#attach,#mic{background:transparent;border:0;color:var(--muted)}
+.op-sources .op-chips{display:none}.op-sources>details>summary{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:12px;list-style:none;background:transparent}.op-sources>details>summary::-webkit-details-marker{display:none}
+.op-sources .op-entry{font-size:13px}.card,.set-group,.dashboard-card,.ev,.org-mini,.org-single{box-shadow:none;border-radius:var(--radius-card)}.btn{border-radius:var(--radius-sm)}.org-mini{padding:14px}.sources-fold>summary{font-size:12px;font-weight:500}
+.chat-search{width:100%;border:1px solid var(--line);background:var(--surface2);color:var(--ink);padding:10px 12px;border-radius:12px;font:inherit;min-height:42px}
+.sidebar-footer{display:flex;gap:8px;margin-top:auto;padding-top:14px;border-top:1px solid var(--line)}.sidebar-footer button{min-height:42px;text-align:start}
+#new-chat{background:var(--surface2);color:var(--ink);border:1px solid var(--line);text-align:start;font-weight:500}
+@media(min-width:1000px){
+ .app{max-width:1600px;padding-inline-start:260px;border:0;position:relative}
+ body:has(#workspace:not([hidden])) #chats-drawer{display:flex!important;position:fixed;inset-block:0;inset-inline-start:max(0px,calc((100vw - 1600px)/2));inset-inline-end:auto;width:260px;background:none;z-index:10}
+ body:has(#workspace:not([hidden])) #chats-drawer .drawer{width:260px;box-shadow:none;border-inline-end:1px solid var(--line);background:var(--surface2);animation:none}
+ body:has(#workspace:not([hidden])) #close-chats,body:has(#workspace:not([hidden])) #open-chats{display:none}
+ #chats-drawer .drawer>.tiny{font-size:11px}header.top{padding-inline:28px}header.top .chip,header.top .top-title{display:none}
+ #home>.section,#mylife>.section,#library>.section,#calendar-panel>.section,#settings-view>.section{width:100%;max-width:900px;margin-inline:auto}
+ #chat .composer-wrap{padding-inline:32px}.chat-scroll{padding-inline:32px;padding-top:40px}
+ body:has(#workspace[hidden]) .app{padding-inline-start:0;max-width:680px}
+}
+@media(max-width:440px){.chat-scroll{padding:22px 16px;gap:22px}#history{gap:24px}.composer-wrap{padding-inline:10px}.reply-actions button{min-height:42px}.bubble.user{max-width:88%}}
+@media(prefers-reduced-motion:reduce){.reply-actions,.reply-arriving{animation:none!important;transition:none!important}}
+
 </style></head>
 <body><div class="app">
 <header class="top"><button type="button" id="open-chats" class="gear menu-btn" aria-label="Chats" aria-haspopup="dialog" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button><span class="brand" role="group" aria-label="Orivia"><svg class="brand-mark" viewBox="0 0 306 310" aria-hidden="true"><path fill="currentColor" d="M0 0 L0 168 C0 248 60 302 136 308 L136 160 C136 70 78 4 0 0 Z"/><path fill="var(--amber)" d="M160 308 L160 190 C160 108 222 44 306 40 L306 172 C306 254 240 302 160 308 Z"/></svg><button type="button" id="brand-home" class="wordmark" aria-label="Home" style="border:0;background:none;color:inherit;padding:0;cursor:pointer">ORIVIA</button></span><span class="chip" data-public="Beta">Private AI trial</span><span class="top-title" id="view-title"></span><div id="orivia-nav" class="onav-slot"></div><button type="button" id="open-notifications" class="gear" aria-label="Notifications" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button><button type="button" id="open-settings" class="gear" aria-label="Settings" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></header>
@@ -691,9 +727,9 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
  <div class="drawer-head"><h2 id="chats-title">Chats</h2><button type="button" id="close-chats" class="icon-btn" aria-label="Close chats">×</button></div>
  <button type="button" id="new-chat" class="btn">+ New chat</button>
  <p class="tiny" data-device-copy="Saved on this device only, not in an account, and they don’t sync. Anyone using this device can open them." data-account-copy="Saved to your private account. Guest chats on this device are kept separately.">Saved on this device only, not in an account, and they don’t sync. Anyone using this device can open them.</p>
- <div id="chats-list" class="chats-list"></div>
+ <label class="sr-only" for="chat-search">Search chats</label><input id="chat-search" class="chat-search" type="search" placeholder="Search chats" autocomplete="off"><div id="chats-list" class="chats-list"></div>
  <details id="archived-wrap" class="archived"><summary>Archived (<span id="archived-count">0</span>)</summary><div id="archived-list" class="chats-list"></div></details>
-</aside></div>
+<div class="sidebar-footer"><button type="button" id="sidebar-account" class="ask">Your account</button><button type="button" id="sidebar-settings" class="ask">Settings</button></div></aside></div>
 <div id="organisation-sheet" class="scrim" hidden><section class="sheet organisation-sheet" role="dialog" aria-modal="true" aria-labelledby="organisation-title"><div class="row"><h2 id="organisation-title"></h2><button id="organisation-close" type="button" class="btn quiet">Close</button></div><div id="organisation-body"></div></section></div>
 <div id="add-sheet" class="scrim" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="add-title"><span class="grab"></span>
  <h2 id="add-title">New reminder</h2>

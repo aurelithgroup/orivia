@@ -2658,5 +2658,37 @@
   "Your Done marks are private: only you can see them.": {
     "fr": "Vos marques « Fait » sont privées : vous seul pouvez les voir.",
     "ar": "علامات «تم» الخاصة بك خاصة: أنت وحدك من يمكنه رؤيتها."
+  },
+  "Outlook (calendar file)": {
+    "fr": "Outlook (fichier calendrier)",
+    "ar": "Outlook (ملف تقويم)"
+  },
+  "Apple Calendar (calendar file)": {
+    "fr": "Calendrier Apple (fichier calendrier)",
+    "ar": "تقويم Apple (ملف تقويم)"
+  },
+  "Search chats": {
+    "fr": "Rechercher des discussions",
+    "ar": "البحث في المحادثات"
+  },
+  "Copy reply": {
+    "fr": "Copier la réponse",
+    "ar": "نسخ الرد"
+  },
+  "Could not copy": {
+    "fr": "Copie impossible",
+    "ar": "تعذّر النسخ"
+  },
+  "Select reply": {
+    "fr": "Sélectionner la réponse",
+    "ar": "تحديد الرد"
+  },
+  "Listen to this reply": {
+    "fr": "Écouter cette réponse",
+    "ar": "الاستماع إلى هذا الرد"
+  },
+  "No chats match your search.": {
+    "fr": "Aucune discussion ne correspond à votre recherche.",
+    "ar": "لا توجد محادثات تطابق بحثك."
   }
 }
