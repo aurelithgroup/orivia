@@ -128,6 +128,8 @@ jobs:
         run: node tests/home-dashboard.test.mjs
       - name: Approved design pass
         run: node tests/design-pass.test.mjs
+      - name: Checked reply progressive display
+        run: node tests/chat-motion.test.mjs
       - name: "Local destination hero photos and fallback"
         run: node tests/home-destination-photo.test.mjs
       - name: "Organisation spaces inside Home"

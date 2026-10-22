@@ -39,7 +39,7 @@ function renderSources({sources,claims,research={},language='en'}) {
  if(!checked.length)return null;
  if(!doc.getElementById('orivia-presentation-style')){const style=node('style',`.op-sources{white-space:normal;overflow-wrap:break-word;margin-block:12px;font-size:.86em}.op-chips{display:flex;flex-wrap:wrap;gap:6px}.op-source{display:inline-flex;gap:5px;align-items:center;padding:5px 9px;border:1px solid var(--line,#d8d3c8);border-radius:999px;color:var(--focus,#806012);text-decoration:none;font-size:.9em;max-width:100%;overflow-wrap:anywhere}.op-source:hover{text-decoration:underline}.op-source:focus-visible,.op-sources summary:focus-visible{outline:2px solid currentColor;outline-offset:3px}.op-sources summary{cursor:pointer;padding-block:10px}.op-entry{padding-block:10px;border-top:1px solid var(--line,#d8d3c8)}.op-entry p{margin:5px 0}.op-entry blockquote{margin:8px 0;padding-inline-start:12px;border-inline-start:2px solid var(--line,#d8d3c8)}.op-muted{font-size:.88em;opacity:.8}`);style.id='orivia-presentation-style';doc.head.append(style)}
  const box=node('section',null,'op-sources');box.setAttribute('aria-label',w.sources);box.dir=language==='ar'?'rtl':'auto';
- const chips=node('div',null,'op-chips'),detail=node('details');detail.append(node('summary',w.evidence+' · '+checked.length));
+ const chips=node('div',null,'op-chips'),detail=node('details');detail.append(node('summary',w.sources+' · '+checked.length));
  const category=s=>s.category==='university'?w.university:['official','government'].includes(s.category)?w.official:s.category==='directory'?w.directory:s.category==='community'?w.community:w.organisation;
  const link=(s,n,text)=>{const a=node('a',text,'op-source');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.setAttribute('aria-label',w.source+' '+n+': '+category(s)+' — '+s.title+' — '+s.host);return a};
  checked.forEach((s,i)=>{
@@ -53,7 +53,7 @@ function renderSources({sources,claims,research={},language='en'}) {
   detail.append(entry);
  });
  detail.append(node('p',w.note,'op-muted'));if(research.applicability==='needs-review')detail.append(node('p',w.review,'op-muted'));
- box.append(chips,detail);return box;
+ detail.append(chips);box.append(detail);return box;
 }
 window.OriviaPresentation={titleFor(turns){return suggestChatTitle(turns,{language:window.OriviaI18n?.language?.()||'en'})},renderSources};
 

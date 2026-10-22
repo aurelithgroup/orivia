@@ -22,7 +22,7 @@ assert.ok(html.includes('<h2 id="home-next-title">Your guides</h2><button type="
 assert.ok(html.includes('<strong>Your guides</strong><small id="life-journey-count">'),'and in My Life');
 assert.ok(js.includes("back-chat').onclick=()=>tab(guidesReturnTab||'mylife')"),'Back returns where the person came from');
 assert.match(html,/id="settings-help"/);assert.match(html,/id="tab-help"/);
-assert.match(js,/draw\(\);tab\('home'\)/);assert.match(js,/newChat\(\);input.value='';ask\(text,true\)/,'home starts a new chat and sends through the normal handler');
+assert.match(js,/draw\(\);renderChats\(\);tab\('home'\)/);assert.match(js,/newChat\(\);input.value='';ask\(text,true\)/,'home starts a new chat and sends through the normal handler');
 assert.match(js,/if\(which==='home'\)renderHome\(\)/);assert.match(js,/renderSavedPlaces\(\);renderLifeSummary\(\)/);
 assert.match(html,/Added by you · not linked/);assert.match(html,/Sign in to keep your chats and plans in your account/);
 const dashboard=js.slice(js.indexOf('function dashboardRecords('),js.indexOf('/* Switching sections:'));

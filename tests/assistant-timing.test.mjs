@@ -43,3 +43,9 @@ assert.equal(result.research.process.metrics.fetches,1,'only real requests consu
 for(const key of ['modelMs','toolWallMs','searchMs','pageMs']) assert.ok(result.research.process.metrics[key]>=0);
 assert.ok(!/https|school|contact/.test(JSON.stringify(result.research.process.metrics)),'timings carry no queries, pages or chat text');
 console.log('Assistant timing: concurrent deduplication, policy separation, retry, request isolation, bounded cache and whole-turn evidence preservation passed');
+
+// Exact searches share only a successful in-flight/result promise inside this turn, never a failure or another turn.
+{let calls=0,release;const gate=new Promise(r=>release=r);const tools={fetchPage:async()=>({ok:true}),search:async()=>{calls++;await gate;return {status:'searched',results:[]}}};
+ const a=assistantTiming(tools);const p=a.tools.search('British schools',{site:'spea.shj.ae',offset:0}),q=a.tools.search('British schools',{site:'spea.shj.ae',offset:0});assert.equal(p,q);release();await p;await q;await a.tools.search('British schools',{site:'spea.shj.ae',offset:0});assert.equal(calls,1);assert.equal(a.timings.searchCacheHits,2);
+ await a.tools.search('British schools',{site:'spea.shj.ae',offset:1});assert.equal(calls,2,'pagination stays distinct');await assistantTiming(tools).tools.search('British schools',{site:'spea.shj.ae',offset:0});assert.equal(calls,3,'no cross-turn reuse');
+ let failures=0;const f=assistantTiming({search:async()=>{failures++;return {status:'unavailable'}},fetchPage:async()=>{}});await f.tools.search('x');await f.tools.search('x');assert.equal(failures,2);}

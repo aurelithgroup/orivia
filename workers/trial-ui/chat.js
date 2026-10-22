@@ -10,7 +10,7 @@ function show(){
  $('intro').hidden=true;$('workspace').hidden=false;$('nav').hidden=false;$('open-settings').hidden=false;$('open-chats').hidden=false;
  loadChats();const c=activeChat();turns=c?c.turns.slice():[];
 
- draw();tab('home');window.OriviaNotifications?.changed();
+ draw();renderChats();tab('home');window.OriviaNotifications?.changed();
 }
 /* ===== Chat history: saved on this device (localStorage), no account, no sync =====
    store = {chats:[{id,title,titled,created,updated,pinned,archived,turns}], active}
@@ -263,11 +263,13 @@ function chatRow(c){
 function renderChats(){
  const list=$('chats-list'),arch=$('archived-list');if(!list)return;
  const by=(a,b)=>b.updated-a.updated;
- const live=store.chats.filter(c=>!c.archived&&c.turns.length),pinned=live.filter(c=>c.pinned).sort(by),recent=live.filter(c=>!c.pinned).sort(by),archived=store.chats.filter(c=>c.archived&&c.turns.length).sort(by);
+ const query=String($('chat-search')?.value||'').trim().toLocaleLowerCase();
+ const matches=c=>!query||(c.title+' '+c.turns.map(t=>t.content).join(' ')).toLocaleLowerCase().includes(query);
+ const live=store.chats.filter(c=>!c.archived&&c.turns.length&&matches(c)),pinned=live.filter(c=>c.pinned).sort(by),recent=live.filter(c=>!c.pinned).sort(by),archived=store.chats.filter(c=>c.archived&&c.turns.length&&matches(c)).sort(by);
  list.replaceChildren();
  if(pinned.length){list.append(el('p','chat-group',uiText('Pinned')));for(const c of pinned)list.append(chatRow(c))}
  if(recent.length){list.append(el('p','chat-group',uiText('Recent')));for(const c of recent)list.append(chatRow(c))}
- if(!live.length)list.append(el('p','notice',uiText('No saved chats yet. Start one and it will appear here.')));
+ if(!live.length)list.append(el('p','notice',uiText(query?'No chats match your search.':'No saved chats yet. Start one and it will appear here.')));
  arch.replaceChildren();for(const c of archived)arch.append(chatRow(c));
  if(!archived.length)arch.append(el('p','tiny',uiText('Archived chats are kept here until you delete them.')));
  $('archived-count').textContent=String(archived.length);
@@ -278,6 +280,13 @@ function closeChats(){if($('chats-drawer').hidden)return;$('chats-drawer').hidde
 $('open-chats').onclick=openChats;$('storage-manage').onclick=openChats;$('close-chats').onclick=closeChats;$('new-chat').onclick=()=>newChat(null); // never pass the click event in as a university guide
 $('chats-drawer').addEventListener('click',e=>{if(e.target.id==='chats-drawer')closeChats()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('chats-drawer').hidden)closeChats()});
+
+// Desktop uses the same chat records and controls as the phone drawer, not a second history.
+if($('chat-search'))$('chat-search').oninput=()=>renderChats();
+if($('sidebar-settings'))$('sidebar-settings').onclick=()=>{closeChats();tab('settings')};
+if($('sidebar-account'))$('sidebar-account').onclick=()=>{closeChats();globalThis.OriviaAccounts?.open?.()};
+function syncSidebarSemantics(){const a=$('chats-drawer').querySelector('aside'),desktop=window.matchMedia('(min-width:1000px)').matches;if(!a)return;a.setAttribute('role',desktop?'navigation':'dialog');if(desktop)a.removeAttribute('aria-modal');else a.setAttribute('aria-modal','true')}
+if(window.matchMedia&&$('chats-drawer')?.querySelector){syncSidebarSemantics();window.matchMedia('(min-width:1000px)').addEventListener?.('change',syncSidebarSemantics)}
 
 /* ===== Information cards (organisations) =====
    D: several results with a shortlist · A: one organisation · B: email draft / phone script · C: help choosing a next step.
@@ -585,14 +594,15 @@ function chatMessages(turns){return turns.slice(-12).map(({role,content,meta})=>
 let renderedChat;
 function nearChatBottom(sc){return sc.scrollHeight-sc.clientHeight-sc.scrollTop<96}
 function draw({newReply=null,scroll=false}={}){
+ window.OriviaChatMotion?.finishAll();
  const sc=$('chat-scroll'),previousTop=sc.scrollTop;
  const follow=scroll||renderedChat!==store.active||nearChatBottom(sc);
  renderedChat=store.active;
  const el=$('history');el.replaceChildren();
- for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant')+(t===newReply?' reply-arriving':'');const b=document.createElement('b');b.textContent=uiText(t.role==='user'?'You':'Orivia');b.className='sr-only';const txt=document.createElement('span');
+ for(const t of turns){const p=document.createElement('div');p.className='bubble '+(t.role==='user'?'user':'assistant')+(t===newReply?' reply-arriving':'');const b=document.createElement('b');b.textContent=uiText(t.role==='user'?'You':'Orivia');b.className='sr-only';const txt=document.createElement('span');txt.className='reply-text';
   const allSrcs=t.role==='assistant'?safeSources(t.meta&&t.meta.sources):[],docSrcs=allSrcs.filter(s=>s.category==='document'),srcs=allSrcs.filter(s=>s.category!=='document');
-  if(srcs.length)txt.append(...citedText(t.content,srcs));
-  if(t.role==='user'&&t.meta?.documentContext){const dc=t.meta.documentContext,n=document.createElement('p');n.className='doc-note';n.textContent=dc.used<dc.total?uiText('Orivia used your most recent documents in this chat:')+' '+dc.used+' '+uiText('of')+' '+dc.total+'.':uiText('Orivia used the first part of your documents in this chat (they’re long).');p.append(n)}else txt.textContent=t.content;p.append(b,txt);
+  if(srcs.length)txt.append(...citedText(t.content,srcs));else txt.textContent=t.content;
+  if(t.role==='user'&&t.meta?.documentContext){const dc=t.meta.documentContext,n=document.createElement('p');n.className='doc-note';n.textContent=dc.used<dc.total?uiText('Orivia used your most recent documents in this chat:')+' '+dc.used+' '+uiText('of')+' '+dc.total+'.':uiText('Orivia used the first part of your documents in this chat (they’re long).');p.append(n)}p.append(b,txt);
   // (draw() has its own local `el`, so the chip is built directly.)
   if(t.role==='user'&&t.meta?.attachment&&typeof t.meta.attachment.name==='string'){const at=t.meta.attachment,card=document.createElement('div');card.className='message-attachment';
    const url=at.type!=='application/pdf'&&(attachmentPreviews.get(at.id)||(at.fileId&&globalThis.OriviaAccounts?.user?'/api/account/files/'+encodeURIComponent(at.fileId):''));
@@ -612,8 +622,17 @@ function draw({newReply=null,scroll=false}={}){
    const rb=researchBlock(srcs,t.meta.research);
    p.append(rb);
   }
-  if(t.role==='assistant'&&'speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent=uiText('▶ Listen');lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label','Listen to this reply');lb.onclick=()=>listen(spokenText(t.content),lb,{language:t.meta?.lang||null});p.append(document.createElement('br'),lb)}
-  el.append(p)}
+  if(t.role==='assistant'){
+   const actions=document.createElement('div');actions.className='reply-actions';
+   const copy=document.createElement('button');copy.type='button';copy.textContent=uiText('Copy');copy.setAttribute('aria-label',uiText('Copy reply'));copy.onclick=async()=>{try{await navigator.clipboard.writeText(t.content);copy.textContent=uiText('Copied')}catch(_){copy.textContent=uiText('Could not copy')}};actions.append(copy);
+   if('speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent=uiText('▶ Listen');lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label',uiText('Listen to this reply'));lb.onclick=()=>listen(spokenText(t.content),lb,{language:t.meta?.lang||null});actions.append(lb)}
+   const more=document.createElement('details'),summary=document.createElement('summary');summary.textContent='⋯';summary.setAttribute('aria-label',uiText('More options'));more.append(summary);
+   const select=document.createElement('button');select.type='button';select.textContent=uiText('Select reply');select.onclick=()=>{window.OriviaChatMotion?.finishAll();const r=document.createRange();r.selectNodeContents(txt);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);more.open=false};more.append(select);actions.append(more);p.append(actions);
+  }
+  el.append(p);
+  if(t===newReply&&window.OriviaChatMotion){const extras=[...p.children].filter(n=>n!==txt&&n!==b);extras.forEach(n=>n.classList.add('reply-pending-extra'));txt.classList.add('reply-revealing');
+   window.OriviaChatMotion.reveal(txt,{text:txt.textContent,onDone:()=>{extras.forEach(n=>n.classList.remove('reply-pending-extra'));txt.classList.remove('reply-revealing')},follow:()=>{if(follow&&nearChatBottom(sc))sc.scrollTop=sc.scrollHeight}})}
+ }
  $('empty').hidden=turns.length>0;
  sc.scrollTop=follow?sc.scrollHeight:previousTop;
 }
@@ -1242,7 +1261,7 @@ function researchBlock(srcs,research){
  const r=research||{};
  if(RESEARCH_NOTE[r.status]){const n=el('p','rnote '+(r.status==='partial'?'partial':'warn'),RESEARCH_NOTE[r.status]);box.append(n)}
  const evidence=document.createElement('details');evidence.className='research-evidence';
- evidence.append(el('summary','','Sources and evidence'+(srcs.length?' ('+srcs.length+')':'')));
+ evidence.append(el('summary','',uiText('Sources')+(srcs.length?' ('+srcs.length+')':'')));
  if(srcs.length){
   const links=el('ol','source-buttons');links.setAttribute('aria-label','Open source websites');
   srcs.forEach((s,i)=>{
@@ -1253,7 +1272,7 @@ function researchBlock(srcs,research){
    a.append(el('span','source-button-n',sourceLetter(s)),el('span','source-button-host',s.host),el('span','source-button-arrow','↗'));
    li.append(a);links.append(li);
   });
-  box.append(links);
+  evidence.append(links);
   evidence.append(el('p','rhead',uiText('Sources')));
   const ol=document.createElement('ol');ol.className='sources-list';
   srcs.forEach((s,i)=>{
