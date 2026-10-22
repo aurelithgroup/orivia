@@ -1022,7 +1022,7 @@ function citeSegments(text,srcs){
 function citedText(text,srcs){
  return citeSegments(text,srcs).map(seg=>{
   if(seg.text!=null)return document.createTextNode(seg.text);
-  const a=document.createElement('a');a.className='cite';a.href=seg.src.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='['+seg.n+']';a.setAttribute('aria-label','Source '+seg.n+': '+seg.src.title+' (opens '+seg.src.host+')');return a;
+  const a=document.createElement('a');a.className='cite';a.href=seg.src.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=sourceLetter(seg.src);a.title=seg.src.host;a.setAttribute('aria-label','Source: '+seg.src.title+' (opens '+seg.src.host+')');return a;
  });
 }
 const RESEARCH_NOTE={
@@ -1038,6 +1038,8 @@ const RESEARCH_NOTE={
 };
 const TOPIC_LABEL={school:'School enrolment',bank:'Bank requirements',medical:'Medical test',residency:'Residence visa',biometrics:'Biometrics and Emirates ID',institution:'Your institution’s requirements','community-permissions-pending':'What people recommend (community experiences aren’t available yet)'};
 /* Ina's presentation module (docs/team-workflow.md): used when present; today's rendering otherwise or if it fails. */
+/* The first letter of a source's site (rta.ae → R), shown in a small circle instead of a number. */
+function sourceLetter(src){const h=String(src&&src.host||'').replace(/^www\./,'');const c=Array.from(h)[0]||'•';return c.toLocaleUpperCase()}
 function researchBlock(srcs,research){
  try{const custom=window.OriviaPresentation?.renderSources?.({sources:srcs,claims:Array.isArray(research?.claims)?research.claims:[],research:research||{},language:uiLanguage()});if(custom instanceof Node)return custom}catch(_){}
  const box=document.createElement('section');box.className='research';box.setAttribute('aria-label','Sources for this reply');
@@ -1050,9 +1052,9 @@ function researchBlock(srcs,research){
   srcs.forEach((s,i)=>{
    const li=document.createElement('li'),a=el('a','source-button');
    a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';
-   a.setAttribute('aria-label','Source '+(i+1)+': '+s.kind+' — '+s.title+' (opens '+s.host+' in a new tab)');
+   a.setAttribute('aria-label','Source: '+s.kind+' — '+s.title+' (opens '+s.host+' in a new tab)');
    a.title=s.kind+' — '+s.title;
-   a.append(el('span','source-button-n',String(i+1)),el('span','source-button-host',s.host),el('span','source-button-arrow','↗'));
+   a.append(el('span','source-button-n',sourceLetter(s)),el('span','source-button-host',s.host),el('span','source-button-arrow','↗'));
    li.append(a);links.append(li);
   });
   box.append(links);
@@ -1071,13 +1073,13 @@ function researchBlock(srcs,research){
  if(claims.length){
   const det=document.createElement('details');det.className='claims';det.append(el('summary','',uiText('Source-backed: see the quotes')));
   for(const c of claims){
-   const n=srcs.findIndex(s=>s.id===c.sourceId)+1;const d=el('div','claim');d.append(el('p','',c.text));
+   const from=srcs.find(s=>s.id===c.sourceId)?.host||'the source';const d=el('div','claim');d.append(el('p','',c.text));
    if(c.quotes&&c.quotes.length>1){ // one quote per fact in the claim, each labelled
     const ul=document.createElement('ul');ul.className='claim-quotes';
     for(const q of c.quotes){const li=document.createElement('li');if(q.label)li.append(el('span','q-label',q.label));li.append(el('blockquote','','“'+q.quote+'”'));ul.append(li)}
-    d.append(ul,el('p','tiny','Each part of this point is quoted from source '+n+'. The quotes support it but don’t guarantee it applies to your situation.'));
+    d.append(ul,el('p','tiny','Each part of this point is quoted from '+from+'. The quotes support it but don’t guarantee it applies to your situation.'));
    }else{
-    d.append(el('blockquote','','“'+((c.quotes&&c.quotes[0]&&c.quotes[0].quote)||c.quote)+'”'),el('p','tiny','Quote from source '+n+'. A quote supports the point but doesn’t guarantee it applies to your situation.'));
+    d.append(el('blockquote','','“'+((c.quotes&&c.quotes[0]&&c.quotes[0].quote)||c.quote)+'”'),el('p','tiny','Quote from '+from+'. A quote supports the point but doesn’t guarantee it applies to your situation.'));
    }
    det.append(d);
   }

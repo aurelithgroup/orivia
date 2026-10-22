@@ -230,7 +230,7 @@ button.link-card{font:inherit;width:100%;text-align:start;cursor:pointer}
 @media (prefers-reduced-motion:no-preference){.listening .dot{animation:pulse 1.2s ease-in-out infinite}@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}}
 #listening-text{flex:1;min-width:120px}
 /* Research: citations and sources under a reply */
-a.cite{color:var(--focus);font-weight:800;text-decoration:none;padding:0 2px;border-radius:4px}
+a.cite{display:inline-flex;align-items:center;justify-content:center;width:1.45em;height:1.45em;margin:0 2px;vertical-align:.12em;border-radius:50%;background:var(--focusSoft);color:var(--focus);font-size:.68em;font-weight:800;line-height:1;text-decoration:none}
 a.cite:hover,a.cite:focus-visible{background:var(--focusSoft)}
 .research{display:flex;flex-direction:column;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);white-space:normal}
 .rhead{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
@@ -241,7 +241,7 @@ a.cite:hover,a.cite:focus-visible{background:var(--focusSoft)}
 .source-buttons{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px;min-width:0}
 .source-buttons li{min-width:0;max-width:100%}
 a.source-button{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:36px;box-sizing:border-box;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-size:12px;line-height:1.3;text-decoration:none;white-space:normal}
-.source-button-n{font-weight:800;color:var(--focus);flex:none}
+.source-button-n{display:inline-flex;align-items:center;justify-content:center;width:1.5em;height:1.5em;border-radius:50%;background:var(--focusSoft);font-size:.8em;font-weight:800;color:var(--focus);flex:none}
 .source-button-host{overflow-wrap:anywhere;min-width:0}
 .source-button-arrow{color:var(--muted);flex:none}
 a.source-button:hover{background:var(--focusSoft)}

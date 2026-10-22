@@ -57,7 +57,7 @@ assert.equal(spoken(F['evidence-found'].reply).includes('https'), false); assert
   assert.equal(safeResearch(F.partial.research).claims[0].quotes.length, 0, 'older single-quote claims still work');
   const block = grab('researchBlock');
   assert.match(block, /c\.quotes&&c\.quotes\.length>1/); assert.match(block, /'q-label',q\.label/);
-  assert.match(block, /Each part of this point is quoted from source/);
+  assert.ok(block.includes("'Each part of this point is quoted from '+from+'."), 'quotes name the site, not a number');
 }
 /* Render the real research block: compact links keep their destinations and accessible names;
    metadata/quotes remain available in a closed native disclosure, warnings stay visible. */
