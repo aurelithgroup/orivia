@@ -153,6 +153,8 @@ jobs:
           node --experimental-sqlite tests/university-chat.test.mjs
       - name: "Installable app: manifest, icons, offline worker"
         run: node --experimental-sqlite tests/installable.test.mjs
+      - name: "Chat titles and compact sources (Ina)"
+        run: node tests/chat-presentation.test.mjs
       - name: "Shared navigation and space addresses"
         run: node tests/navigation.test.mjs
       - name: "myorivia.app production entry gates"
