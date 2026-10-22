@@ -23,11 +23,20 @@ const seed=`(function(){try{
  // ?view=library|chat|mylife|calendar|settings opens that screen; ?scroll=N scrolls it; ?drawer=1 opens the chat list.
  const q=new URLSearchParams(location.search);addEventListener('load',()=>setTimeout(()=>{try{const v=q.get('view');if(v)window.oriviaGo?.(v);setTimeout(()=>{const n=Number(q.get('scroll')||0);if(n){const el=[...document.querySelectorAll('.view:not([hidden]) .life-scroll,.view:not([hidden]),#chat-scroll,main')].find(e=>e.scrollHeight>e.clientHeight);(el||document.scrollingElement).scrollTop=n;window.scrollTo(0,n)}if(q.get('drawer'))document.getElementById('open-chats')?.click()},300)}catch(e){}},700));
 })();`;
+let voiceCount=0;
+function silentWav(seconds){const rate=8000,n=Math.round(rate*seconds),b=Buffer.alloc(44+n*2);b.write('RIFF',0);b.writeUInt32LE(36+n*2,4);b.write('WAVEfmt ',8);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(rate,24);b.writeUInt32LE(rate*2,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(n*2,40);return b}
 const server=http.createServer(async(req,res)=>{
  try{
   const url='http://localhost:8793'+req.url;
   if(req.url.startsWith('/__seed.js')){res.writeHead(200,{'content-type':'text/javascript'});return res.end(seed)}
   const body=['GET','HEAD'].includes(req.method)?undefined:await new Promise(r=>{const c=[];req.on('data',d=>c.push(d));req.on('end',()=>r(Buffer.concat(c)))});
+  // HARNESS_VOICE=<ms>: offer the natural voice and answer /v1/voice after <ms> with half a second of silence (no OpenAI).
+  // /__voice-count says how many voice requests arrived, so duplicate generation is visible.
+  if(process.env.HARNESS_VOICE){
+   if(req.url==='/__voice-count'){res.writeHead(200,{'content-type':'application/json'});return res.end(JSON.stringify({count:voiceCount}))}
+   if(req.url.startsWith('/v1/voice')){voiceCount++;await new Promise(r=>setTimeout(r,Number(process.env.HARNESS_VOICE)||400));res.writeHead(200,{'content-type':'audio/wav'});return res.end(silentWav(0.5))}
+   if(req.url.startsWith('/v1/config')){const r=await worker.fetch(new Request('https://app.localhost/v1/config'),env,ctx);const d=await r.json();d.naturalVoice=true;d.providerPilot={provider:'OpenAI',consent:'harness-consent-v1',text:'Harness only.',agree:'I agree'};res.writeHead(200,{'content-type':'application/json'});return res.end(JSON.stringify(d))}
+  }
   const h={...req.headers};if(h.origin)h.origin='https://app.localhost';delete h.host;
   const r=await worker.fetch(new Request('https://app.localhost'+req.url,{method:req.method,headers:h,body}),env,ctx);
   const headers={};r.headers.forEach((v,k)=>{if(!/content-security-policy|content-length|content-encoding/i.test(k))headers[k]=v});

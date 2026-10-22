@@ -2818,5 +2818,9 @@
   "Couldn’t save this change on this device. Nothing was removed or restored.": {
     "fr": "Impossible d’enregistrer ce changement sur cet appareil. Rien n’a été retiré ni restauré.",
     "ar": "تعذّر حفظ هذا التغيير على هذا الجهاز. لم تتم إزالة أو استعادة أي شيء."
+  },
+  "Preparing the voice…": {
+    "fr": "Préparation de la voix…",
+    "ar": "جارٍ تجهيز الصوت…"
   }
 }

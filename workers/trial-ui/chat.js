@@ -1102,6 +1102,12 @@ function bestVoice(l){
 }
 function voicesReady(){return new Promise(res=>{const now=speechSynthesis.getVoices();if(now.length)return res();let done=false;const fin=()=>{if(!done){done=true;res()}};speechSynthesis.addEventListener('voiceschanged',fin,{once:true});setTimeout(fin,1200)})}
 let speakingBtn=null,speakRun=0;
+/* Click-to-first-audio, measured on this device (numbers only: no text). Kept for this page in OriviaListenTimings and
+   logged as {"event":"orivia-listen"} for a reviewer's console. */
+const listenTiming={t0:0,cached:0,run:0};window.OriviaListenTimings=[];
+function listenStarted(source){if(!listenTiming.t0||listenTiming.run!==speakRun)return;const ms=Math.round(performance.now()-listenTiming.t0);listenTiming.t0=0;
+ const st=$('status');if(st.dataset.preparing==='1'){delete st.dataset.preparing;if(st.textContent===uiText('Preparing the voice…'))st.textContent=''}
+ const rec={event:'orivia-listen',source:source==='natural'&&listenTiming.cached?'natural-reused':source,firstAudioMs:ms};window.OriviaListenTimings.push(rec);if(window.OriviaListenTimings.length>20)window.OriviaListenTimings.shift();try{console.info(JSON.stringify(rec))}catch(_){}}
 // Natural voice (OpenAI), when the server offers it, the person agreed to OpenAI and hasn't turned it off in Settings.
 // Only the text of the reply being read is sent, a piece at a time; the next piece is fetched while one plays.
 let naturalVoiceServer=false,voicePlayer=null,voiceRequests=new Set(),voiceError='';
@@ -1109,30 +1115,47 @@ const SILENT_WAV='data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAwF0AAIC7
 function naturalVoiceOn(){return naturalVoiceServer&&readSettings().naturalVoice!==false&&!!pilotConsent()}
 // iPhones only let audio play from a tap: start the one player during the tap, then reuse it for the voice.
 function unlockPlayer(){const a=voicePlayer||(voicePlayer=new Audio());try{a.src=SILENT_WAV;a.play().catch(()=>{})}catch(_){}return a}
-function voicePiece(text,lang){const c=new AbortController();voiceRequests.add(c);
+/* Audio already generated in this session is reused (replay, or the same reply again) instead of paying for it twice.
+   Memory only: never stored, keyed by account so another account never hears it, at most 24 pieces / 8 MB.
+   A request for the same piece that is still in flight is shared rather than sent again. */
+const voiceCache=new Map(),voiceInflight=new Map();let voiceCacheBytes=0;
+const voiceKey=(text,lang)=>(globalThis.OriviaAccounts?.epoch||'guest')+'|'+lang+'|'+text;
+function voiceRemember(k,blob){if(!blob||blob.size>4e6||!k.startsWith((globalThis.OriviaAccounts?.epoch||'guest')+'|'))return;if(voiceCache.has(k))return;voiceCache.set(k,blob);voiceCacheBytes+=blob.size;
+ while(voiceCache.size>24||voiceCacheBytes>8e6){const [old,b]=voiceCache.entries().next().value;voiceCache.delete(old);voiceCacheBytes-=b.size}}
+let voiceCacheEpoch=null;
+function voicePiece(text,lang){const epoch=globalThis.OriviaAccounts?.epoch||'guest';if(epoch!==voiceCacheEpoch){for(const c of voiceRequests)c.abort();voiceRequests.clear();voiceCache.clear();voiceCacheBytes=0;voiceInflight.clear();voiceCacheEpoch=epoch}
+ const k=voiceKey(text,lang);
+ if(voiceCache.has(k)){listenTiming.cached++;return Promise.resolve(voiceCache.get(k))}
+ if(voiceInflight.has(k))return voiceInflight.get(k);
+ const p=voiceFetch(text,lang).then(b=>{voiceRemember(k,b);return b}).finally(()=>voiceInflight.delete(k));voiceInflight.set(k,p);return p}
+function voiceFetch(text,lang){const c=new AbortController();voiceRequests.add(c);
  return fetch('/v1/voice',{method:'POST',signal:c.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,language:lang,preferences:{providerConsent:pilotConsent()}})})
   // A failed piece remembers why (a safe code such as voice_limit), so the person can tell us what happened.
   .then(async r=>{if(r.ok&&String(r.headers.get('Content-Type')).startsWith('audio/'))return r.blob();let e='';try{e=String((await r.json()).error||'')}catch(_){}voiceError=(/^[a-z_]{3,40}$/.test(e)?e:'http_'+r.status);return null}).catch(()=>{voiceError=voiceError||'offline';return null}).finally(()=>voiceRequests.delete(c))}
-function playPiece(blob,run){return new Promise(res=>{const a=voicePlayer,url=URL.createObjectURL(blob);let over=false;const done=ok=>{if(over)return;over=true;URL.revokeObjectURL(url);a.onended=a.onerror=a.onpause=null;res(ok)};
+function playPiece(blob,run,first){return new Promise(res=>{const a=voicePlayer,url=URL.createObjectURL(blob);let over=false;if(first)a.addEventListener('playing',()=>{if(run===speakRun)listenStarted(first)},{once:true});const done=ok=>{if(over)return;over=true;URL.revokeObjectURL(url);a.onended=a.onerror=a.onpause=null;res(ok)};
  a.onended=()=>done(true);a.onerror=()=>done(false);a.onpause=()=>{if(run!==speakRun)done(true)};a.src=url;a.play().catch(()=>done(false))})}
 // Returns the text it could not read ('' when done or stopped).
 async function naturalSpeak(text,lang,run){
- const parts=(window.OriviaVoiceText?.chunks?window.OriviaVoiceText.chunks(text,600):[text]).filter(x=>x.trim());
+ const chunk=(t,n)=>(window.OriviaVoiceText?.chunks?window.OriviaVoiceText.chunks(t,n):[t]).filter(x=>x.trim());
+ let parts=chunk(text,600);if(parts.length&&parts[0].length>220){const head=chunk(parts[0],200);parts=[head[0],...(head.length>1?chunk(head.slice(1).join(' '),600):[]),...parts.slice(1)]}
  voiceError='';let next=voicePiece(parts[0],lang);
  for(let i=0;i<parts.length;i++){
   const blob=await next;if(run!==speakRun)return '';
   if(!blob){if(voiceError)$('status').textContent=uiText('The natural voice isn’t available right now, so your phone’s voice is reading this.')+' ('+voiceError+')';return parts.slice(i).join(' ')}
   next=i+1<parts.length?voicePiece(parts[i+1],lang):null;
   if(i===0)$('status').textContent=uiText('Reading with an AI-generated voice (OpenAI).');
-  const ok=await playPiece(blob,run);if(run!==speakRun)return '';if(!ok)return parts.slice(i).join(' ');
+  const ok=await playPiece(blob,run,i===0?'natural':null);if(run!==speakRun)return '';if(!ok)return parts.slice(i).join(' ');
  }
  stopSpeaking();return '';
 }
-function stopSpeaking(){if(!canSpeak)return;speakRun++;speechSynthesis.cancel();for(const c of voiceRequests)c.abort();voiceRequests.clear();if(voicePlayer){try{voicePlayer.pause()}catch(_){}}if(speakingBtn){speakingBtn.setAttribute('aria-pressed','false');speakingBtn.textContent=uiText('▶ Listen');speakingBtn=null}}
+// Stop silences at once. A voice piece already being generated is left to finish into this session's cache (never played
+// for the stopped run), so tapping Listen again reuses it instead of paying twice. An account change does abort them.
+function stopSpeaking(){if(!canSpeak)return;speakRun++;speechSynthesis.cancel();listenTiming.t0=0;if($('status').dataset.preparing==='1'){$('status').textContent='';delete $('status').dataset.preparing}if(voicePlayer){try{voicePlayer.pause()}catch(_){}}if(speakingBtn){speakingBtn.setAttribute('aria-pressed','false');speakingBtn.textContent=uiText('▶ Listen');speakingBtn=null}}
 async function listen(text,btn,{language=null,feedback=null}={}){
  if(speakingBtn===btn){stopSpeaking();return}
  stopSpeaking();stopDictation(false);
- const run=++speakRun,l=language&&VOICE_LOC[language]?language:textLang(text);
+ const run=++speakRun,l=language&&VOICE_LOC[language]?language:textLang(text);listenTiming.t0=performance.now();listenTiming.cached=0;listenTiming.run=run;
+ $('status').textContent=uiText('Preparing the voice…');$('status').dataset.preparing='1';
  let clean=text.replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu,'').replace(/\s+/g,' ').trim();
  // Natural voice first; anything it couldn't read (limit reached, offline, not word for word) goes to the phone's voice.
  if(naturalVoiceOn()&&clean){unlockPlayer();if(feedback)feedback.textContent='';speakingBtn=btn;btn.setAttribute('aria-pressed','true');btn.textContent=uiText('■ Stop');
@@ -1143,6 +1166,7 @@ async function listen(text,btn,{language=null,feedback=null}={}){
  // Ina's lossless chunks (long text without spaces, e.g. Chinese, used to lose its start); the old split only if missing.
  const parts=window.OriviaVoiceText?.chunks?window.OriviaVoiceText.chunks(clean,200).filter(x=>x.trim()):clean.split(/(?<=[.!?。！？।۔])\s+/).flatMap(x=>x.length>220?x.match(/.{1,200}(\s|$)/g):[x]).filter(Boolean);
  parts.forEach((c,i)=>{const u=new SpeechSynthesisUtterance(c);u.lang=v?v.lang:VOICE_LOC[l];if(v)u.voice=v;u.rate=v&&/natural|neural|online|enhanced|premium/i.test(v.name)?1:.95;
+  if(i===0)u.onstart=()=>{if(run===speakRun)listenStarted('device')};
   if(i===parts.length-1)u.onend=()=>{if(run===speakRun)stopSpeaking()};u.onerror=e=>{if(run===speakRun&&e.error!=='interrupted'&&e.error!=='canceled')stopSpeaking()};speechSynthesis.speak(u)});
 }
 if(canSpeak)setInterval(()=>{try{if(speechSynthesis.speaking&&!speechSynthesis.paused){speechSynthesis.pause();speechSynthesis.resume()}}catch(_){}},10000); // keeps Chrome on Android from stopping long replies

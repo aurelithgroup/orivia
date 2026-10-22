@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 const [outDir,jobsFile]=process.argv.slice(2);const jobs=JSON.parse(fs.readFileSync(jobsFile,'utf8'));fs.mkdirSync(outDir,{recursive:true});
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'cdp-'));
-const chrome=spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',['--headless=new','--disable-gpu','--hide-scrollbars','--no-first-run','--no-default-browser-check','--remote-debugging-port=9333','--user-data-dir='+profile,'about:blank'],{stdio:'ignore'});
+const chrome=spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',['--headless=new','--disable-gpu','--hide-scrollbars','--no-first-run','--no-default-browser-check','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9333','--user-data-dir='+profile,'about:blank'],{stdio:'ignore'});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let ws;for(let i=0;i<50;i++){try{const list=await (await fetch('http://127.0.0.1:9333/json')).json();const pg=list.find(t=>t.type==='page');if(pg){ws=new WebSocket(pg.webSocketDebuggerUrl);break}}catch(_){}await sleep(200)}
 await new Promise(r=>ws.addEventListener('open',r,{once:true}));
