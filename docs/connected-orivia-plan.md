@@ -253,3 +253,33 @@ Order (Cleo, one step at a time):
   - device alerts enable on the phone, the test alert arrives and tapping it opens Orivia;
   - the bell shows a red dot until the inbox is opened.
   - Fixes on the way: a new device replaces the oldest registration (max 3) instead of `device_limit` (`78a5afa`); unread dot (`bab347f`).
+
+## Step 9, composer, Library and the bell released to myorivia.app (22 Oct, Cleo, founder-approved)
+
+- **Includes:**
+  - Step 9 for staff:
+    - counts (joins in the last 30 days, invitation uses, published items);
+    - member search with 100-per-page paging;
+    - admin status on the owner list.
+  - Step 9 for students: Mark as done on guides and key dates, which staff see only as totals (minimum 5 sharing, opt-out). Ina cleared step 9 to proceed independently.
+  - Ina's approved composer and Library. On production the Library is guides and shortlists only, because `files:false` hides the Files tab and section.
+  - The bell's red dot for unread inbox items.
+- **Not included (still pilot only):**
+  - Files and Files to Chat: `files:false` and `documents:false` live, and the + button stays hidden. They wait for Ina's recheck of `11a2578` and the Privacy approval.
+  - Device push stays off in production (503).
+- **Database:**
+  - restore bookmark `00000026-00000000-0000510c-0a57a5b6d715aacda5a9460d0afbbee5` recorded first;
+  - added `organisation_progress` and `organisation_progress_private` (additive, empty);
+  - users, organisations and memberships were unchanged.
+- **Deploys:**
+  - built from `11a2578`; full suite passed (82 checks);
+  - `orivia-production` `b5730013` (rollback `b83cbbdb`); the front door was not redeployed.
+- **Live checks passed:**
+  - routes, the `/manage` refusal, favicon and app worker;
+  - `/v1/config` has `files:false`, `documents:false`, `naturalVoice:true`, consent v1 and no secrets;
+  - the Library, composer, red-dot and progress code is served;
+  - the bottom bar has five columns;
+  - `img-src` and `media-src` allow `blob:`;
+  - progress, files and document routes refuse signed-out or human-check-less requests;
+  - device push is refused (503);
+  - chat still needs the human check.
