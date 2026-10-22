@@ -10,7 +10,7 @@ const PROD='production b9e32ffc (myorivia.app), also on pilot',PIL='pilot '+pilo
 const NOTYET='Not started tonight: deferred by the GOV-007 cut-off, not by a product decision.';
 // [status, evidence, dependency?]
 const S={
-'GOV-001':['locally verified','Built on the integrated app (a846926 → candidate); all 90 CI commands pass on a clean tree (docs/evidence/pilot-candidate-2-2026-10-22.json).'],
+'GOV-001':['locally verified','Built on the integrated app (a846926 → candidate); every CI command passes on a clean tree at the candidate (count and results in the candidate receipt).'],
 'GOV-002':['locally verified','Baseline a846926 = spec baselineSha; production b9e32ffc recorded before work.'],
 'GOV-003':['in progress','Cleo integrated one candidate; Ina’s independent review pending.','Ina review'],
 'GOV-004':['locally verified','No founder test requested during this build.'],
@@ -38,7 +38,7 @@ const S={
 'AI-006':['existing',CODE],'AI-007':['existing',CODE],'AI-008':['existing',CODE],'AI-009':['existing',CODE],'AI-010':['existing',CODE],'AI-011':['existing',CODE],'AI-012':['existing',CODE],
 'PERF-001':['in progress','Timing log (orivia-assistant: steps, model/tool ms) exists; numbers-only tail script ready. 0 live samples: pilot traffic is behind Access and the founder is not asked to test.','Ina or reviewer sends the 3 benchmark classes on the pilot'],
 'PERF-002':['deferred by scope',NOTYET],'PERF-003':['existing','Same-turn page reuse (tests/assistant-timing.test.mjs).'],'PERF-004':['deferred by scope',NOTYET],'PERF-005':['existing','verifyReply before display; '+CODE],
-'PERF-006':['deferred by scope',NOTYET],'PERF-007':['existing',CODE],'PERF-008':['locally verified','Preparing message at the tap; first natural piece ~1 sentence; click-to-first-audio recorded (orivia-listen). Harness with simulated 600 ms voice: ~1.0–1.2 s first audio, 51–72 ms on reuse. OpenAI latency not measured.','Real-provider and device measurement'],'PERF-009':['locally verified','Session-only audio reuse per account (memory, 24 pieces / 8 MB), in-flight sharing, dropped on account change; Stop keeps a piece in progress so a re-tap does not pay twice (browser: 2 requests, not 3).'],'PERF-010':['released','Voice $1/day, $5/month caps.'],
+'PERF-006':['deferred by scope',NOTYET],'PERF-007':['existing',CODE],'PERF-008':['locally verified','Preparing message at the tap; first natural piece ~1 sentence; click-to-first-audio recorded (orivia-listen). Harness with simulated 600 ms voice: ~1.0–1.2 s first audio, 51–72 ms on reuse. OpenAI latency not measured.','Real-provider and device measurement'],'PERF-009':['locally verified','Session-only audio reuse per account (memory, 24 pieces / 8 MB), in-flight sharing; Stop keeps a piece in progress for replay. Account exit, account change and Clear saved data run resetVoiceSession(): cache, in-flight, requests, player and audio URLs cleared at once; late responses never cached or played (Ina 7c701fb; tests/voice-account-exit.test.mjs; docs/evidence/voice-account-exit-browser-2026-10-22.json).'],'PERF-010':['released','Voice $1/day, $5/month caps.'],
 'JOURNEY-001':['existing',CODE],'JOURNEY-002':['existing','Guide offer card; '+CODE],'JOURNEY-003':['existing',CODE],'JOURNEY-004':['existing',CODE],'JOURNEY-005':['deferred by scope',NOTYET],'JOURNEY-006':['existing',CODE],
 'JOURNEY-007':['deferred by scope',NOTYET],'JOURNEY-008':['deferred by scope',NOTYET],'JOURNEY-009':['deferred by scope',NOTYET],'JOURNEY-010':['deferred by scope',NOTYET],
 'LIB-001':['locally verified','Tabs All, Files, Guides, Places and services, Shortlists over existing records (no copies); tests/library.test.mjs.','Saved conversations/links section not built'],
@@ -52,7 +52,7 @@ const S={
 'CAL-005':['existing',CODE],'CAL-006':['existing',CODE],'CAL-007':['existing',CODE],'CAL-008':['existing',CODE],'CAL-009':['deferred by scope',NOTYET],'CAL-010':['existing',CODE],
 'AUTH-001':['released','Accounts and guest entry.'],
 'AUTH-002':['deferred by scope',NOTYET+' Spec forbids shipping an insecure switch; needs Better Auth multi-session review.'],'AUTH-003':['deferred by scope',NOTYET],
-'AUTH-004':['existing','Account epoch binding and X-Orivia-Account 409; '+CODE],'AUTH-005':['existing','Partial: account header per request; '+CODE],'AUTH-006':['deferred by scope',NOTYET],
+'AUTH-004':['locally verified','Account epoch binding and X-Orivia-Account 409 (existing); voice audio now cleared immediately on account exit or change (Ina 7c701fb).','Full multi-account switching (AUTH-002/003)'],'AUTH-005':['existing','Partial: account header per request; '+CODE],'AUTH-006':['deferred by scope',NOTYET],
 'AUTH-007':['existing','Verified email required for organisation and owner actions; '+CODE],'AUTH-008':['deferred by scope','Not reviewed tonight.'],'AUTH-009':['released','In-app account deletion with durable file cleanup.'],'AUTH-010':['existing','Last owner cannot delete; '+CODE],
 'OWNER-001':['locally verified','GET /api/admin/overview: organisations, active students/staff, join requests, open invitations, published/draft content, open feedback, each defined; tests/owner-overview.test.mjs (exact counts, refusal for visitor/student/admin/non-member); rendered at 1280px and 390px (docs/evidence/screens).','Ina signed-in check on the pilot'],'OWNER-002':['locally verified','Organisation search (name, web name, city; % literal) with per-organisation totals and direct actions (invite first admin; open dashboard when also staff).'],'OWNER-003':['deferred by scope',NOTYET],'OWNER-004':['deferred by scope',NOTYET],
 'OWNER-005':['deferred by scope',NOTYET+' Rating totals only.'],'OWNER-006':['deferred by scope',NOTYET],'OWNER-007':['locally verified','Budgets read from the server meters only (OpenAI and voice spend_meter, search research_usage, sign-in email account_mail_meter); otherwise Unavailable. Pilot read-only check: shared OpenAI meter $5.35 this month.','Actual-cost report vs 250 AED target (BUSINESS-005)'],
@@ -89,11 +89,11 @@ const S={
 'APP-001':['existing','Install button and manifest; '+CODE],'APP-002':['deferred by scope',NOTYET],'APP-003':['deferred by scope',NOTYET],'APP-004':['deferred by scope',NOTYET],
 'APP-005':['blocked external','Apple membership, identity/entity, signing.','Authorised account holder'],'APP-006':['released','In-app account deletion.'],
 'APP-007':['blocked external','Physical devices required.','Real-device tests'],'APP-008':['locally verified','No enrolment, payment or submission made.'],
-'QA-001':['locally verified','90/90 CI commands pass on a clean tree at the candidate.'],'QA-002':['locally verified','One candidate deployed to the isolated pilot; frozen for review.'],
+'QA-001':['locally verified','Every CI command passes on a clean tree at the candidate; the receipt lists each command and result.'],'QA-002':['locally verified','One candidate deployed to the isolated pilot; frozen for review.'],
 'QA-003':['in progress','Awaiting Ina.','Ina review'],'QA-004':['in progress','After Ina’s review.','Founder acceptance'],'QA-005':['locally verified','Ina’s five findings (a4e6dcf) fixed at source with behavioural tests; a step 9 Members-tab crash found by a browser check, fixed with a guard.'],
-'QA-006':['locally verified','Production not touched.'],'QA-007':['locally verified','docs/evidence/pilot-candidate-2-2026-10-22.json + this ledger.'],'QA-008':['locally verified','Readiness list states what is left.'],
+'QA-006':['locally verified','Production not touched.'],'QA-007':['locally verified','The candidate receipt (docs/evidence/pilot-candidate-*.json) + this ledger.'],'QA-008':['locally verified','Readiness list states what is left.'],
 };
-const NEW=new Set(['UX-003','UX-004','CHAT-007','CHAT-008','LIB-001','LIB-002','LIB-003','LIB-004','LIB-006','CAL-001','OWNER-001','OWNER-002','OWNER-007','OWNER-009','UNI-001','UNI-008','PERF-008','PERF-009','SEC-005']);
+const NEW=new Set(['UX-003','UX-004','CHAT-007','CHAT-008','LIB-001','LIB-002','LIB-003','LIB-004','LIB-006','CAL-001','OWNER-001','OWNER-002','OWNER-007','OWNER-009','UNI-001','UNI-008','PERF-008','PERF-009','SEC-005','AUTH-004']);
 const out=[],missing=[];
 for(const r of spec.requirements){const k=r.id.replace(/^ORI-/,''),v=S[k];if(!v){missing.push(r.id);continue}
  if(!VOCAB.includes(v[0]))throw Error(r.id+' bad status '+v[0]);

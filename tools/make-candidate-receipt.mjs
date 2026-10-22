@@ -1,8 +1,9 @@
 /* Writes the machine-readable pilot candidate receipt from real run outputs: a CI run file (from the local runner),
    the requirements ledger and the browser-check evidence files. It cannot prove facts; it only assembles them.
-   Usage: node tools/make-candidate-receipt.mjs <ci-run.json> <workerVersion> <bundleSha256> <out.json> */
+   Usage: node tools/make-candidate-receipt.mjs <ci-run.json> <workerVersion> <bundleSha256> <out.json> [notes.json]
+   notes.json (optional) replaces candidate-specific fields: inaFindings, newInThisCandidate, extraTests, findings, rollback. */
 import fs from 'node:fs';
-const [ciFile,workerVersion,bundleSha256,out]=process.argv.slice(2);if(!out)throw Error('usage');
+const [ciFile,workerVersion,bundleSha256,out,notesFile]=process.argv.slice(2);const notes=notesFile?JSON.parse(fs.readFileSync(notesFile,'utf8')):{};if(!out)throw Error('usage');
 const ci=JSON.parse(fs.readFileSync(ciFile,'utf8')),ledger=JSON.parse(fs.readFileSync('docs/evidence/requirements-ledger-2026-10-22.json','utf8'));
 if(ci.failed||ci.dirty)throw Error('refusing: the CI run failed or ran on a dirty tree');
 const by=s=>ledger.requirements.filter(r=>r.status===s).map(r=>r.id);
@@ -40,4 +41,5 @@ const receipt={
  settingsParityChecked:false,settingsParityNote:'Not applicable until a production promotion is requested.',
  rollback:{codeVersion:'7f0de223-beaa-4179-af06-92f43d6df9e4 (previous candidate) or d673b88f-ce1c-4bce-8d8f-043079e92d0f (before tonight)',databasePlan:'No schema change in this candidate. Library state lives inside the synced chats record (store.library); older code ignores it.'},
  inaReview:'pending',founderProductionDecision:'pending'};
+for(const k of ['inaFindings','newInThisCandidate','findings','rollback','migrationIds'])if(notes[k])receipt[k]=notes[k];if(notes.extraTests)receipt.tests.push(...notes.extraTests);
 fs.writeFileSync(out,JSON.stringify(receipt,null,1)+'\n');console.log('verified',receipt.requirements.verifiedIds.length,'tests',receipt.tests.length,'sha',ci.sha.slice(0,7));

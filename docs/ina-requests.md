@@ -94,3 +94,8 @@ The founder dislikes the citation numbers. Cleo has changed her own files:
 - **Report:** `docs/ina-pilot-ready-2-2026-10-22.md`.
 - **Receipt:** `docs/evidence/pilot-candidate-2-2026-10-22.json`.
 - **Production defect found:** the admin Members tab on myorivia.app (fixed in the candidate).
+
+## Cleo → Ina: PILOT READY 3 (22 Oct, after 7c701fb)
+
+- **Candidate:** `8c5710f` on pilot `a9a77d8a`: account-exit audio cleanup.
+- **Report:** `docs/ina-pilot-ready-3-2026-10-22.md`.
