@@ -1247,17 +1247,9 @@
     "fr": "Votre prochaine étape",
     "ar": "خطوتك التالية"
   },
-  "Pick up where you left off": {
-    "fr": "Reprendre là où vous en étiez",
-    "ar": "تابع من حيث توقفت"
-  },
   "All chats →": {
     "fr": "Toutes les discussions →",
     "ar": "كل المحادثات ←"
-  },
-  "Saved on this device. Accounts and sync are coming later.": {
-    "fr": "Enregistré sur cet appareil. Les comptes et la synchronisation viendront plus tard.",
-    "ar": "محفوظ على هذا الجهاز. الحسابات والمزامنة ستتوفر لاحقاً."
   },
   "Your details, in your control.": {
     "fr": "Vos informations, sous votre contrôle.",
@@ -2642,5 +2634,25 @@
   "Before your first document: when you tap Use this in my chat, Orivia sends this file to OpenAI to count its size and, if today’s budget allows, to read its text. Each new attempt sends it again. OpenAI doesn’t keep it for later use through Orivia, but may hold it for a limited time for abuse checks.": {
     "fr": "Avant votre premier document : quand vous touchez « Utiliser dans ma discussion », Orivia envoie ce fichier à OpenAI pour en mesurer la taille et, si le budget du jour le permet, en lire le texte. Chaque nouvelle tentative l’envoie à nouveau. OpenAI ne le conserve pas pour une utilisation ultérieure via Orivia, mais peut le garder pendant une durée limitée pour la détection des abus.",
     "ar": "قبل أول مستند لك: عندما تضغط «استخدمه في محادثتي» ترسل أوريفيا هذا الملف إلى OpenAI لقياس حجمه، ثم لقراءة نصّه إذا سمحت ميزانية اليوم. وكل محاولة جديدة ترسله مرة أخرى. لا تحتفظ به OpenAI لاستخدامه لاحقًا عبر أوريفيا، لكنها قد تحتفظ به لفترة محدودة لرصد إساءة الاستخدام."
+  },
+  "Recent chats": {
+    "fr": "Discussions récentes",
+    "ar": "المحادثات الأخيرة"
+  },
+  "Saved on this device. Sign in to keep your chats and plans in your account.": {
+    "fr": "Enregistré sur cet appareil. Connectez-vous pour garder vos discussions et vos plans dans votre compte.",
+    "ar": "محفوظ على هذا الجهاز. سجّل الدخول للاحتفاظ بمحادثاتك وخططك في حسابك."
+  },
+  "Add to calendar": {
+    "fr": "Ajouter au calendrier",
+    "ar": "إضافة إلى التقويم"
+  },
+  "More options": {
+    "fr": "Plus d’options",
+    "ar": "خيارات أخرى"
+  },
+  "Add to home screen": {
+    "fr": "Ajouter à l’écran d’accueil",
+    "ar": "إضافة إلى الشاشة الرئيسية"
   }
 }

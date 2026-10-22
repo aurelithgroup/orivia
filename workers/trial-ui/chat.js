@@ -644,10 +644,15 @@ function eventRow(e,past){
  const acts=el('div','acts');
  if(!past){
   // The right button for this device (no surprise file download on Android or computers); see calendarLinks.
-  for(const a of calendarLinks(e)){a.addEventListener('click',()=>{setTimeout(()=>{note.hidden=false;note.textContent=uiText('It’s only in your calendar after you tap Save or Add there.')},300)});acts.append(a)}
+  // One quiet button; with two choices (computer, iPhone) it opens them, with one (Android) it is that choice.
+  const links=calendarLinks(e);for(const a of links)a.addEventListener('click',()=>{setTimeout(()=>{note.hidden=false;note.textContent=uiText('It’s only in your calendar after you tap Save or Add there.')},300)});
+  if(links.length===1)acts.append(links[0]);
+  else{const options=el('div','cal-options');options.hidden=true;options.append(...links);const add=button(uiText('Add to calendar')+' ▾','cal-add',()=>{options.hidden=!options.hidden;add.setAttribute('aria-expanded',String(!options.hidden))});add.setAttribute('aria-expanded','false');acts.append(add);acts.optionsBox=options}
  }
  const rm=button('Remove','danger',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=uiText('Tap again to remove');return}removeEvent(e.id)});
- acts.append(rm);
+ // Remove sits behind ⋯ so the card isn't a row of buttons.
+ rm.hidden=true;const more=button('⋯','cal-more',()=>{rm.hidden=!rm.hidden;more.setAttribute('aria-expanded',String(!rm.hidden))});more.setAttribute('aria-label',uiText('More options'));more.setAttribute('aria-expanded','false');
+ acts.append(more,rm);if(acts.optionsBox)acts.append(acts.optionsBox);
  const note=el('p','hint');note.hidden=true;note.setAttribute('role','status');
  if(!past&&typeof e.alarm==='number')b.append(el('span','tiny','Alert: '+(ALARMS.find(([m])=>m===e.alarm)||[,'30 minutes before'])[1].toLowerCase()));
  b.append(acts,note);row.append(t,b);return row;
@@ -819,7 +824,7 @@ function renderInstall(){const box=$('install-box');if(!box)return;box.replaceCh
  const standalone=window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true;
  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
  if(standalone){box.append(el('p','tiny',uiText('Orivia is installed on this device.')));return}
- if(installPrompt){const b=el('button','btn',uiText('Install Orivia'));b.type='button';b.onclick=async()=>{const p=installPrompt;installPrompt=null;try{await p.prompt();await p.userChoice}catch(_){}renderInstall()};box.append(b,el('p','tiny',uiText('Opens like an app from your home screen. Chat still needs a connection.')));return}
+ if(installPrompt){const b=el('button','btn',uiText('Add to home screen'));b.type='button';b.onclick=async()=>{const p=installPrompt;installPrompt=null;try{await p.prompt();await p.userChoice}catch(_){}renderInstall()};box.append(b,el('p','tiny',uiText('Opens like an app from your home screen. Chat still needs a connection.')));return}
  box.append(el('p','tiny',uiText(ios?'On iPhone or iPad: open Orivia in Safari, tap Share, then Add to Home Screen.':'In Chrome or Edge, open the browser menu and choose Install app or Add to Home screen.')),el('p','tiny',uiText('Chat still needs a connection.')));
 }
 var guidesReturnTab='home';
