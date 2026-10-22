@@ -176,3 +176,11 @@ Order (Cleo, one step at a time):
    - the manifest and app worker;
    - no secrets in `/v1/config`.
 7. Ina rechecks the live version; the founder confirms it feels like one app.
+
+## Released to myorivia.app (22 Oct, Cleo)
+
+- Merged Ina's `f2a82d2` (numberless expanded sources). Her independent review: OK (docs/ina-connected-release-review-2026-10-22.md). Full combined suite passed; pilot `6b2d4127`.
+- Production accounts DB: time-travel bookmark `00000021-00000000-0000510c-a316cb1ef7b8a629f3a8f5a84a77a443` recorded first. The column was absent; the migration was applied once; checked afterwards: column present, 1 content row and its revision unchanged, `details` NULL, users and organisations intact.
+- `orivia-production` `569f1f5b` (rollback `fe28a2ae`); all five secrets present. `orivia-front-door` `48958a0e` (rollback `0fe7fcb0`). The first deploy attempt timed out at Cloudflare's API and changed nothing; the retry succeeded.
+- **Live checks passed:** routes, space addresses, `/join` alias, `/manage` refusal when signed out, nav script, app worker, manifest, icons, consent v1, no secrets in `/v1/config`, frame and manifest policies, push refused, human check before any AI call (including guide context), new presentation code live. orivia-beta is unchanged.
+- **Still to do:** the founder's signed-in look ("one connected app"); Ina's live recheck.
