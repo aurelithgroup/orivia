@@ -1891,9 +1891,9 @@
     "fr": "J’accepte d’envoyer mes messages et ma conversation récente à Cloudflare Workers AI.",
     "ar": "أوافق على إرسال رسائلي والمحادثة الأخيرة إلى Cloudflare Workers AI."
   },
-  "Welcome to your university’s Orivia. University single sign-on is not connected yet; use your Orivia email sign-in for this pilot.": {
-    "fr": "Bienvenue dans l’Orivia de votre université. La connexion universitaire unique n’est pas encore connectée ; utilisez votre connexion Orivia par e-mail pour ce pilote.",
-    "ar": "مرحباً بك في أوريفيا جامعتك. تسجيل الدخول الموحد للجامعة غير متصل بعد؛ استخدم تسجيل الدخول إلى أوريفيا بالبريد الإلكتروني لهذه النسخة التجريبية."
+  "Welcome to your university’s Orivia. University single sign-on is not connected yet; use your Orivia email sign-in.": {
+    "fr": "Bienvenue dans l’Orivia de votre université. La connexion universitaire unique n’est pas encore connectée ; utilisez votre connexion Orivia par e-mail.",
+    "ar": "مرحباً بك في أوريفيا جامعتك. تسجيل الدخول الموحد للجامعة غير متصل بعد؛ استخدم تسجيل الدخول إلى أوريفيا بالبريد الإلكتروني."
   },
   "Don’t have access? Ask your university for your Orivia invitation.": {
     "fr": "Vous n’avez pas accès ? Demandez une invitation Orivia à votre université.",

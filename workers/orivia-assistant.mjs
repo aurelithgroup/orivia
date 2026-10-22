@@ -142,6 +142,21 @@ export function datesIn(text){
  for(const m of t.matchAll(DAY_MONTH))key(m[2],m[1]);for(const m of t.matchAll(MONTH_DAY))key(m[1],m[2]);for(const m of t.matchAll(ISO_DATE))out.add(Number(m[2])+'-'+Number(m[3]));
  return out;
 }
+/* A figure must be stated for what the source states it for (22 Oct: "Gold card AED 25" borrowed the Silver card's price
+   from the same page). The claim's named subjects (capitalised names such as Gold, Metro, Foundation Stage; not the first word,
+   not all-capital codes like AED) that appear on the cited pages: at least one must be in the source sentence holding the
+   figure or right beside it. With no named subject on the page there's nothing to contradict, so nothing is refused. */
+export function factAboutSubject(f,sentence,evs){
+ const hay=evs.map(e=>String(e.excerpt||'')).join('\n'),lower=hay.toLowerCase();
+ const pieces=hay.split(/(?<=[.!?])\s+|\n+/).filter(Boolean);
+ const holders=pieces.map((p,i)=>factInEvidence(f,[{excerpt:p,url:''}])?i:-1).filter(i=>i>=0);
+ if(!holders.length)return true; // a figure missing altogether is reported by the evidence check
+ const words=String(sentence).split(/\s+/).slice(1).map(w=>w.replace(/[’']s$/u,'').replace(/^[^\p{L}]+|[^\p{L}]+$/gu,''));
+ const named=[...new Set(words.filter(w=>/^\p{Lu}\p{Ll}{2,}$/u.test(w)).map(w=>w.toLowerCase()))].filter(w=>lower.includes(w));
+ if(!named.length)return true;
+ const near=holders.flatMap(i=>[pieces[i-1]||'',pieces[i],pieces[i+1]||'']).join(' ').toLowerCase();
+ return named.some(w=>near.includes(w));
+}
 function factInEvidence(f,evs){
  const hay=evs.map(e=>norm(e.excerpt)+' '+norm(e.url)).join(' \n ');
  if(f.type==='phone'){const d=digits(f.value),tail=d.slice(-8),hd=digits(hay);return d.length>=7&&(hd.includes(d)||hd.includes(tail))}
@@ -208,6 +223,7 @@ export function verifyReply(reply,ledger,{region='',conversation='',replyLanguag
    else if(facts.length){errors.push(`sentence ${i+1}: contains ${facts.map(f=>f.type+' "'+f.value+'"').join(', ')} but cites no evidence`)}
   }else{
    if(!evs.length)errors.push(`sentence ${i+1}: a ${kind} sentence must cite evidence`);
+   if(evs.length){const wrong=facts.filter(f=>['amount','percent','number'].includes(f.type)).find(f=>!factAboutSubject(f,text,evs));if(wrong)errors.push(`sentence ${i+1}: states ${wrong.value} for something the cited source gives it for something else; only state a figure for what the source states it for`)}
    if(evs.length){const have=new Set(evs.flatMap(e=>[...datesIn(e.excerpt)])),missing=[...datesIn(text)].filter(d=>!have.has(d));if(missing.length)errors.push(`sentence ${i+1}: states a date the cited evidence doesn't state; use the date exactly as the source gives it`)}
    const allowed=CLAIM_SOURCES[kind];const fit=evs.filter(e=>allowed.includes(e.kind));
    if(evs.length&&!fit.length)errors.push(`sentence ${i+1}: a ${kind} claim cannot rest on ${[...new Set(evs.map(e=>e.kind))].join('/')} sources`);
