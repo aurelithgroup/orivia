@@ -15,11 +15,11 @@ assert.equal((await run('alice','/api/account/notifications/subscription','POST'
 let events=[{id:'reminder',title:'Never show this private title on a lock screen',at:new Date(stamp+120000).toISOString(),alarm:0}];sql.prepare('INSERT INTO account_vault VALUES (?,1,?,?)').run('alice',JSON.stringify({events}),iso);
 sql.prepare('INSERT INTO organisations VALUES (?,?,?,?,?,?,?,?)').run('org','northbay','Northbay','Sharjah',1,'active','alice',stamp);
 sql.prepare('INSERT INTO organisation_memberships VALUES (?,?,?,?,?,?,?,?)').run('org','alice','student','requested',null,'request',stamp,stamp);
-let sends=0;const fetcher=async(url,opts)=>{sends++;assert.equal(url,sub.endpoint);assert.equal(opts.redirect,'error');assert.ok(opts.headers.Authorization||opts.headers.authorization);assert.ok(opts.body.byteLength>100,'real encrypted RFC8291 payload');assert.ok(!Buffer.from(opts.body).toString().includes(events[0].title),'payload is encrypted');return new Response(null,{status:201})};
+let sends=0;const fetcher=async(url,opts)=>{sends++;assert.equal(url,sub.endpoint);assert.equal(opts.redirect,'manual','Workers reject redirect:error before sending (founder test 22 Oct)');assert.ok(opts.headers.Authorization||opts.headers.authorization);assert.ok(opts.body.byteLength>100,'real encrypted RFC8291 payload');assert.ok(!Buffer.from(opts.body).toString().includes(events[0].title),'payload is encrypted');return new Response(null,{status:201})};
 await runNotificationTick(env,{now:()=>stamp,fetcher});assert.equal(sends,0,'not due and not approved');
 stamp+=180000;sql.prepare("UPDATE organisation_memberships SET status='active',updated_at=?").run(stamp);
 sql.prepare("INSERT INTO organisation_content(id,org_id,kind,title,body,visibility,status,revision,updated_by,updated_at) VALUES ('content','org','update','University update','Private body','members','published',1,'alice',?)").run(stamp);
-await runNotificationTick(env,{now:()=>stamp,fetcher});assert.equal(sends,3,'due reminder, approval and published update');await runNotificationTick(env,{now:()=>stamp,fetcher});assert.equal(sends,3,'no duplicates');
+{const c=await runNotificationTick(env,{now:()=>stamp,fetcher});assert.deepEqual([c.accepted,c.uncertain,c.failed],[3,0,0],'accepted by the push service, none uncertain')}assert.equal(sends,3,'due reminder, approval and published update');await runNotificationTick(env,{now:()=>stamp,fetcher});assert.equal(sends,3,'no duplicates');
 let inbox=await (await run('alice','/api/account/notifications')).json();assert.equal(inbox.notifications.length,3);assert.equal((await (await run('bob','/api/account/notifications')).json()).notifications.length,0);assert.ok(!JSON.stringify(inbox).includes(sub.endpoint));
 await run('bob','/api/account/notifications/read','POST',{});assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM notifications WHERE read_at IS NOT NULL').get().n,0,'cannot read another account notifications');
 // A new reminder is collected, then cancelled before delivery.
@@ -33,4 +33,9 @@ sql.prepare("UPDATE organisation_memberships SET status='removed'").run();inbox=
 // Session deletion removes its push route, and account deletion cascades notification data.
 sql.prepare('DELETE FROM session WHERE id=?').run('alice-session');assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM notification_subscriptions').get().n,0);
 sql.prepare('DELETE FROM user WHERE id=?').run('alice');assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM notifications').get().n,0);assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM notification_preferences').get().n,0);
+// Founder 22 Oct: a 4th device (e.g. the same phone after a new sign-in) replaces the oldest registration instead of
+// being refused, so enabling alerts always works; still at most 3 per account.
+{for(let i=1;i<=4;i++){stamp+=1000;const k=createECDH('prime256v1');k.generateKeys();const r=await run('bob','/api/account/notifications/subscription','POST',{subscription:{endpoint:'https://fcm.googleapis.com/fcm/send/bob-device-'+i,keys:{p256dh:k.getPublicKey().toString('base64url'),auth:Buffer.alloc(16,i).toString('base64url')}},language:'en'});assert.equal(r.status,200,'device '+i)}
+ const left=sql.prepare("SELECT endpoint FROM notification_subscriptions WHERE user_id='bob' ORDER BY created_at").all().map(r=>r.endpoint.split('/').pop());
+ assert.deepEqual(left,['bob-device-2','bob-device-3','bob-device-4'],'the oldest registration made room');}
 console.log('Notifications: real SQL and encrypted Web Push generation; opt-in, due times, deduplication, cancellation, private membership boundaries, endpoint safety, session/account cleanup passed. Push transport scripted only.');

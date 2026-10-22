@@ -24,7 +24,8 @@ export async function handleNotificationRequest(req,env,{session,readJson,now=Da
  if(path==='/api/account/notifications/subscription'){
   if(req.method==='POST'){const b=await readJson(req,5000);if(!validSubscription(b?.subscription)||!['en','fr','ar'].includes(b.language))return json({error:'invalid_subscription'},400);
    const existing=await db.prepare('SELECT user_id FROM notification_subscriptions WHERE endpoint=?').bind(b.subscription.endpoint).first();if(existing&&existing.user_id!==owner)return json({error:'subscription_in_use'},409);
-   const count=await db.prepare('SELECT COUNT(*) AS n FROM notification_subscriptions WHERE user_id=?').bind(owner).first();if(count.n>=3&&!existing)return json({error:'device_limit'},409);
+   const count=await db.prepare('SELECT COUNT(*) AS n FROM notification_subscriptions WHERE user_id=?').bind(owner).first();// At most 3 devices: a new one replaces the oldest registration (usually the same phone from an older sign-in).
+   if(count.n>=3&&!existing)await db.prepare('DELETE FROM notification_subscriptions WHERE id IN (SELECT id FROM notification_subscriptions WHERE user_id=? ORDER BY created_at ASC LIMIT ?)').bind(owner,count.n-2).run();
    await db.prepare('INSERT INTO notification_subscriptions(id,user_id,session_id,endpoint,data,language,created_at) VALUES (?,?,?,?,?,?,?) ON CONFLICT(endpoint) DO UPDATE SET session_id=excluded.session_id,data=excluded.data,language=excluded.language WHERE notification_subscriptions.user_id=excluded.user_id').bind(crypto.randomUUID(),owner,session.session.id,b.subscription.endpoint,JSON.stringify(b.subscription),b.language,t).run();return json({ok:true})}
   if(req.method==='DELETE'){await db.prepare('DELETE FROM notification_subscriptions WHERE user_id=? AND session_id=?').bind(owner,session.session.id).run();return json({ok:true})}
  }

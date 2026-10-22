@@ -2594,5 +2594,17 @@
   "unread": {
     "fr": "non lues",
     "ar": "غير مقروءة"
+  },
+  "Notifications aren’t allowed for Orivia on this device. Allow them in your phone’s settings, then try again.": {
+    "fr": "Les notifications ne sont pas autorisées pour Orivia sur cet appareil. Autorisez-les dans les réglages de votre téléphone, puis réessayez.",
+    "ar": "الإشعارات غير مسموح بها لأوريفيا على هذا الجهاز. اسمح بها في إعدادات هاتفك ثم حاول مرة أخرى."
+  },
+  "This device is connected to another Orivia account. Sign out there first.": {
+    "fr": "Cet appareil est relié à un autre compte Orivia. Déconnectez-vous d’abord de celui-ci.",
+    "ar": "هذا الجهاز مرتبط بحساب أوريفيا آخر. سجّل الخروج منه أولًا."
+  },
+  "Sign in again, then try once more.": {
+    "fr": "Reconnectez-vous, puis réessayez.",
+    "ar": "سجّل الدخول مرة أخرى، ثم حاول من جديد."
   }
 }
