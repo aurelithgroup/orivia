@@ -55,4 +55,10 @@ const platform=fs.readFileSync('workers/accounts/platform-ui.mjs','utf8');assert
 // myorivia.app: production and the front door agree on which paths are the app.
 for(const p of ['/app/space/north-1','/orivia-nav.js','/app','/platform','/manage'])assert.ok(isAppPath(p)&&doorPath(p),p);
 for(const p of ['/space/north-1','/app/space/','/app/space/a/b','/'])assert.ok(!isAppPath(p)&&!doorPath(p),p);
+// Home cards go straight to the right space; an app update offers a reload; Ina's presentation hooks fall back safely.
+const spacesJs=fs.readFileSync('workers/trial-ui/spaces.js','utf8').replace(/\r\n/g,'\n'),chatJs=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace(/\r\n/g,'\n');
+assert.ok(spacesJs.includes("'/platform?org='+encodeURIComponent(m.organisationId)"),'staff cards open their own university');assert.ok(spacesJs.includes("management('Orivia management','/manage')"));
+assert.ok(chatJs.includes("addEventListener('controllerchange'")&&chatJs.includes("uiText('Orivia has been updated.')"),'updates offer a reload, never reload under the person');
+assert.ok(chatJs.includes('window.OriviaPresentation?.titleFor?.')&&chatJs.includes('return autoTitle(ts)'),'titles fall back to today’s');
+assert.ok(chatJs.includes('window.OriviaPresentation?.renderSources?.')&&chatJs.includes('if(custom instanceof Node)return custom}catch(_){}'),'sources fall back to today’s rendering');
 console.log('Navigation: spaces only from server memberships, addressable spaces, text-only menus, sign-out to other tabs, routes agree.');

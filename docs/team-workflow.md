@@ -43,8 +43,9 @@ window.OriviaPresentation = {
   // A short title for a chat from its turns. Return '' to keep the current title. Manual renames are never passed here.
   titleFor(turns /* [{role, content}] */) { return '' },
   // Draw the sources for one reply. Return a DOM node, or null to keep the current rendering.
-  // sources: [{id, url, title, host, kind, checkedAt}]; claims: [{text, sourceIds, quote}] (sentence → source mapping).
-  renderSources({ sources, claims, language }) { return null },
+  // sources: the checked sources as the app has them ({id, url, title, host, kind, checkedAt, …});
+  // claims: research.claims from the server (sentence ↔ source and quote); research: the whole research object; language: 'en'|'fr'|'ar'.
+  renderSources({ sources, claims, research, language }) { return null },
 }
 ```
 

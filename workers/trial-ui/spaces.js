@@ -13,7 +13,7 @@
  function current(id,g){return user()?.id===id&&generation===g;}
  async function get(path,id){const r=await fetch(path,{credentials:'same-origin',cache:'no-store',headers:{'X-Orivia-Account':id},signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('unavailable');return r.json();}
  function card(name,subtitle,action){const b=node('button','dashboard-card');b.type='button';const copy=node('span','dashboard-copy');copy.append(node('strong','',name,true),node('small','',subtitle));b.append(copy,node('span','dashboard-arrow','›'));b.onclick=action;return b;}
- function management(label){const a=node('a','dashboard-card',label,true);a.href='/platform';return a;}
+ function management(label,href='/platform'){const a=node('a','dashboard-card',label,true);a.href=href;return a;}
  /* "17:00, Thursday 12 November (Dubai time)": shown in the university's time zone, in the app language. */
  function orgWhen(det){
   const lang=window.OriviaI18n?.language?.()||'en';
@@ -92,8 +92,8 @@
   const root=$('home-spaces'),list=$('home-spaces-list'),id=user()?.id;if(!root||!list)return;if(!id){clear();return}const g=++generation;
   root.hidden=false;list.replaceChildren(node('p','tiny','Checking your spaces…'));
   try{const d=await get('/api/me/memberships',id);if(!current(id,g))return;memberships=Object.assign([...(d.memberships||[])],{loaded:true});queueMicrotask(followAddress);
-   const out=[];for(const m of d.memberships||[]){if(m.status==='active')out.push(m.role==='student'?card(m.name,'Guides, dates and contacts',()=>openSpace(m)):management(m.name+' · '+t(m.role==='admin'?'Admin':'Editor')));else if(m.status==='requested'){const p=node('div','dashboard-card');p.append(node('strong','',m.name,true),node('small','','Waiting for approval'));out.push(p)}}
-   if((d.platformRoles||[]).includes('owner'))out.push(management('Orivia management'));
+   const out=[];for(const m of d.memberships||[]){if(m.status==='active')out.push(m.role==='student'?card(m.name,'Guides, dates and contacts',()=>openSpace(m)):management(m.name+' · '+t(m.role==='admin'?'Admin':'Editor'),'/platform?org='+encodeURIComponent(m.organisationId)));else if(m.status==='requested'){const p=node('div','dashboard-card');p.append(node('strong','',m.name,true),node('small','','Waiting for approval'));out.push(p)}}
+   if((d.platformRoles||[]).includes('owner'))out.push(management('Orivia management','/manage'));
    if(!out.length)out.push(node('p','tiny','No organisations connected yet. An invitation adds one after staff approval.'));
    const join=node('a','ask','Join or manage your spaces →');join.href='/platform';out.push(join);list.replaceChildren(...out);
   }catch(_){if(current(id,g)){list.replaceChildren(node('p','tiny','Your spaces couldn’t be loaded. Try again when you’re connected.'));const b=node('button','btn quiet small','Try again');b.type='button';b.onclick=refresh;list.append(b)}}

@@ -2162,5 +2162,13 @@
   "You’re offline. Chat and research need a connection; your saved chats, plans and calendar are still here.": {
     "fr": "Vous êtes hors ligne. Le chat et la recherche nécessitent une connexion ; vos conversations, plans et calendrier enregistrés sont toujours là.",
     "ar": "أنت غير متصل. تحتاج الدردشة والبحث إلى اتصال؛ محادثاتك وخططك وتقويمك المحفوظة ما زالت هنا."
+  },
+  "Orivia has been updated.": {
+    "fr": "Orivia a été mis à jour.",
+    "ar": "تم تحديث أوريفيا."
+  },
+  "Reload": {
+    "fr": "Recharger",
+    "ar": "إعادة التحميل"
   }
 }

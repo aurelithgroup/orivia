@@ -71,10 +71,11 @@ function loadChats(){
  if(store.active&&!store.chats.some(c=>c.id===store.active))store.active=null;
 }
 function activeChat(){return store.chats.find(c=>c.id===store.active)||null}
+function presentedTitle(ts){try{const t=window.OriviaPresentation?.titleFor?.(ts.map(x=>({role:x.role,content:x.content})));if(typeof t==='string'&&t.trim())return t.trim().slice(0,80)}catch(_){}return autoTitle(ts)}
 function save(){
  let c=activeChat();
  if(!c){if(!turns.length)return;c=normChat({id:newId(),turns:[],created:Date.now(),orgContext:pendingOrgContext});pendingOrgContext=null;store.chats.unshift(c);store.active=c.id}
- c.turns=turns.slice();c.updated=Date.now();if(!c.titled)c.title=autoTitle(c.turns);
+ c.turns=turns.slice();c.updated=Date.now();if(!c.titled)c.title=presentedTitle(c.turns);
  const ok=persist();renderChats();return ok;
 }
 function clearChatCards(){resources([]);for(const id of ['guide-offer','remember-card','inline-calendar'])$(id)?.remove();$('status').textContent=''}
@@ -660,6 +661,8 @@ const APP_SCOPE=location.pathname.startsWith('/app')?'/app':'/';
 // Registered after the page has loaded (now, if it already has), so it never slows the first screen.
 let appWorkerAsked=false;function registerAppWorker(){if(appWorkerAsked||!('serviceWorker' in navigator))return;appWorkerAsked=true;navigator.serviceWorker.register('/orivia-sw.js',{scope:APP_SCOPE}).catch(()=>{})}
 if(document.readyState==='complete')setTimeout(registerAppWorker,0);else{window.addEventListener('load',registerAppWorker);setTimeout(registerAppWorker,4000)} // load can wait on slow third-party parts
+// A new app version took over: offer a reload rather than reloading under the person (they may be typing).
+if('serviceWorker' in navigator){const hadController=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!hadController||$('update-note'))return;const n=el('div','offline-note',uiText('Orivia has been updated.'));n.id='update-note';n.setAttribute('role','status');const b=el('button','ask',uiText('Reload'));b.type='button';b.onclick=()=>location.reload();n.append(' ',b);$('offline-note')?.before(n)})}
 function showOffline(){const n=$('offline-note');if(n)n.hidden=navigator.onLine!==false}
 window.addEventListener('online',showOffline);window.addEventListener('offline',showOffline);showOffline();
 let installPrompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;renderInstall()});window.addEventListener('appinstalled',()=>{installPrompt=null;renderInstall()});
@@ -1034,7 +1037,9 @@ const RESEARCH_NOTE={
  'partial':'Partly answered: some parts couldn’t be confirmed.'
 };
 const TOPIC_LABEL={school:'School enrolment',bank:'Bank requirements',medical:'Medical test',residency:'Residence visa',biometrics:'Biometrics and Emirates ID',institution:'Your institution’s requirements','community-permissions-pending':'What people recommend (community experiences aren’t available yet)'};
+/* Ina's presentation module (docs/team-workflow.md): used when present; today's rendering otherwise or if it fails. */
 function researchBlock(srcs,research){
+ try{const custom=window.OriviaPresentation?.renderSources?.({sources:srcs,claims:Array.isArray(research?.claims)?research.claims:[],research:research||{},language:uiLanguage()});if(custom instanceof Node)return custom}catch(_){}
  const box=document.createElement('section');box.className='research';box.setAttribute('aria-label','Sources for this reply');
  const r=research||{};
  if(RESEARCH_NOTE[r.status]){const n=el('p','rnote '+(r.status==='partial'?'partial':'warn'),RESEARCH_NOTE[r.status]);box.append(n)}

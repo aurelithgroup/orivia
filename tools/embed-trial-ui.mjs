@@ -17,9 +17,11 @@ const photos=JSON.parse(fs.readFileSync('workers/trial-ui/destination-photos.jso
 for(const photo of Object.values(photos)){photo.image='data:image/jpeg;base64,'+fs.readFileSync(photo.file).toString('base64');delete photo.file;}
 const chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace('/*__DESTINATION_PHOTOS__*/{}',()=>JSON.stringify(photos));
 const nav=fs.readFileSync('workers/trial-ui/nav.js','utf8');
-{const {createHash}=await import('node:crypto');const v=createHash('sha256').update(fs.readFileSync('workers/trial-ui/page.html','utf8')+fs.readFileSync('workers/trial-ui/chat.js','utf8')+nav+fs.readFileSync('workers/trial-ui/accounts.js','utf8')+fs.readFileSync('workers/trial-ui/spaces.js','utf8')).digest('hex').slice(0,12);
+// Ina's optional presentation module (docs/team-workflow.md), loaded before chat.js when present.
+const presentation=fs.existsSync('workers/trial-ui/chat-presentation.js')?fs.readFileSync('workers/trial-ui/chat-presentation.js','utf8')+'\n':'';
+{const {createHash}=await import('node:crypto');const v=createHash('sha256').update(fs.readFileSync('workers/trial-ui/page.html','utf8')+fs.readFileSync('workers/trial-ui/chat.js','utf8')+presentation+nav+fs.readFileSync('workers/trial-ui/accounts.js','utf8')+fs.readFileSync('workers/trial-ui/spaces.js','utf8')).digest('hex').slice(0,12);
  swap('/orivia-sw.js',fs.readFileSync('workers/trial-ui/app-sw.js','utf8').replace('__VERSION__',v))}
 swap('/orivia-nav.js',nav);
-swap('/chat.js',i18n+'\n'+nav+'\n'+fs.readFileSync('workers/trial-ui/accounts.js','utf8')+'\n'+fs.readFileSync('workers/trial-ui/spaces.js','utf8')+'\n'+fs.readFileSync('workers/trial-ui/notifications.js','utf8')+'\n'+chat);
+swap('/chat.js',i18n+'\n'+presentation+nav+'\n'+fs.readFileSync('workers/trial-ui/accounts.js','utf8')+'\n'+fs.readFileSync('workers/trial-ui/spaces.js','utf8')+'\n'+fs.readFileSync('workers/trial-ui/notifications.js','utf8')+'\n'+chat);
 fs.writeFileSync(W,src);
 console.log('Embedded trial UI into',W);
