@@ -39,6 +39,7 @@ export async function handleNotificationRequest(req,env,{session,readJson,now=Da
 export async function runNotificationTick(env,{now=Date.now,fetcher=fetch}={}){
  // Counts are what happened at the push service, never proof that a phone displayed anything.
  const counts={attempted:0,accepted:0,failed:0,expired:0,uncertain:0};
+ const note=(stage,e,status)=>{try{console.log(JSON.stringify({event:'orivia-notifications-error',stage,...(e?{error:String(e?.name||'Error').replace(/[^A-Za-z]/g,'').slice(0,40)}:{}),...(status?{status}:{})}))}catch(_){}};
  if(!enabled(env)||!env.PUSH_PUBLIC_KEY||!env.PUSH_PRIVATE_KEY)return counts;const db=env.ACCOUNTS_DB,t=now();
  const cursor=await db.prepare('SELECT value FROM notification_cursor WHERE id=1').first();let users=(await db.prepare('SELECT user_id FROM notification_preferences WHERE user_id>? ORDER BY user_id LIMIT 100').bind(cursor?.value||'').all()).results;
  if(!users.length)users=(await db.prepare('SELECT user_id FROM notification_preferences ORDER BY user_id LIMIT 100').all()).results;
@@ -46,9 +47,15 @@ export async function runNotificationTick(env,{now=Date.now,fetcher=fetch}={}){
  for(const row of rows){if(attempts>=20)break;if(row.kind==='reminder'&&!await reminderStillExists(db,u.user_id,row.ref))continue;if(row.kind==='update'){const c=await db.prepare("SELECT 1 AS yes FROM organisation_content WHERE id=? AND revision=? AND status='published'").bind(row.ref.split(':')[0],Number(row.ref.split(':')[1])).first();if(!c)continue}const sub=JSON.parse(row.data);if(!validSubscription(sub))continue;
   const reserve=await db.prepare('INSERT INTO notification_meter(day,count) VALUES (?,1) ON CONFLICT(day) DO UPDATE SET count=count+1 WHERE count<100 RETURNING count').bind(new Date(t).toISOString().slice(0,10)).first();if(!reserve)break;
   const claim=await db.prepare("INSERT OR IGNORE INTO notification_deliveries(notification_id,subscription_id,status) VALUES (?,?,'reserved') RETURNING status").bind(row.id,row.sid).first();if(!claim)continue;attempts++;counts.attempted++;
-  try{const body={title:'Orivia',body:row.language==='fr'?'Vous avez un rappel ou une actualité dans Orivia.':row.language==='ar'?'لديك تذكير أو تحديث في أوريفيا.':'You have a reminder or update in Orivia.',tag:'orivia-'+row.id};const request=webpush.generateRequestDetails(sub,JSON.stringify(body),{TTL:3600,vapidDetails:{subject:'https://aurelithgroup.org',publicKey:env.PUSH_PUBLIC_KEY,privateKey:env.PUSH_PRIVATE_KEY}});
-   const response=await fetcher(request.endpoint,{method:request.method,headers:request.headers,body:request.body,redirect:'error',signal:AbortSignal.timeout(10000)});await response.body?.cancel();if([404,410].includes(response.status)){await db.prepare('DELETE FROM notification_subscriptions WHERE id=?').bind(row.sid).run();counts.expired++}else{await db.prepare('UPDATE notification_deliveries SET status=? WHERE notification_id=? AND subscription_id=?').bind(response.ok?'accepted':'failed',row.id,row.sid).run();counts[response.ok?'accepted':'failed']++}
-  }catch(_){await db.prepare("UPDATE notification_deliveries SET status='uncertain' WHERE notification_id=? AND subscription_id=?").bind(row.id,row.sid).run();counts.uncertain++}
+  // Preparing the encrypted alert can fail before anything leaves Orivia: that is 'failed' (certain), not 'uncertain'.
+  let request;try{const body={title:'Orivia',body:row.language==='fr'?'Vous avez un rappel ou une actualité dans Orivia.':row.language==='ar'?'لديك تذكير أو تحديث في أوريفيا.':'You have a reminder or update in Orivia.',tag:'orivia-'+row.id};request=webpush.generateRequestDetails(sub,JSON.stringify(body),{TTL:3600,vapidDetails:{subject:'https://aurelithgroup.org',publicKey:env.PUSH_PUBLIC_KEY,privateKey:env.PUSH_PRIVATE_KEY}});}
+  catch(e){await db.prepare("UPDATE notification_deliveries SET status='failed' WHERE notification_id=? AND subscription_id=?").bind(row.id,row.sid).run();counts.failed++;note('prepare',e);continue}
+  try{
+   // Workers only accept redirect 'follow' or 'manual' ('error' throws before any request is sent). Push services
+   // don't redirect, so a 3xx counts as failed.
+   const response=await fetcher(request.endpoint,{method:request.method,headers:request.headers,body:request.body,redirect:'manual',signal:AbortSignal.timeout(10000)});await response.body?.cancel();
+   if([404,410].includes(response.status)){await db.prepare('DELETE FROM notification_subscriptions WHERE id=?').bind(row.sid).run();counts.expired++}else{const ok=response.status>=200&&response.status<300;await db.prepare('UPDATE notification_deliveries SET status=? WHERE notification_id=? AND subscription_id=?').bind(ok?'accepted':'failed',row.id,row.sid).run();counts[ok?'accepted':'failed']++;if(!ok)note('status',null,response.status)}
+  }catch(e){await db.prepare("UPDATE notification_deliveries SET status='uncertain' WHERE notification_id=? AND subscription_id=?").bind(row.id,row.sid).run();counts.uncertain++;note('send',e)}
  }
  }
  if(users.length)await db.prepare('INSERT INTO notification_cursor(id,value) VALUES (1,?) ON CONFLICT(id) DO UPDATE SET value=excluded.value').bind(users.at(-1).user_id).run();

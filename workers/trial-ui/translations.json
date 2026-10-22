@@ -2586,5 +2586,9 @@
   "Based on your document:": {
     "fr": "D’après votre document :",
     "ar": "استنادًا إلى مستندك:"
+  },
+  "The text Orivia reads becomes part of this conversation: it’s kept with the chat (in your private account if you’re signed in, otherwise in this browser) and sent with your later messages here, so you can ask follow-up questions. Deleting the chat removes it; a file saved in your Library is separate.": {
+    "fr": "Le texte lu par Orivia fait partie de cette discussion : il est conservé avec elle (dans votre compte privé si vous êtes connecté, sinon dans ce navigateur) et envoyé avec vos messages suivants ici, pour que vous puissiez poser d’autres questions. Supprimer la discussion le supprime ; un fichier enregistré dans votre bibliothèque est distinct.",
+    "ar": "يصبح النص الذي تقرؤه أوريفيا جزءًا من هذه المحادثة: يُحفظ معها (في حسابك الخاص إذا كنت مسجّلًا الدخول، وإلا ففي هذا المتصفح) ويُرسَل مع رسائلك التالية هنا لتتمكن من طرح أسئلة متابعة. حذف المحادثة يحذفه، أما الملف المحفوظ في مكتبتك فمنفصل."
   }
 }

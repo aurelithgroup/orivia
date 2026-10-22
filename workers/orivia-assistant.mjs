@@ -372,7 +372,7 @@ Writing the reply (only from the evidence ledger; search snippets are not eviden
   * official_listing: an organisation's details (address, phone, hours, services) as a government or regulator directory records them; cite that official page.
   * organisation_fact: what an organisation says about itself (admissions, services, contacts, fees); cite its own website.
   * university_instruction: what the person's own university published in Orivia (state.university_context, evidence kind "university"); say it is the university's instruction. It is never evidence for official_rule: visa, residency and other government requirements still need government or regulator evidence, so research those separately or say they should be confirmed with the authority.
-  * person_document: what the person's own attached document says (state.person_document, evidence kind "document"); say "your document says" or "according to your [kind]". Orivia transcribed it and may have misread it, so for amounts, dates and deadlines that matter, suggest checking the original. It is never evidence for official_rule or for what an organisation does in general. Never say the document is valid, genuine, verified or approved.
+  * person_document: what a photo or file the person sent in this chat says (state.person_documents, newest first, evidence kind "document"); when they say "it" or "the photo" without naming one, they usually mean the newest; say "your document says" or "according to your [kind]". Orivia transcribed it and may have misread it, so for amounts, dates and deadlines that matter, suggest checking the original. It is never evidence for official_rule or for what an organisation does in general. Never say the document is valid, genuine, verified or approved.
   * experience: what people report on community sites; say it is people's experience.
   * listing: a name appears on a list or listing site; it proves only that.
   Every phone number, email, link, amount and figure you write must appear in the evidence you cite. Do not write [n] markers; code adds citations.
@@ -496,7 +496,7 @@ export function incompleteReply(done,memory,ledger,{metrics,language='en'}={}){
   research:{status:'incomplete',applicability:'needs-review',claims:[],unresolved:[],assistant:true,progress:[],taskContext:{task:{assistant:cleanMemory({...memory,evidence:keep.length?keep:memory?.evidence})}},process:{metrics}}};
 }
 /** Run one assistant turn. ai: the pilot transport (json mode). Returns the chat reply object, or null (caller falls back). */
-export async function runAssistantTurn({messages,profile=null,context=null,localNow=null,orgContext=null,document=null,calendarChangeUI=false,replyLanguage='en'},env,{ai,fetcher=fetch,reserve,now=()=>new Date(),maxCalls=12,onProgress=null}={}){
+export async function runAssistantTurn({messages,profile=null,context=null,localNow=null,orgContext=null,documents=null,document=null,calendarChangeUI=false,replyLanguage='en'},env,{ai,fetcher=fetch,reserve,now=()=>new Date(),maxCalls=12,onProgress=null}={}){
  // Progress for the chat: written by code from what is actually happening (never the model's private reasoning).
  const report=t=>{try{onProgress&&onProgress(t)}catch(_){}};
  if(!ai?.run)return null;
@@ -515,7 +515,8 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
   if(ledger.length>ASSISTANT_LIMITS.evidenceKept+8)ledger.splice(0,ledger.length-(ASSISTANT_LIMITS.evidenceKept+8));return ev};
  for(const e of memory.evidence)addEvidence({...e,kind:undefined,from:'earlier-in-chat',max:ASSISTANT_LIMITS.memoryExcerpt});
  // The document the person attached (its transcript comes from their device with each message). Labelled, never kept in memory.
- const docEv=document&&typeof document.text==='string'&&typeof document.url==='string'?addEvidence({url:document.url,title:'Your document: '+String(document.name||'Document'),excerpt:document.text,kind:'document',from:'document',max:12000}):null;
+ const docs=(Array.isArray(documents)?documents:document?[document]:[]).filter(d=>d&&typeof d.text==='string'&&typeof d.url==='string').slice(0,3);
+ const docEvs=docs.map(d=>({d,ev:addEvidence({url:d.url,title:'Your document: '+String(d.name||'Document'),excerpt:d.text,kind:'document',from:'document',max:12000})})).filter(x=>x.ev);
  // The university item the person chose (server-checked for membership on this message). Labelled, not stored in memory.
  const orgEv=orgContext&&typeof orgContext.body==='string'?addEvidence({url:orgContext.url,title:String(orgContext.orgName||'University')+': '+String(orgContext.title||''),excerpt:orgContext.body,kind:'university',checkedAt:orgContext.updatedAt,from:'university',max:4000}):null;
 
@@ -559,7 +560,7 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
  let rejection=null,result=null,budgetOut=false,lastCodes='';const done={searches:0,pages:0};
  for(let call=0;call<maxCalls&&!result;call++){
   const left=maxCalls-call,mustReply=left<=2||Date.now()-started>ASSISTANT_LIMITS.wallMs;
-  const state={...(docEv?{person_document:{evidence:docEv.id,name:document.name,kind:document.kind||undefined,note:'Transcribed by Orivia from the person\'s own file; it may contain reading mistakes.'}}:{}),...(orgEv?{university_context:{evidence:orgEv.id,university:orgContext.orgName,title:orgContext.title,updated:String(orgContext.updatedAt).slice(0,10)}}:{}),reply_language:['en','fr','ar'].includes(replyLanguage)?replyLanguage:'en',today:now().toISOString().slice(0,10),local_now:here,...(profileFacts(profile)?{aboutMe:profileFacts(profile)}:{}),memory:{...memory,evidence:undefined},
+  const state={...(docEvs.length?{person_documents:docEvs.map(({d,ev})=>({evidence:ev.id,name:d.name,kind:d.kind||undefined})),person_documents_note:'Photos and files the person sent in this chat, newest first, transcribed by Orivia; they may contain reading mistakes.'}:{}),...(orgEv?{university_context:{evidence:orgEv.id,university:orgContext.orgName,title:orgContext.title,updated:String(orgContext.updatedAt).slice(0,10)}}:{}),reply_language:['en','fr','ar'].includes(replyLanguage)?replyLanguage:'en',today:now().toISOString().slice(0,10),local_now:here,...(profileFacts(profile)?{aboutMe:profileFacts(profile)}:{}),memory:{...memory,evidence:undefined},
    conversation:msgs,
    evidence:evidenceView(ledger),
    leads:leads.slice(-ASSISTANT_LIMITS.leadsShown).map(l=>({id:l.id,kind:l.kind,url:l.url,title:clip(l.title,100),snippet:clip(l.snippet,160)})),

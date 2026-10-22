@@ -89,7 +89,13 @@ export async function handleDocument(req,env,{reply,fetcher=fetch,now=()=>new Da
  return reply({document:{name,kind:typeof out.kind==='string'?out.kind.slice(0,80):'',language:['en','fr','ar'].includes(out.language)?out.language:'other',
   text:text.slice(0,DOCUMENT_LIMITS.textChars),truncated:text.length>DOCUMENT_LIMITS.textChars,pages:type==='application/pdf'?pages:null}});
 }
-/** The document the person attached, as sent back with a chat message (their own device holds it). */
+/** The documents sent in this chat (newest first), as the person's device sends them with a message: at most 3 and
+ *  24,000 characters together. */
+export function cleanDocuments(list){
+ const out=[];let total=0;for(const d of (Array.isArray(list)?list:[list]).slice(0,3)){const c=cleanDocument(d);if(!c)continue;const room=24000-total;if(room<200)break;c.text=c.text.slice(0,room);total+=c.text.length;out.push(c)}
+ return out;
+}
+/** One document, as sent back with a chat message (their own device holds it). */
 export function cleanDocument(d){
  if(!d||typeof d!=='object'||typeof d.text!=='string'||typeof d.name!=='string')return null;
  const text=d.text.replace(/\r\n/g,'\n').trim().slice(0,DOCUMENT_LIMITS.textChars);if(text.length<8)return null;

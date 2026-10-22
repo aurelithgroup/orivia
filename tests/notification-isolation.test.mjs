@@ -10,7 +10,9 @@ import {runNotificationTick} from '../workers/accounts/notifications.mjs';
 const none=await runNotificationTick({NOTIFICATIONS_ENABLED:'0'});
 assert.deepEqual(none,{attempted:0,accepted:0,failed:0,expired:0,uncertain:0});
 const src=fs.readFileSync('workers/accounts/notifications.mjs','utf8');assert.doesNotMatch(src,/\bsent\+\+|return \{sent\}/);
-assert.match(src,/counts\.uncertain\+\+/);assert.match(src,/counts\.expired\+\+/);
+assert.match(src,/counts\.uncertain\+\+/);
+// Founder test 22 Oct: every alert was uncertain because Workers reject redirect:'error' before sending anything.
+assert.doesNotMatch(src,/redirect:'error'/);assert.match(src,/redirect:'manual'/);assert.ok(src.includes("note('prepare',e)"),'a failure before sending is failed, not uncertain');assert.match(src,/counts\.expired\+\+/);
 
 // The pilot entry: its scheduler needs the pilot's explicit setting naming its own test database.
 const entry=fs.readFileSync('workers/pilot/index.mjs','utf8');

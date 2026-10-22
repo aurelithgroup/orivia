@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
-import {handleDocument,cleanDocument,pdfPages,DOCUMENT_LIMITS,DOCUMENT_CONSENT} from '../workers/orivia-document.mjs';
+import {handleDocument,cleanDocument,cleanDocuments,pdfPages,DOCUMENT_LIMITS,DOCUMENT_CONSENT} from '../workers/orivia-document.mjs';
 import {plainPdf,objectStreamPdf,encryptedPdf,brokenPdf} from './fixtures/make-pdf.mjs';
 import vm from 'node:vm';
 import {runAssistantTurn,verifyReply} from '../workers/orivia-assistant.mjs';
@@ -68,11 +68,13 @@ for(const bad of [encryptedPdf(),brokenPdf(),new TextEncoder().encode('%PDF-1.4\
 assert.equal(cleanDocument({name:'x',text:'short'}),null);assert.equal(cleanDocument({name:'<b>Lease</b>',text:'a'.repeat(20000)}).text.length,12000);
 assert.equal(cleanDocument({name:'<b>Lease</b>',text:'Long enough text'}).name,' b Lease /b'.trim());
 
+assert.equal(cleanDocuments([{name:'a',text:'x'.repeat(20000)},{name:'b',text:'y'.repeat(20000)},{name:'c',text:'z'.repeat(20000)},{name:'d',text:'w'.repeat(100)}]).reduce((n,d)=>n+d.text.length,0),24000,'at most 3 and 24,000 characters');
+assert.equal(cleanDocuments({name:'legacy',text:'one older single document'}).length,1);
 // In chat: "your document" evidence; its figures pass, invented ones don't; never an official rule.
 const docUrl='https://pilot.example/#your-document';
 const turn=async step=>{const log=console.log;console.log=()=>{};try{return await runAssistantTurn({messages:[{role:'user',content:'How much is my rent and how many cheques?'}],document:{name:'Lease.jpg',kind:'tenancy contract',text:TRANSCRIPT,url:docUrl}},{},{ai:{run:async(_m,o)=>{turn.prompt=JSON.parse(o.messages[1].content);return {response:JSON.stringify(step)}}},fetcher:async()=>new Response(''),reserve:async()=>true})}finally{console.log=log}};
 let out=await turn({action:'reply',language:'en',sentences:[{text:'Your tenancy contract says the annual rent is AED 52,000, payable in 4 cheques.',kind:'person_document',evidence:['E1']}],memory:{}});
-assert.equal(turn.prompt.person_document.evidence,'E1');assert.match(turn.prompt.person_document.note,/may contain reading mistakes/);
+assert.equal(turn.prompt.person_documents[0].evidence,'E1');assert.match(turn.prompt.person_documents_note,/may contain reading mistakes/);
 assert.match(out.reply,/AED 52,000/);assert.equal(out.liveSources[0].category,'document');assert.equal(out.liveSources[0].url,docUrl);
 assert.ok(!JSON.stringify(out.research.taskContext).includes('Al Noor'),'the transcript is never kept in chat memory');
 const ledger=[{id:'E1',url:docUrl,title:'Your document: Lease.jpg',kind:'document',excerpt:TRANSCRIPT}];
@@ -103,37 +105,46 @@ assert.ok(!/id="msg"[^>]*required/.test(page),'a message can be only an attachme
  assert.ok(vt({role:'user',content:'',meta:{attachment:{name:'Lease.pdf'}}}));assert.ok(!vt({role:'user',content:''}));assert.ok(!vt({role:'assistant',content:'',meta:{attachment:{name:'x'}}}));
  const cm=new Function(chat.split(String.fromCharCode(10)).find(l=>l.startsWith("function chatMessages(turns){")).split(' // only the active chat')[0]+';return chatMessages')();
  const m=cm([{role:'user',content:'',meta:{attachment:{name:'Lease.pdf'}}}]);assert.equal(m[0].content,'Please help me with the document I shared (Lease.pdf).','internal prompt, not saved as the person words');}
-assert.ok(chat.includes("...(chatDocument()&&pilotConsent()?{document:{name:chatDocument().name,kind:chatDocument().kind||'',text:chatDocument().text}}:{}),"),'the transcript goes with messages');
+assert.ok(chat.includes("...(chatDocuments().length&&pilotConsent()?{documents:documentsForMessage()}:{}),"),'the documents go with every message in the chat');
+// Founder 22 Oct: documents are part of the conversation (no label, no ✕); several per chat; follow-ups can use them.
+assert.ok(chat.includes("function renderDocContext(){const a=$('attach');if(a)a.hidden=!attachAllowed();const box=$('doc-context');if(box){box.hidden=true;box.replaceChildren()}}"),'no label and no ✕');
+assert.ok(chat.includes("if(c){c.documents=[...(Array.isArray(c.documents)?c.documents:[]),doc];persist()}"),'a new document is added, never replacing earlier ones');
+{const dm=new Function('activeChat','pendingDocuments',chat.split(String.fromCharCode(10)).filter(l=>l.startsWith('function chatDocuments(){')||l.startsWith('function documentsForMessage(){')).join(String.fromCharCode(10))+';return documentsForMessage');
+ const chatWith=docs=>dm(()=>({documents:docs}),[]);
+ const sent=chatWith([{name:'old',text:'a'.repeat(5000),addedAt:1},{name:'mid',text:'b'.repeat(5000),addedAt:2},{name:'new',text:'c'.repeat(5000),addedAt:3},{name:'oldest',text:'d',addedAt:0}])();
+ assert.deepEqual(sent.map(d=>d.name),['new','mid','old'],'newest three go with each message');
+ const big=chatWith([{name:'x',text:'é'.repeat(12000),addedAt:2},{name:'y',text:'é'.repeat(12000),addedAt:1},{name:'z',text:'é'.repeat(12000),addedAt:0}])();
+ assert.ok(big.reduce((n,d)=>n+d.text.length,0)<=24000,'about 24,000 characters together');}
 assert.ok(chat.includes("function attachAllowed(){return documentsServer&&!!pilotConsent()}"));
 assert.ok(!chat.includes('delete x.document'),'never removes another chat document');
 assert.match(page,/<button id="attach" class="compose-plus" type="button" aria-label="Add a photo or file"/);
 assert.ok(chat.includes("It doesn’t check whether a document is genuine or valid."));
 // Ina's review #2 and #3, on the real readAttached code: late results never cross chats/accounts; nothing is evicted.
-{const a=chat.indexOf('/* Files to Chat (step 7)'),b=chat.indexOf('var pendingDocument=null;');const block=chat.slice(a,b)+'var pendingDocument=null;';
+{const a=chat.indexOf('/* Files to Chat (step 7)'),b=chat.indexOf('var pendingDocuments=[];');const block=chat.slice(a,b)+'var pendingDocuments=[];';
  function harness(){
   const nodes=new Map(),node=()=>({hidden:true,textContent:'',children:[],dataset:{},replaceChildren(...v){this.children=v},append(...v){this.children.push(...v)},setAttribute(){},focus(){},click(){}});
   let resolve;const ctx={console,TextEncoder,AbortController,JSON,Date,Error,
    $:id=>{if(!nodes.has(id))nodes.set(id,node());return nodes.get(id)},el:(t,c,x)=>({tag:t,textContent:x||'',append(){},setAttribute(){}}),
-   uiText:t=>t,persisted:0,store:{active:'c1',chats:[{id:'c1',turns:[]},{id:'c2',turns:[]}]},pilotConsent:()=>({openai:'consent'}),
+   uiText:t=>t,persisted:0,newId:()=>Math.random().toString(36).slice(2),store:{active:'c1',chats:[{id:'c1',turns:[]},{id:'c2',turns:[]}]},pilotConsent:()=>({openai:'consent'}),
    localStorage:{getItem:()=>null,setItem(){}},window:{},
    fetch:(url,init)=>new Promise((res,rej)=>{resolve=v=>v instanceof Error?rej(v):res(v);init.signal?.addEventListener('abort',()=>rej(Object.assign(Error('aborted'),{name:'AbortError'})))})};
   ctx.globalThis=ctx;ctx.OriviaAccounts={epoch:'acct-A'};ctx.activeChat=()=>ctx.store.chats.find(c=>c.id===ctx.store.active)||null;ctx.persist=()=>{ctx.persisted++};
-  vm.createContext(ctx);vm.runInContext(block+';this.readAttached=readAttached;this.cancelAttach=cancelAttach;this.getPending=()=>pendingDocument;',ctx);
+  vm.createContext(ctx);vm.runInContext(block+';this.readAttached=readAttached;this.cancelAttach=cancelAttach;this.getPending=()=>pendingDocuments.length?pendingDocuments:null;',ctx);
   const ok=(text='Annual rent AED 52,000 payable in 4 cheques',name='Lease.jpg')=>({ok:true,json:async()=>({document:{name,kind:'tenancy contract',text}})});
   return {ctx,ok,answer:v=>resolve(v)};
  }
  const tick=()=>new Promise(r=>setTimeout(r,0));
- {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'Lease.jpg');await tick();h.answer(h.ok());await p;assert.equal(h.ctx.store.chats[0].document.name,'Lease.jpg','normal: lands on its chat')}
- {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.store.active='c2';h.answer(h.ok());await p;assert.ok(!h.ctx.store.chats.some(c=>c.document),'switched chat: dropped')}
- {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.OriviaAccounts.epoch='acct-B';h.answer(h.ok());await p;assert.ok(!h.ctx.store.chats.some(c=>c.document),'another account: dropped')}
- {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.cancelAttach();await p;assert.ok(!h.ctx.store.chats.some(c=>c.document));assert.equal(h.ctx.getPending(),null,'sign-out (leave) aborts')}
+ {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'Lease.jpg');await tick();h.answer(h.ok());await p;assert.equal(h.ctx.store.chats[0].documents[0].name,'Lease.jpg','normal: lands on its chat')}
+ {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.store.active='c2';h.answer(h.ok());await p;assert.ok(!h.ctx.store.chats.some(c=>c.documents),'switched chat: dropped')}
+ {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.OriviaAccounts.epoch='acct-B';h.answer(h.ok());await p;assert.ok(!h.ctx.store.chats.some(c=>c.documents),'another account: dropped')}
+ {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.cancelAttach();await p;assert.ok(!h.ctx.store.chats.some(c=>c.documents));assert.equal(h.ctx.getPending(),null,'sign-out (leave) aborts')}
  {const h=harness();h.ctx.store.active=null;const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.cancelAttach();h.answer(h.ok());await p;assert.equal(h.ctx.getPending(),null,'new empty chat then another: dropped')}
  {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.store.chats.shift();h.ctx.store.active=null;h.answer(h.ok());await p;assert.equal(h.ctx.getPending(),null,'chat deleted: dropped')}
  {const h=harness();const p=h.ctx.readAttached(new Blob(['x']),'L');await tick();h.ctx.store.active='c2';h.answer(Error('network'));assert.equal(await p,false,'late error: nothing to show on the other chat')}
- {const h=harness();const heavy='عقد إيجار سنوي ٥٢٬٠٠٠ درهم '.repeat(300);h.ctx.store.chats=Array.from({length:9},(_,i)=>({id:'k'+i,turns:[],...(i<8?{document:{name:'d'+i,text:heavy,addedAt:i}}:{})}));h.ctx.store.active='k8';
+ {const h=harness();const heavy='عقد إيجار سنوي ٥٢٬٠٠٠ درهم '.repeat(300);h.ctx.store.chats=Array.from({length:9},(_,i)=>({id:'k'+i,turns:[],...(i<8?{documents:[{name:'d'+i,text:heavy,addedAt:i}]}:{})}));h.ctx.store.active='k8';
   let p=h.ctx.readAttached(new Blob(['x']),'ninth');await tick();h.answer(h.ok(heavy,'ninth'));await p;
-  assert.equal(h.ctx.store.chats.filter(c=>c.document).length,9,'nine attachments: none evicted');
-  const huge='é'.repeat(12000);h.ctx.store.chats.push(...Array.from({length:40},(_,i)=>({id:'z'+i,turns:[],document:{name:'z',text:huge}})),{id:'last',turns:[]});h.ctx.store.active='last';
+  assert.equal(h.ctx.store.chats.filter(c=>c.documents).length,9,'nine attachments: none evicted');
+  const huge='é'.repeat(12000);h.ctx.store.chats.push(...Array.from({length:40},(_,i)=>({id:'z'+i,turns:[],documents:[{name:'z',text:huge}]})),{id:'last',turns:[]});h.ctx.store.active='last';
   const before=JSON.stringify(h.ctx.store.chats);p=h.ctx.readAttached(new Blob(['x']),'one more');await tick();h.answer(h.ok(heavy,'more'));await p;
   assert.equal(JSON.stringify(h.ctx.store.chats),before,'over the backup size: refused, nothing changed');}
 }
