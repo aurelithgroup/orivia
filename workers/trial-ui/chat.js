@@ -861,23 +861,24 @@ function voicesReady(){return new Promise(res=>{const now=speechSynthesis.getVoi
 let speakingBtn=null,speakRun=0;
 // Natural voice (OpenAI), when the server offers it, the person agreed to OpenAI and hasn't turned it off in Settings.
 // Only the text of the reply being read is sent, a piece at a time; the next piece is fetched while one plays.
-let naturalVoiceServer=false,voicePlayer=null,voiceRequests=new Set();
+let naturalVoiceServer=false,voicePlayer=null,voiceRequests=new Set(),voiceError='';
 const SILENT_WAV='data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAwF0AAIC7AAACABAAZGF0YTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
 function naturalVoiceOn(){return naturalVoiceServer&&readSettings().naturalVoice!==false&&!!pilotConsent()}
 // iPhones only let audio play from a tap: start the one player during the tap, then reuse it for the voice.
 function unlockPlayer(){const a=voicePlayer||(voicePlayer=new Audio());try{a.src=SILENT_WAV;a.play().catch(()=>{})}catch(_){}return a}
 function voicePiece(text,lang){const c=new AbortController();voiceRequests.add(c);
  return fetch('/v1/voice',{method:'POST',signal:c.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,language:lang,preferences:{providerConsent:pilotConsent()}})})
-  .then(r=>r.ok&&String(r.headers.get('Content-Type')).startsWith('audio/')?r.blob():null).catch(()=>null).finally(()=>voiceRequests.delete(c))}
+  // A failed piece remembers why (a safe code such as voice_limit), so the person can tell us what happened.
+  .then(async r=>{if(r.ok&&String(r.headers.get('Content-Type')).startsWith('audio/'))return r.blob();let e='';try{e=String((await r.json()).error||'')}catch(_){}voiceError=(/^[a-z_]{3,40}$/.test(e)?e:'http_'+r.status);return null}).catch(()=>{voiceError=voiceError||'offline';return null}).finally(()=>voiceRequests.delete(c))}
 function playPiece(blob,run){return new Promise(res=>{const a=voicePlayer,url=URL.createObjectURL(blob);let over=false;const done=ok=>{if(over)return;over=true;URL.revokeObjectURL(url);a.onended=a.onerror=a.onpause=null;res(ok)};
  a.onended=()=>done(true);a.onerror=()=>done(false);a.onpause=()=>{if(run!==speakRun)done(true)};a.src=url;a.play().catch(()=>done(false))})}
 // Returns the text it could not read ('' when done or stopped).
 async function naturalSpeak(text,lang,run){
  const parts=(window.OriviaVoiceText?.chunks?window.OriviaVoiceText.chunks(text,600):[text]).filter(x=>x.trim());
- let next=voicePiece(parts[0],lang);
+ voiceError='';let next=voicePiece(parts[0],lang);
  for(let i=0;i<parts.length;i++){
   const blob=await next;if(run!==speakRun)return '';
-  if(!blob)return parts.slice(i).join(' ');
+  if(!blob){if(voiceError)$('status').textContent=uiText('The natural voice isn’t available right now, so your phone’s voice is reading this.')+' ('+voiceError+')';return parts.slice(i).join(' ')}
   next=i+1<parts.length?voicePiece(parts[i+1],lang):null;
   if(i===0)$('status').textContent=uiText('Reading with an AI-generated voice (OpenAI).');
   const ok=await playPiece(blob,run);if(run!==speakRun)return '';if(!ok)return parts.slice(i).join(' ');

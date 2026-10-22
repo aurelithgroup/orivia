@@ -2266,5 +2266,9 @@
   "Replies you tap Listen on are read by an AI-generated voice from OpenAI. Only that reply’s text is sent. Off: your phone’s own voice reads them.": {
     "fr": "Les réponses que vous écoutez sont lues par une voix générée par IA d’OpenAI. Seul le texte de cette réponse est envoyé. Désactivé : la voix de votre téléphone les lit.",
     "ar": "تُقرأ الردود التي تضغط على «استمع» فيها بصوت مُولَّد بالذكاء الاصطناعي من OpenAI. يُرسَل نص ذلك الرد فقط. عند الإيقاف: يقرؤها صوت هاتفك."
+  },
+  "The natural voice isn’t available right now, so your phone’s voice is reading this.": {
+    "fr": "La voix naturelle n’est pas disponible pour le moment : c’est la voix de votre téléphone qui lit.",
+    "ar": "الصوت الطبيعي غير متاح الآن، لذلك يقرأ صوت هاتفك هذا الرد."
   }
 }
