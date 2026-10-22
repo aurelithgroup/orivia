@@ -19,7 +19,11 @@
     { "binding": "ACCOUNTS_DB", "database_name": "orivia-accounts-private", "database_id": "3ebd10d5-01e5-4a01-b846-977f1bb2d5b3" }
   ],
   "send_email": [{ "name": "ACCOUNTS_EMAIL", "allowed_sender_addresses": ["login@auth.aurelithgroup.org"] }],
+  // Files (founder-approved, Ina review OK e1b10eb, 22 Oct): production's own private bucket in Western Europe.
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "orivia-files-production" }],
   "vars": {
+    // Files and Files to Chat. Device push stays off (orivia-production.mjs) until Privacy is approved.
+    "FILES_ENABLED": "1", "DOCUMENTS_ENABLED": "1",
     "PUBLIC_RELEASE": "1", "PUBLIC_BETA": "1", "PUBLIC_HOST": "myorivia.app",
     "OPENAI_PILOT": "1", "OPENAI_INPUT_USD_PER_M": "2", "OPENAI_OUTPUT_USD_PER_M": "10",
     "PILOT_OPENAI_DAY_USD": "5", "PILOT_OPENAI_MONTH_USD": "20",

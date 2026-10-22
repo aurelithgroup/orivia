@@ -2,3 +2,5 @@
 CREATE TABLE IF NOT EXISTS account_files(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE, name TEXT NOT NULL, type TEXT NOT NULL, size INTEGER NOT NULL, created_at TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS account_files_user ON account_files(user_id, created_at);
 CREATE TABLE IF NOT EXISTS account_file_meter(user_id TEXT PRIMARY KEY REFERENCES user(id) ON DELETE CASCADE, day TEXT NOT NULL, count INTEGER NOT NULL);
+-- Account deletion: written before the account is deleted; files are removed only once the account is confirmed gone.
+CREATE TABLE IF NOT EXISTS file_cleanup(user_id TEXT PRIMARY KEY, created_at TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, last_attempt TEXT, last_error TEXT);

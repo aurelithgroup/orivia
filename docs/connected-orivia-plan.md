@@ -283,3 +283,27 @@ Order (Cleo, one step at a time):
   - progress, files and document routes refuse signed-out or human-check-less requests;
   - device push is refused (503);
   - chat still needs the human check.
+
+## Files and Files to Chat released to myorivia.app (22 Oct, Cleo)
+
+- **Approvals:**
+  - Ina's engineering review: OK (`e1b10eb`, closing all four findings of `76f73fe`).
+  - Disclosure: the selected file is sent to OpenAI to count its input tokens and, if the budget permits, to extract its text (acknowledgement v3).
+  - Pilot validation of the new counting path: a made-up note, outcome `ok`, 3,108 input and 124 output tokens.
+  - The founder's condition (release when Ina's Privacy text covers Files) is met by Ina's private addendum; the public Privacy/Terms pages remain unpublished drafts.
+- **Storage:** production's own private bucket, `orivia-files-production`, located in Western Europe.
+- **Database:**
+  - restore bookmark `0000002e-00000000-0000510c-b1f43147935540a967c366d1f001bfe8` recorded first;
+  - added `account_files` (with its index), `account_file_meter` and `file_cleanup` (additive, empty);
+  - users, organisations and saved data were unchanged.
+- **Deploys:**
+  - built from `b242e04`; full suite passed (82 checks);
+  - `orivia-production` `d94ca852` (rollback `b5730013`, which has Files off);
+  - production settings `FILES_ENABLED=1` and `DOCUMENTS_ENABLED=1`, plus the R2 binding `FILES`.
+- **Live checks passed:**
+  - `/v1/config` has `files:true`, `documents:true` and no secrets;
+  - consent v3 is served;
+  - file routes refuse signed-out (401) and other-origin (403) requests;
+  - documents need the human check and the same origin;
+  - device push is still refused (503).
+- **Still off:** production device alerts, pending Privacy approval, then a fresh production opt-in.
