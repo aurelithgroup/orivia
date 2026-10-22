@@ -98,7 +98,9 @@ function libraryShortlists(){
  }
  return out;
 }
-function renderLibrary(){
+// (Named renderLibraryView: the guide catalogue below has its own renderLibrary, and a second function with the same name
+// would silently replace this one.)
+function renderLibraryView(){
  mountLibrary();showLibraryFiles();const done=filesServer?window.OriviaFiles?.render?.():null;
  // Guides & journeys: the person's saved guides, newest first, with their progress (the same cards as before).
  const d=readJourneys(),items=Object.entries(d).filter(([k,v])=>JID.test(k)&&v&&typeof v.title==='string').sort((a,b)=>String(b[1].updated).localeCompare(String(a[1].updated)));
@@ -273,7 +275,7 @@ function renderChats(){
 let chatsReturnFocus=null;
 function openChats(){chatsReturnFocus=document.activeElement;renderChats();$('chats-drawer').hidden=false;$('new-chat').focus()}
 function closeChats(){if($('chats-drawer').hidden)return;$('chats-drawer').hidden=true;(chatsReturnFocus||$('open-chats')).focus?.()}
-$('open-chats').onclick=openChats;$('storage-manage').onclick=openChats;$('close-chats').onclick=closeChats;$('new-chat').onclick=newChat;
+$('open-chats').onclick=openChats;$('storage-manage').onclick=openChats;$('close-chats').onclick=closeChats;$('new-chat').onclick=()=>newChat(null); // never pass the click event in as a university guide
 $('chats-drawer').addEventListener('click',e=>{if(e.target.id==='chats-drawer')closeChats()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('chats-drawer').hidden)closeChats()});
 
@@ -788,7 +790,7 @@ function tab(which){
  const views={home:'home',chat:'chat',library:'library',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view',settings:'settings-view'};
  if(!views[which])return;
  if(which==='chat')try{renderOrgContext()}catch(_){}
- if(which==='library')try{renderLibrary()}catch(_){}
+ if(which==='library')try{renderLibraryView()}catch(_){}
  if(which!=='settings')lastTab=which;
  if(!['journeys','guide','settings'].includes(which))guidesReturnTab=which;
  if(which!=='chat'){try{stopSpeaking();stopDictation(true);closeMicLanguageMenu()}catch(_){}}

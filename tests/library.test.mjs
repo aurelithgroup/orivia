@@ -29,3 +29,10 @@ console.log('Library: five tabs, files moved with the same ids, a view over save
 // Where Files is switched off (production until it's released), the Library has no Files tab or section.
 assert.ok(chat.includes("function showLibraryFiles(){const tab=$('lib-tab-files'),group=$('files-title')?.closest('section');if(tab)tab.hidden=!filesServer;if(group)group.hidden=!filesServer;")&&chat.includes("filesServer=d?.files===true;"));
 assert.ok(fs.readFileSync('workers/orivia-research-pilot.mjs','utf8').includes('body.files=filesAvailable(env);'),'the server says whether Files is on');
+// 22 Oct bug: two functions named renderLibrary (the Library and the guide catalogue); the later one silently replaced
+// the Library's, so live it showed empty sections. No top-level function may be declared twice.
+{const names=[...chat.matchAll(/^(?:async )?function ([A-Za-z0-9_$]+)/gm)].map(m=>m[1]),dupes=names.filter((n,i)=>names.indexOf(n)!==i);
+ assert.deepEqual(dupes,[],'duplicate function names in chat.js: '+dupes.join(', '));
+ assert.ok(chat.includes("if(which==='library')try{renderLibraryView()}catch(_){}"));}
+// 22 Oct bug: New chat passed its click event as a university guide ("Using your university’s guide" in a personal chat).
+assert.ok(chat.includes("$('new-chat').onclick=()=>newChat(null);")&&!/\$\('new-chat'\)\.onclick=newChat;/.test(chat));
