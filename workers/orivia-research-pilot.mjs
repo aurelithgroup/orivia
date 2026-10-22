@@ -16,6 +16,7 @@ import {readSpeaDirectoryFeed} from './orivia-spea-directory-feed.mjs';
 import {REGULATORS} from './orivia-research-loop.mjs';
 import {runAssistantTurn} from './orivia-assistant.mjs';
 import {handleVoice,voiceAvailable} from './orivia-voice.mjs';
+import {handleDocument,documentAvailable} from './orivia-document.mjs';
 
 // v3 (founder-approved 18 Oct): OpenAI handles the whole conversation, About me included unless its switch is off.
 // v2 ticks don't carry over: the tester sees the new wording and ticks again.
@@ -69,10 +70,12 @@ export function createPilotWorker({launchBrowser,fetcher,publicRelease=false,voi
   let shared;const getAI=(e,p)=>shared===undefined?(shared=pilotAI(e,p,{fetcher})):shared;
   const inner=createTrialWorker({
    // Listen's natural voice: only for people who agreed to OpenAI, only while the voice switch and its limits are set.
+   // Files to Chat: one reading of the file the person chose, only with their OpenAI consent.
+   document:({env,req,reply})=>providerAllowed(env)&&consentedToOpenAI({providerConsent:{openai:req.headers.get('X-Orivia-Consent')||''}},env)?handleDocument(req,env,{reply,...(fetcher?{fetcher}:{})}):reply({error:'document_unavailable'},503),
    voice:({env,input,reply})=>providerAllowed(env)&&consentedToOpenAI(input?.preferences,env)?handleVoice(input,env,{reply,...(voiceConnect?{connect:voiceConnect}:{})}):reply({error:'voice_unavailable'},503),
    research:async({env,preferences})=>pilotResearchOptions({env,preferences,ctx},{launchBrowser,fetcher,getAI}),
    assistant:({env,preferences})=>{const ai=getAI(env,preferences);if(!ai)return null;
-    return ({messages,profile,context,localNow,orgContext,reserve,onProgress})=>runAssistantTurn({messages,profile,context,localNow,orgContext,calendarChangeUI:preferences?.calendarChangeUI===1,replyLanguage:preferences?.language},env,{ai,reserve,onProgress,...(fetcher?{fetcher}:{})})}
+    return ({messages,profile,context,localNow,orgContext,document,reserve,onProgress})=>runAssistantTurn({messages,profile,context,localNow,orgContext,document,calendarChangeUI:preferences?.calendarChangeUI===1,replyLanguage:preferences?.language},env,{ai,reserve,onProgress,...(fetcher?{fetcher}:{})})}
   });
   const res=await inner.fetch(req,env,ctx);
   const url=new URL(req.url);
@@ -83,6 +86,7 @@ export function createPilotWorker({launchBrowser,fetcher,publicRelease=false,voi
    body.publicAssistant=isPublic(env)&&publicRelease&&env.PUBLIC_ASSISTANT==='1';
    body.research={...(body.research||{}),browserDirectory:env.BROWSER_DIRECTORY==='1'&&!!env.BROWSER};
    body.naturalVoice=providerAllowed(env)&&voiceAvailable(env);
+   body.documents=providerAllowed(env)&&documentAvailable(env);
    return new Response(JSON.stringify(body),{status:200,headers:res.headers});
   }
   return res;

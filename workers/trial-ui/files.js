@@ -89,5 +89,5 @@
   $('files-camera').onclick=()=>$('files-camera-input').click();$('files-add').onclick=()=>$('files-input').click();
   for(const id of ['files-camera-input','files-input'])$(id).addEventListener('change',e=>{const files=e.target.files;addFiles(files).finally(()=>{e.target.value=''})});
  }
- window.OriviaFiles={render:()=>{mount();return render()},prepare,LIMIT};
+ window.OriviaFiles={render:()=>{mount();return render()},prepare,LIMIT,list:()=>store().list(),blob:id=>store().blob(id)};
 })();

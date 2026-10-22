@@ -44,7 +44,7 @@ export function personRegion(msgs,profile,memory){
 }
 const REGION_NAME={uae:'UAE',uk:'UK'};
 // What the chat screen calls each kind (workers/trial-ui/chat.js SOURCE_KIND).
-const CATEGORY={regulator:'official',government:'official',website:'organisation',listing:'directory',community:'community',university:'university'};
+const CATEGORY={regulator:'official',government:'official',website:'organisation',listing:'directory',community:'community',university:'university',document:'document'};
 // Which source kinds may support which kind of sentence.
 export const CLAIM_SOURCES=Object.freeze({
  official_rule:['government','regulator'],     // laws, visas, official fees, deadlines, government procedures
@@ -52,6 +52,7 @@ export const CLAIM_SOURCES=Object.freeze({
  official_listing:['government','regulator'],  // an organisation's address/phone/hours as an official directory records them
  organisation_fact:['website','government','regulator'], // what an organisation says about itself (own site checked below)
  university_instruction:['university'],          // what the person's university published in Orivia (a guide they chose); never an official rule
+ person_document:['document'],                 // what the person's own attached document says (as Orivia transcribed it); never an official rule
  experience:['community'],                     // what people report; labelled as experience
  listing:['listing','website','government','regulator','community'], // "appears on a list": proves only that
  general:[]                                    // plain explanation: no contacts, links, amounts or figures allowed
@@ -364,13 +365,14 @@ Writing the reply (only from the evidence ledger; search snippets are not eviden
 - Never invent a name, number, fee, date, link, phone number or email. If something could not be established, say exactly what, and what they can do instead.
 - person_region (when given) says which country's rules apply. An official page from the other country is general information only: use kind "general" with evidence and say whose guidance it is (for example "NHS (UK) advice").
 - Separate official requirements from people's experiences. Don't promise outcomes (a seat, an approval) the evidence doesn't support. Never call something verified just because a page was opened.
-- Each sentence: {"text":"...","kind":"general|official_rule|regulatory_status|official_listing|organisation_fact|university_instruction|experience|listing","evidence":["E1",...],"org":"<organisation name, for organisation_fact>","break":"paragraph|line|null"}
+- Each sentence: {"text":"...","kind":"general|official_rule|regulatory_status|official_listing|organisation_fact|university_instruction|person_document|experience|listing","evidence":["E1",...],"org":"<organisation name, for organisation_fact>","break":"paragraph|line|null"}
   * general: explanation or next step with no facts needing a source: no phone numbers, emails, links, amounts or figures.
   * official_rule: laws, visas, official fees, deadlines, government procedures; cite government or regulator evidence only.
   * regulatory_status: licensed/classified/curriculum per the regulator; cite regulator evidence.
   * official_listing: an organisation's details (address, phone, hours, services) as a government or regulator directory records them; cite that official page.
   * organisation_fact: what an organisation says about itself (admissions, services, contacts, fees); cite its own website.
   * university_instruction: what the person's own university published in Orivia (state.university_context, evidence kind "university"); say it is the university's instruction. It is never evidence for official_rule: visa, residency and other government requirements still need government or regulator evidence, so research those separately or say they should be confirmed with the authority.
+  * person_document: what the person's own attached document says (state.person_document, evidence kind "document"); say "your document says" or "according to your [kind]". Orivia transcribed it and may have misread it, so for amounts, dates and deadlines that matter, suggest checking the original. It is never evidence for official_rule or for what an organisation does in general. Never say the document is valid, genuine, verified or approved.
   * experience: what people report on community sites; say it is people's experience.
   * listing: a name appears on a list or listing site; it proves only that.
   Every phone number, email, link, amount and figure you write must appear in the evidence you cite. Do not write [n] markers; code adds citations.
@@ -494,7 +496,7 @@ export function incompleteReply(done,memory,ledger,{metrics,language='en'}={}){
   research:{status:'incomplete',applicability:'needs-review',claims:[],unresolved:[],assistant:true,progress:[],taskContext:{task:{assistant:cleanMemory({...memory,evidence:keep.length?keep:memory?.evidence})}},process:{metrics}}};
 }
 /** Run one assistant turn. ai: the pilot transport (json mode). Returns the chat reply object, or null (caller falls back). */
-export async function runAssistantTurn({messages,profile=null,context=null,localNow=null,orgContext=null,calendarChangeUI=false,replyLanguage='en'},env,{ai,fetcher=fetch,reserve,now=()=>new Date(),maxCalls=12,onProgress=null}={}){
+export async function runAssistantTurn({messages,profile=null,context=null,localNow=null,orgContext=null,document=null,calendarChangeUI=false,replyLanguage='en'},env,{ai,fetcher=fetch,reserve,now=()=>new Date(),maxCalls=12,onProgress=null}={}){
  // Progress for the chat: written by code from what is actually happening (never the model's private reasoning).
  const report=t=>{try{onProgress&&onProgress(t)}catch(_){}};
  if(!ai?.run)return null;
@@ -505,13 +507,15 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
  const tools=timing.tools;
  const ledger=[];let nextE=1;const leads=[];let nextL=1;const steps=[];const failures=[];
  // A site not on the listing list still counts as a listing when its page reads like one ("Apartments For Rent in Sharjah").
- const addEvidence=(e)=>{let kind=e.kind==='university'?'university':sourceKind(e.url);if(kind==='unknown')return null;if(kind==='website'&&LISTING_PAGE.test(String(e.title||'')))kind='listing';
+ const addEvidence=(e)=>{let kind=['university','document'].includes(e.kind)?e.kind:sourceKind(e.url);if(kind==='unknown')return null;if(kind==='website'&&LISTING_PAGE.test(String(e.title||'')))kind='listing';
   // One page = one source: a second read of the same address adds its new passages to the same evidence item.
   const have=ledger.find(x=>x.url===e.url);
   if(have){const add=String(e.excerpt||'').split('\n').filter(p=>p.trim()&&!have.excerpt.includes(p.trim()));if(add.length)have.excerpt=clip(have.excerpt+'\n'+add.join('\n'),Math.max(have.excerpt.length,(e.max||ASSISTANT_LIMITS.pageChars)*2));return have}
   const ev={id:'E'+(nextE++),url:e.url,title:clip(e.title,160),kind,excerpt:clip(e.excerpt,e.max||ASSISTANT_LIMITS.pageChars),checkedAt:e.checkedAt||now().toISOString(),from:e.from||'this-turn'};ledger.push(ev);
   if(ledger.length>ASSISTANT_LIMITS.evidenceKept+8)ledger.splice(0,ledger.length-(ASSISTANT_LIMITS.evidenceKept+8));return ev};
  for(const e of memory.evidence)addEvidence({...e,kind:undefined,from:'earlier-in-chat',max:ASSISTANT_LIMITS.memoryExcerpt});
+ // The document the person attached (its transcript comes from their device with each message). Labelled, never kept in memory.
+ const docEv=document&&typeof document.text==='string'&&typeof document.url==='string'?addEvidence({url:document.url,title:'Your document: '+String(document.name||'Document'),excerpt:document.text,kind:'document',from:'document',max:12000}):null;
  // The university item the person chose (server-checked for membership on this message). Labelled, not stored in memory.
  const orgEv=orgContext&&typeof orgContext.body==='string'?addEvidence({url:orgContext.url,title:String(orgContext.orgName||'University')+': '+String(orgContext.title||''),excerpt:orgContext.body,kind:'university',checkedAt:orgContext.updatedAt,from:'university',max:4000}):null;
 
@@ -555,7 +559,7 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
  let rejection=null,result=null,budgetOut=false,lastCodes='';const done={searches:0,pages:0};
  for(let call=0;call<maxCalls&&!result;call++){
   const left=maxCalls-call,mustReply=left<=2||Date.now()-started>ASSISTANT_LIMITS.wallMs;
-  const state={...(orgEv?{university_context:{evidence:orgEv.id,university:orgContext.orgName,title:orgContext.title,updated:String(orgContext.updatedAt).slice(0,10)}}:{}),reply_language:['en','fr','ar'].includes(replyLanguage)?replyLanguage:'en',today:now().toISOString().slice(0,10),local_now:here,...(profileFacts(profile)?{aboutMe:profileFacts(profile)}:{}),memory:{...memory,evidence:undefined},
+  const state={...(docEv?{person_document:{evidence:docEv.id,name:document.name,kind:document.kind||undefined,note:'Transcribed by Orivia from the person\'s own file; it may contain reading mistakes.'}}:{}),...(orgEv?{university_context:{evidence:orgEv.id,university:orgContext.orgName,title:orgContext.title,updated:String(orgContext.updatedAt).slice(0,10)}}:{}),reply_language:['en','fr','ar'].includes(replyLanguage)?replyLanguage:'en',today:now().toISOString().slice(0,10),local_now:here,...(profileFacts(profile)?{aboutMe:profileFacts(profile)}:{}),memory:{...memory,evidence:undefined},
    conversation:msgs,
    evidence:evidenceView(ledger),
    leads:leads.slice(-ASSISTANT_LIMITS.leadsShown).map(l=>({id:l.id,kind:l.kind,url:l.url,title:clip(l.title,100),snippet:clip(l.snippet,160)})),
@@ -625,7 +629,7 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
  const keepIds=new Set((Array.isArray(result.mem.keep_evidence)?result.mem.keep_evidence:[]).filter(x=>typeof x==='string'));
  const cited=result.kind==='reply'?result.checked.used:[];
  // University material is never kept in chat memory: it is re-read (and membership rechecked) on every message.
- const kept=[...cited,...ledger.filter(e=>keepIds.has(e.id)&&!cited.includes(e))].filter(e=>e.kind!=='university').slice(0,ASSISTANT_LIMITS.memoryEvidence)
+ const kept=[...cited,...ledger.filter(e=>keepIds.has(e.id)&&!cited.includes(e))].filter(e=>e.kind!=='university'&&e.kind!=='document').slice(0,ASSISTANT_LIMITS.memoryEvidence)
   .map(e=>({url:e.url,title:e.title,excerpt:e.excerpt.slice(0,ASSISTANT_LIMITS.memoryExcerpt),checkedAt:e.checkedAt}));
  const nextMemory=cleanMemory({...memory,...result.mem,evidence:kept.length?kept:memory.evidence});
  const taskContext={task:{assistant:nextMemory}};

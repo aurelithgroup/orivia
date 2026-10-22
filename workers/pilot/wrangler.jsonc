@@ -36,6 +36,8 @@
   "r2_buckets": [{ "binding": "FILES", "bucket_name": "orivia-files-pilot" }],
   "vars": {
     "FILES_ENABLED": "1",
+    // Files to Chat (step 7): one reading per chosen document, inside the OpenAI limits; 30 readings a day on the pilot.
+    "DOCUMENTS_ENABLED": "1",
     "PRIVATE_HOST": "orivia-research-pilot.habeebahsallah27.workers.dev",
     "ACCESS_TEAM_DOMAIN": "shy-rain-efa9.cloudflareaccess.com",
     "ACCESS_AUD": "dbdcd14c948acf07a9ecc9d720e19c6fcf455922f66704221fa2f80db9c21028",

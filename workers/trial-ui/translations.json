@@ -2370,5 +2370,69 @@
   "Couldn’t do that. Check your connection and try again.": {
     "fr": "Impossible pour le moment. Vérifiez votre connexion et réessayez.",
     "ar": "تعذّر ذلك. تحقّق من اتصالك وحاول مرة أخرى."
+  },
+  "Using your document:": {
+    "fr": "Document utilisé :",
+    "ar": "المستند المستخدَم:"
+  },
+  "Stop using this document": {
+    "fr": "Ne plus utiliser ce document",
+    "ar": "التوقف عن استخدام هذا المستند"
+  },
+  "Orivia has stopped using that document in this chat.": {
+    "fr": "Orivia n’utilise plus ce document dans cette discussion.",
+    "ar": "توقفت أوريفيا عن استخدام هذا المستند في هذه المحادثة."
+  },
+  "Choose one document to use in this chat.": {
+    "fr": "Choisissez un document à utiliser dans cette discussion.",
+    "ar": "اختر مستندًا واحدًا لاستخدامه في هذه المحادثة."
+  },
+  "Couldn’t open that file.": {
+    "fr": "Impossible d’ouvrir ce fichier.",
+    "ar": "تعذّر فتح هذا الملف."
+  },
+  "Orivia will send this file to OpenAI once to read its text, then use that text to answer you in this chat. Orivia can misread documents, so check important details against the original. It doesn’t check whether a document is genuine or valid.": {
+    "fr": "Orivia enverra ce fichier une fois à OpenAI pour en lire le texte, puis utilisera ce texte pour vous répondre dans cette discussion. Orivia peut mal lire un document : vérifiez les détails importants sur l’original. Orivia ne vérifie pas si un document est authentique ou valide.",
+    "ar": "سترسل أوريفيا هذا الملف إلى OpenAI مرة واحدة لقراءة نصّه، ثم تستخدم هذا النص للرد عليك في هذه المحادثة. قد تخطئ أوريفيا في قراءة المستندات، لذا تحقّق من التفاصيل المهمة في النسخة الأصلية. ولا تتحقق أوريفيا من صحة المستند أو صلاحيته."
+  },
+  "Use this in my chat": {
+    "fr": "Utiliser dans ma discussion",
+    "ar": "استخدمه في محادثتي"
+  },
+  "Reading your document…": {
+    "fr": "Lecture de votre document…",
+    "ar": "جارٍ قراءة مستندك…"
+  },
+  "Orivia can read up to 10 pages. Try a shorter document, or a photo of the page you need.": {
+    "fr": "Orivia peut lire jusqu’à 10 pages. Essayez un document plus court, ou une photo de la page utile.",
+    "ar": "يمكن لأوريفيا قراءة ما يصل إلى 10 صفحات. جرّب مستندًا أقصر، أو صورة للصفحة التي تحتاجها."
+  },
+  "Orivia couldn’t read any text in that file. Try a clearer photo.": {
+    "fr": "Orivia n’a trouvé aucun texte lisible dans ce fichier. Essayez une photo plus nette.",
+    "ar": "لم تتمكن أوريفيا من قراءة أي نص في هذا الملف. جرّب صورة أوضح."
+  },
+  "Orivia has read as many documents as it can today. Try again tomorrow.": {
+    "fr": "Orivia a lu autant de documents que possible aujourd’hui. Réessayez demain.",
+    "ar": "قرأت أوريفيا أقصى عدد ممكن من المستندات اليوم. حاول مرة أخرى غدًا."
+  },
+  "Please confirm you’re human again, then try once more.": {
+    "fr": "Confirmez à nouveau que vous êtes humain, puis réessayez.",
+    "ar": "يرجى تأكيد أنك إنسان مرة أخرى، ثم المحاولة من جديد."
+  },
+  "Orivia couldn’t read that document. Please try again.": {
+    "fr": "Orivia n’a pas pu lire ce document. Veuillez réessayer.",
+    "ar": "تعذّر على أوريفيا قراءة هذا المستند. يرجى المحاولة مرة أخرى."
+  },
+  "Orivia read the first part of your document (it’s long). Ask your question.": {
+    "fr": "Orivia a lu le début de votre document (il est long). Posez votre question.",
+    "ar": "قرأت أوريفيا الجزء الأول من مستندك (فهو طويل). اطرح سؤالك."
+  },
+  "Orivia has read your document. Ask your question.": {
+    "fr": "Orivia a lu votre document. Posez votre question.",
+    "ar": "قرأت أوريفيا مستندك. اطرح سؤالك."
+  },
+  "Your document": {
+    "fr": "Votre document",
+    "ar": "مستندك"
   }
 }
