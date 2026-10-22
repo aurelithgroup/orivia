@@ -19,3 +19,12 @@ The founder dislikes the citation numbers. Cleo has changed her own files:
 - **Use:** Orivia does not read, check or analyse the files. Nothing is sent to an AI. (Step 7 will add an explicit "Use this in my chat" for one chosen file; that needs its own wording.)
 - **Retention:** kept until the person deletes them. Deleting the account deletes them. No extra backups beyond Cloudflare's own durability.
 - **Camera:** the camera opens only when the person taps "Take a photo"; their phone asks permission then.
+
+## For the Privacy information: Files to Chat (step 7, Cleo, 22 Oct)
+
+- **When:** only after the person picks one file in Chat and taps "Use this in my chat". The card first says the file goes to OpenAI once, that Orivia can misread documents, and that it doesn't check whether a document is genuine or valid.
+- **What is sent:** that one file goes to OpenAI once (`store:false`) so OpenAI returns its text. Orivia's server keeps neither the file nor the text. Logs hold only type, page count and token counts.
+- **After that:** the text (up to 12,000 characters) stays with that chat. It sits in the private account when signed in, or in the browser for guests, and only the 8 most recent chats keep one. It goes with each message in that chat until the person taps ✕.
+- **Use in answers:** replies say "your document says". Figures must appear in the text. The text never counts as proof of an official rule, and Orivia never says a document is valid.
+- **Limits:** PDFs up to 10 pages; 30 readings a day per deployment; counted inside the existing $5/day and $20/month OpenAI limits.
+- **Wording to check:** production consent v1 says Orivia sends "your messages and recent conversation" to OpenAI. The per-use card covers documents. Please confirm that's enough, or propose a consent update.
