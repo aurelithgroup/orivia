@@ -33,3 +33,5 @@ const filtered=render({sources:[{...source,url:'http://unsafe.example/'},source]
 assert.ok(walk(filtered).some(x=>x.tag==='a'&&/ 2:/.test(x.attrs['aria-label'])));
 render({});assert.equal(document.head.children.length,1);
 console.log('Standalone presentation hook checks passed');
+
+assert.ok(nodes.filter(x=>x.tag==='a').every(x=>x.textContent==='example.com ↗'),'source links show only the host, with no visible number');
