@@ -3,7 +3,9 @@
  'use strict';
  document.title='Orivia';
  let native;try{native=window.localStorage}catch(_){native={getItem(){throw Error('storage_unavailable')},setItem(){throw Error('storage_unavailable')},removeItem(){throw Error('storage_unavailable')}}}
- const keys={profile:'orivia-private-profile-v1',events:'orivia-private-events-v1',journeys:'orivia-private-journeys-v1',chats:'orivia-private-chats-v1'},privateKeys=new Set([...Object.values(keys),'orivia-private-chats-v1-unreadable','orivia-private-settings-v1']);
+ const keys={profile:'orivia-private-profile-v1',events:'orivia-private-events-v1',journeys:'orivia-private-journeys-v1',chats:'orivia-private-chats-v1'};
+ // Consents are the person's own (ORI-LEGAL-003): another account on this device must give its own.
+ const privateKeys=new Set([...Object.values(keys),'orivia-private-chats-v1-unreadable','orivia-private-settings-v1','orivia-pilot-consent','orivia-document-consent','orivia-org-ai-notice-v1']);
  let user=null,scope=null,callbacks=null,config={},revision=0,ready=false,paused=false,timer=null,syncing=false,generation=0,screen='welcome',email='';
  let copyNodes=[],arrival=null;const arrivalKey='orivia-pending-arrival-v1';
  const $=id=>document.getElementById(id),t=s=>window.OriviaI18n?.text(s)??s;

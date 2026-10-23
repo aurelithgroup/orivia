@@ -280,6 +280,146 @@
    "id": "ORI-LIB-010",
    "verdict": "verified",
    "evidence": "Files show \"N of 100 MB used\", refuse new uploads with allowance_full and a plain message (tests/files.test.mjs:57-60); device saves that fail say so and change nothing (tests/library-discoveries.test.mjs quota case, tests/calendar-changes.test.mjs storage failure); no eviction or truncation code exists."
+  },
+  {
+   "id": "ORI-UX-001",
+   "verdict": "verified",
+   "evidence": "Menus come from server roles and memberships only (tests/navigation.test.mjs:24-30 menuItems per role; spaces addressable; routes agree across app, /platform and /manage); every staff and owner route refuses other roles (tests/staff-tenant-matrix.test.mjs)."
+  },
+  {
+   "id": "ORI-UX-005",
+   "verdict": "gap (open)",
+   "evidence": "Keyboard, Arabic and 200% zoom checks run in the browser (docs/evidence/accessibility-browser-2026-10-23.json). Arabic at 200% zoom on a 390px phone still overflows by 27px in one place. To fix."
+  },
+  {
+   "id": "ORI-UX-007",
+   "verdict": "verified",
+   "evidence": "Failed loads show a sentence and a retry, never a blank card or fake number: spaces (tests/organisation-home.test.mjs:14 \"couldn’t be loaded\", Try again), owner overview (tests/owner-overview.test.mjs:81-84 unavailable/null), bookmarks (tests/org-bookmarks.test.mjs \"Couldn’t check access\"), files error messages (files.js ERRORS)."
+  },
+  {
+   "id": "ORI-UX-009",
+   "verdict": "verified",
+   "evidence": "Keyboard-only flows through chat, versions, Library and settings with real key events (docs/evidence/accessibility-browser-2026-10-23.json, 5efd68d); pointer and touch paths covered by the UI tests (click handlers) and swipe tests (tests/week-swipe-links.test.mjs)."
+  },
+  {
+   "id": "ORI-UX-010",
+   "verdict": "verified",
+   "evidence": "Slow or failed images fall back (tests/place-card.test.mjs img.onerror → illustration), missing voices fall back to the device voice or text (tests/listen-startup.test.mjs, tests/natural-voice.test.mjs), and there is no analytics dependency in chat or navigation."
+  },
+  {
+   "id": "ORI-HOME-004",
+   "verdict": "verified (unverified text)",
+   "evidence": "The institution a person types stays their own unverified text (profile.place) and is never attached to an organisation; university membership only comes from an invitation plus staff approval (tests/organisations.test.mjs:49-56). School identity checks offer alternatives with sources (tests/school-sites.test.mjs)."
+  },
+  {
+   "id": "ORI-HOME-006",
+   "verdict": "verified",
+   "evidence": "Invitation welcome before sign-in, expired invitation refused, pending membership shows \"Waiting for approval\" with no content, personal use continues (tests/organisations.test.mjs:52,94; tests/organisation-home.test.mjs; tests/organisation-arrival.test.mjs institutional arrival kept separate from personal origin)."
+  },
+  {
+   "id": "ORI-HOME-008",
+   "verdict": "verified",
+   "evidence": "My Life and Settings reach profile, preferences, saved places, memberships, permissions and account deletion through menus; the account panel has \"Download my personal data\" (orivia-personal-export) — tests/consent-scope.test.mjs, tests/navigation.test.mjs."
+  },
+  {
+   "id": "ORI-LIB-008",
+   "verdict": "verified",
+   "evidence": "Cards show only supplied contacts: university contacts render Call/Email/Website only for staff-supplied details (tests/university-actions.test.mjs), organisation cards only quoted values (tests/assistant.test.mjs:82-83), support requests are editable drafts never sent (tests/handoff-cards.test.mjs, STUDENT-007)."
+  },
+  {
+   "id": "ORI-UNI-002",
+   "verdict": "verified",
+   "evidence": "Editors draft, only admins publish (tests/organisations.test.mjs:43-48, editor publish by direct API 403), stale revisions refused with 409 (:47), arrival edits conflict-checked (:37)."
+  },
+  {
+   "id": "ORI-UNI-003",
+   "verdict": "verified",
+   "evidence": "A revision that drops required details is refused with a field-specific error (tests/content-details.test.mjs: contact with no method, date without a date, time without a zone, bad links; tests/organisations.test.mjs PATCH validation)."
+  },
+  {
+   "id": "ORI-UNI-006",
+   "verdict": "gap",
+   "evidence": "Past dates can’t be added (\"This date has passed\") but stay listed, updates have no end date, and editing a date doesn’t explain what happens to copies students already added. To build."
+  },
+  {
+   "id": "ORI-UNI-007",
+   "verdict": "verified",
+   "evidence": "Generated QR codes decode to the exact join or public link (tests/organisations.test.mjs:29,50,68,71 decodeSvg = URL) on the configured origin; public codes open public content only; application records refused even to admins (:58)."
+  },
+  {
+   "id": "ORI-UNI-009",
+   "verdict": "verified",
+   "evidence": "Demotion and removal take effect on the next request (tests/organisations.test.mjs:139-143), every staff route re-checks the role server-side (tests/staff-tenant-matrix.test.mjs), so an old tab can’t publish or read."
+  },
+  {
+   "id": "ORI-UNI-015",
+   "verdict": "gap",
+   "evidence": "Institution admins have overview, welcome, guides, members, invitations, counts and records tabs, but no settings for notification categories, retention/contact policy, service owners or export permissions, and no audit history view (audit rows are written). To build."
+  },
+  {
+   "id": "ORI-STUDENT-001",
+   "verdict": "verified",
+   "evidence": "Spaces are addressable (/space/<id>), Back closes and reopens through popstate, deep links re-check membership and show \"Space unavailable\" otherwise (tests/navigation.test.mjs, tests/organisation-home.test.mjs, spaces.js followAddress)."
+  },
+  {
+   "id": "ORI-STUDENT-007",
+   "verdict": "verified",
+   "evidence": "Support requests are an editable email draft card that never claims submission (tests/handoff-cards.test.mjs; spaces contact Email opens mailto only)."
+  },
+  {
+   "id": "ORI-METRIC-008",
+   "verdict": "verified",
+   "evidence": "Stage durations and codes logged (assistant metrics, tests/assistant-timing.test.mjs), request references for feedback (feedback request_id), provider error bodies never logged (tests/openai-pilot.test.mjs:37 rejects \"Unsupported\"/\"Invalid redirect\" text and prompts in logs)."
+  },
+  {
+   "id": "ORI-FILES-006",
+   "verdict": "verified",
+   "evidence": "The reading card says Orivia doesn’t check whether a document is genuine or valid (tests/files-to-chat.test.mjs:137); a person’s document never proves an official rule and figures must be in the document (:97-98)."
+  },
+  {
+   "id": "ORI-VOICE-004",
+   "verdict": "verified",
+   "evidence": "Arabic sets dir=rtl app-wide (tests/i18n.test.mjs), week swipe is RTL-aware (tests/week-swipe-links.test.mjs), messages and inputs use dir=auto; Arabic browser checks in docs/evidence/accessibility-browser-2026-10-23.json (zoom overflow tracked under UX-005)."
+  },
+  {
+   "id": "ORI-VOICE-005",
+   "verdict": "verified",
+   "evidence": "tests/dictation.test.mjs: dictation fills the box and never sends, errors keep typed text, stale sessions can’t write."
+  },
+  {
+   "id": "ORI-VOICE-007",
+   "verdict": "verified",
+   "evidence": "Automated: tests across focus, labels and live regions; browser keyboard/Arabic/zoom checks (docs/evidence/accessibility-browser-2026-10-23.json). Manual screen-reader spot checks on a real device remain with Ina (external: physical devices)."
+  },
+  {
+   "id": "ORI-VOICE-008",
+   "verdict": "verified",
+   "evidence": "tests/assistant.test.mjs:174-183 (anxious newcomer with a housing scam: concrete steps, scam-aware, no generic disclaimer), tests/guide-cards.test.mjs (no nagging, offers not repeated), tests/research-follow-through.test.mjs (\"yes please\" continues without another permission question)."
+  },
+  {
+   "id": "ORI-BUSINESS-001",
+   "verdict": "verified",
+   "evidence": "No subscription, paywall or payment code exists; onboarding and newcomer flows complete for guests and accounts (tests/onboarding-consent.test.mjs, tests/home-dashboard.test.mjs)."
+  },
+  {
+   "id": "ORI-LEGAL-003",
+   "verdict": "gap→fixed",
+   "evidence": "Before: the OpenAI provider consent, the document-reading acknowledgement and the university AI notice were stored device-wide, so a second account on the same device inherited the first person’s consent. Fixed: kept per account (accounts.js privateKeys); existing pilot accounts are asked once more. tests/consent-scope.test.mjs. Versioned consents and unticked defaults: tests/onboarding-consent.test.mjs:16, tests/research-pilot.test.mjs:67,95 (an old provider version is refused)."
+  },
+  {
+   "id": "ORI-LEGAL-005",
+   "verdict": "verified",
+   "evidence": "Evidence kinds stay separate in verification (official_rule, organisation_fact, person_document, community) with source labels (Official source / Organisation source / Source-backed); a person’s document can’t prove a rule (tests/files-to-chat.test.mjs:98); no blanket \"verified\" claim in the UI (chat.js:1394 note)."
+  },
+  {
+   "id": "ORI-LEGAL-006",
+   "verdict": "verified (no store materials yet)",
+   "evidence": "Demo organisations are labelled Demo; the app names OpenAI only where it is used, with consent; there are no store listings yet (blocked: Apple/Google accounts), so nothing claims a partner that isn’t configured."
+  },
+  {
+   "id": "ORI-APP-001",
+   "verdict": "verified",
+   "evidence": "tests/installable.test.mjs (manifest, icons, scope, install help, offline shell), tests/offline-updates.test.mjs (updates keep drafts, competing workers removed), tests/organisation-arrival.test.mjs (invite links keep the welcome flow before sign-in)."
   }
  ]
 }

@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace(/\r\n/g,'\n'),acc=fs.readFileSync('workers/trial-ui/accounts.js','utf8');
-assert.ok(acc.includes("'orivia-private-chats-v1-unreadable','orivia-private-settings-v1']"),'settings are an account-scoped key');
+assert.ok(/privateKeys=new Set\(\[[^\]]*'orivia-private-settings-v1'/.test(acc),'settings are an account-scoped key');
 const line=s=>chat.slice(chat.indexOf(s),chat.indexOf('\n',chat.indexOf(s)));
 const code=[line('const settingsKey='),line('const SET_DEFAULT='),chat.slice(chat.indexOf('const DEVICE_SETTINGS='),chat.indexOf('function writeSettings(')),chat.slice(chat.indexOf('function writeSettings('),chat.indexOf('applySettings();renderSettings()}',chat.indexOf('function writeSettings('))+'applySettings();renderSettings()}'.length)].join('\n');
 // accounts.js scoping: private keys get "orivia-account:<id>:" when someone is signed in.
