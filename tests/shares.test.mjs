@@ -57,17 +57,3 @@ assert.equal((await call(amira,'/api/account/shares/'+r.data.id,'DELETE')).statu
 r=await call(bilal,'/api/account/shares','POST',{messages:[msg('user','Bilal shares')],expiresInDays:30});const t4=r.data.url.split('/s/')[1];assert.equal((await raw('/s/'+t4)).status,200);
 sql.prepare('DELETE FROM user WHERE id=?').run(bilal.id);assert.ok(await unavailable(t4));
 console.log('Shares: reviewed text-only snapshots, hashed unguessable links, escaped noindex read-only page without cookies, revoke/expiry/delete/account deletion stop it, owners only: pass.');
-// Client selection rules (shipped share-select.js): files, document-based replies and university replies can't be ticked.
-{const vm=await import('node:vm');const box={};vm.runInNewContext(fs.readFileSync('workers/trial-ui/share-select.js','utf8'),{window:box});const S=box.OriviaShare;
- const src=l=>(Array.isArray(l)?l:[]).map(s=>({...s}));
- const plain={turns:[{role:'user',content:'Q1'},{role:'assistant',content:'A1',meta:{sources:[{title:'ICP',url:'https://icp.gov.ae',category:'official'},{title:'Your document: lease',url:'https://x.example/doc',category:'document'}]}},{role:'user',content:'Q2'},{role:'assistant',content:'A2'}]};
- let list=S.candidates(plain,src);assert.ok(list.every(x=>!x.excluded));assert.equal(JSON.stringify(list[1].sources),JSON.stringify([{title:'ICP',url:'https://icp.gov.ae'}]),'document sources never shared');
- assert.deepEqual([...S.defaults(list,3)].sort(),[2,3],'the reply and its question by default');
- const doc={turns:[{role:'user',content:'Before'},{role:'assistant',content:'Early answer'},{role:'user',content:'Read this',meta:{attachment:{name:'lease.pdf'}}},{role:'assistant',content:'The lease says rent is 4000'},{role:'user',content:'Thanks'}]};
- list=S.candidates(doc,src);assert.deepEqual(list.map(x=>x.excluded),[null,null,'attachment','document',null]);
- assert.equal([...S.defaults(list,3)].length,0,'nothing pre-selected when the reply is excluded');
- const p=S.payload(list,new Set([0,1,2,3,4]),' Title ',30);assert.deepEqual(p.messages.map(m=>m.content),['Before','Early answer','Thanks'],'excluded messages never reach the payload even if selected');assert.equal(p.title,'Title');assert.equal(p.expiresInDays,30);
- assert.ok(!JSON.stringify(p).includes('lease'));
- const uni={orgContext:{org:'o',content:'c'},turns:[{role:'user',content:'Q'},{role:'assistant',content:'Members-only steps'}]};assert.equal(S.candidates(uni,src)[1].excluded,'university');
- assert.equal(S.payload(list,new Set([0]),'',999).expiresInDays,7);}
-console.log('Share selection: files, document replies and university replies excluded from the payload: pass.');

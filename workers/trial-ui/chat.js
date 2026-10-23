@@ -692,7 +692,7 @@ async function replayTurn(index,text){
    university members-only replies can't be selected. The link is shown once; it can be revoked or deleted later. */
 function shareApi(path,method,body){const u=window.OriviaAccounts?.user;if(!u)return Promise.reject(Object.assign(Error('sign_in'),{code:'sign_in'}));
  return fetch('/api/account/shares'+path,{method,credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(12000),headers:{'X-Orivia-Account':u.id,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})}).then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(d.error||'failed'),{code:d.error||'failed',status:r.status});return d})}
-const SHARE_WHY={attachment:'Has an attached file: files are never shared.',document:'May include details from your document.',university:'May include university members-only guidance.',empty:'Nothing to share.'};
+const SHARE_WHY={unverified:'Older reply: Orivia can’t check whether it used a document or university guide.',attachment:'Has an attached file: files are never shared.',document:'May include details from your document.',university:'May include university members-only guidance.',empty:'Nothing to share.'};
 function openShareDialog(replyIndex){
  const c=activeChat();if(!c)return;closeHandoff();
  const d=document.createElement('dialog');d.className='handoff-dialog share-dialog';d.setAttribute('aria-labelledby','share-title');
@@ -700,7 +700,7 @@ function openShareDialog(replyIndex){
  if(!window.OriviaAccounts?.user){shell.append(el('p','',uiText('Sign in to share. Shared links belong to your account so you can withdraw them.')));d.append(shell);document.body.append(d);d.addEventListener('close',()=>d.remove());d.showModal();return}
  const list=window.OriviaShare.candidates({...c,turns},s=>safeSources(s)),selected=window.OriviaShare.defaults(list,replyIndex);
  const body=el('div','share-body');shell.append(body);
- const draw=()=>{body.replaceChildren(el('p','tiny',uiText('Anyone with the link can read the messages you tick, until it expires. It doesn’t give access to your account, files or university spaces. Orivia’s answers stay labelled as Orivia’s.')));
+ const draw=()=>{body.replaceChildren(el('p','tiny',uiText('Anyone with the link can read the messages you tick, until it expires. It doesn’t give access to your account, files or university spaces. Orivia’s answers stay labelled as Orivia’s.')),el('p','tiny',uiText('You decide what is shared, so read it first. Orivia blocks replies it knows were based on your documents or a university guide, and older replies it can’t check, but it can’t guarantee your own text is free of private details.')));
   const box=el('div','share-list');for(const x of list){const row=el('label','share-row'+(x.excluded?' is-excluded':''));const cb=document.createElement('input');cb.type='checkbox';cb.checked=selected.has(x.index)&&!x.excluded;cb.disabled=!!x.excluded;cb.onchange=()=>{cb.checked?selected.add(x.index):selected.delete(x.index);count.textContent=uiText('Messages included:')+' '+[...selected].filter(i=>!list[i].excluded).length};
    const txt=el('span','');txt.append(el('strong','',uiText(x.role==='user'?'You':'Orivia')),' ',el('span','tiny',x.content.slice(0,140)+(x.content.length>140?'…':'')));if(x.excluded)txt.append(el('span','tiny share-why',uiText(SHARE_WHY[x.excluded])));row.append(cb,txt);box.append(row)}
   const count=el('p','tiny',uiText('Messages included:')+' '+[...selected].filter(i=>!list[i].excluded).length);
@@ -2196,6 +2196,9 @@ async function sendChat(e,replay=null){
  }
  try{
   {const ctx=chatDocuments().length?documentContext():null,me=turns.at(-1);if(ctx&&(ctx.used<ctx.total||ctx.cut)&&me?.role==='user'){me.meta={...(me.meta||{}),documentContext:{used:ctx.used,total:ctx.total,cut:ctx.cut}};save();draw()}}
+  // Reply origin (Ina f99c2b3): what this request carried, stamped on the reply for good, so clearing a university
+  // context, switching versions or reloading can't later make a document- or university-based answer shareable.
+  const sentWith={documents:!!(chatDocuments().length&&pilotConsent()),university:!!currentOrgContext()};
   const res=await fetch('/v1/chat',{method:'POST',signal:controller.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),...(currentOrgContext()?{orgContext:{org:currentOrgContext().org,content:currentOrgContext().content}}:{}),...(chatDocuments().length&&pilotConsent()?{documents:documentsForMessage()}:{}),researchContext:currentResearchContext(sentTurns),language:uiLanguage(),style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
   const {r,d}=await readReply(res,chatId);
   if((globalThis.OriviaAccounts?.epoch||'')!==accountAtSend)return;
@@ -2217,7 +2220,7 @@ async function sendChat(e,replay=null){
    if(why==='rate_limit'||(r.status===429&&!why))cooldown(wait||60);
    return}
   if(typeof d.reply!=='string'||!d.reply.trim())throw Error('empty');
-  const meta={replyRef:newId()};const change=safeCalendarChange(d.calendarChange);if(change)meta.calendarChange={proposal:change,status:'pending'};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
+  const meta={replyRef:newId(),origin:{v:1,documents:sentWith.documents,university:sentWith.university}};const change=safeCalendarChange(d.calendarChange);if(change)meta.calendarChange={proposal:change,status:'pending'};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
   if(vetted.length&&Array.isArray(d.organisations)){const orgs=d.organisations.slice(0,8);if(safeOrgs(orgs,vetted).length){meta.organisations=JSON.parse(JSON.stringify(orgs));if(['list','single','choose'].includes(d.cardMode))meta.cardMode=d.cardMode}}
   const dr=safeDraft(d.draft);if(dr)meta.draft=dr;
   // The language the reply was written in (from the server), so Listen picks the right voice instead of guessing.

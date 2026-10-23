@@ -185,6 +185,9 @@ jobs:
           node --experimental-sqlite tests/restore-drill.test.mjs
           node tests/language-matrix.test.mjs
           node --experimental-sqlite tests/shares.test.mjs
+          node --experimental-sqlite tests/share-routing.test.mjs
+          node tests/share-provenance.test.mjs
+          node tests/rollback-compat.test.mjs
       - name: "Shared navigation and space addresses"
         run: node tests/navigation.test.mjs
       - name: "myorivia.app production entry gates"

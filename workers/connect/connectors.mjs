@@ -67,13 +67,16 @@ export async function receiveUpdate(db,conn,env,{headers,body,now=Date.now()}){
  let e;try{e=JSON.parse(body)}catch(_){return {status:400,error:'invalid_json'}}
  if(!validEvent(e))return {status:400,error:'invalid_event'};
  const personRef=conn.orgId+':'+e.subject,received=now;
- // Idempotent: the same event id for this organisation is recorded once.
- const ins=await db.prepare('INSERT INTO connector_events(org_id,event_id,person_ref,status,source_version,occurred_at,received_at) VALUES (?,?,?,?,?,?,?) ON CONFLICT(org_id,event_id) DO NOTHING RETURNING event_id').bind(conn.orgId,e.eventId,personRef,e.status,e.sourceVersion,e.occurredAt,received).first();
- if(!ins)return {status:200,duplicate:true};
- // Newer source versions win; an older or equal one is kept in the event log but doesn't change the current status.
- const cur=await db.prepare('INSERT INTO connector_status(org_id,person_ref,status,source_version,source_event_id,occurred_at,received_at,recorded_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(org_id,person_ref) DO UPDATE SET status=excluded.status,source_version=excluded.source_version,source_event_id=excluded.source_event_id,occurred_at=excluded.occurred_at,received_at=excluded.received_at,recorded_at=excluded.recorded_at WHERE excluded.source_version>connector_status.source_version RETURNING status').bind(conn.orgId,personRef,e.status,e.sourceVersion,e.eventId,e.occurredAt,received,now).first();
+ // One atomic batch (D1 batches are transactions; Ina f99c2b3): the event log row and the status change are written
+ // together or not at all, so a failure between them can't leave an event that later retries treat as already applied.
+ // Idempotent: the same event id for this organisation is recorded once. Newer source versions win; an older or equal one
+ // stays in the event log but doesn't change the current status, so re-running the status write for a duplicate is harmless.
+ const [ins,cur]=await db.batch([
+  db.prepare('INSERT INTO connector_events(org_id,event_id,person_ref,status,source_version,occurred_at,received_at) VALUES (?,?,?,?,?,?,?) ON CONFLICT(org_id,event_id) DO NOTHING RETURNING event_id').bind(conn.orgId,e.eventId,personRef,e.status,e.sourceVersion,e.occurredAt,received),
+  db.prepare('INSERT INTO connector_status(org_id,person_ref,status,source_version,source_event_id,occurred_at,received_at,recorded_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(org_id,person_ref) DO UPDATE SET status=excluded.status,source_version=excluded.source_version,source_event_id=excluded.source_event_id,occurred_at=excluded.occurred_at,received_at=excluded.received_at,recorded_at=excluded.recorded_at WHERE excluded.source_version>connector_status.source_version RETURNING status').bind(conn.orgId,personRef,e.status,e.sourceVersion,e.eventId,e.occurredAt,received,now)]);
  await db.prepare('UPDATE connector_sync SET last_success_at=? WHERE org_id=?').bind(now,conn.orgId).run().catch(()=>{});
- return {status:200,applied:!!cur,stale:!cur};
+ if(!ins?.results?.length)return {status:200,duplicate:true};
+ const applied=!!cur?.results?.length;return {status:200,applied,stale:!applied};
 }
 
 // What a student may be shown (CONNECT-004): the source's own meaning, who asserted it, and when it was received.

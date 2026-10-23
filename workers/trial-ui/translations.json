@@ -3070,5 +3070,13 @@
   "Couldn’t load your shared links.": {
     "fr": "Impossible de charger vos liens partagés.",
     "ar": "تعذّر تحميل روابطك المشتركة."
+  },
+  "Older reply: Orivia can’t check whether it used a document or university guide.": {
+    "fr": "Réponse plus ancienne : Orivia ne peut pas vérifier si elle s’appuyait sur un document ou un guide universitaire.",
+    "ar": "رد أقدم: لا يستطيع Orivia التحقق مما إذا كان مبنيًا على مستند أو دليل جامعي."
+  },
+  "You decide what is shared, so read it first. Orivia blocks replies it knows were based on your documents or a university guide, and older replies it can’t check, but it can’t guarantee your own text is free of private details.": {
+    "fr": "C’est vous qui décidez de ce qui est partagé : relisez d’abord. Orivia bloque les réponses qu’il sait basées sur vos documents ou un guide universitaire, ainsi que les réponses plus anciennes qu’il ne peut pas vérifier, mais il ne peut pas garantir que votre propre texte ne contient pas d’informations privées.",
+    "ar": "أنت من يقرر ما تتم مشاركته، فاقرأه أولاً. يحظر Orivia الردود التي يعرف أنها مبنية على مستنداتك أو على دليل جامعي، والردود الأقدم التي لا يمكنه التحقق منها، لكنه لا يضمن خلو نصك من التفاصيل الخاصة."
   }
 }

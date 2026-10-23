@@ -41,7 +41,25 @@ The restore itself returns a bookmark for the pre-restore state, so the restore 
 
 - **Worker rollback:** `npx wrangler rollback <version>` or the deploy script with an earlier build. Each candidate's receipt names the version to roll back to.
 - **Schema changes:** these are additive (`CREATE TABLE IF NOT EXISTS`), so older code ignores newer tables and rows. A rollback keeps newer user data rather than deleting it.
-- **Data the code depends on:** stored inside the synced personal copy (`store.library`, chat versions). Older code ignores the extra fields and keeps them when it saves.
+- **Client data in the synced personal copy:** the Library's removed items (`store.library`) and conversation versions (`chat.versions`) live there. Older app code does **not** keep them: its loader rebuilds each chat without these fields, so the next save drops them (Ina f99c2b3).
+
+  Checked with each version's own loader (`node tools/rollback-compat.mjs <chat.js> [chat-versions.js]`, 23 Oct):
+
+  | App source | Keeps chat versions | Keeps Library removals |
+  |---|---|---|
+  | `a846926` (production `b9e32ffc`) | no | no |
+  | `1c94765` | no | yes |
+  | `5bdfcf8` and later (pilot candidates from `8306e1e3`) | yes | yes |
+
+  **Rule:** once a release with conversation versions is live, roll back only to `5bdfcf8` or later. To undo a problem in that release, ship a forward fix. Don't roll back to an older build, because people's earlier versions and Library removals would be lost when their devices next save. `tests/rollback-compat.test.mjs` fails if the current code stops keeping these fields.
+
+## Retention of withdrawn and expired shares, and of feedback
+
+- **Withdrawn or expired shared link:** the page stops working at once, but the stored snapshot stays in the database until its owner deletes it or deletes the account. Expiry doesn't delete it.
+- **Feedback reports and ratings:** these have no separate expiry. They're kept until marked reviewed and are deleted with the account.
+- **Backups:** D1 Time Travel can bring back recently deleted rows for its retention window.
+
+Privacy wording must describe exactly this until a purge schedule is decided.
 
 ## Files (R2: `orivia-files-production`, `orivia-files-pilot`)
 

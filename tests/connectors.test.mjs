@@ -6,7 +6,8 @@ import {DatabaseSync} from 'node:sqlite';
 import {CAPABILITIES,STATUS,connectionState,matchIdentity,fixtureAdapter,signBody,receiveUpdate,currentStatus,validEvent} from '../workers/connect/connectors.mjs';
 const sql=new DatabaseSync(':memory:');sql.exec('PRAGMA foreign_keys=ON;'+['workers/accounts/schema.sql','workers/accounts/organisations.sql','workers/connect/connectors.sql'].map(f=>fs.readFileSync(f,'utf8')).join('\n'));
 const st=(t,a=[])=>({bind:(...v)=>st(t,v),run:async()=>sql.prepare(t).run(...a),first:async()=>sql.prepare(t).get(...a)||null,all:async()=>({results:sql.prepare(t).all(...a)})});
-const db={prepare:t=>st(t)};
+// D1-like batch: one transaction; failOn (a regex) makes a matching statement fail mid-batch, to test atomicity.
+const db={failOn:null,prepare:t=>({...st(t),text:t,bind:(...v)=>({...st(t,v),text:t})}),batch:async stmts=>{sql.exec('BEGIN IMMEDIATE');try{const out=[];for(const x of stmts){if(db.failOn&&db.failOn.test(x.text))throw Error('simulated storage failure');out.push(await x.all())}sql.exec('COMMIT');return out}catch(e){sql.exec('ROLLBACK');throw e}}};
 sql.prepare("INSERT INTO organisations(id,slug,name,city,demo,created_at) VALUES ('org-nb','northbay','Northbay University','Sharjah',1,0),('org-rv','riverside','Riverside College','Leeds',1,0)").run();
 sql.prepare("INSERT INTO connector_sync(org_id,last_success_at) VALUES ('org-nb',NULL)").run();
 // CONNECT-001/006: read-only capabilities; "configured" only with credential AND agreement; fixtures are sandbox.
@@ -51,4 +52,13 @@ assert.equal(validEvent({eventId:'e1'}),false);
 // CONNECT-005: after disconnect, a correctly signed update queued earlier is refused and changes nothing.
 const before=JSON.stringify(await currentStatus(db,'org-nb','org-nb:s-123'));const revoked={...conn,revokedAt:now-1000};
 assert.deepEqual(await send(ev('e7','withdrawn',9),{c:revoked}),{status:410,error:'revoked'});assert.equal(JSON.stringify(await currentStatus(db,'org-nb','org-nb:s-123')),before);assert.equal(connectionState({...conn,revokedAt:1,adapter:'sis',credentialSecret:'NB_SECRET',agreementRef:'M',agreementSignedAt:1},env),'revoked');
+// Ina's reproduction (f99c2b3): a failure between the event row and the status row must not strand the event.
+{const c2={...conn,orgId:'org-nb'},e9={eventId:'atomic-1',subject:'s-777',status:'documents_requested',sourceVersion:1,occurredAt:'2026-10-23T08:00:00Z'};
+ db.failOn=/INSERT INTO connector_status/;await assert.rejects(send(e9,{c:c2}),/simulated storage failure/);db.failOn=null;
+ assert.equal(sql.prepare("SELECT COUNT(*) AS n FROM connector_events WHERE event_id='atomic-1'").get().n,0,'nothing half-written');
+ assert.deepEqual(await send(e9,{c:c2}),{status:200,applied:true,stale:false},'the retry applies the update');
+ assert.equal((await currentStatus(db,'org-nb','org-nb:s-777')).status,'documents_requested');
+ // Applied, then the response was lost: the retry is a duplicate and the status stays as applied.
+ assert.deepEqual(await send(e9,{c:c2}),{status:200,duplicate:true});assert.equal((await currentStatus(db,'org-nb','org-nb:s-777')).sourceEventId,'atomic-1');
+ assert.equal(sql.prepare("SELECT COUNT(*) AS n FROM connector_events WHERE event_id='atomic-1'").get().n,1);}
 console.log('Connectors: read-only contract, configured only with credential and agreement, identity from institution claims, signed/fresh/idempotent updates that never regress, source meaning kept: pass.');
