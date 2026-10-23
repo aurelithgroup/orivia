@@ -10,7 +10,15 @@
  const PAGE=30;
  function key(name,src){return String(name||'').trim().toLowerCase().replace(/\s+/g,' ')+'|'+String(src&&src.host||'').toLowerCase()}
  function legacyHidden(chats){const out=[];for(const c of Array.isArray(chats)?chats:[])for(const t of Array.isArray(c.turns)?c.turns:[])if(t&&t.meta&&Array.isArray(t.meta.hiddenDiscoveries))for(const k of t.meta.hiddenDiscoveries)if(typeof k==='string')out.push(k);return out}
- function normLibrary(v){const hidden=v&&Array.isArray(v.hidden)?v.hidden.filter(k=>typeof k==='string'&&k.length<=400):[];return {hidden:[...new Set(hidden)]}}
+ // University bookmarks (ORI-LIB-005): references only (organisation, item, title, organisation name, time). The item's
+ // text is never kept here, so leaving or being removed closes it: opening or asking re-checks membership on the server.
+ const ID=/^[A-Za-z0-9-]{1,64}$/;
+ function normSaved(list){const out=[],seen=new Set();for(const x of Array.isArray(list)?list:[]){if(!x||typeof x.org!=='string'||typeof x.content!=='string'||!ID.test(x.org)||!ID.test(x.content))continue;const k=x.org+'|'+x.content;if(seen.has(k))continue;seen.add(k);
+  out.push({org:String(x.org),content:String(x.content),title:String(x.title||'').substring(0,150),orgName:String(x.orgName||'').substring(0,80),savedAt:Number(x.savedAt)||0})}return out}
+ function normLibrary(v){const hidden=v&&Array.isArray(v.hidden)?v.hidden.filter(k=>typeof k==='string'&&k.length<=400):[];return {hidden:[...new Set(hidden)],saved:normSaved(v&&v.saved)}}
+ function saveOrgItem(library,item,now){const l=normLibrary(library);const one=normSaved([{...item,savedAt:now}]);if(!one.length)return null;l.saved=normSaved([one[0],...l.saved.filter(x=>!(x.org===one[0].org&&x.content===one[0].content))]);return l}
+ function removeOrgItem(library,org,content){const l=normLibrary(library);l.saved=l.saved.filter(x=>!(x.org===org&&x.content===content));return l}
+ function isSaved(library,org,content){return normLibrary(library).saved.some(x=>x.org===org&&x.content===content)}
  // chats: store.chats; h: {safeSources,safeDestinations,safeOrgs,placeIdentity}. Returns {shown,hidden} (both complete).
  function collect(chats,library,h){
   const hidden=new Set(normLibrary(library).hidden),seen=new Map();
@@ -28,5 +36,5 @@
  function hide(library,k){const l=normLibrary(library);if(!l.hidden.includes(k))l.hidden.push(k);return l}
  function restore(library,k){const l=normLibrary(library);l.hidden=l.hidden.filter(x=>x!==k);return l}
  function page(list,shown){const n=Math.max(PAGE,Number(shown)||PAGE);return {items:list.slice(0,n),more:Math.max(0,list.length-n),next:n+PAGE}}
- root.OriviaDiscoveries={key,legacyHidden,normLibrary,collect,hide,restore,page,PAGE};
+ root.OriviaDiscoveries={key,legacyHidden,normLibrary,collect,hide,restore,page,PAGE,saveOrgItem,removeOrgItem,isSaved};
 })(typeof window!=='undefined'?window:globalThis);

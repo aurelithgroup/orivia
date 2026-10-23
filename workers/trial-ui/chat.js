@@ -107,6 +107,26 @@ function libraryShortlists(){
  }
  return out;
 }
+// University bookmarks in Guides & journeys: title and organisation only. Availability comes from the server each time the
+// Library is drawn; Open and Ask both re-check (the space loads from the server; the chat request is checked again there).
+let orgBookmarkCheck=0;
+function renderOrgBookmarks(g){
+ const saved=window.OriviaDiscoveries.normLibrary(store.library).saved,check=++orgBookmarkCheck;if(!saved.length)return;
+ g.querySelector?.(':scope > p.tiny')?.remove();
+ const from=x=>x.orgName?uiText('From')+' '+x.orgName+' · ':'';
+ const cards=saved.slice().reverse().map(x=>{const card=el('article','lib-short org-bookmark');card.dataset.org=x.org;card.dataset.content=x.content;const title=el('strong','',x.title||uiText('Saved item'));title.dir='auto';
+  const state=el('p','tiny',from(x)+uiText('Checking access…'));state.dir='auto';const row=el('div','attach-row');
+  const rm=attachButton('Remove from Library',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=uiText('Tap again to remove');return}setOrgSaved(x,false)});row.append(rm);
+  card.append(title,state,row);g.prepend(libItem(card,'guides',x.title+' '+x.orgName));return {x,card,state,row}});
+ const id=globalThis.OriviaAccounts?.user?.id;
+ const mark=(c,ok,why)=>{c.state.textContent=from(c.x)+uiText(why);c.card.classList.toggle('lib-unavailable',!ok);c.card.dataset.access=ok?'member':'closed';
+  if(ok)c.row.prepend(attachButton('Open',()=>window.OriviaSpaces?.openItem?.(c.x.org,c.x.content)),attachButton('Ask in Chat',()=>window.OriviaChat.useOrgContext(c.x)))};
+ if(!id){for(const c of cards)mark(c,false,'Sign in to open this.');return}
+ // The same shared memberships request the menu and Home use (nav.js); nothing about the bookmark is sent.
+ Promise.resolve().then(()=>window.OriviaNav.memberships(id)).then(d=>{if(check!==orgBookmarkCheck)return;const active=new Set((d.memberships||[]).filter(m=>m.status==='active'&&m.role==='student').map(m=>m.organisationId));
+  for(const c of cards)active.has(c.x.org)?mark(c,true,'Members only · opens from your university space'):mark(c,false,'No longer available: you’re not a member of this organisation now.')})
+  .catch(()=>{if(check!==orgBookmarkCheck)return;for(const c of cards)mark(c,false,'Couldn’t check access. Try again when you’re connected.')});
+}
 // (Named renderLibraryView: the guide catalogue below has its own renderLibrary, and a second function with the same name
 // would silently replace this one.)
 function renderLibraryView(){
@@ -124,6 +144,7 @@ function renderLibraryView(){
   const row=el('div','attach-row');row.append(attachButton('Open chat',()=>openChat(chat.id)),attachButton('Compare in Chat',()=>{openChat(chat.id);$('msg').value=uiText('Please compare my shortlist:')+' '+names.join(', ');grow();$('msg').focus()}));card.append(row);
   s.append(libItem(card,'shortlists',(chat.title||'')+' '+names.join(' ')))}
  if(!lists.length)s.append(el('p','tiny',uiText('No shortlists yet. When Orivia shows you options in chat, add the ones you like to a shortlist.')));
+ renderOrgBookmarks(g);
  const pg=$('lib-places');pg.replaceChildren();const disc=libraryDiscoveries(),found=disc.shown,pageOf=window.OriviaDiscoveries.page(found,discoveryShown);
  for(const x of pageOf.items){const card=el('article','lib-short');const title=el('strong','',(x.favourite?'♥ ':'')+x.name);title.dir='auto';if(x.shortlisted)title.append(' ',el('span','chip lib-flag',uiText('Shortlisted')));
   card.append(title,el('p','tiny',[x.detail,uiText(x.kind==='place'?'Place':'Service'),uiText('from')+' '+(x.chatTitle||uiText('Chat'))].filter(Boolean).join(' · ')));
@@ -255,7 +276,9 @@ function renderOrgContext(){
  box.replaceChildren(label,x,personal);box.hidden=false;
 }
 const ORG_AI_NOTICE='orivia-org-ai-notice-v1';
-window.OriviaChat={clearOrgContextFor(org){let changed=false;for(const c of store.chats)if(c.orgContext&&c.orgContext.org===org){delete c.orgContext;changed=true}if(pendingOrgContext&&pendingOrgContext.org===org)pendingOrgContext=null;if(changed)persist();renderOrgContext();return changed},aiNoticeSeen(){try{return (globalThis.OriviaAccountStorage?.storage||localStorage).getItem(ORG_AI_NOTICE)==='yes'}catch(_){return false}},markAiNotice(){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(ORG_AI_NOTICE,'yes')}catch(_){}},useOrgContext(o){if(!o||!/^[A-Za-z0-9-]{1,64}$/.test(String(o.org))||!/^[A-Za-z0-9-]{1,64}$/.test(String(o.content)))return;
+// University bookmarks (ORI-LIB-005): saved as references; returns false if the device couldn't save it.
+function setOrgSaved(o,on){const D=window.OriviaDiscoveries,before=store.library,next=on?D.saveOrgItem(store.library,o,Date.now()):D.removeOrgItem(store.library,String(o.org),String(o.content));if(!next)return false;store.library=next;if(!persist()){store.library=before;return false}if($('library')&&!$('library').hidden)renderLibraryView();return true}
+window.OriviaChat={saveOrgItem:o=>setOrgSaved(o,true),unsaveOrgItem:o=>setOrgSaved(o,false),isOrgItemSaved:(org,content)=>!!window.OriviaDiscoveries?.isSaved(store.library,org,content),clearOrgContextFor(org){let changed=false;for(const c of store.chats)if(c.orgContext&&c.orgContext.org===org){delete c.orgContext;changed=true}if(pendingOrgContext&&pendingOrgContext.org===org)pendingOrgContext=null;if(changed)persist();renderOrgContext();return changed},aiNoticeSeen(){try{return (globalThis.OriviaAccountStorage?.storage||localStorage).getItem(ORG_AI_NOTICE)==='yes'}catch(_){return false}},markAiNotice(){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(ORG_AI_NOTICE,'yes')}catch(_){}},useOrgContext(o){if(!o||!/^[A-Za-z0-9-]{1,64}$/.test(String(o.org))||!/^[A-Za-z0-9-]{1,64}$/.test(String(o.content)))return;
  newChat({org:String(o.org),content:String(o.content),title:String(o.title||'').slice(0,150),orgName:String(o.orgName||'').slice(0,80)});
  const m=$('msg');if(m&&!m.value)m.value='Help me with “'+String(o.title||'this guide').slice(0,120)+'”: what do I need to do?';m?.focus()}};
 function whenShort(t){const d=new Date(t),now=new Date();const same=d.toDateString()===now.toDateString();const y=new Date(now);y.setDate(now.getDate()-1);

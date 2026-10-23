@@ -23,6 +23,16 @@
    return new Intl.DateTimeFormat(lang,{weekday:'long',day:'numeric',month:'long',hour:'numeric',minute:'2-digit',timeZone:det.timeZone,timeZoneName:'short'}).format(at)}catch(_){return det.date+(det.time?' '+det.time:'')}
  }
  /* "Ask Orivia about this": the first time, explain that the selected guide's text goes to the AI providers with the question. */
+ // Save to Library (ORI-LIB-005): keeps a reference (organisation, item, title) only, never the text.
+ function saveAction(c,m,org){const b=node('button','btn quiet small','');b.type='button';const ref={org:m.organisationId,content:c.id,title:c.title,orgName:org};
+  const paint=()=>{const on=!!window.OriviaChat.isOrgItemSaved?.(ref.org,ref.content);b.textContent=t(on?'Saved in Library ✓':'Save to Library');b.setAttribute?.('aria-pressed',String(on))};paint();
+  b.onclick=()=>{const on=!!window.OriviaChat.isOrgItemSaved?.(ref.org,ref.content);if(!(on?window.OriviaChat.unsaveOrgItem(ref):window.OriviaChat.saveOrgItem(ref))){b.textContent=t('Couldn’t save on this device');return}paint()};return b}
+ // Opens a saved item: only through the person's active membership; the space itself loads from the server.
+ async function openItem(org,content){const id=user()?.id;if(!id)return false;
+  let list=memberships;if(!list.loaded){try{const d=await (window.OriviaNav?.memberships?window.OriviaNav.memberships(id):get('/api/me/memberships',id));list=Object.assign([...(d.memberships||[])],{loaded:true});memberships=list}catch(_){return false}}
+  const m=list.find(x=>x.organisationId===org&&x.status==='active'&&x.role==='student');if(!m)return false;
+  await openSpace(m);const it=$('org-item-'+content);if(it){it.scrollIntoView?.({block:'start'});it.classList.add('org-highlight');setTimeout(()=>it.classList.remove('org-highlight'),1600)}
+  else $('organisation-body')?.prepend(node('p','notice','That item isn’t published here any more.'));return true}
  function askAction(c,m,org,actions){
   const b=node('button','btn small','Ask Orivia about this');b.type='button';
   const go=()=>{close();leaveAddress();window.OriviaChat?.useOrgContext({org:m.organisationId,content:c.id,title:c.title,orgName:org})};
@@ -82,6 +92,7 @@
      if(prog&&(kind==='guide'||kind==='date'))actions.append(doneButton(c));
      if(kind==='contact'){if(det.phone)actions.append(link('Call','tel:'+det.phone.replace(/[^\d+]/g,'')));if(det.email)actions.append(link('Email','mailto:'+det.email));if(det.website)actions.append(link('Website ↗',det.website,true))}
      if(kind==='guide')actions.append(askAction(c,m,org,actions));
+     if(kind!=='contact'&&window.OriviaChat?.saveOrgItem)actions.append(saveAction(c,m,org));
      if(kind==='guide'&&det.sourceUrl)actions.append(link('Source page ↗',det.sourceUrl,true));
      if(kind==='update'){const g=det.relatedId&&byId.get(det.relatedId);if(g&&g.kind==='guide'){const b=node('button','btn quiet small','Open guide: '+g.title,true);b.type='button';b.onclick=()=>{const t=$('org-item-'+g.id);t?.scrollIntoView({behavior:'smooth',block:'start'});t?.classList.add('org-highlight');setTimeout(()=>t?.classList.remove('org-highlight'),1600)};actions.append(b)}
       if(det.actionLabel&&det.actionUrl)actions.append(link(det.actionLabel+' ↗',det.actionUrl,true))}
@@ -124,5 +135,5 @@
   const found=memberships.find(x=>x.organisationId===m[1]&&x.status==='active'&&x.role==='student');
   if(found)openSpace(found,true);else if(user()&&memberships.loaded){const body=$('organisation-body');if(body&&sheet){$('organisation-title').textContent=t('Space unavailable');body.replaceChildren(node('p','notice','This space isn’t available to your account. It may need approval, or your access may have changed.'));sheet.hidden=false}}}
  window.addEventListener('popstate',followAddress);
- window.OriviaSpaces={refresh,reset:clear,changed(){clear();if(user())refresh()},close,followAddress};
+ window.OriviaSpaces={refresh,reset:clear,changed(){clear();if(user())refresh()},close,followAddress,openItem};
 })();

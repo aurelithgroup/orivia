@@ -23,6 +23,8 @@ assert.ok(lib.includes('for(const chat of store.chats)for(const t of chat.turns|
 const hide=lib.slice(lib.indexOf('function setDiscoveryHidden('),lib.indexOf('function libraryShortlists('));
 assert.ok(hide.startsWith('function setDiscoveryHidden(key,hidden){const before=store.library;store.library=')&&!/delete |fetch\(|setItem|save\(|turns|meta/.test(hide),'the only write is the Library state');
 assert.equal((hide.match(/persist\(/g)||[]).length,1);
+// University bookmarks (ORI-LIB-005) only read the shared memberships request to show access; behaviour: tests/org-bookmarks.test.mjs.
+assert.ok(!/fetch\(/.test(lib.slice(lib.indexOf('function renderOrgBookmarks('),lib.indexOf('function renderLibraryView('))),'bookmarks send nothing themselves');
 assert.doesNotMatch(lib.replace(hide,''),/setItem|persist\(|save\(|delete |fetch\(/,'otherwise the Library never writes, deletes or sends');
 // Compare and Use in Chat only prepare; the person sends.
 assert.ok(lib.includes("$('msg').value=uiText('Please compare my shortlist:')")&&!lib.includes('requestSubmit'));

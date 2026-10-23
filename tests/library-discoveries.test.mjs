@@ -33,15 +33,15 @@ while(p.more){p=D.page(r.shown,p.next);seen=p.items.length}assert.equal(seen,106
 // Remove: one write to the Library state; chats unchanged byte for byte.
 const k=r.shown.find(x=>x.name==='Centre 50').key;
 lib=D.hide(lib,k);lib=D.hide(lib,k);
-assert.equal(JSON.stringify(lib),JSON.stringify({hidden:[k]}),'stored once, idempotent');
+assert.equal(JSON.stringify(lib),JSON.stringify({hidden:[k],saved:[]}),'stored once, idempotent');
 assert.equal(JSON.stringify(chats),before,'no chat or message modified');
 r=D.collect(chats,lib,h);assert.equal(r.shown.length,105);assert.equal(r.hidden.map(x=>x.name).join(),'Centre 50');
 // Restore brings it back; still no chat change.
 lib=D.restore(lib,k);r=D.collect(chats,lib,h);assert.equal(r.shown.length,106);assert.equal(r.hidden.length,0);
 assert.equal(JSON.stringify(chats),before);
 // Library state is validated on load (bad values dropped, duplicates merged).
-assert.equal(JSON.stringify(D.normLibrary({hidden:['a','a',5,null,'x'.repeat(500)]})),'{"hidden":["a"]}');
-assert.equal(JSON.stringify(D.normLibrary(null)),'{"hidden":[]}');
+assert.equal(JSON.stringify(D.normLibrary({hidden:['a','a',5,null,'x'.repeat(500)]})),'{"hidden":["a"],"saved":[]}');
+assert.equal(JSON.stringify(D.normLibrary(null)),'{"hidden":[],"saved":[]}');
 // chat.js uses the module, stores removal in store.library via persist() (not save(), which would touch the active chat),
 // and never writes discovery state into messages.
 const chat=fs.readFileSync('workers/trial-ui/chat.js','utf8').replace(/\r\n/g,'\n');
@@ -61,7 +61,7 @@ assert.ok(chat.includes("if(x.shortlisted)title.append(' ',el('span','chip lib-f
 // Ina finding 2: removals made by 5569f60 (stored on messages) are read into the Library state; messages are not edited.
 const legacyChats=[{id:'L',turns:[{role:'assistant',content:'x',meta:{hiddenDiscoveries:['a|b','c|d']}},{role:'assistant',content:'y',meta:{hiddenDiscoveries:['a|b']}}]}];
 const legacyBefore=JSON.stringify(legacyChats);
-assert.equal(JSON.stringify(D.normLibrary({hidden:D.legacyHidden(legacyChats)})),'{"hidden":["a|b","c|d"]}');
+assert.equal(JSON.stringify(D.normLibrary({hidden:D.legacyHidden(legacyChats)})),'{"hidden":["a|b","c|d"],"saved":[]}');
 assert.equal(JSON.stringify(legacyChats),legacyBefore);
 assert.ok(chat.includes('normLibrary(d.library||{hidden:window.OriviaDiscoveries.legacyHidden(d.chats)})'),'migration runs only when there is no Library state yet');
 
@@ -71,7 +71,7 @@ const run=ok=>{const env={store:{library:{hidden:[]},chats:legacyChats},persiste
  const f=new Function('window','uiText','persist','renderLibraryView','env',`let store=env.store,discoveryNote='';${fnSrc};return {set:(k,h)=>{setDiscoveryHidden(k,h);return {library:store.library,note:discoveryNote}}}`);
  return f({OriviaDiscoveries:D},s=>s,()=>{env.persisted++;return ok},()=>{env.rendered++},env).set('a|b',true)};
 let res=run(false);assert.equal(JSON.stringify(res.library),'{"hidden":[]}','quota failure: nothing hidden');assert.match(res.note,/Couldn’t save this change/);
-res=run(true);assert.equal(JSON.stringify(res.library),'{"hidden":["a|b"]}');assert.equal(res.note,'');
+res=run(true);assert.equal(JSON.stringify(res.library),'{"hidden":["a|b"],"saved":[]}');assert.equal(res.note,'');
 // Account separation: the Library state lives inside the account-scoped chats record (synced with that account only).
 const acc=fs.readFileSync('workers/trial-ui/accounts.js','utf8');
 assert.ok(acc.includes("chats:'orivia-private-chats-v1'")&&acc.includes("const key=k=>scope&&privateKeys.has(k)?prefix(scope)+k:k;"),'chats record (and its Library state) is stored per account');
