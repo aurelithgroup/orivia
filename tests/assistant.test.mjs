@@ -127,7 +127,7 @@ assert.ok(!/Skip to main content/i.test(pageText('<nav>Home Services</nav><a hre
  const steps=[{action:'tools',calls:[{tool:'read_page',url:'https://www.shj.ae/hospitals',focus:'emergency'},{tool:'read_page',url:'https://www.shj.ae/hospitals',focus:'phone'}]},
   {action:'reply',sentences:[{text:'Al Qassimi Hospital has an emergency department open 24 hours.',kind:'official_rule',evidence:['E1']},{text:'Its number is 06 518 8888.',kind:'official_rule',evidence:['E1']}],memory:{}}];let k=0;
  const quiet=console.log;console.log=()=>{};
- const o=await runAssistantTurn({messages:[{role:'user',content:'which hospital in sharjah'}]},env,{ai:{run:async()=>({response:JSON.stringify(steps[k++])})},fetcher:async()=>new Response(page,{headers:{'content-type':'text/html'}}),reserve:async()=>true});
+ const o=await runAssistantTurn({messages:[{role:'user',content:'which hospital in sharjah — check https://www.shj.ae/hospitals'}]},env,{ai:{run:async()=>({response:JSON.stringify(steps[k++])})},fetcher:async()=>new Response(page,{headers:{'content-type':'text/html'}}),reserve:async()=>true});
  console.log=quiet;assert.ok(o,'verified');assert.equal(o.liveSources.length,1,'one source for one page');assert.ok(!/\[2\]/.test(o.reply));}
 // Money: too little left to write a reply → an honest limit reply (with emergency numbers for health), never a hand-over
 {const quiet=console.log;console.log=()=>{};let called=0;
@@ -211,7 +211,7 @@ assert.equal(maybeResearch(housing,{task:{topic:'housing'}}),false);
 // A site not on the listing list still counts as a listing when its page reads like one
 {const page='<html><title>Apartments For Rent in Sharjah - Find Properties</title><body><p>Al Nabba AED 24,000 1BHK apartment.</p></body></html>';
  const st=[{action:'tools',calls:[{tool:'read_page',url:'https://findproperties.ae/for-rent/apartments/sharjah'}]},{action:'reply',sentences:[{text:'One advert lists a 1BHK in Al Nabba for AED 24,000.',kind:'listing',evidence:['E1']}],memory:{}}];let k=0;
- const quiet=console.log;console.log=()=>{};const o=await runAssistantTurn({messages:[{role:'user',content:'apartments in sharjah'}]},env,{ai:{run:async()=>({response:JSON.stringify(st[k++])})},fetcher:async()=>new Response(page,{headers:{'content-type':'text/html'}}),reserve:async()=>true});console.log=quiet;
+ const quiet=console.log;console.log=()=>{};const o=await runAssistantTurn({messages:[{role:'user',content:'apartments in sharjah — check https://findproperties.ae/for-rent/apartments/sharjah'}]},env,{ai:{run:async()=>({response:JSON.stringify(st[k++])})},fetcher:async()=>new Response(page,{headers:{'content-type':'text/html'}}),reserve:async()=>true});console.log=quiet;
  assert.equal(o.liveSources[0].category,'directory','shown as a listing site, not an organisation source');}
 // Basic mode: the keyword card steps aside in research mode and, otherwise, fills a clean title and the date the message names
 {const src=(await import('../workers/orivia-inline-calendar.js')).default;

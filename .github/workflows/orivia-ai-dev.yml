@@ -203,6 +203,7 @@ jobs:
           node tests/share-provenance.test.mjs
           node tests/rollback-compat.test.mjs
           node tests/assistant-safety.test.mjs
+          node tests/fetch-targets.test.mjs
           node tests/settings-scope.test.mjs
           node tests/deletion-consequences.test.mjs
           node --experimental-sqlite tests/leave-organisation.test.mjs

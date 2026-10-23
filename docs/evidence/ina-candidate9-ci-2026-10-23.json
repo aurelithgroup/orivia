@@ -1,0 +1,741 @@
+{
+ "ranAt": "2026-10-23T10:10:59.117Z",
+ "sha": "2545018e409361fe33689815b011815eaff014b6",
+ "dirty": true,
+ "total": 122,
+ "failed": 0,
+ "results": [
+  {
+   "command": "node --check js/buddy.js",
+   "status": "pass",
+   "ms": 53,
+   "last": ""
+  },
+  {
+   "command": "node --check js/orivia-ai-bridge.js",
+   "status": "pass",
+   "ms": 62,
+   "last": ""
+  },
+  {
+   "command": "node --check workers/orivia-ai-preview.mjs",
+   "status": "pass",
+   "ms": 59,
+   "last": ""
+  },
+  {
+   "command": "node tests/spea-directory-feed.test.mjs",
+   "status": "pass",
+   "ms": 77,
+   "last": "SPEA official feed: captured live data, metadata-derived filters, strict records, budgets, honest sources and end-to-end list answer pass."
+  },
+  {
+   "command": "node tests/openai-pilot.test.mjs",
+   "status": "pass",
+   "ms": 71,
+   "last": "OpenAI pilot gates, no retries, bounded calls, private usage accounting and error handling pass."
+  },
+  {
+   "command": "node tests/transport-assistant-card.test.mjs",
+   "status": "pass",
+   "ms": 370,
+   "last": "Trip-to-card: chosen driving mode, origin and follow-up retained, registered official campus source, assistant route path and encoded driving links passed"
+  },
+  {
+   "command": "node tests/place-card.test.mjs",
+   "status": "pass",
+   "ms": 86,
+   "last": "Place cards: bounded same-origin raster preview, redirect/type/size failure, sourced details, map chooser, Save/reload/My Life, and illustration fallback passed"
+  },
+  {
+   "command": "node tests/handoff-cards.test.mjs",
+   "status": "pass",
+   "ms": 89,
+   "last": "Handoff cards: translated messages, sourced destinations, map encoding, manual speech/language, close/focus, no geolocation, and scripted response integration passed"
+  },
+  {
+   "command": "node tests/assistant.test.mjs",
+   "status": "pass",
+   "ms": 104,
+   "last": "Assistant: source kinds by address, answer check (contacts, amounts, claim/source fit, own site, jurisdiction), cards never guessed, one source per page, relevant quotes, private search terms, memory carried and cleaned, ask, budget-aware w"
+  },
+  {
+   "command": "node tests/assistant-timing.test.mjs",
+   "status": "pass",
+   "ms": 89,
+   "last": "Assistant timing: concurrent deduplication, policy separation, retry, request isolation, bounded cache and whole-turn evidence preservation passed"
+  },
+  {
+   "command": "node tests/reply-arrival.test.mjs",
+   "status": "pass",
+   "ms": 52,
+   "last": "Reply arrival: full text saved immediately, new reply only, reduced motion, history position and progress scrolling passed"
+  },
+  {
+   "command": "node tests/dictation.test.mjs",
+   "status": "pass",
+   "ms": 59,
+   "last": "Dictation: language choice, Cancel/Stop races, stale sessions, permissions, failures, no speech, limits, unsupported browser and no auto-send passed"
+  },
+  {
+   "command": "node tests/calendar-changes.test.mjs",
+   "status": "pass",
+   "ms": 97,
+   "last": "Calendar changes: proposals, matching, ambiguity, edit in place, delete, Undo, storage failure, stale data and no calendar disclosure passed"
+  },
+  {
+   "command": "node tests/inline-calendar-routing.test.mjs",
+   "status": "pass",
+   "ms": 62,
+   "last": "Legacy calendar: edit vs add, current consent on first submit, basic creation and stale form cleanup passed"
+  },
+  {
+   "command": "node tests/i18n.test.mjs",
+   "status": "pass",
+   "ms": 86,
+   "last": "Languages: complete dictionary pairs, selected/saved language, RTL, repeated switches, unchanged messages/quotes/values, progress and provider preference passed"
+  },
+  {
+   "command": "node tests/buddy-smoke.js",
+   "status": "pass",
+   "ms": 82,
+   "last": "Buddy smoke checks passed"
+  },
+  {
+   "command": "node tests/ai-bridge.test.js",
+   "status": "pass",
+   "ms": 52,
+   "last": "AI bridge: 13 checks passed"
+  },
+  {
+   "command": "node tests/ai-chat-consent.test.js",
+   "status": "pass",
+   "ms": 59,
+   "last": "Private AI consent and open-ended first message tests passed"
+  },
+  {
+   "command": "node tests/native-calendar.test.cjs",
+   "status": "pass",
+   "ms": 73,
+   "last": "Private chat tabs, locally saved calendar and Google Calendar draft: passed"
+  },
+  {
+   "command": "node tests/live-official-and-reminders.test.mjs",
+   "status": "pass",
+   "ms": 52,
+   "last": "Live official reader & explicit calendar alarms: checks passed"
+  },
+  {
+   "command": "node tests/official-sources.test.mjs",
+   "status": "pass",
+   "ms": 61,
+   "last": "Official source trust policy, Heriot-Watt contacts, and travel handoff: passed"
+  },
+  {
+   "command": "node tests/journey-sources.test.mjs",
+   "status": "pass",
+   "ms": 53,
+   "last": "Verified journey resource / link construction checks passed"
+  },
+  {
+   "command": "node --experimental-sqlite tests/journey-api.test.mjs",
+   "status": "pass",
+   "ms": 77,
+   "last": "Journey API v1: list, match, step, place, problems, freshness, CORS, and existing auth: passed"
+  },
+  {
+   "command": "node tests/journey-adapter-loop.test.mjs",
+   "status": "pass",
+   "ms": 71,
+   "last": "Journey adapter: no loop, AI phrases checked facts: passed"
+  },
+  {
+   "command": "node tests/natural-entry.test.mjs",
+   "status": "pass",
+   "ms": 60,
+   "last": "Natural-language first contact: messy student, parent, brief fragment, no assumed visa: passed"
+  },
+  {
+   "command": "node --test tests/journey-intelligence.test.mjs",
+   "status": "pass",
+   "ms": 180,
+   "last": "  }"
+  },
+  {
+   "command": "node tests/transport-actions.test.mjs",
+   "status": "pass",
+   "ms": 382,
+   "last": "Transport actions: commute links, broad origin, \"time\" follow-up, visa→transport, no stray reminders, no made-up numbers: passed"
+  },
+  {
+   "command": "node tests/device-handoffs.test.mjs",
+   "status": "pass",
+   "ms": 58,
+   "last": "Device handoffs: destination lookup, Apple and Google routes, explicit calendar import contract passed"
+  },
+  {
+   "command": "node tests/guide-cards.test.mjs",
+   "status": "pass",
+   "ms": 407,
+   "last": "Journey cards: reusable, decision-only, three choices, no nagging, refreshers, route-aware nol guide: passed"
+  },
+  {
+   "command": "node tests/settings-calendar.test.mjs",
+   "status": "pass",
+   "ms": 411,
+   "last": "Settings and Calendar: tone, guide suggestions, theme override, safe reminders: passed"
+  },
+  {
+   "command": "node tests/research-display.test.mjs",
+   "status": "pass",
+   "ms": 75,
+   "last": "Research display (fixtures): compact links, accessible names, retained evidence, vetted citations and visible failures: passed"
+  },
+  {
+   "command": "node tests/chat-history.test.mjs",
+   "status": "pass",
+   "ms": 84,
+   "last": "Chat history and origin: migration, new chat, refresh, menus, active-only to AI, end session vs clear, origin field: passed"
+  },
+  {
+   "command": "node tests/beta-start.test.mjs",
+   "status": "pass",
+   "ms": 72,
+   "last": "Beta Start: pending verification, error preservation, retry and consent passed"
+  },
+  {
+   "command": "node --experimental-sqlite tests/research.test.mjs",
+   "status": "pass",
+   "ms": 404,
+   "last": "Worker follow-up routing and enabled-search capability prompt passed"
+  },
+  {
+   "command": "node tests/school-task-integration.test.mjs",
+   "status": "pass",
+   "ms": 83,
+   "last": "School task integration: expand without repeats, named lookup with contradictory evidence, named contacts, state bounds and topic change passed"
+  },
+  {
+   "command": "node tests/research-follow-through.test.mjs",
+   "status": "pass",
+   "ms": 84,
+   "last": "Real backend organisation cards and natural contact follow-ups: passed"
+  },
+  {
+   "command": "node tests/research-schools.test.mjs",
+   "status": "pass",
+   "ms": 93,
+   "last": "Per-fact quotes: every fact in a school claim has its own verbatim quote; unquoted facts are dropped: passed"
+  },
+  {
+   "command": "node tests/information-cards.test.mjs",
+   "status": "pass",
+   "ms": 63,
+   "last": "Information cards: sourced facts and contacts only, safe links, drafts without assumptions, shortlist saved: passed"
+  },
+  {
+   "command": "node tests/spea-reader.test.mjs",
+   "status": "pass",
+   "ms": 88,
+   "last": "SPEA reader: captured pages, beyond page 1, bounded batches and cursor, year filter, budget and failures, name lookup with candidates: passed"
+  },
+  {
+   "command": "node tests/school-sites.test.mjs",
+   "status": "pass",
+   "ms": 91,
+   "last": "School sites: SPEA identity first, domain established only by regulator link or regulator-listed email (never rank, title, name or phone), facts tied to their page, differences flagged, bounds and budget kept: passed"
+  },
+  {
+   "command": "node tests/research-loop.test.mjs",
+   "status": "pass",
+   "ms": 142,
+   "last": "Research loop: Sharjah conversation (find → more → all → named check → correction → contacts → compare), exact listing + proven site, Dubai without regulator, user link, list contacts, rules fallback, budgets, tool limits, model validation "
+  },
+  {
+   "command": "node --experimental-sqlite tests/research-loop-worker.test.mjs",
+   "status": "pass",
+   "ms": 434,
+   "last": "Research loop through the Worker: opt-in, authenticated, quota first, model understanding, ordinary chat untouched, switch off restores the old path: passed"
+  },
+  {
+   "command": "node tests/site-captures.test.mjs",
+   "status": "pass",
+   "ms": 104,
+   "last": "Site captures: 2 raw capture(s), 2 checked against expectations: passed"
+  },
+  {
+   "command": "node tests/site-reader-layouts.test.mjs",
+   "status": "pass",
+   "ms": 88,
+   "last": "Site reader layouts: request-ranked links (SIPS layout), compact year tables and labels with sections, Year vs Grade, labelled curriculum values, no curriculum from IGCSE/A Level/EYFS alone, end-to-end link: passed"
+  },
+  {
+   "command": "node tests/site-captures-navigation.test.mjs",
+   "status": "pass",
+   "ms": 205,
+   "last": "Real captures: ranking (no role/location pages over curriculum/contact), year-page following, whole-school facts only, honest Year 6 answer: passed"
+  },
+  {
+   "command": "node tests/research-agent.test.mjs",
+   "status": "pass",
+   "ms": 116,
+   "last": "Research agent: Ina’s case study (model-chosen route, complete filtered listing, caveats), policy fallback, invalid choices rejected, early stop, change of route for an unlisted school, no-regulator honesty, contacts follow-up, budgets: pas"
+  },
+  {
+   "command": "node --experimental-sqlite tests/research-web-evidence.test.mjs",
+   "status": "pass",
+   "ms": 115,
+   "last": "Web evidence: reworded searches, listing sites, own websites, leads checked against the regulator, conflicts stated, labelled sources, no-regulator city, early stop overruled, pilot search pool: passed"
+  },
+  {
+   "command": "node --experimental-sqlite tests/spend-ledger.test.mjs",
+   "status": "pass",
+   "ms": 64,
+   "last": "Spend ledger: atomic shared day/month limits, refund only known usage, uncertain kept, idempotent, fail-closed, transport integration: passed"
+  },
+  {
+   "command": "node tests/browser-directory.test.mjs",
+   "status": "pass",
+   "ms": 5733,
+   "last": "Browser directory (scripted fake): counter-ahead guard, under-render, timeout, host/method/navigation checks, exhausted allowance, close in finally, action limit, year not confirmed by membership, long lists paged without loss, late launche"
+  },
+  {
+   "command": "node --experimental-sqlite tests/research-pilot.test.mjs",
+   "status": "pass",
+   "ms": 45422,
+   "last": "Research pilot entry: private only, auth/quota first, OpenAI only with named consent + switch + confirmed rates, shared ledger, browser behind its own switch and allowance, public Worker untouched: passed"
+  },
+  {
+   "command": "node --experimental-sqlite tests/provider-comparison.test.mjs",
+   "status": "pass",
+   "ms": 5107,
+   "last": "Provider comparison (scripted): 9 conversations × 2 providers, same enforced outcomes, aggregate metrics only, scripted/live kept apart: passed"
+  },
+  {
+   "command": "node --experimental-sqlite tests/public-beta.test.mjs",
+   "status": "pass",
+   "ms": 378,
+   "last": "Public beta: fails closed, human check, signed cookie, per-person and daily limits, private trial unchanged: passed"
+  },
+  {
+   "command": "node tests/ai-preview.test.mjs",
+   "status": "pass",
+   "ms": 55,
+   "last": "AI preview backend: signed-login requirement, host checks and unverified-claim guards tested"
+  },
+  {
+   "command": "node tests/ai-journey-tools.test.mjs",
+   "status": "pass",
+   "ms": 54,
+   "last": "Journey tools: validation, matching, check-ups, uncertain placement and source-preserving retrieval passed"
+  },
+  {
+   "command": "node tests/home-dashboard.test.mjs",
+   "status": "pass",
+   "ms": 86,
+   "last": "Home submit: new conversation, automatic send, old chat retained, blocked messages retained and empty draft preserved"
+  },
+  {
+   "command": "node tests/chat-motion.test.mjs",
+   "status": "pass",
+   "ms": 62,
+   "last": "Checked reply reveal: progressive words, exact source DOM restored, reduced motion, bounded finish and cleanup passed"
+  },
+  {
+   "command": "node tests/home-destination-photo.test.mjs",
+   "status": "pass",
+   "ms": 66,
+   "last": "Destination hero: current vs future country, origin excluded, both bundled JPEGs, empty/failure fallback and no remote requests passed"
+  },
+  {
+   "command": "node tests/organisation-home.test.mjs",
+   "status": "pass",
+   "ms": 65,
+   "last": "Organisation Home: student-only cards, pending state, plain-text content, account-bound requests, logout clearing, late-response isolation and access-loss handling passed. Transport scripted."
+  },
+  {
+   "command": "node tests/account-mail.test.mjs",
+   "status": "pass",
+   "ms": 55,
+   "last": "Account mail: verified-only recipient restriction, safe envelope, unchanged paid transport and private test page passed. Delivery scripted."
+  },
+  {
+   "command": "node --experimental-sqlite tests/accounts.test.mjs",
+   "status": "pass",
+   "ms": 518,
+   "last": "Accounts: real Better Auth on D1-shaped SQLite; hashed one-use OTP, secure session restoration/sign-out, CSRF, cross-user isolation, conflict protection, size rejection, email caps and deletion passed. Emails scripted only."
+  },
+  {
+   "command": "node tests/account-client.test.mjs",
+   "status": "pass",
+   "ms": 98,
+   "last": "Account client: user namespaces, no automatic import, selected-category import, guest preservation, unsynced-copy protection and returning to guest passed. Auth transport scripted."
+  },
+  {
+   "command": "node tests/onboarding-consent.test.mjs",
+   "status": "pass",
+   "ms": 61,
+   "last": "Integrated onboarding: original consent/widget controls, explicit AI agreement, human-check gate, configuration failure, provider disclosure, abandoned screens and fallback restoration passed. Scripted DOM only."
+  },
+  {
+   "command": "node tests/organisation-arrival.test.mjs",
+   "status": "pass",
+   "ms": 88,
+   "last": "Organisation arrival: branded landing, fragment persistence through sign-in, explicit joining, locked campus settings, pending privacy, approved content and personal exit passed. Scripted transport/DOM only."
+  },
+  {
+   "command": "node --experimental-sqlite tests/notifications.test.mjs",
+   "status": "pass",
+   "ms": 102,
+   "last": "Notifications: real SQL and encrypted Web Push generation; opt-in, due times, deduplication, cancellation, private membership boundaries, endpoint safety, session/account cleanup passed. Push transport scripted only."
+  },
+  {
+   "command": "node tests/notification-client.test.mjs",
+   "status": "pass",
+   "ms": 62,
+   "last": "Notification client: no automatic permission prompt, Not now, explicit device subscription/category opt-in, permission denial and guest behaviour passed. Scripted browser APIs only."
+  },
+  {
+   "command": "node --experimental-sqlite tests/public-release.test.mjs",
+   "status": "pass",
+   "ms": 483,
+   "last": "Public release: explicit gate, public consent, no tester login, private entry preserved, human verification and origin required before any provider call. Scripted transport only."
+  },
+  {
+   "command": "node tests/content-details.test.mjs",
+   "status": "pass",
+   "ms": 83,
+   "last": "Content details: dates and time zones, contacts, sources and update actions validated; nothing invented; kinds kept apart."
+  },
+  {
+   "command": "node tests/university-actions.test.mjs",
+   "status": "pass",
+   "ms": 98,
+   "last": "University actions: labelled content, buttons only for supplied details, safe links, related guides, dates converted, confirmed and saved once."
+  },
+  {
+   "command": "node --experimental-sqlite tests/university-chat.test.mjs",
+   "status": "pass",
+   "ms": 481,
+   "last": "University chat: members-only, published-only, same-organisation reads each message; labelled source that never backs official rules; not kept in memory; removable label."
+  },
+  {
+   "command": "node --experimental-sqlite tests/installable.test.mjs",
+   "status": "pass",
+   "ms": 437,
+   "last": "Installable: manifest and icons, versioned app worker (offline app pages, never API calls), honest offline text, install guidance, push off."
+  },
+  {
+   "command": "node tests/chat-presentation.test.mjs",
+   "status": "pass",
+   "ms": 71,
+   "last": "Standalone presentation hook checks passed"
+  },
+  {
+   "command": "node tests/ina-voice-text.test.mjs",
+   "status": "pass",
+   "ms": 79,
+   "last": "Voice text: lossless bounded chunks for long unspaced, multilingual and astral text passed"
+  },
+  {
+   "command": "node tests/answer-accuracy.test.mjs",
+   "status": "pass",
+   "ms": 138,
+   "last": "Answer accuracy: figures stay with what the source states them for (nol Gold/Silver), correct statements pass."
+  },
+  {
+   "command": "node tests/reply-language.test.mjs",
+   "status": "pass",
+   "ms": 116,
+   "last": "Reply language: stated by the model for Listen, code-written replies in fr/ar, clearer own-site correction."
+  },
+  {
+   "command": "node --experimental-sqlite tests/natural-voice.test.mjs",
+   "status": "pass",
+   "ms": 551,
+   "last": "Natural voice: only the reply text, own $1/day meter inside the OpenAI limits, word-for-word check, gates, phone fallback."
+  },
+  {
+   "command": "node --experimental-sqlite tests/files.test.mjs",
+   "status": "pass",
+   "ms": 101,
+   "last": "Files: private per account, type from content, limits, no cross-account access, account deletion removes them, app wiring."
+  },
+  {
+   "command": "node --experimental-sqlite tests/files-to-chat.test.mjs",
+   "status": "pass",
+   "ms": 554,
+   "last": "Files to Chat: read once inside the OpenAI limits, labelled evidence, figures from the document only, gates, app wiring."
+  },
+  {
+   "command": "node --experimental-sqlite tests/notification-isolation.test.mjs",
+   "status": "pass",
+   "ms": 89,
+   "last": "Notification isolation: pilot scheduler bound to the pilot database, honest counters, generic lock-screen text only."
+  },
+  {
+   "command": "node tests/library.test.mjs",
+   "status": "pass",
+   "ms": 73,
+   "last": "Library: five tabs, files moved with the same ids, a view over saved guides, chat shortlists and discoveries; the only write is hiding a discovery, nothing sent."
+  },
+  {
+   "command": "node tests/design-pass.test.mjs",
+   "status": "pass",
+   "ms": 60,
+   "last": "Design pass: header, titles, calendar, chat labels, Home wording, Settings: in place and translated."
+  },
+  {
+   "command": "node tests/week-swipe-links.test.mjs",
+   "status": "pass",
+   "ms": 64,
+   "last": "Week swipe (LTR/RTL, threshold, vertical rejection) and brand link colours (AA contrast both themes): pass."
+  },
+  {
+   "command": "node --experimental-sqlite tests/feedback.test.mjs",
+   "status": "pass",
+   "ms": 74,
+   "last": "Feedback lost-response handling (server idempotent, client says it could not confirm): pass."
+  },
+  {
+   "command": "node tests/library-discoveries.test.mjs",
+   "status": "pass",
+   "ms": 61,
+   "last": "Library discoveries: 106 of 106 shown via paging, dedupe and favourites, removal stored once with Restore, chats unchanged: pass."
+  },
+  {
+   "command": "node tests/org-bookmarks.test.mjs",
+   "status": "pass",
+   "ms": 1667,
+   "last": "Protected bookmarks: references only (no item text), saved from the space, opened and asked about only through an active membership re-checked by the server; after leaving or removal the title shows as no longer available: pass."
+  },
+  {
+   "command": "node --experimental-sqlite tests/staff-tenant-matrix.test.mjs",
+   "status": "pass",
+   "ms": 648,
+   "last": "Staff tenant matrix: 209 hostile calls across every staff route and the owner export; other-organisation staff, students, pending members, the platform owner and signed-out callers refused; object substitution refused; organisation B unchan"
+  },
+  {
+   "command": "node tests/owner-recovery.test.mjs",
+   "status": "pass",
+   "ms": 76,
+   "last": "Owner recovery: last-owner and sole-admin refusals explained in the app; no Worker route writes the owner role; recovery steps documented: pass."
+  },
+  {
+   "command": "node tests/tab-account-switch.test.mjs",
+   "status": "pass",
+   "ms": 62,
+   "last": "Tab account switch: other tabs reload on sign-in, switch or sign-out; an unsent draft is held under its own account, never shown to another account or a guest, and returns to its account with an explanation: pass."
+  },
+  {
+   "command": "node tests/hostile-fetch.test.mjs",
+   "status": "pass",
+   "ms": 70,
+   "last": "Hostile fetch: 20 private, numeric, local, credentialed, non-https and odd-port addresses refused without a request; off-host and downgrade redirects refused: pass."
+  },
+  {
+   "command": "node --experimental-sqlite tests/incident-switches.test.mjs",
+   "status": "pass",
+   "ms": 378,
+   "last": "Incident switches: sign-in email, stored files and university spaces each switch off with a plain unavailable state and no sending, storage or reading: pass."
+  },
+  {
+   "command": "node tests/time-correctness.test.mjs",
+   "status": "pass",
+   "ms": 396,
+   "last": "Time correctness: UK spring-forward gap and repeated fall-back hour shown with their real zone, Dubai day boundaries, unclear times refused, Dubai→London travel keeps the same moment: pass."
+  },
+  {
+   "command": "node tests/truthful-progress.test.mjs",
+   "status": "pass",
+   "ms": 85,
+   "last": "Truthful progress: a page that failed is never shown as read, counts match what actually loaded, checking is named, and replies are verified whole before display: pass."
+  },
+  {
+   "command": "node tests/consent-scope.test.mjs",
+   "status": "pass",
+   "ms": 61,
+   "last": "Consent scope: provider consent, document acknowledgement and university AI notice kept per account; another account or a guest is asked again: pass."
+  },
+  {
+   "command": "node tests/plan-steps.test.mjs",
+   "status": "pass",
+   "ms": 78,
+   "last": "Plan steps: eight states with Ready derived, ordered blockers and next step, blocked notes, history with source, Undo of the last change only, server agreement: pass."
+  },
+  {
+   "command": "node --experimental-sqlite tests/org-settings.test.mjs",
+   "status": "pass",
+   "ms": 472,
+   "last": "Institution settings: staff read, admins change with a recent sign-in and revision check; unknown fields (records, caps, progress) refused; nothing else in the database changes; aggregate export with editor permission; retention is display-"
+  },
+  {
+   "command": "node --experimental-sqlite tests/dates-announcements.test.mjs",
+   "status": "pass",
+   "ms": 465,
+   "last": "Dates and announcements: updates end on their date and staff see them, past dates fold away, edits are revision-checked, a changed saved date is flagged and updated only on the student’s tap: pass."
+  },
+  {
+   "command": "node --experimental-sqlite tests/owner-overview.test.mjs",
+   "status": "pass",
+   "ms": 429,
+   "last": "Owner overview: exact defined counts, authoritative budgets or Unavailable, search, privacy, and refusal for students, staff and visitors: pass."
+  },
+  {
+   "command": "node --experimental-sqlite tests/university-overview.test.mjs",
+   "status": "pass",
+   "ms": 469,
+   "last": "University overview: joins, drafts, past/undated/upcoming dates and contacts missing details from this organisation only; staff allowed, students and outsiders refused: pass."
+  },
+  {
+   "command": "node tests/listen-startup.test.mjs",
+   "status": "pass",
+   "ms": 100,
+   "last": "Listen startup: shared in-flight pieces, account-isolated reuse, bounded cache, immediate feedback, short first piece, timing, limits unchanged: pass."
+  },
+  {
+   "command": "node tests/voice-account-exit.test.mjs",
+   "status": "pass",
+   "ms": 92,
+   "last": "Voice account exit: immediate cleanup (cache, in-flight, requests, URLs, player), late A response neither cached nor played, B generates its own, Stop/replay reuse kept: pass."
+  },
+  {
+   "command": "node tests/chat-versions.test.mjs",
+   "status": "pass",
+   "ms": 60,
+   "last": "Versions: preserved originals, nested edits, reload, safe limits, selected-only requests; actual regenerate sends once and creates no reminder: passed"
+  },
+  {
+   "command": "node tests/chat-versions-integration.test.mjs",
+   "status": "pass",
+   "ms": 63,
+   "last": "Version integration fixes: stop/failure roll back, controls re-enabled after a reply, notice outside the reply text: pass."
+  },
+  {
+   "command": "node tests/metric-definitions.test.mjs",
+   "status": "pass",
+   "ms": 53,
+   "last": "Metric definitions: every console metric documented, paused/unavailable named, CSV formula-safe: pass."
+  },
+  {
+   "command": "node tests/offline-updates.test.mjs",
+   "status": "pass",
+   "ms": 64,
+   "last": "Offline and updates: private requests never cached or served offline, shell only, old caches removed, competing workers removed, drafts kept through updates: pass."
+  },
+  {
+   "command": "node --experimental-sqlite tests/device-accounts.test.mjs",
+   "status": "pass",
+   "ms": 476,
+   "last": "Accounts on this device: remember and switch without credentials, no raw tokens, forged/other-device/expired refused, removal keeps others: pass."
+  },
+  {
+   "command": "node --experimental-sqlite tests/connectors.test.mjs",
+   "status": "pass",
+   "ms": 64,
+   "last": "Connectors: read-only contract, configured only with credential and agreement, identity from institution claims, signed/fresh/idempotent updates that never regress, source meaning kept: pass."
+  },
+  {
+   "command": "node --experimental-sqlite tests/ina-connector-duplicate.test.mjs",
+   "status": "pass",
+   "ms": 57,
+   "last": "Duplicate event ID cannot mutate the original status or another person; event log stays authoritative: pass"
+  },
+  {
+   "command": "node tests/ina-reply-origin.test.mjs",
+   "status": "pass",
+   "ms": 56,
+   "last": "Reply provenance proposal: historical private context propagates, old stamps unverified, same 12-turn boundary, fresh clean requests allowed: pass"
+  },
+  {
+   "command": "node --experimental-sqlite tests/restore-drill.test.mjs",
+   "status": "pass",
+   "ms": 289,
+   "last": "Restore drill: clean dump restores with matching counts and idempotent migrations; mismatches and broken references fail; counts only: pass."
+  },
+  {
+   "command": "node tests/language-matrix.test.mjs",
+   "status": "pass",
+   "ms": 65,
+   "last": "Language matrix: 10 languages tracked separately; UI, replies, dictation and voice claims match the code and tests: pass."
+  },
+  {
+   "command": "node --experimental-sqlite tests/shares.test.mjs",
+   "status": "pass",
+   "ms": 425,
+   "last": "Shares: reviewed text-only snapshots, hashed unguessable links, escaped noindex read-only page without cookies, revoke/expiry/delete/account deletion stop it, owners only: pass."
+  },
+  {
+   "command": "node --experimental-sqlite tests/share-routing.test.mjs",
+   "status": "pass",
+   "ms": 387,
+   "last": "Share routing: front door and production route only /s/<token> to the read-only page; HEAD, unknown/expired/revoked, unframeable, private APIs unchanged: pass."
+  },
+  {
+   "command": "node tests/share-provenance.test.mjs",
+   "status": "pass",
+   "ms": 72,
+   "last": "Share provenance (send path): follow-ups after detaching a guide or document inherit its origin; older history stays unverified; clean requests shareable; versions and reload keep stamps: pass."
+  },
+  {
+   "command": "node tests/rollback-compat.test.mjs",
+   "status": "pass",
+   "ms": 126,
+   "last": "Rollback compatibility: current app keeps versions and Library removals; rollback rule and retention stated: pass."
+  },
+  {
+   "command": "node tests/assistant-safety.test.mjs",
+   "status": "pass",
+   "ms": 97,
+   "last": "Assistant safety: stated names never searched; injected pages cannot send Orivia elsewhere, leak details in URLs, trigger sends or reach secrets: pass."
+  },
+  {
+   "command": "node tests/fetch-targets.test.mjs",
+   "status": "pass",
+   "ms": 96,
+   "last": "Exact fetch provenance: real assistant refuses private data in model-created URLs, supports discovered same-site links and search/read steps: pass"
+  },
+  {
+   "command": "node tests/settings-scope.test.mjs",
+   "status": "pass",
+   "ms": 57,
+   "last": "Settings scope: personal defaults stay with each account; language, theme and size stay device-wide: pass."
+  },
+  {
+   "command": "node tests/deletion-consequences.test.mjs",
+   "status": "pass",
+   "ms": 72,
+   "last": "Deletion consequences: chat, file, reminder and account deletion each say what changes and what stays: pass."
+  },
+  {
+   "command": "node --experimental-sqlite tests/leave-organisation.test.mjs",
+   "status": "pass",
+   "ms": 470,
+   "last": "Leaving: confirmed, audited, access and Chat context end at once, Done marks removed, pending requests withdrawable, sole admin protected: pass."
+  },
+  {
+   "command": "node tests/navigation.test.mjs",
+   "status": "pass",
+   "ms": 391,
+   "last": "Navigation: spaces only from server memberships, addressable spaces, text-only menus, sign-out to other tabs, routes agree."
+  },
+  {
+   "command": "node --experimental-sqlite tests/myorivia-release.test.mjs",
+   "status": "pass",
+   "ms": 407,
+   "last": "myorivia.app: fails closed, app paths only, /join links, consent v1, accounts on (orivia-beta unchanged), push off, human check before any model call, consent remembered per version. Scripted only."
+  },
+  {
+   "command": "node --experimental-sqlite tests/organisations.test.mjs",
+   "status": "pass",
+   "ms": 707,
+   "last": "Organisations: real account sessions and SQL, full owner → admin → invite → request → approval → student flow; forged roles, cross-tenant access, stale writes, expiry/revocation, public-code isolation and personal-vault preservation passed."
+  },
+  {
+   "command": "node tests/platform-ui.test.mjs",
+   "status": "pass",
+   "ms": 61,
+   "last": "Organisation dashboards (connected): session-only roles, contract endpoints only, plain-text content, unfinished features labelled, no demo data: passed"
+  }
+ ]
+}

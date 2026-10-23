@@ -16,7 +16,7 @@
  // Older saves used one "waiting" state, which only appeared for steps that wait on someone else.
  function migrate(stepStatus){const out={};for(const [k,v] of Object.entries(stepStatus&&typeof stepStatus==='object'?stepStatus:{})){if(!ID.test(k))continue;const s=v==='waiting'?'waiting_org':v;if(STATES.includes(s))out[k]=s}return out}
  function normEntry(e){const x=e&&typeof e==='object'?e:{};
-  const history=(Array.isArray(x.history)?x.history:[]).filter(h=>h&&ID.test(String(h.step))&&STATES.includes(h.to)&&(h.from===undefined||STATES.includes(h.from))&&Number.isFinite(Number(h.at))).slice(-HISTORY).map(h=>({step:String(h.step),from:h.from||'not_started',to:h.to,at:Number(h.at),by:'you'}));
+  const history=(Array.isArray(x.history)?x.history:[]).filter(h=>h&&ID.test(String(h.step))&&STATES.includes(h.to)&&(h.from===undefined||STATES.includes(h.from))&&Number.isFinite(Number(h.at))).slice(-HISTORY).map(h=>({step:String(h.step),from:h.from||'not_started',to:h.to,at:Number(h.at),by:'you',...(Object.hasOwn(h,'fromNote')?{fromNote:String(h.fromNote||'').slice(0,200)}:{}),...(Object.hasOwn(h,'toNote')?{toNote:String(h.toNote||'').slice(0,200)}:{})}));
   const notes={};for(const [k,v] of Object.entries(x.notes&&typeof x.notes==='object'?x.notes:{}))if(ID.test(k)&&typeof v==='string'&&v.trim())notes[k]=v.trim().substring(0,200);
   return {...x,stepStatus:migrate(x.stepStatus),history,notes}}
  // Which states a step offers: "waiting for them" only where the step waits on someone else.
@@ -32,10 +32,11 @@
  function change(entry,stepId,to,at,note){const e=normEntry(entry);if(!ID.test(String(stepId))||!STATES.includes(to))return e;const from=e.stepStatus[stepId]||'not_started';if(from===to&&to!=='blocked')return e;
   const stepStatus={...e.stepStatus};if(to==='not_started')delete stepStatus[stepId];else stepStatus[stepId]=to;
   const notes={...e.notes};if(to==='blocked'&&typeof note==='string'&&note.trim())notes[stepId]=note.trim().substring(0,200);else if(to!=='blocked')delete notes[stepId];
-  return {...e,stepStatus,notes,history:[...e.history,{step:stepId,from,to,at:Number(at)||0,by:'you'}].slice(-HISTORY)}}
+  return {...e,stepStatus,notes,history:[...e.history,{step:stepId,from,to,at:Number(at)||0,by:'you',...(from==='blocked'||to==='blocked'?{fromNote:e.notes[stepId]||'',toNote:notes[stepId]||''}:{})}].slice(-HISTORY)}}
  // Undo the last change, only if that step still has the state it was changed to. Returns {entry, undone} or null.
  function undo(entry){const e=normEntry(entry),last=e.history.at(-1);if(!last||(e.stepStatus[last.step]||'not_started')!==last.to)return null;
-  const stepStatus={...e.stepStatus};if(last.from==='not_started')delete stepStatus[last.step];else stepStatus[last.step]=last.from;const notes={...e.notes};if(last.from!=='blocked')delete notes[last.step];
+  if(Object.hasOwn(last,'toNote')&&(e.notes[last.step]||'')!==last.toNote)return null;
+  const stepStatus={...e.stepStatus};if(last.from==='not_started')delete stepStatus[last.step];else stepStatus[last.step]=last.from;const notes={...e.notes};if(last.from==='blocked'&&Object.hasOwn(last,'fromNote')){if(last.fromNote)notes[last.step]=last.fromNote;else delete notes[last.step]}else if(last.from!=='blocked')delete notes[last.step];
   return {entry:{...e,stepStatus,notes,history:e.history.slice(0,-1)},undone:last}}
  function lastChange(entry,stepId){return normEntry(entry).history.filter(h=>h.step===stepId).at(-1)||null}
  root.OriviaPlan={STATES,LABEL,MARK,migrate,normEntry,statesFor,stored,shown,blockers,next,change,undo,lastChange,finished};

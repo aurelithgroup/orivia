@@ -33,7 +33,7 @@ let model=0, fetched=0;const states=[];
 const html='<title>School</title><p>Admissions are open.</p><p>Telephone +971 6 555 1234.</p>';
 const log=console.log;console.log=()=>{};
 let result;
-try { result=await runAssistantTurn({messages:[{role:'user',content:'school contacts'}]}, {}, {
+try { result=await runAssistantTurn({messages:[{role:'user',content:'school contacts at https://school.example/contact'}]}, {}, {
  ai:{run:async(_m,o)=>{states.push(JSON.parse(o.messages[1].content));model++;return {response:JSON.stringify(model<3?{action:'tools',calls:[{tool:'read_page',url:'https://school.example/contact',focus:model===1?'admissions':'telephone'}]}:{action:'reply',sentences:[{kind:'general',text:'You can ask the school about admissions.'}]})}}},
  fetcher:async()=>{fetched++;return new Response(html,{headers:{'content-type':'text/html'}})}
  }); } finally { console.log=log; }
