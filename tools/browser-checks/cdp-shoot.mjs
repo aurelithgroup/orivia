@@ -19,7 +19,7 @@ for(const job of jobs){
  await send('Emulation.setDeviceMetricsOverride',{width:job.width||390,height:job.height||844,deviceScaleFactor:job.width>600?1:2,mobile:!(job.width>600)});
  if(!job.keep)await send('Storage.clearDataForOrigin',{origin:'http://localhost:8793',storageTypes:'all'});
  await send('Page.navigate',{url:'http://localhost:8793/'+(job.path||'')});await sleep(job.wait||2500);
- if(job.js){const r=await send("Runtime.evaluate",{expression:job.js,awaitPromise:true});console.log(job.name,'result',JSON.stringify(r.result?.result?.value));if(r.result?.exceptionDetails)console.log(job.name,'js error',JSON.stringify(r.result.exceptionDetails).slice(0,200));await sleep(job.after||800)}
+ if(job.js){const r=await send("Runtime.evaluate",{expression:job.js,awaitPromise:true});console.log(job.name,'result',JSON.stringify(r.result?.result?.value));if(r.result?.exceptionDetails)console.log(job.name,'js error',JSON.stringify(r.result.exceptionDetails.exception?.description||r.result.exceptionDetails).slice(0,400));await sleep(job.after||800)}
  const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(outDir,job.name+'.png'),Buffer.from(shot.result.data,'base64'));console.log('saved',job.name);
 }
 ws.close();chrome.kill();try{fs.rmSync(profile,{recursive:true,force:true})}catch(_){}

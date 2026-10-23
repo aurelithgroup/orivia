@@ -177,6 +177,7 @@ jobs:
           node tests/listen-startup.test.mjs
           node tests/voice-account-exit.test.mjs
           node tests/chat-versions.test.mjs
+          node tests/chat-versions-integration.test.mjs
       - name: "Shared navigation and space addresses"
         run: node tests/navigation.test.mjs
       - name: "myorivia.app production entry gates"

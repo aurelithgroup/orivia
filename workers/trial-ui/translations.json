@@ -2882,5 +2882,13 @@
   "Could not save this reminder. Check its date and time.": {
     "fr": "Impossible d’enregistrer ce rappel. Vérifiez sa date et son heure.",
     "ar": "تعذّر حفظ التذكير. تحقق من التاريخ والوقت."
+  },
+  "Couldn’t make a new version right now. Your earlier version is back.": {
+    "fr": "Impossible de créer une nouvelle version pour le moment. Votre version précédente est revenue.",
+    "ar": "تعذّر إنشاء نسخة جديدة الآن. عادت نسختك السابقة."
+  },
+  "Stopped. Your earlier version is back.": {
+    "fr": "Arrêté. Votre version précédente est revenue.",
+    "ar": "تم الإيقاف. عادت نسختك السابقة."
   }
 }
