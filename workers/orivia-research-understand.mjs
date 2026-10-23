@@ -30,7 +30,21 @@ const lower=s=>clean(s).toLowerCase();
 
 /* ---------- Validation: nothing the model says is trusted unless the conversation supports it ---------- */
 // Personal details never go to a search provider.
-export function safeQuery(q){
+/* Names a person has told Orivia (ORI-AI-009): "my daughter Layla", "named Omar", "my name is Sara", and the saved display
+   name. They are removed from every search query on the server, whatever the model writes. Common words that follow
+   these phrases (nationalities, "a", "in", ...) are never treated as names. */
+const NOT_NAMES=new Set(['a','an','the','in','at','from','going','moving','starting','british','american','indian','french','arabic','emirati','pakistani','filipino','egyptian','new','year','grade','called','named','also','very','not','still','here','there','mr','mrs','ms','miss','dr','he','she','they','we','it','my','our','and','or','to','of','for','is','was','will']);
+export function conversationNames(messages,profile){
+ const out=new Set(),add=s=>{for(const w of String(s||'').split(/\s+/)){const x=w.replace(/[^\p{L}'-]/gu,'');if(x.length>=2&&!NOT_NAMES.has(x.toLowerCase()))out.add(x)}};
+ const rel='(?:son|daughter|child|kid|kids|baby|boy|girl|husband|wife|partner|fianc[eé]e?|brother|sister|mother|mum|mom|father|dad|friend|flatmate|roommate|landlord|landlady)';
+ const name="(\\p{Lu}[\\p{L}'-]+(?:\\s+\\p{Lu}[\\p{L}'-]+)?)";
+ const patterns=[new RegExp('\\b(?:[Mm]y|[Oo]ur)\\s+'+rel+"(?:'s name is|,|\\s+is called|\\s+called|\\s+named|\\s+is)?\\s+"+name,'gu'),new RegExp('\\b(?:[Nn]amed|[Cc]alled)\\s+'+name,'gu'),new RegExp('\\bmy name is\\s+'+name,'giu')];
+ for(const m of (Array.isArray(messages)?messages:[]).filter(m=>m&&m.role==='user'))for(const re of patterns)for(const x of String(m.content||'').matchAll(re))add(x[1]);
+ if(profile&&typeof profile==='object')for(const k of ['displayName','name','childName'])if(typeof profile[k]==='string')add(profile[k]);
+ return [...out];
+}
+export function safeQuery(q,names=[]){
+ for(const n of Array.isArray(names)?names:[])q=String(q||'').replace(new RegExp('(^|[^\\p{L}])'+n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^\\p{L}])','giu'),'$1 ');
  let s=clean(q).replace(/https?:\/\/\S+/g,' ').replace(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi,' ').replace(/\+?\d[\d ()-]{5,}\d/g,' ')
   .replace(/\b(?:my|our) (?:son|daughter|child|kids?|husband|wife|name)\b[^,.;]*/gi,' ').replace(/[^\p{L}\p{N}&.'"() -]+/gu,' ').replace(/\s+/g,' ').trim();
  if((s.match(/"/g)||[]).length%2)s=s.replace(/"/g,'');

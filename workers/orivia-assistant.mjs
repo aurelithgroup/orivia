@@ -16,7 +16,7 @@ import {placeImageFromPage,loadPlacePhoto} from './orivia-place-card.mjs';
 import {assistantTiming} from './orivia-assistant-timing.mjs';
 import {makeTools} from './orivia-research-loop.mjs';
 import {readSpeaDirectoryFeed} from './orivia-spea-directory-feed.mjs';
-import {safeQuery} from './orivia-research-understand.mjs';
+import {safeQuery,conversationNames} from './orivia-research-understand.mjs';
 
 export const ASSISTANT_LIMITS=Object.freeze({toolsPerStep:4,pageChars:2000,evidenceChars:14000,evidenceKept:18,memoryEvidence:10,memoryExcerpt:700,
  replyChars:3800,sentences:40,orgs:8,leadsShown:10,wallMs:45000});
@@ -504,6 +504,16 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
  const started=Date.now();
  const memory=cleanMemory(context?.task?.assistant);
  const msgs=(Array.isArray(messages)?messages:[]).filter(m=>m&&['user','assistant'].includes(m.role)).slice(-12).map(m=>({role:m.role,content:clip(m.content,1200)}));
+ // Names the person mentioned never leave in a search query (ORI-AI-009).
+ const personNames=conversationNames(messages,profile);
+ const hostOf=u=>{try{return new URL(u).hostname.toLowerCase().replace(/^www\./,'')}catch(_){return ''}};
+ const userHosts=new Set(msgs.filter(m=>m.role==='user').flatMap(m=>[...String(m.content).matchAll(/https:\/\/[^\s<>"')\]]+/gi)].map(x=>hostOf(x[0]))).filter(Boolean));
+ const readableUrl=u=>{const h=hostOf(u);if(!h)return false;const low=decodeURIComponent(String(u)).toLowerCase();
+  if(personNames.some(n=>low.includes(n.toLowerCase())))return false;
+  if(userHosts.has(h)||leads.some(l=>hostOf(l.url)===h)||ledger.some(e=>hostOf(e.url)===h)||memory?.evidence?.some?.(e=>hostOf(e.url)===h)||sourceKind(u)==='government')return true;
+  // A host that only appeared inside a page read this turn is where that page is trying to send Orivia: refused.
+  return !pageMentionedHosts.has(h)};
+ const pageMentionedHosts=new Set();
  const timing=assistantTiming(makeTools({env,fetcher,reserve}));
  const tools=timing.tools;
  const ledger=[];let nextE=1;const leads=[];let nextL=1;const steps=[];const failures=[];
@@ -524,7 +534,7 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
  const runTool=async c=>{
   const tool=c?.tool;
   if(tool==='web_search'){
-   const q=safeQuery(c.query||'');if(q.length<3)return {tool,status:'empty-query'};
+   const q=safeQuery(c.query||'',personNames);if(q.length<3)return {tool,status:'empty-query'};
    const r=await tools.search(q);
    const found=r.results.slice(0,8).map(x=>{const l={id:'L'+(nextL++),url:x.url,title:x.title,snippet:x.snippet,kind:sourceKind(x.url)};leads.push(l);return l});
    if(leads.length>ASSISTANT_LIMITS.leadsShown*2)leads.splice(0,leads.length-ASSISTANT_LIMITS.leadsShown*2);
@@ -532,8 +542,14 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
   }
   if(tool==='read_page'){
    const url=String(c.url||'');if(sourceKind(url)==='unknown')return {tool,url:clip(url,200),status:'bad-url'};
+   // Prompt injection (ORI-AI-010): a page can't send Orivia to an address of its choosing. Only hosts that came from search
+   // results, the person's own messages, the official directory or pages already read may be read, and never an address
+   // carrying a name the person mentioned (no smuggling conversation details out in a URL).
+   if(!readableUrl(url))return {tool,url:clip(url,200),status:'not-allowed'};
    const r=await tools.fetchPage(url,{});
    if(!r.ok)return {tool,url:clip(url,200),status:r.reason,http:r.http};
+   for(const m of String(r.raw||'').matchAll(/(?:https?:)?\/\/([a-z0-9.-]+\.[a-z]{2,})/gi)){const mh=m[1].toLowerCase().replace(/^www\./,'');if(mh!==hostOf(r.url))pageMentionedHosts.add(mh)}
+   for(const m of String(r.raw||'').matchAll(/\b((?:[a-z0-9-]+\.)+(?:com|net|org|io|ae|uk|info|biz|xyz|example|app|site|online))\b/gi)){const mh=m[1].toLowerCase().replace(/^www\./,'');if(mh!==hostOf(r.url))pageMentionedHosts.add(mh)}
    const {title,text}=pageText(r.raw);if(text.length<40)return {tool,url:r.url,status:'no-readable-text'};
    const ev=addEvidence({url:r.url,title,excerpt:excerptFor(text,c.focus||msgs.filter(m=>m.role==='user').at(-1)?.content||'')});
    if(ev)ev.placeImage=placeImageFromPage(r.raw,r.url);
