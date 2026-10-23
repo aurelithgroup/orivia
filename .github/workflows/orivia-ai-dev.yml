@@ -173,6 +173,11 @@ jobs:
           node --experimental-sqlite tests/feedback.test.mjs
           node tests/library-discoveries.test.mjs
           node tests/org-bookmarks.test.mjs
+          node --experimental-sqlite tests/staff-tenant-matrix.test.mjs
+          node tests/owner-recovery.test.mjs
+          node tests/tab-account-switch.test.mjs
+          node tests/hostile-fetch.test.mjs
+          node --experimental-sqlite tests/incident-switches.test.mjs
           node --experimental-sqlite tests/owner-overview.test.mjs
           node --experimental-sqlite tests/university-overview.test.mjs
           node tests/listen-startup.test.mjs

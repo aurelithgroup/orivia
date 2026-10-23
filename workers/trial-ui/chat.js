@@ -994,12 +994,13 @@ const draftKey=()=>'orivia-update-draft:'+(globalThis.OriviaAccounts?.epoch||'gu
 function reloadKeepingDraft(note){
  if(busy){if(note)note.lastChild.textContent=uiText('Reload');$('status').textContent=uiText('Orivia is still replying. Reload when the reply has arrived.');return false}
  if(pendingAttachment){$('status').textContent=uiText('Send or remove your attached file first, then reload. Files can’t be kept through an update.');return false}
- try{const text=$('msg').value;if(text.trim())sessionStorage.setItem(draftKey(),JSON.stringify({text:text.slice(0,4000),chat:store.active,at:Date.now()}));else sessionStorage.removeItem(draftKey())}catch(_){}
- location.reload();return true}
+ keepDraft('update');location.reload();return true}
+// Held under the account it was typed in (draftKey uses the account id), so it only comes back to that account (ORI-AUTH-005).
+function keepDraft(why){try{const text=$('msg').value;if(text.trim())sessionStorage.setItem(draftKey(),JSON.stringify({text:text.slice(0,4000),chat:store.active,at:Date.now(),why}));else sessionStorage.removeItem(draftKey())}catch(_){}}
 function restoreUpdateDraft(){try{const raw=sessionStorage.getItem(draftKey());if(!raw)return;sessionStorage.removeItem(draftKey());const d=JSON.parse(raw);
  if(!d||typeof d.text!=='string'||Date.now()-Number(d.at)>600000||$('msg').value)return;if(d.chat&&store.chats.some(c=>c.id===d.chat)&&store.active!==d.chat)openChat(d.chat);
- $('msg').value=d.text;grow();tab('chat');$('status').textContent=uiText('Orivia was updated. Your unsent message is still here.')}catch(_){}}
-window.OriviaUpdate={reloadKeepingDraft,restoreUpdateDraft};
+ $('msg').value=d.text;grow();tab('chat');$('status').textContent=uiText(d.why==='switch'?'Your unsent message from before the account change is still here.':'Orivia was updated. Your unsent message is still here.')}catch(_){}}
+window.OriviaUpdate={reloadKeepingDraft,restoreUpdateDraft,keepDraft};
 function showOffline(){const n=$('offline-note');if(n)n.hidden=navigator.onLine!==false}
 window.addEventListener('online',showOffline);window.addEventListener('offline',showOffline);showOffline();
 let installPrompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;renderInstall()});window.addEventListener('appinstalled',()=>{installPrompt=null;renderInstall()});

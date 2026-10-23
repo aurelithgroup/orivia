@@ -122,7 +122,7 @@
  function mount(target){
   root=typeof target==='string'?document.getElementById(target):target;if(!root)return;root.classList.add('onav');
   document.addEventListener('click',e=>{if(openMenu&&!openMenu.menu.contains(e.target))closeMenus()});
-  try{const c=new BroadcastChannel('orivia-account');c.onmessage=e=>{const other=e.data?.user??null;if(other!==(user?.id??null)){if(!other&&root)root.replaceChildren(el('span','onav-note',t('Signed out in another tab.')));setTimeout(()=>location.reload(),other?0:600)}}}catch(_){}
+  try{const c=new BroadcastChannel('orivia-account');c.onmessage=e=>{const other=e.data?.user??null;if(other!==(user?.id??null)){window.OriviaUpdate?.keepDraft?.('switch');if(!other&&root)root.replaceChildren(el('span','onav-note',t('Signed out in another tab.')));setTimeout(()=>location.reload(),other?0:600)}}}catch(_){}
   refresh();
  }
  const style=document.createElement('style');

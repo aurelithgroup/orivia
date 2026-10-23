@@ -36,6 +36,12 @@ vm.createContext({self,caches:{},fetch,URL,Response,Request,Promise});vm.runInCo
 const push=body=>new Promise(res=>listeners.push({data:{json:()=>({body})},waitUntil:p=>p.then(res)}));
 await push('Your visa appointment at 10:00 with passport number X1234567');await push('Vous avez un rappel ou une actualité dans Orivia.');
 assert.deepEqual(shown,['You have a reminder or update in Orivia.','Vous avez un rappel ou une actualité dans Orivia.']);
+// Opening a notification (ORI-NOTIFY-005), however old and whatever it carries, only opens the app's home: the app then
+// checks sign-in, account and membership itself, so after logout or leaving a university nothing protected is shown.
+{const opened=[];self.clients.openWindow=async u=>{opened.push(u)};
+ for(const data of [{url:'/space/riverside'},{url:'https://evil.example/'},{url:'/app/space/x?item=g1'},null]){let closed=false;
+  await new Promise(res=>listeners.notificationclick({notification:{data,close(){closed=true}},waitUntil:p=>p.then(res)}));assert.ok(closed)}
+ assert.deepEqual(opened,['/','/','/','/'],'always the app home, never a deep link from the notification');}
 console.log('Notification isolation: pilot scheduler bound to the pilot database, honest counters, generic lock-screen text only.');
 // The bell shows a red dot while anything is unread; opening the inbox marks it read and clears the dot.
 {const nj=fs.readFileSync('workers/trial-ui/notifications.js','utf8'),pg=fs.readFileSync('workers/trial-ui/page.html','utf8');

@@ -16,4 +16,6 @@ assert.ok(/\*\*Paused\*\*: no counts/.test(doc)&&/\*\*Unavailable\*\*: views are
 for(const [v,want] of [['=1+1',`"'=1+1"`],['+44 20',`"'+44 20"`],['-5',`"'-5"`],['@SUM(A1)',`"'@SUM(A1)"`],['\tx',`"'\tx"`],['plain "q"','"plain ""q"""'],[null,'""'],[42,'"42"']])assert.equal(csvCell(v),want);
 const csv=organisationsCsv([{name:'=cmd|calc',slug:'s',city:'c',demo:true,status:'active',totals:{students:1,staff:2,requests:0,published:3,drafts:4},adminActive:false,adminInvitePending:true}]);
 assert.ok(csv.split('\r\n')[1].startsWith(`"'=cmd|calc","s","c","yes","active","1","2","0","3","4","invited"`));
+// The university dashboard says views aren't tracked rather than showing a rate (ORI-METRIC-005).
+{const pui=fs.readFileSync('workers/accounts/platform-ui.mjs','utf8');assert.ok(pui.includes('Guide views and QR opens aren’t tracked'));assert.ok(!/engagement rate|view rate|opened by d|% of students/i.test(pui))}
 console.log('Metric definitions: every console metric documented, paused/unavailable named, CSV formula-safe: pass.');

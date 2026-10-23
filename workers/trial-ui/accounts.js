@@ -89,7 +89,10 @@
    if(!d.content?.length)box.append(el('p','notice','Your organisation hasn’t published anything here yet.'));
   }catch(_){if(scope===owner&&arrival===entry)loading.textContent=t('This space couldn’t be opened. Your access may have changed. Close it and refresh your spaces.')}
  }
- function fail(e){const n=$('account-flow-status');if(n)n.textContent=t(e.status===429?'Please wait before trying again.':'That didn’t work. Check the details and try again.');}
+ // Refusals that need the person to do something first say what (ORI-AUTH-010); everything else stays generic.
+ const FAIL_REASON={transfer_platform_owner_first:'You’re the only Orivia owner, so this account can’t be deleted yet. Add another owner first, following the owner recovery steps. Nothing was deleted.',
+  transfer_organisation_admin_first:'You’re the only admin of an organisation. Make another member an admin there first, then try again. Nothing was deleted.'};
+ function fail(e){const n=$('account-flow-status');if(n)n.textContent=t(e&&e.status===409&&FAIL_REASON[e.message]||(e&&e.status===429?'Please wait before trying again.':'That didn’t work. Check the details and try again.'));}
  function guest(skipSetup=false){if(skipSetup!==true&&!scope&&!hasSavedPersonalData()){personalSetup({guestMode:true});return}const leavingAccount=!!scope;delete document.body.dataset.accountFlow;user=null;scope=null;ready=false;paused=false;clearTimeout(timer);$('account-entry').hidden=true;applyCopy();Promise.resolve(window.OriviaConsent?.ready).then(()=>{if(consentAgreed()){if(leavingAccount||$('workspace').hidden)callbacks.reload()}else consentEntry()})}
  function welcome(){signIn()}
  function signIn(signup=false){signup=signup===true;screen='signin';const box=shell(arrival?arrival.organisation.name:signup?'Create your Orivia account':'Sign in to Orivia',signup?'Your own space, wherever you’re going.':'Welcome back. Your next step starts here.');

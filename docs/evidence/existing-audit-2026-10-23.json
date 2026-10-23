@@ -110,6 +110,91 @@
    "id": "ORI-LIB-005",
    "verdict": "gap→fixed",
    "evidence": "Before: no university bookmarks existed (Ina 1f797f2: unverified). Built 16b8776: references only, membership re-checked each Library draw, Open reloads from the server, Ask through the server-checked context, title-only after leaving or removal. tests/org-bookmarks.test.mjs; docs/evidence/screens/lib-005-bookmarks-phone.png."
+  },
+  {
+   "id": "ORI-AUTH-005",
+   "verdict": "gap→fixed",
+   "evidence": "Before: other tabs reloaded on sign-in/switch/sign-out (BroadcastChannel) and the server refuses a mismatched account header (409 account_changed), but an unsent draft in the reloading tab was lost. Fixed: the draft is held under the account it was typed in (sessionStorage key by account id) before the reload and returns only to that account. tests/tab-account-switch.test.mjs; tests/device-accounts.test.mjs."
+  },
+  {
+   "id": "ORI-AUTH-007",
+   "verdict": "verified",
+   "evidence": "Roles come from server tables only: tests/organisations.test.mjs:119-120 (owner not inferred from email domain or request content), :49 (university email does not auto-enrol), :129-141 (no self-promotion, demotion takes effect next request); tests/staff-tenant-matrix.test.mjs (every staff route refused to students and other organisations' staff; owner routes refused to every organisation role)."
+  },
+  {
+   "id": "ORI-AUTH-010",
+   "verdict": "gap→fixed",
+   "evidence": "Before: last-owner and sole-admin deletion were refused on the server (tests/organisations.test.mjs:108) but the app said only \"That didn’t work\", and no recovery procedure existed. Fixed: the account panel explains both refusals; no Worker route writes platform_roles; docs/owner-recovery.md (second owner, lost mailbox, private notes). tests/owner-recovery.test.mjs."
+  },
+  {
+   "id": "ORI-OWNER-015",
+   "verdict": "verified",
+   "evidence": "No impersonation or browse-everything route: owner overview and export carry no identities or private content, owner role is refused on every organisation staff route (tests/staff-tenant-matrix.test.mjs; tests/organisations.test.mjs:40 owner cannot list members); feedback queue excludes identity (tests/feedback.test.mjs)."
+  },
+  {
+   "id": "ORI-UNI-012",
+   "verdict": "verified",
+   "evidence": "New tests/staff-tenant-matrix.test.mjs: 181 hostile calls over every /api/orgs/:id route and method, the owner routes and the CSV export, by other-organisation admins and editors, students, pending members, the platform owner and signed-out callers, plus object substitution (own organisation id with the other organisation's content, member, invitation, request and code ids) and cross-site origin; all refused and organisation B's rows byte-identical afterwards."
+  },
+  {
+   "id": "ORI-STUDENT-002",
+   "verdict": "verified",
+   "evidence": "tests/organisations.test.mjs:49,52 (verified university email and pending membership expose nothing), :105-106 (invitation secrets not accepted in URLs or by others), :72-76 (public codes are public content only; revoked code 404); joining requires staff approval before member content."
+  },
+  {
+   "id": "ORI-STUDENT-004",
+   "verdict": "verified",
+   "evidence": "Context is a reference, re-read on the server for every request: tests/university-chat.test.mjs:47,50 (left or removed → readOrgContext null on the very next message), trial returns 403 org_context_unavailable before any model call, client clears the context and labels \"Using <university>’s …\"."
+  },
+  {
+   "id": "ORI-METRIC-002",
+   "verdict": "verified",
+   "evidence": "No product analytics pipeline exists; Worker logs carry codes and counts only: tests/assistant.test.mjs:86 (assistant log holds outcome codes, not chat text or names), notifications/feedback logs are fixed codes (workers/accounts/notifications.mjs:43,64; feedback.mjs:59); feedback stores no identity in the owner queue."
+  },
+  {
+   "id": "ORI-METRIC-005",
+   "verdict": "verified",
+   "evidence": "Unavailable is never 0: tests/owner-overview.test.mjs:48-54,81-84 (missing budgets/feedback → unavailable/null), tests/metric-definitions.test.mjs (Paused/Unavailable documented; university dashboard says guide views and QR opens aren’t tracked and shows no rate)."
+  },
+  {
+   "id": "ORI-NOTIFY-002",
+   "verdict": "verified",
+   "evidence": "tests/notification-client.test.mjs:8-11 (opening onboarding never prompts; Not now continues without a permission call; denied permission never subscribes; guests never asked); separate reminders/membership/updates preferences (tests/notifications.test.mjs:10-11) changeable in Settings."
+  },
+  {
+   "id": "ORI-NOTIFY-003",
+   "verdict": "verified",
+   "evidence": "tests/notification-isolation.test.mjs: a push carrying a visa appointment and passport number shows only fixed generic text; scheduler sends generic text (tests/notifications.test.mjs private title never on a lock screen)."
+  },
+  {
+   "id": "ORI-NOTIFY-005",
+   "verdict": "verified",
+   "evidence": "Notifications carry no link: opening one always opens the app home, which re-checks sign-in, account and membership (app-sw.js notificationclick). New assertions in tests/notification-isolation.test.mjs: space, external and item URLs in notification data all open \"/\" only."
+  },
+  {
+   "id": "ORI-NOTIFY-006",
+   "verdict": "verified",
+   "evidence": "Gate held: production scheduled() delivers nothing and production push keys are empty (tests/notification-isolation.test.mjs:27-28). Enabling needs the founder approval, a real-device check and the disclosure version in the receipt."
+  },
+  {
+   "id": "ORI-SEC-001",
+   "verdict": "verified",
+   "evidence": "Same-origin, session, account header and server roles on every route: tests/staff-tenant-matrix.test.mjs (direct endpoint attacks with manipulated ids, cross-site origin, mismatched account header), tests/organisations.test.mjs:86, tests/device-accounts.test.mjs, tests/files.test.mjs, tests/shares.test.mjs; account-specific storage (tests/account-client.test.mjs)."
+  },
+  {
+   "id": "ORI-SEC-003",
+   "verdict": "verified",
+   "evidence": "Human check before any chat (tests/myorivia-release.test.mjs:68), expired check keeps the agreement (:78), failed check shows the reason and Try again (tests/beta-start.test.mjs); per-person daily limit by salted hash and overall cap (tests/public-beta.test.mjs:57-65); assistant daily cap with retryAfter and provider spend limits (tests/research-pilot.test.mjs:99-103)."
+  },
+  {
+   "id": "ORI-SEC-004",
+   "verdict": "verified",
+   "evidence": "Text nodes for all user values (tests across chat-presentation, information-cards, place-card, content-details, shares with javascript: and <script> fixtures), CSV formula neutralised (tests/owner-overview.test.mjs:69-73); new tests/hostile-fetch.test.mjs: 20 private/numeric/local/credentialed/non-https/odd-port addresses refused without a request, off-host and downgrade redirects refused."
+  },
+  {
+   "id": "ORI-SEC-010",
+   "verdict": "gap→fixed",
+   "evidence": "Before: switches existed but several off states were untested and there was no runbook. Fixed: docs/incident-controls.md (each switch, what stops, what people see, its test; rollback record and order of moves); tests/incident-switches.test.mjs (sign-in email, files, university spaces off: unavailable state, nothing sent/stored/read); research-off check added to tests/research-pilot.test.mjs."
   }
  ]
 }

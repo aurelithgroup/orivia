@@ -150,6 +150,11 @@ assert.ok(sql.prepare("SELECT day_amount FROM spend_meter WHERE id='browser'").g
 const trialSrc=readFileSync(new URL('../workers/orivia-ai-private-trial.mjs',import.meta.url),'utf8');
 const imports=[...trialSrc.matchAll(/^\s*import\b[^;]*?from\s*['"]([^'"]+)['"]/gm)].map(m=>m[1]).concat([...trialSrc.matchAll(/import\(\s*['"]([^'"]+)/g)].map(m=>m[1]));
 assert.ok(imports.length>3,'imports parsed');
+// Incident switch (ORI-SEC-010): research off → no search or page request at all, config says so, chat still answers.
+{const prior=globalThis.fetch,outbound=[];globalThis.fetch=async(u,i)=>{outbound.push(String(u));return prior(u,i)};
+ const offEnv={...base,RESEARCH_ENABLED:'0'};const cfgOff=await (await worker.fetch(new Request('https://'+host+'/v1/config'),offEnv,ctx)).json();assert.equal(cfgOff.research.enabled,false);
+ const res=await worker.fetch(req('list british schools in Sharjah'),offEnv,ctx);assert.equal(res.status,200);
+ assert.deepEqual(outbound.filter(u=>/search\.brave|spea\.shj|^https:\/\/(?!api\.openai)/.test(u)),[],'no search or page fetch with research switched off');globalThis.fetch=prior}
 for(const m of ['orivia-research-pilot','orivia-openai-pilot','orivia-browser-directory','orivia-spend-ledger','puppeteer'])assert.ok(!imports.some(i=>i.includes(m)),'public Worker must not import '+m);
 assert.ok(!trialSrc.includes('api.openai.com'));
 console.log('Research pilot entry: private only, auth/quota first, OpenAI only with named consent + switch + confirmed rates, shared ledger, browser behind its own switch and allowance, public Worker untouched: passed');
