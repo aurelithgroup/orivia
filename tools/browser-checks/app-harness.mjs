@@ -8,6 +8,17 @@ const {createTrialWorker}=await import(pathToFileURL(repo+'/workers/orivia-ai-pr
 const worker=createTrialWorker();
 const env={PRIVATE_HOST:'app.localhost',ACCESS_TEST_EMAIL:'designer@example.test',RESEARCH_ENABLED:'0'};
 const ctx={access:{getIdentity:async()=>({email:'designer@example.test'})},waitUntil(){}};
+// HARNESS_ACCOUNTS=1: real Better Auth accounts on an in-memory SQLite database (no real email: the last sign-in code is at
+// /__otp). For checking account screens locally; never a deployment.
+let lastOtp=null;
+if(process.env.HARNESS_ACCOUNTS){
+ const {DatabaseSync}=await import('node:sqlite');const sql=new DatabaseSync(':memory:');
+ sql.exec('PRAGMA foreign_keys=ON;'+['schema','organisations','feedback','platform-audit'].map(n=>fs.readFileSync(repo+'/workers/accounts/'+n+'.sql','utf8')).join('\n'));
+ const st=(text,args=[])=>({bind:(...v)=>st(text,v),all:async()=>({results:sql.prepare(text).all(...args),meta:{changes:sql.prepare('SELECT changes() AS n').get().n},success:true}),first:async()=>sql.prepare(text).get(...args)||null,run:async()=>({meta:sql.prepare(text).run(...args),success:true})});
+ Object.assign(env,{ACCOUNTS_ENABLED:'1',ACCOUNTS_UI:'1',ACCOUNTS_ORIGIN:'https://app.localhost',ACCOUNTS_SECRET:'harness-only-accounts-secret-0123456789abcdef',
+  ACCOUNTS_DB:{prepare:t=>st(t),exec:async t=>sql.exec(t),batch:async s=>{sql.exec('BEGIN IMMEDIATE');try{const o=[];for(const x of s)o.push(await x.all());sql.exec('COMMIT');return o}catch(e){sql.exec('ROLLBACK');throw e}}},
+  ACCOUNTS_EMAIL_ENABLED:'1',ACCOUNTS_FROM:'signin@example.test',ACCOUNTS_EMAIL_DAY_CAP:'100',ACCOUNTS_EMAIL_MONTH_CAP:'1000',ACCOUNTS_EMAIL:{send(m){lastOtp=String(m.text||'').match(/\b\d{6}\b/)?.[0]||null}}});
+}
 const day=n=>{const d=new Date();d.setDate(d.getDate()+n);d.setHours(10,0,0,0);return d.toISOString()};
 const seed=`(function(){try{
  if(localStorage.getItem('harness-seeded'))return;
@@ -32,6 +43,7 @@ const server=http.createServer(async(req,res)=>{
   const body=['GET','HEAD'].includes(req.method)?undefined:await new Promise(r=>{const c=[];req.on('data',d=>c.push(d));req.on('end',()=>r(Buffer.concat(c)))});
   // HARNESS_VOICE=<ms>: offer the natural voice and answer /v1/voice after <ms> with half a second of silence (no OpenAI).
   // /__voice-count says how many voice requests arrived, so duplicate generation is visible.
+  if(process.env.HARNESS_ACCOUNTS&&req.url==='/__otp'){res.writeHead(200,{'content-type':'application/json'});return res.end(JSON.stringify({otp:lastOtp}))}
   if(process.env.HARNESS_VOICE){
    if(req.url==='/__voice-count'){res.writeHead(200,{'content-type':'application/json'});return res.end(JSON.stringify({count:voiceCount}))}
    if(req.url.startsWith('/v1/voice')){voiceCount++;await new Promise(r=>setTimeout(r,Number(process.env.HARNESS_VOICE)||400));res.writeHead(200,{'content-type':'audio/wav'});return res.end(silentWav(0.5))}
@@ -39,7 +51,8 @@ const server=http.createServer(async(req,res)=>{
   }
   const h={...req.headers};if(h.origin)h.origin='https://app.localhost';delete h.host;
   const r=await worker.fetch(new Request('https://app.localhost'+req.url,{method:req.method,headers:h,body}),env,ctx);
-  const headers={};r.headers.forEach((v,k)=>{if(!/content-security-policy|content-length|content-encoding/i.test(k))headers[k]=v});
+  const headers={};r.headers.forEach((v,k)=>{if(!/content-security-policy|content-length|content-encoding|set-cookie/i.test(k))headers[k]=v});
+  const cookies=r.headers.getSetCookie?.()||[];if(cookies.length)headers['set-cookie']=cookies;
   let out=Buffer.from(await r.arrayBuffer());
   if(String(headers['content-type']).startsWith('text/html')){let html=out.toString('utf8').replace('<head>','<head><script src="/__seed.js"></script>');
    const css=new URL(url).searchParams.get('after')&&afterCss?fs.readFileSync(afterCss,'utf8'):'';if(css)html=html.replace('</head>','<style id="after">'+css+'</style></head>');out=Buffer.from(html)}

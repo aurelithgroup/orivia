@@ -1,0 +1,61 @@
+{
+ "check": "Accounts on this device in the real app: local harness with HARNESS_ACCOUNTS=1 (real Better Auth sessions on in-memory SQLite, sign-in codes captured locally, no email sent), headless Chrome.",
+ "ranAt": "2026-10-23T04:04:19.013Z",
+ "limitation": "The new-account onboarding stops at Make yourself at home in this harness (no AI-agreement check available locally); switching and removal do not depend on it.",
+ "results": {
+  "acc-reset": "ok",
+  "acc-a": {
+   "log": [
+    "after code: What should we call you?",
+    "step: Make yourself at home",
+    "step: Make yourself at home",
+    "step: Make yourself at home",
+    "step: Make yourself at home",
+    "step: Make yourself at home",
+    "step: Make yourself at home"
+   ],
+   "start": "Sign in to Orivia",
+   "end": "Make yourself at home",
+   "user": "amira@example.test",
+   "scopedKey": true
+  },
+  "acc-b": {
+   "log": [
+    "after code: What should we call you?",
+    "step: Make yourself at home",
+    "step: Make yourself at home",
+    "step: Make yourself at home",
+    "step: Make yourself at home",
+    "step: Make yourself at home",
+    "step: Make yourself at home"
+   ],
+   "panel": "Your account",
+   "signInScreen": "Sign in to Orivia",
+   "user": "bilal@example.test"
+  },
+  "acc-list": {
+   "log": [],
+   "rows": [
+    "amira@example.test Switch Remove from this device",
+    "bilal@example.test This account"
+   ],
+   "hasAdd": true
+  },
+  "acc-list check": {
+   "user": "amira@example.test"
+  },
+  "acc-remove": {
+   "log": [],
+   "before": [
+    "amira@example.test This account",
+    "bilal@example.test Switch Remove from this device"
+   ],
+   "firstTap": true,
+   "after": [
+    "amira@example.test This account"
+   ],
+   "user": "amira@example.test",
+   "status": "Removed from this device. That account is signed out here; its saved data in the account is kept."
+  }
+ }
+}
