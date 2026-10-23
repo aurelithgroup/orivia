@@ -1,0 +1,10 @@
+import {DatabaseSync} from 'node:sqlite';
+import {getMigrations} from 'better-auth/db/migration';
+import fs from 'node:fs';
+import {authOptions} from './auth.mjs';
+const database=new DatabaseSync(':memory:');
+const options=authOptions({ACCOUNTS_ORIGIN:'https://orivia-research-pilot.habeebahsallah27.workers.dev',ACCOUNTS_SECRET:'schema-generation-only-not-a-live-secret-0000'},{database});
+const migrations=await getMigrations(options);
+fs.writeFileSync('schema.sql','-- Generated from Better Auth 1.7.11. Separate accounts database only.\n'+await migrations.compileMigrations()+`\nCREATE TABLE account_vault(user_id TEXT PRIMARY KEY REFERENCES user(id) ON DELETE CASCADE, revision INTEGER NOT NULL, data TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE account_mail_meter(month TEXT PRIMARY KEY, day TEXT NOT NULL, day_count INTEGER NOT NULL, month_count INTEGER NOT NULL);
+`);console.log('Generated account schema.');

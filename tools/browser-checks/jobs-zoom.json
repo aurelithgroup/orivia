@@ -1,0 +1,50 @@
+[
+ {
+  "name": "zoom-en-1x-390",
+  "path": "?view=chat",
+  "wait": 3000,
+  "width": 390,
+  "height": 844,
+  "js": "(async()=>{const wait=ms=>new Promise(r=>setTimeout(r,ms));\n const K='orivia-private-chats-v1',st=JSON.parse(localStorage.getItem(K));st.chats[0].title='Questions about the Northbay University of Applied Sciences and Technology international student admissions office';localStorage.setItem(K,JSON.stringify(st));\n window.OriviaI18n.setLanguage('en');document.documentElement.style.zoom='1';await wait(600);\n const vw=innerWidth,out={lang:'en',zoom:1,dir:document.documentElement.dir,overflowX:document.documentElement.scrollWidth>document.documentElement.clientWidth+1};\n const keys={send:'#send',composer:'#msg',menu:'#open-chats',settings:'#open-settings'};out.controls={};\n for(const [k,s] of Object.entries(keys)){const e=document.querySelector(s);if(!e){out.controls[k]='missing';continue}const r=e.getBoundingClientRect(),z=Number(1);out.controls[k]=(r.left>=-1&&r.right*1<=vw/ (1)+1&&r.width>0)?'visible':'clipped '+Math.round(r.left)+'..'+Math.round(r.right)+' of '+vw}\n const tabs=[...document.querySelectorAll('nav button, #nav button')].filter(b=>b.offsetParent);out.tabsClipped=tabs.filter(b=>{const r=b.getBoundingClientRect();return r.right>vw+1||r.left<-1||r.width<20}).map(b=>b.textContent.trim().slice(0,12));\n out.smallTargets=[...document.querySelectorAll('button')].filter(b=>b.offsetParent).filter(b=>{const r=b.getBoundingClientRect();return r.width>0&&(r.height<24||r.width<24)}).map(b=>(b.getAttribute('aria-label')||b.textContent).trim().slice(0,20)).slice(0,8);\n return JSON.stringify(out)})()"
+ },
+ {
+  "name": "zoom-ar-1x-390",
+  "path": "?view=chat",
+  "wait": 3000,
+  "width": 390,
+  "height": 844,
+  "js": "(async()=>{const wait=ms=>new Promise(r=>setTimeout(r,ms));\n const K='orivia-private-chats-v1',st=JSON.parse(localStorage.getItem(K));st.chats[0].title='Questions about the Northbay University of Applied Sciences and Technology international student admissions office';localStorage.setItem(K,JSON.stringify(st));\n window.OriviaI18n.setLanguage('ar');document.documentElement.style.zoom='1';await wait(600);\n const vw=innerWidth,out={lang:'ar',zoom:1,dir:document.documentElement.dir,overflowX:document.documentElement.scrollWidth>document.documentElement.clientWidth+1};\n const keys={send:'#send',composer:'#msg',menu:'#open-chats',settings:'#open-settings'};out.controls={};\n for(const [k,s] of Object.entries(keys)){const e=document.querySelector(s);if(!e){out.controls[k]='missing';continue}const r=e.getBoundingClientRect(),z=Number(1);out.controls[k]=(r.left>=-1&&r.right*1<=vw/ (1)+1&&r.width>0)?'visible':'clipped '+Math.round(r.left)+'..'+Math.round(r.right)+' of '+vw}\n const tabs=[...document.querySelectorAll('nav button, #nav button')].filter(b=>b.offsetParent);out.tabsClipped=tabs.filter(b=>{const r=b.getBoundingClientRect();return r.right>vw+1||r.left<-1||r.width<20}).map(b=>b.textContent.trim().slice(0,12));\n out.smallTargets=[...document.querySelectorAll('button')].filter(b=>b.offsetParent).filter(b=>{const r=b.getBoundingClientRect();return r.width>0&&(r.height<24||r.width<24)}).map(b=>(b.getAttribute('aria-label')||b.textContent).trim().slice(0,20)).slice(0,8);\n return JSON.stringify(out)})()"
+ },
+ {
+  "name": "zoom-ar-2x-390",
+  "path": "?view=chat",
+  "wait": 3000,
+  "width": 390,
+  "height": 844,
+  "js": "(async()=>{const wait=ms=>new Promise(r=>setTimeout(r,ms));\n const K='orivia-private-chats-v1',st=JSON.parse(localStorage.getItem(K));st.chats[0].title='Questions about the Northbay University of Applied Sciences and Technology international student admissions office';localStorage.setItem(K,JSON.stringify(st));\n window.OriviaI18n.setLanguage('ar');document.documentElement.style.zoom='2';await wait(600);\n const vw=innerWidth,out={lang:'ar',zoom:2,dir:document.documentElement.dir,overflowX:document.documentElement.scrollWidth>document.documentElement.clientWidth+1};\n const keys={send:'#send',composer:'#msg',menu:'#open-chats',settings:'#open-settings'};out.controls={};\n for(const [k,s] of Object.entries(keys)){const e=document.querySelector(s);if(!e){out.controls[k]='missing';continue}const r=e.getBoundingClientRect(),z=Number(2);out.controls[k]=(r.left>=-1&&r.right*1<=vw/ (1)+1&&r.width>0)?'visible':'clipped '+Math.round(r.left)+'..'+Math.round(r.right)+' of '+vw}\n const tabs=[...document.querySelectorAll('nav button, #nav button')].filter(b=>b.offsetParent);out.tabsClipped=tabs.filter(b=>{const r=b.getBoundingClientRect();return r.right>vw+1||r.left<-1||r.width<20}).map(b=>b.textContent.trim().slice(0,12));\n out.smallTargets=[...document.querySelectorAll('button')].filter(b=>b.offsetParent).filter(b=>{const r=b.getBoundingClientRect();return r.width>0&&(r.height<24||r.width<24)}).map(b=>(b.getAttribute('aria-label')||b.textContent).trim().slice(0,20)).slice(0,8);\n return JSON.stringify(out)})()"
+ },
+ {
+  "name": "zoom-en-2x-1280",
+  "path": "?view=chat",
+  "wait": 3000,
+  "width": 1280,
+  "height": 900,
+  "js": "(async()=>{const wait=ms=>new Promise(r=>setTimeout(r,ms));\n const K='orivia-private-chats-v1',st=JSON.parse(localStorage.getItem(K));st.chats[0].title='Questions about the Northbay University of Applied Sciences and Technology international student admissions office';localStorage.setItem(K,JSON.stringify(st));\n window.OriviaI18n.setLanguage('en');document.documentElement.style.zoom='2';await wait(600);\n const vw=innerWidth,out={lang:'en',zoom:2,dir:document.documentElement.dir,overflowX:document.documentElement.scrollWidth>document.documentElement.clientWidth+1};\n const keys={send:'#send',composer:'#msg',menu:'#open-chats',settings:'#open-settings'};out.controls={};\n for(const [k,s] of Object.entries(keys)){const e=document.querySelector(s);if(!e){out.controls[k]='missing';continue}const r=e.getBoundingClientRect(),z=Number(2);out.controls[k]=(r.left>=-1&&r.right*1<=vw/ (1)+1&&r.width>0)?'visible':'clipped '+Math.round(r.left)+'..'+Math.round(r.right)+' of '+vw}\n const tabs=[...document.querySelectorAll('nav button, #nav button')].filter(b=>b.offsetParent);out.tabsClipped=tabs.filter(b=>{const r=b.getBoundingClientRect();return r.right>vw+1||r.left<-1||r.width<20}).map(b=>b.textContent.trim().slice(0,12));\n out.smallTargets=[...document.querySelectorAll('button')].filter(b=>b.offsetParent).filter(b=>{const r=b.getBoundingClientRect();return r.width>0&&(r.height<24||r.width<24)}).map(b=>(b.getAttribute('aria-label')||b.textContent).trim().slice(0,20)).slice(0,8);\n return JSON.stringify(out)})()"
+ },
+ {
+  "name": "zoom-ar-2x-1280",
+  "path": "?view=chat",
+  "wait": 3000,
+  "width": 1280,
+  "height": 900,
+  "js": "(async()=>{const wait=ms=>new Promise(r=>setTimeout(r,ms));\n const K='orivia-private-chats-v1',st=JSON.parse(localStorage.getItem(K));st.chats[0].title='Questions about the Northbay University of Applied Sciences and Technology international student admissions office';localStorage.setItem(K,JSON.stringify(st));\n window.OriviaI18n.setLanguage('ar');document.documentElement.style.zoom='2';await wait(600);\n const vw=innerWidth,out={lang:'ar',zoom:2,dir:document.documentElement.dir,overflowX:document.documentElement.scrollWidth>document.documentElement.clientWidth+1};\n const keys={send:'#send',composer:'#msg',menu:'#open-chats',settings:'#open-settings'};out.controls={};\n for(const [k,s] of Object.entries(keys)){const e=document.querySelector(s);if(!e){out.controls[k]='missing';continue}const r=e.getBoundingClientRect(),z=Number(2);out.controls[k]=(r.left>=-1&&r.right*1<=vw/ (1)+1&&r.width>0)?'visible':'clipped '+Math.round(r.left)+'..'+Math.round(r.right)+' of '+vw}\n const tabs=[...document.querySelectorAll('nav button, #nav button')].filter(b=>b.offsetParent);out.tabsClipped=tabs.filter(b=>{const r=b.getBoundingClientRect();return r.right>vw+1||r.left<-1||r.width<20}).map(b=>b.textContent.trim().slice(0,12));\n out.smallTargets=[...document.querySelectorAll('button')].filter(b=>b.offsetParent).filter(b=>{const r=b.getBoundingClientRect();return r.width>0&&(r.height<24||r.width<24)}).map(b=>(b.getAttribute('aria-label')||b.textContent).trim().slice(0,20)).slice(0,8);\n return JSON.stringify(out)})()"
+ },
+ {
+  "name": "zoom-en-1x-390-large",
+  "path": "?view=chat",
+  "wait": 3000,
+  "width": 390,
+  "height": 844,
+  "js": "(async()=>{const wait=ms=>new Promise(r=>setTimeout(r,ms));\n const K='orivia-private-chats-v1',st=JSON.parse(localStorage.getItem(K));st.chats[0].title='Questions about the Northbay University of Applied Sciences and Technology international student admissions office';localStorage.setItem(K,JSON.stringify(st));\n window.OriviaI18n.setLanguage('en');document.documentElement.dataset.size='large';document.documentElement.style.zoom='1';await wait(600);\n const vw=innerWidth,out={lang:'en',zoom:1,dir:document.documentElement.dir,overflowX:document.documentElement.scrollWidth>document.documentElement.clientWidth+1};\n const keys={send:'#send',composer:'#msg',menu:'#open-chats',settings:'#open-settings'};out.controls={};\n for(const [k,s] of Object.entries(keys)){const e=document.querySelector(s);if(!e){out.controls[k]='missing';continue}const r=e.getBoundingClientRect(),z=Number(1);out.controls[k]=(r.left>=-1&&r.right*1<=vw/ (1)+1&&r.width>0)?'visible':'clipped '+Math.round(r.left)+'..'+Math.round(r.right)+' of '+vw}\n const tabs=[...document.querySelectorAll('nav button, #nav button')].filter(b=>b.offsetParent);out.tabsClipped=tabs.filter(b=>{const r=b.getBoundingClientRect();return r.right>vw+1||r.left<-1||r.width<20}).map(b=>b.textContent.trim().slice(0,12));\n out.smallTargets=[...document.querySelectorAll('button')].filter(b=>b.offsetParent).filter(b=>{const r=b.getBoundingClientRect();return r.width>0&&(r.height<24||r.width<24)}).map(b=>(b.getAttribute('aria-label')||b.textContent).trim().slice(0,20)).slice(0,8);\n return JSON.stringify(out)})()"
+ }
+]

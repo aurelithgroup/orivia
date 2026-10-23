@@ -1,0 +1,15 @@
+{
+  "name": "orivia-research-pilot",
+  "private": true,
+  "type": "module",
+  "description": "Protected private research pilot; OpenAI and browser execution disabled by default.",
+  "scripts": {
+    "check": "wrangler deploy --dry-run --config wrangler.jsonc"
+  },
+  "dependencies": {
+    "@cloudflare/puppeteer": "1.4.0"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.1"
+  }
+}

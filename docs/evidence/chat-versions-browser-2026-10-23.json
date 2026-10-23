@@ -1,0 +1,153 @@
+{
+ "check": "Conversation versions (Ina 5bdfcf8 + Cleo integration fixes) in the real app: local harness, headless Chrome at 390px. /v1/chat stubbed in the page (reminder in every reply; slow mode for Stop/exit; 500 for failure); counts requests and user messages per request. Not provider evidence.",
+ "ranAt": "2026-10-23T03:35:21.488Z",
+ "script": "node tools/browser-checks/make-versions-jobs.cjs; node tools/browser-checks/app-harness.mjs <repo>; node tools/browser-checks/cdp-shoot.mjs <out> tools/browser-checks/jobs-versions.json",
+ "findingsFixed": [
+  "Stop during a version emptied the question from the new version and moved it to the composer → now restores the earlier version",
+  "A failed version left an empty conversation → now restores the earlier version",
+  "Edit/Regenerate/version buttons stayed disabled after every reply → released when the reply ends",
+  "Version notice was written into the reply text (sent back to the AI, read by Listen) → shown under the reply"
+ ],
+ "results": {
+  "v-seed": "ok",
+  "v-flow": {
+   "start": [
+    "U:Read my tenancy photo",
+    "A:It says the rent is 4000."
+   ],
+   "afterSend": {
+    "events": 1,
+    "requests": 1,
+    "label": null
+   },
+   "afterEdit": {
+    "events": 1,
+    "requests": 2,
+    "label": "2 / 2",
+    "userInLastRequest": [
+     "Read my tenancy photo",
+     "Book the dentist on Friday"
+    ],
+    "reply": "Here is the reminder suggested by this version. Review it before saving.",
+    "reviewCard": true
+   },
+   "afterRegen": {
+    "events": 1,
+    "requests": 3,
+    "label": "3 / 3",
+    "usersInRequest": 2,
+    "usersShown": 2,
+    "lastSentText": [
+     "Read my tenancy photo",
+     "It says the rent is 4000.",
+     "Book the dentist on Friday"
+    ]
+   },
+   "prev1": {
+    "label": "2 / 3",
+    "bubbles": [
+     "U:Read my tenancy photo",
+     "A:It says the rent is 4000.",
+     "U:Book the dentist on Friday",
+     "A:Here is the reminder suggested by this version. Review it be"
+    ]
+   },
+   "prev2": {
+    "label": "1 / 3",
+    "bubbles": [
+     "U:Read my tenancy photo",
+     "A:It says the rent is 4000.",
+     "U:Book the dentist",
+     "A:Answer 1 to: Book the dentist"
+    ],
+    "attachmentShown": true
+   },
+   "backToLatest": "3 / 3",
+   "hadSave": true,
+   "afterSave": 2
+  },
+  "v-refresh": {
+   "label": "3 / 3",
+   "bubbles": [
+    "U:Read my tenancy photo",
+    "A:It says the rent is 4000.",
+    "U:Book the dentist on Friday",
+    "A:Here is the reminder suggested by this version. Review it be"
+   ],
+   "reminderSaved": true
+  },
+  "v-stop": {
+   "during": {
+    "label": "4 / 4",
+    "busy": true
+   },
+   "afterStop": {
+    "label": "3 / 3",
+    "bubbles": [
+     "U:Read my tenancy photo",
+     "A:It says the rent is 4000.",
+     "U:Book the dentist on Friday",
+     "A:Here is the reminder suggested by this version. Review it be"
+    ],
+    "status": "Stopped. Your earlier version is back.",
+    "composer": ""
+   },
+   "before": {
+    "label": "3 / 3",
+    "bubbles": [
+     "U:Read my tenancy photo",
+     "A:It says the rent is 4000.",
+     "U:Book the dentist on Friday",
+     "A:Here is the reminder suggested by this version. Review it be"
+    ]
+   },
+   "prevAfterStop": {
+    "label": "2 / 3",
+    "bubbles": [
+     "U:Read my tenancy photo",
+     "A:It says the rent is 4000.",
+     "U:Book the dentist on Friday",
+     "A:Here is the reminder suggested by this version. Review it be"
+    ]
+   }
+  },
+  "v-fail": {
+   "afterFail": {
+    "label": "2 / 3",
+    "bubbles": [
+     "U:Read my tenancy photo",
+     "A:It says the rent is 4000.",
+     "U:Book the dentist on Friday",
+     "A:Here is the reminder suggested by this version. Review it be"
+    ],
+    "status": "Couldn’t make a new version right now. Your earlier version is back.",
+    "composer": "",
+    "requests": 1
+   }
+  },
+  "v-storage": {
+   "afterQuota": {
+    "requests": 0,
+    "labelBefore": "2 / 3",
+    "label": "2 / 3",
+    "same": true,
+    "status": "Could not change this conversation. Your saved version is kept."
+   }
+  },
+  "v-exit": {
+   "afterExit": {
+    "requests": 1,
+    "labelBefore": "2 / 3",
+    "versions": 4,
+    "active": 3,
+    "lastTurns": [
+     "user:Read my tenancy photo",
+     "assistant:It says the rent is 4000.",
+     "user:Book the dentist on Friday",
+     "assistant:Here is the reminder suggested by this v"
+    ],
+    "accountFlow": "on"
+   }
+  }
+ }
+}

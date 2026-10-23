@@ -1,0 +1,17 @@
+{
+  // myorivia.app front door: landing page at '/', app paths to the production Worker (APP), other paths to the previous website.
+  "name": "orivia-front-door",
+  "main": "index.mjs",
+  "account_id": "dca77f1ed4a6d4407bc82e27b4581f7d",
+  "compatibility_date": "2026-10-18",
+  "workers_dev": false,
+  "routes": [
+    { "pattern": "myorivia.app", "custom_domain": true },
+    { "pattern": "www.myorivia.app", "custom_domain": true }
+  ],
+  // The Worker decides every route first; assets are only the landing page and its fonts.
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true, "html_handling": "none" },
+  // The production Worker. Visitors reach it only with the release preview cookie, or once RELEASE_LIVE is "1".
+  "services": [{ "binding": "APP", "service": "orivia-production" }],
+  "vars": { "RELEASE_LIVE": "1" }
+}

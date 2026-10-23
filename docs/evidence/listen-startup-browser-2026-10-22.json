@@ -1,0 +1,47 @@
+{
+ "check": "Listen startup in the real app (local harness, headless Chrome). /v1/voice is simulated with a fixed 600 ms delay and silent audio: this measures the client path and duplicate generation, NOT OpenAI latency.",
+ "ranAt": "2026-10-22T17:50:13.299Z",
+ "harness": "HARNESS_VOICE=600 node tools/browser-checks/app-harness.mjs; node tools/browser-checks/cdp-shoot.mjs <out> tools/browser-checks/jobs-listen.json",
+ "results": {
+  "listen-seed": "ok",
+  "listen-check": {
+   "immediate": "Preparing the voice…",
+   "button": "■ Stop",
+   "timings1": [
+    {
+     "event": "orivia-listen",
+     "source": "natural",
+     "firstAudioMs": 1234
+    }
+   ],
+   "requests1": 2,
+   "afterStop": "Reading with an AI-generated voice (OpenAI).",
+   "buttonAfterStop": "▶ Listen",
+   "timings2": [
+    {
+     "event": "orivia-listen",
+     "source": "natural-reused",
+     "firstAudioMs": 67
+    }
+   ],
+   "requests2": 2,
+   "stopDuringPreparing": "",
+   "requests3": 2,
+   "playing": false,
+   "rapidTaps": 2
+  },
+  "listen-uncached-seed": "ok",
+  "listen-uncached": {
+   "afterStopStatus": "",
+   "playingAfterStop": false,
+   "timingsAfterStop": 0,
+   "requestsAfterStop": 1,
+   "requestsAfterRetap": 2,
+   "retapTiming": {
+    "event": "orivia-listen",
+    "source": "natural-reused",
+    "firstAudioMs": 72
+   }
+  }
+ }
+}

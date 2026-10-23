@@ -1,0 +1,54 @@
+{
+ "check": "Real account-exit path in the app (local harness, headless Chrome): Listen, then OriviaAccounts.open() runs hideApp() → leave() → resetVoiceSession(). /v1/voice simulated (1200 ms). Counts from window.OriviaVoiceDebug (numbers only).",
+ "ranAt": "2026-10-22T18:32:07.796Z",
+ "results": {
+  "exit-seed": "ok",
+  "exit-completed": {
+   "before": {
+    "cached": 2,
+    "bytes": 16088,
+    "inflight": 0,
+    "requests": 0,
+    "activeURL": true,
+    "session": 1
+   },
+   "after": {
+    "cached": 0,
+    "bytes": 0,
+    "inflight": 0,
+    "requests": 0,
+    "activeURL": false,
+    "session": 2
+   },
+   "accountFlow": "on"
+  },
+  "exit-inflight": {
+   "before": {
+    "cached": 0,
+    "bytes": 0,
+    "inflight": 1,
+    "requests": 1,
+    "activeURL": false,
+    "session": 1
+   },
+   "after": {
+    "cached": 0,
+    "bytes": 0,
+    "inflight": 0,
+    "requests": 0,
+    "activeURL": false,
+    "session": 2
+   },
+   "late": {
+    "cached": 0,
+    "bytes": 0,
+    "inflight": 0,
+    "requests": 0,
+    "activeURL": false,
+    "session": 2
+   },
+   "pressed": 0,
+   "timings": 0
+  }
+ }
+}

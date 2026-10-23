@@ -1,0 +1,63 @@
+# Captured from SPEA public JS query 16 on 2026-10-18. Filter term inserted; no secrets.
+
+#graphql
+query VerticalFilterList(
+  $currentItemId: String!
+  $templateId: String!
+  $language: String!
+  $first: Int
+  $after: String
+) {
+  search(
+    where: {
+      AND: [
+        { name: "_path", value: $currentItemId, operator: EQ }
+        { name: "_templates", value: $templateId, operator: EQ }
+        { name: "_language", value: $language, operator: EQ }
+        { OR: [ { name: "curriculumtype", value: "ea66652a-d56c-45b0-b63e-d56aa190d9a5", operator: EQ } ] }
+      ]
+    }
+    first: $first
+    after: $after
+  ) {
+    total
+    pageInfo {
+      endCursor
+      hasNext
+    }
+
+    results {
+      id
+      url {
+        path
+      }
+      title: field(name: "title") {
+        value
+      }
+      location: field(name: "location") {
+        jsonValue
+      }
+      curriculum: field(name: "curriculumType") {
+        jsonValue
+      }
+      image: field(name: "cardThumbnailImage") {
+        jsonValue
+      }
+      rating: field(name: "rating") {
+        jsonValue
+      }
+      ageGroup: field(name: "ageGroup") {
+        jsonValue
+      }
+      programOffered: field(name: "programOffered") {
+        jsonValue
+      }
+      NurseryType: field(name: "nurseryType") {
+        jsonValue
+      }
+    }
+  }
+   emirateArabic: item(path: "/sitecore/content/SDD/SPEA/Home", language: $language) {
+    path
+  }  
+}
