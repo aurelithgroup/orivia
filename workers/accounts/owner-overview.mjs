@@ -56,6 +56,12 @@ export async function ownerOverview(env,{now=Date.now}={}){
  return {generatedAt:new Date(t).toISOString(),definitions:OVERVIEW_DEFINITIONS,counts,budgets};
 }
 
+/* Spreadsheet-safe CSV (ORI-METRIC-006): every cell quoted; a cell a spreadsheet would treat as a formula (= + - @, tab,
+   carriage return) gets a leading apostrophe. */
+export function csvCell(v){let s=v==null?'':String(v);if(/^[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
+export function organisationsCsv(rows){const head=['Name','Web name','City','Demo','Status','Active students','Active staff','Join requests','Published','Drafts','Admin'];
+ return [head,...rows.map(o=>[o.name,o.slug,o.city,o.demo?'yes':'no',o.status,o.totals.students,o.totals.staff,o.totals.requests,o.totals.published,o.totals.drafts,o.adminActive?'active':o.adminInvitePending?'invited':'none'])].map(r=>r.map(csvCell).join(',')).join('\r\n')+'\r\n'}
+
 /* Organisation directory for the owner: search by name, web name or city, with operational totals per organisation
    (no member names or emails). */
 export async function ownerOrganisations(db,{q='',now=Date.now}={}){

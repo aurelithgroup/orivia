@@ -9,7 +9,7 @@ import {handleAccountRequest} from '../workers/accounts/handler.mjs';
 import {OVERVIEW_DEFINITIONS} from '../workers/accounts/owner-overview.mjs';
 const wrap=sql=>{const statement=(text,args=[])=>({bind:(...v)=>statement(text,v),all:async()=>({results:sql.prepare(text).all(...args),meta:{changes:sql.prepare('SELECT changes() AS n').get().n},success:true}),first:async()=>sql.prepare(text).get(...args)||null,run:async()=>({meta:sql.prepare(text).run(...args),success:true})});
  return {prepare:text=>statement(text),exec:async text=>sql.exec(text),batch:async stmts=>{sql.exec('BEGIN IMMEDIATE');try{const out=[];for(const s of stmts)out.push(await s.all());sql.exec('COMMIT');return out}catch(e){sql.exec('ROLLBACK');throw e}}}};
-const sql=new DatabaseSync(':memory:');sql.exec('PRAGMA foreign_keys=ON;'+['schema','organisations','feedback'].map(n=>fs.readFileSync('workers/accounts/'+n+'.sql','utf8')).join('\n'));
+const sql=new DatabaseSync(':memory:');sql.exec('PRAGMA foreign_keys=ON;'+['schema','organisations','feedback','platform-audit'].map(n=>fs.readFileSync('workers/accounts/'+n+'.sql','utf8')).join('\n'));
 const budget=new DatabaseSync(':memory:');
 const T=Date.parse('2026-10-22T15:00:00Z'),day='2026-10-22',month='2026-10';
 const origin='https://accounts.example.test',env={ACCOUNTS_ENABLED:'1',ACCOUNTS_ORIGIN:origin,ACCOUNTS_SECRET:'test-only-owner-overview-secret-1234567890',ACCOUNTS_DB:wrap(sql),BUDGET_DB:wrap(budget),
@@ -63,6 +63,21 @@ assert.deepEqual(n.totals,{students:1,staff:1,requests:1,published:2,drafts:1});
 assert.equal((await call(owner,'/api/admin/orgs?q=%25')).data.organisations.length,0,'% is literal, not a wildcard');
 assert.equal((await call(owner,'/api/admin/orgs')).data.organisations.length,2);
 
+// Export (ORI-METRIC-006): owner only, formula-safe, bounded, audited without the search text.
+const callRaw=async(who,path)=>handleAccountRequest(new Request(origin+path,{headers:{Origin:origin,'cf-connecting-ip':'192.0.2.'+(++ip),...(who?{Cookie:who.cookie}:{})}}),env,{},{auth,organisationOptions:{now:()=>T}});
+for(const who of [student,admin,other,null])assert.ok([401,403].includes((await callRaw(who,'/api/admin/export/organisations.csv')).status),'export refused');
+r=await call(owner,'/api/admin/orgs','POST',{name:'=HYPERLINK("https://evil.example","Click")',slug:'formula-test',city:'+Dubai',demo:true});assert.equal(r.status,201);
+let res=await callRaw(owner,'/api/admin/export/organisations.csv');assert.equal(res.status,200);assert.match(res.headers.get('content-type'),/text\/csv/);assert.match(res.headers.get('content-disposition'),/attachment; filename="orivia-organisations-2026-10-22\.csv"/);
+let csv=(await res.text()).replace(/^﻿/,'');const lines=csv.trim().split('\r\n');
+assert.equal(lines[0],'"Name","Web name","City","Demo","Status","Active students","Active staff","Join requests","Published","Drafts","Admin"');
+const evil=lines.find(l=>l.includes('HYPERLINK'));assert.ok(evil.startsWith(`"'=HYPERLINK(""https://evil.example"",`),'formula neutralised and quotes escaped: '+evil);assert.ok(evil.includes(`"'+Dubai"`));
+assert.ok(lines.some(l=>l.startsWith('"Northbay University","northbay","Sharjah","yes","active","1","1","1","2","1","active"')));
+assert.doesNotMatch(csv,/northbay\.example|aisha|mariam/i,'no names or emails');
+res=await callRaw(owner,'/api/admin/export/organisations.csv?q=river');assert.equal((await res.text()).trim().split('\r\n').length,2,'filter bounds the export');
+const audits=sql.prepare("SELECT actor_id,action,detail FROM platform_audit ORDER BY created_at").all();assert.equal(audits.length,2);
+assert.deepEqual(audits.map(a=>[a.actor_id===owner.id,a.action,a.detail]),[[true,'export.organisations','{"rows":3,"filtered":false}'],[true,'export.organisations','{"rows":1,"filtered":true}']]);
+assert.ok(!audits.some(a=>a.detail.includes('river')),'search text not stored');
+sql.prepare("DELETE FROM organisations WHERE slug='formula-test'").run();
 // Missing sources are Unavailable, never 0.
 budget.exec('DROP TABLE spend_meter');sql.exec('DROP TABLE feedback_reports');
 r=await call(owner,'/api/admin/overview');assert.equal(r.status,200);

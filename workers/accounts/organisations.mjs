@@ -2,7 +2,7 @@ import QRCode from 'qrcode/lib/core/qrcode.js';
 import SVG from 'qrcode/lib/renderer/svg-tag.js';
 import {platformPage,mountPlatform} from './platform-ui.mjs';
 import {appHome} from './app-home.mjs';
-import {ownerOverview,ownerOrganisations} from './owner-overview.mjs';
+import {ownerOverview,ownerOrganisations,organisationsCsv} from './owner-overview.mjs';
 import {normaliseDetails,parseDetails,DetailsError} from './content-details.mjs';
 /* Plain page for /manage when the visitor isn't the owner account. No organisation or account details. */
 const manageRefusal=(signedOut,home)=>'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orivia management</title><style>body{font-family:system-ui,sans-serif;max-width:520px;margin:15vh auto;padding:0 20px;line-height:1.5;color:#1C2733;background:#F7F8FA}a{color:#7A5300}@media (prefers-color-scheme:dark){body{color:#E8EDF3;background:#0E1620}a{color:#F3C04A}}</style></head><body><h1>Orivia management</h1><p>'+(signedOut?'Sign in to Orivia with the management account, then open this page again.':'This page is only for Orivia’s management account.')+'</p><p><a href="'+home+'">'+(signedOut?'Go to sign-in':'Back to Orivia')+'</a></p></body></html>';
@@ -102,6 +102,11 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
   };
   if(path==='/api/me/memberships'&&req.method==='GET')return json({platformRoles:(await all('SELECT role FROM platform_roles WHERE user_id=?',actor)).map(r=>r.role),memberships:(await all("SELECT m.org_id,m.role,m.status,o.name,o.slug,o.demo FROM organisation_memberships m JOIN organisations o ON o.id=m.org_id WHERE m.user_id=? AND m.status IN ('active','requested') AND o.status='active'",actor)).map(m=>({organisationId:m.org_id,name:m.name,slug:m.slug,demo:!!m.demo,role:m.role,status:m.status}))});
   // Founder overview: defined counts and authoritative budgets only (owner-overview.mjs). Owners only.
+  // Directory export (ORI-METRIC-006): owner only, at most 100 rows, formula-safe, audited without the search text.
+  if(path==='/api/admin/export/organisations.csv'){await requireOwner();if(req.method!=='GET')deny(405,'method_not_allowed');
+   const qtext=url.searchParams.get('q')||'',rows=await ownerOrganisations(db,{q:qtext,now:clock});
+   try{await q('INSERT INTO platform_audit(id,actor_id,action,detail,created_at) VALUES (?,?,?,?,?)',id(),actor,'export.organisations',JSON.stringify({rows:rows.length,filtered:qtext.length>0}),clock()).run()}catch(_){deny(503,'audit_unavailable')}
+   return new Response('﻿'+organisationsCsv(rows),{headers:{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="orivia-organisations-'+new Date(clock()).toISOString().slice(0,10)+'.csv"','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}})}
   if(path==='/api/admin/overview'){await requireOwner();if(req.method!=='GET')deny(405,'method_not_allowed');return json(await ownerOverview(env,{now:clock}))}
   if(path==='/api/admin/orgs'){
    // Owner directory: optional ?q= search (name, web name, city) with operational totals; no member names or emails.
