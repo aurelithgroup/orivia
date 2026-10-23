@@ -653,6 +653,7 @@ function draw({newReply=null,scroll=false}={}){
    if('speechSynthesis' in window){const lb=document.createElement('button');lb.type='button';lb.className='listen-btn';lb.textContent=uiText('▶ Listen');lb.setAttribute('aria-pressed','false');lb.setAttribute('aria-label',uiText('Listen to this reply'));lb.onclick=()=>listen(spokenText(t.content),lb,{language:t.meta?.lang||null});actions.append(lb)}
    const more=document.createElement('details'),summary=document.createElement('summary');summary.textContent='⋯';summary.setAttribute('aria-label',uiText('More options'));more.append(summary);
    const select=document.createElement('button');select.type='button';select.textContent=uiText('Select reply');select.onclick=()=>{window.OriviaChatMotion?.finishAll();const r=document.createRange();r.selectNodeContents(txt);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);more.open=false};more.append(select);
+   const shareBtn=document.createElement('button');shareBtn.type='button';shareBtn.textContent=uiText('Share…');shareBtn.onclick=()=>{more.open=false;openShareDialog(turns.indexOf(t))};more.append(shareBtn);
    const regenerate=document.createElement('button');regenerate.type='button';regenerate.textContent=uiText('Regenerate');regenerate.disabled=busy;if(busy)regenerate.dataset.busyLock='1';regenerate.onclick=()=>replayTurn(turns.indexOf(t)-1);more.append(regenerate);
    feedbackControls(t,t.meta?.replyRef||store.active+':'+turns.indexOf(t),actions,more,p);actions.append(more);p.append(actions);
   }
@@ -687,6 +688,38 @@ async function replayTurn(index,text){
 
 /* Reply feedback (ORI-CHAT-007/008): optional thumbs and Report a problem. Signed-in only, sent to the Orivia team's
    review queue; guests are told to sign in, never shown a false success. The reply text goes only if ticked. */
+/* Shared links (ORI-CHAT-009/010): the person reviews exactly which messages go in; files, document-based replies and
+   university members-only replies can't be selected. The link is shown once; it can be revoked or deleted later. */
+function shareApi(path,method,body){const u=window.OriviaAccounts?.user;if(!u)return Promise.reject(Object.assign(Error('sign_in'),{code:'sign_in'}));
+ return fetch('/api/account/shares'+path,{method,credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(12000),headers:{'X-Orivia-Account':u.id,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})}).then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(d.error||'failed'),{code:d.error||'failed',status:r.status});return d})}
+const SHARE_WHY={attachment:'Has an attached file: files are never shared.',document:'May include details from your document.',university:'May include university members-only guidance.',empty:'Nothing to share.'};
+function openShareDialog(replyIndex){
+ const c=activeChat();if(!c)return;closeHandoff();
+ const d=document.createElement('dialog');d.className='handoff-dialog share-dialog';d.setAttribute('aria-labelledby','share-title');
+ const shell=el('div','handoff-shell'),top=el('div','handoff-top'),h=el('h2','',uiText('Share part of this chat'));h.id='share-title';top.append(h,button('Close','btn quiet',()=>d.close()));shell.append(top);
+ if(!window.OriviaAccounts?.user){shell.append(el('p','',uiText('Sign in to share. Shared links belong to your account so you can withdraw them.')));d.append(shell);document.body.append(d);d.addEventListener('close',()=>d.remove());d.showModal();return}
+ const list=window.OriviaShare.candidates({...c,turns},s=>safeSources(s)),selected=window.OriviaShare.defaults(list,replyIndex);
+ const body=el('div','share-body');shell.append(body);
+ const draw=()=>{body.replaceChildren(el('p','tiny',uiText('Anyone with the link can read the messages you tick, until it expires. It doesn’t give access to your account, files or university spaces. Orivia’s answers stay labelled as Orivia’s.')));
+  const box=el('div','share-list');for(const x of list){const row=el('label','share-row'+(x.excluded?' is-excluded':''));const cb=document.createElement('input');cb.type='checkbox';cb.checked=selected.has(x.index)&&!x.excluded;cb.disabled=!!x.excluded;cb.onchange=()=>{cb.checked?selected.add(x.index):selected.delete(x.index);count.textContent=uiText('Messages included:')+' '+[...selected].filter(i=>!list[i].excluded).length};
+   const txt=el('span','');txt.append(el('strong','',uiText(x.role==='user'?'You':'Orivia')),' ',el('span','tiny',x.content.slice(0,140)+(x.content.length>140?'…':'')));if(x.excluded)txt.append(el('span','tiny share-why',uiText(SHARE_WHY[x.excluded])));row.append(cb,txt);box.append(row)}
+  const count=el('p','tiny',uiText('Messages included:')+' '+[...selected].filter(i=>!list[i].excluded).length);
+  const title=document.createElement('input');title.value=c.title||'';title.maxLength=120;title.setAttribute('aria-label',uiText('Title'));
+  const exp=document.createElement('select');for(const [v,l] of [[1,'1 day'],[7,'7 days'],[30,'30 days']]){const o=document.createElement('option');o.value=v;o.textContent=uiText(l);exp.append(o)}exp.value='7';exp.setAttribute('aria-label',uiText('Link expires after'));
+  const out=el('div','share-out');out.setAttribute('role','status');
+  const create=button('Create link','btn',async()=>{const p=window.OriviaShare.payload(list,selected,title.value,exp.value);if(!p.messages.length){out.textContent=uiText('Tick at least one message.');return}create.disabled=true;out.textContent=uiText('Creating…');
+   try{const r=await shareApi('','POST',p);const link=document.createElement('input');link.readOnly=true;link.value=r.url;link.className='share-link';const copy=button('Copy link','btn quiet small',async()=>{try{await navigator.clipboard.writeText(r.url);copy.textContent=uiText('Copied')}catch(_){link.select()}});
+    out.replaceChildren(el('p','tiny',uiText('Link created. It works until')+' '+new Date(r.expiresAt).toLocaleString(uiLanguage())+'. '+uiText('Copy it now: for your privacy it isn’t shown again.')),link,copy);loadLinks()}
+   catch(e){create.disabled=false;out.textContent=e.code==='too_many_shares'?uiText('You have too many active links. Withdraw some below first.'):uiText('Couldn’t create the link. Nothing was shared.')}});
+  const links=el('div','share-links');
+  const loadLinks=async()=>{try{const r=await shareApi('','GET');links.replaceChildren(el('h3','',uiText('Your shared links')));if(!r.shares.length)links.append(el('p','tiny',uiText('No shared links yet.')));
+   for(const s of r.shares){const row=el('div','share-row');row.append(el('span','',s.title+' · '+uiText(s.state==='active'?'Active':s.state==='revoked'?'Withdrawn':'Expired')+' · '+new Date(s.expiresAt).toLocaleDateString(uiLanguage())));
+    if(s.state==='active')row.append(button('Withdraw','btn quiet small',async()=>{try{await shareApi('/'+encodeURIComponent(s.id)+'/revoke','POST',{});loadLinks()}catch(_){out.textContent=uiText('Couldn’t withdraw the link. Try again.')}}));
+    const del=button('Delete','btn quiet small',async()=>{if(del.dataset.sure!=='1'){del.dataset.sure='1';del.textContent=uiText('Tap again to delete');return}try{await shareApi('/'+encodeURIComponent(s.id),'DELETE');loadLinks()}catch(_){out.textContent=uiText('Couldn’t delete the link. Try again.')}});row.append(del);links.append(row)}}
+   catch(_){links.replaceChildren(el('p','tiny',uiText('Couldn’t load your shared links.')))}};
+  body.append(box,count,el('label','field',uiText('Title')),title,el('label','field',uiText('Link expires after')),exp,create,out,links);loadLinks()};
+ draw();d.append(shell);document.body.append(d);d.addEventListener('close',()=>d.remove());d.showModal();
+}
 function feedbackApi(path,method,body){const u=window.OriviaAccounts?.user;if(!u)return Promise.reject(Object.assign(Error('sign_in'),{code:'sign_in'}));
  return fetch('/api/account/feedback/'+path,{method,credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(12000),headers:{'X-Orivia-Account':u.id,'Content-Type':'application/json'},body:JSON.stringify(body)}).then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(d.error||'failed'),{code:d.error||'failed',status:r.status});return d},e=>{throw Object.assign(e instanceof Error?e:Error('network'),{code:'network'})})}
 // Only a 4xx refusal proves nothing was saved. A lost response, timeout or server error may come after the save, so say

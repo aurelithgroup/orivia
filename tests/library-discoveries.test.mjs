@@ -76,5 +76,5 @@ res=run(true);assert.equal(JSON.stringify(res.library),'{"hidden":["a|b"]}');ass
 const acc=fs.readFileSync('workers/trial-ui/accounts.js','utf8');
 assert.ok(acc.includes("chats:'orivia-private-chats-v1'")&&acc.includes("const key=k=>scope&&privateKeys.has(k)?prefix(scope)+k:k;"),'chats record (and its Library state) is stored per account');
 assert.ok(chat.includes("let store={chats:[],active:null,library:{hidden:[]}};")&&chat.includes("storeLocked=false;store={chats:[],active:null,library:{hidden:[]}};"),'switching account reloads a fresh Library state');
-assert.ok(fs.readFileSync('tools/embed-trial-ui.mjs','utf8').includes("library-discoveries.js','utf8')+'\\n'+chat"),'module ships before chat.js');
+{const line=fs.readFileSync('tools/embed-trial-ui.mjs','utf8').split('\n').find(l=>l.startsWith("swap('/chat.js'"));assert.ok(line&&line.indexOf("library-discoveries.js")>0&&line.indexOf("library-discoveries.js")<line.lastIndexOf('+chat)'),'module ships before chat.js')}
 console.log('Library discoveries: 106 of 106 shown via paging, dedupe and favourites, removal stored once with Restore, chats unchanged: pass.');

@@ -13,7 +13,7 @@ const ctx={access:{getIdentity:async()=>({email:'designer@example.test'})},waitU
 let lastOtp=null;
 if(process.env.HARNESS_ACCOUNTS){
  const {DatabaseSync}=await import('node:sqlite');const sql=new DatabaseSync(':memory:');
- sql.exec('PRAGMA foreign_keys=ON;'+['schema','organisations','feedback','platform-audit'].map(n=>fs.readFileSync(repo+'/workers/accounts/'+n+'.sql','utf8')).join('\n'));
+ sql.exec('PRAGMA foreign_keys=ON;'+['schema','organisations','feedback','platform-audit','shares'].map(n=>fs.readFileSync(repo+'/workers/accounts/'+n+'.sql','utf8')).join('\n'));
  const st=(text,args=[])=>({bind:(...v)=>st(text,v),all:async()=>({results:sql.prepare(text).all(...args),meta:{changes:sql.prepare('SELECT changes() AS n').get().n},success:true}),first:async()=>sql.prepare(text).get(...args)||null,run:async()=>({meta:sql.prepare(text).run(...args),success:true})});
  Object.assign(env,{ACCOUNTS_ENABLED:'1',ACCOUNTS_UI:'1',ACCOUNTS_ORIGIN:'https://app.localhost',ACCOUNTS_SECRET:'harness-only-accounts-secret-0123456789abcdef',
   ACCOUNTS_DB:{prepare:t=>st(t),exec:async t=>sql.exec(t),batch:async s=>{sql.exec('BEGIN IMMEDIATE');try{const o=[];for(const x of s)o.push(await x.all());sql.exec('COMMIT');return o}catch(e){sql.exec('ROLLBACK');throw e}}},

@@ -2946,5 +2946,129 @@
   "Could not load the accounts on this device.": {
     "fr": "Impossible de charger les comptes de cet appareil.",
     "ar": "تعذّر تحميل الحسابات على هذا الجهاز."
+  },
+  "Share…": {
+    "fr": "Partager…",
+    "ar": "مشاركة…"
+  },
+  "Share part of this chat": {
+    "fr": "Partager une partie de cette conversation",
+    "ar": "مشاركة جزء من هذه المحادثة"
+  },
+  "Sign in to share. Shared links belong to your account so you can withdraw them.": {
+    "fr": "Connectez-vous pour partager. Les liens partagés appartiennent à votre compte pour que vous puissiez les retirer.",
+    "ar": "سجّل الدخول للمشاركة. الروابط المشتركة تابعة لحسابك لتتمكن من سحبها."
+  },
+  "Anyone with the link can read the messages you tick, until it expires. It doesn’t give access to your account, files or university spaces. Orivia’s answers stay labelled as Orivia’s.": {
+    "fr": "Toute personne disposant du lien peut lire les messages cochés jusqu’à son expiration. Il ne donne accès ni à votre compte, ni à vos fichiers, ni aux espaces universitaires. Les réponses d’Orivia restent identifiées comme telles.",
+    "ar": "يمكن لأي شخص لديه الرابط قراءة الرسائل التي تحددها حتى انتهاء صلاحيته. لا يمنح الوصول إلى حسابك أو ملفاتك أو مساحات الجامعة. تبقى إجابات Orivia موسومة باسمه."
+  },
+  "Has an attached file: files are never shared.": {
+    "fr": "Contient un fichier joint : les fichiers ne sont jamais partagés.",
+    "ar": "تحتوي على ملف مرفق: لا تتم مشاركة الملفات أبدًا."
+  },
+  "May include details from your document.": {
+    "fr": "Peut contenir des informations de votre document.",
+    "ar": "قد تتضمن تفاصيل من مستندك."
+  },
+  "May include university members-only guidance.": {
+    "fr": "Peut contenir des conseils réservés aux membres de l’université.",
+    "ar": "قد تتضمن إرشادات مخصصة لأعضاء الجامعة فقط."
+  },
+  "Nothing to share.": {
+    "fr": "Rien à partager.",
+    "ar": "لا شيء للمشاركة."
+  },
+  "Messages included:": {
+    "fr": "Messages inclus :",
+    "ar": "الرسائل المضمنة:"
+  },
+  "Title": {
+    "fr": "Titre",
+    "ar": "العنوان"
+  },
+  "1 day": {
+    "fr": "1 jour",
+    "ar": "يوم واحد"
+  },
+  "7 days": {
+    "fr": "7 jours",
+    "ar": "7 أيام"
+  },
+  "30 days": {
+    "fr": "30 jours",
+    "ar": "30 يومًا"
+  },
+  "Link expires after": {
+    "fr": "Le lien expire après",
+    "ar": "تنتهي صلاحية الرابط بعد"
+  },
+  "Create link": {
+    "fr": "Créer le lien",
+    "ar": "إنشاء الرابط"
+  },
+  "Tick at least one message.": {
+    "fr": "Cochez au moins un message.",
+    "ar": "حدد رسالة واحدة على الأقل."
+  },
+  "Creating…": {
+    "fr": "Création…",
+    "ar": "جارٍ الإنشاء…"
+  },
+  "Copy link": {
+    "fr": "Copier le lien",
+    "ar": "نسخ الرابط"
+  },
+  "Link created. It works until": {
+    "fr": "Lien créé. Il fonctionne jusqu’au",
+    "ar": "تم إنشاء الرابط. يعمل حتى"
+  },
+  "Copy it now: for your privacy it isn’t shown again.": {
+    "fr": "Copiez-le maintenant : pour votre confidentialité, il ne sera plus affiché.",
+    "ar": "انسخه الآن: لخصوصيتك لن يُعرض مرة أخرى."
+  },
+  "You have too many active links. Withdraw some below first.": {
+    "fr": "Vous avez trop de liens actifs. Retirez-en d’abord ci-dessous.",
+    "ar": "لديك روابط نشطة كثيرة. اسحب بعضها أدناه أولاً."
+  },
+  "Couldn’t create the link. Nothing was shared.": {
+    "fr": "Impossible de créer le lien. Rien n’a été partagé.",
+    "ar": "تعذّر إنشاء الرابط. لم تتم مشاركة شيء."
+  },
+  "Your shared links": {
+    "fr": "Vos liens partagés",
+    "ar": "روابطك المشتركة"
+  },
+  "No shared links yet.": {
+    "fr": "Aucun lien partagé pour l’instant.",
+    "ar": "لا توجد روابط مشتركة بعد."
+  },
+  "Active": {
+    "fr": "Actif",
+    "ar": "نشط"
+  },
+  "Withdrawn": {
+    "fr": "Retiré",
+    "ar": "مسحوب"
+  },
+  "Expired": {
+    "fr": "Expiré",
+    "ar": "منتهي"
+  },
+  "Withdraw": {
+    "fr": "Retirer",
+    "ar": "سحب"
+  },
+  "Couldn’t withdraw the link. Try again.": {
+    "fr": "Impossible de retirer le lien. Réessayez.",
+    "ar": "تعذّر سحب الرابط. حاول مرة أخرى."
+  },
+  "Couldn’t delete the link. Try again.": {
+    "fr": "Impossible de supprimer le lien. Réessayez.",
+    "ar": "تعذّر حذف الرابط. حاول مرة أخرى."
+  },
+  "Couldn’t load your shared links.": {
+    "fr": "Impossible de charger vos liens partagés.",
+    "ar": "تعذّر تحميل روابطك المشتركة."
   }
 }
