@@ -182,6 +182,8 @@ jobs:
           node tests/offline-updates.test.mjs
           node --experimental-sqlite tests/device-accounts.test.mjs
           node --experimental-sqlite tests/connectors.test.mjs
+          node --experimental-sqlite tests/ina-connector-duplicate.test.mjs
+          node tests/ina-reply-origin.test.mjs
           node --experimental-sqlite tests/restore-drill.test.mjs
           node tests/language-matrix.test.mjs
           node --experimental-sqlite tests/shares.test.mjs
