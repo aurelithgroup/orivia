@@ -11,6 +11,7 @@ function show(){
  loadChats();const c=activeChat();turns=c?c.turns.slice():[];
 
  draw();renderChats();tab('home');window.OriviaNotifications?.changed();
+ restoreUpdateDraft();
 }
 /* ===== Chat history: saved on this device (localStorage), no account, no sync =====
    store = {chats:[{id,title,titled,created,updated,pinned,archived,turns}], active}
@@ -921,10 +922,28 @@ window.oriviaGo=tab;
 /* Installable app (21 Oct): register the app worker for this app's scope; show an honest offline note. */
 const APP_SCOPE=location.pathname.startsWith('/app')?'/app':'/';
 // Registered after the page has loaded (now, if it already has), so it never slows the first screen.
-let appWorkerAsked=false;function registerAppWorker(){if(appWorkerAsked||!('serviceWorker' in navigator))return;appWorkerAsked=true;navigator.serviceWorker.register('/orivia-sw.js',{scope:APP_SCOPE}).catch(()=>{})}
+// One worker for the app: any other registration whose scope overlaps the app's (an older notifications worker, say) is
+// removed, so two workers never compete for the same pages (ORI-SEC-008).
+function competingWorkers(regs,origin,scope){const app=origin+scope;return regs.filter(r=>{const url=r.active?.scriptURL||r.waiting?.scriptURL||r.installing?.scriptURL||'';
+ if(!url.startsWith(origin)||new URL(url).pathname==='/orivia-sw.js')return false;return r.scope.startsWith(app)||app.startsWith(r.scope)})}
+let appWorkerAsked=false;function registerAppWorker(){if(appWorkerAsked||!('serviceWorker' in navigator))return;appWorkerAsked=true;
+ navigator.serviceWorker.getRegistrations?.().then(regs=>{for(const r of competingWorkers(regs,location.origin,APP_SCOPE))r.unregister().catch(()=>{})}).catch(()=>{});
+ navigator.serviceWorker.register('/orivia-sw.js',{scope:APP_SCOPE}).catch(()=>{})}
 if(document.readyState==='complete')setTimeout(registerAppWorker,0);else{window.addEventListener('load',registerAppWorker);setTimeout(registerAppWorker,4000)} // load can wait on slow third-party parts
 // A new app version took over: offer a reload rather than reloading under the person (they may be typing).
-if('serviceWorker' in navigator){const hadController=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!hadController||$('update-note'))return;const n=el('div','offline-note',uiText('Orivia has been updated.'));n.id='update-note';n.setAttribute('role','status');const b=el('button','ask',uiText('Reload'));b.type='button';b.onclick=()=>location.reload();n.append(' ',b);$('offline-note')?.before(n)})}
+if('serviceWorker' in navigator){const hadController=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!hadController||$('update-note'))return;const n=el('div','offline-note',uiText('Orivia has been updated.'));n.id='update-note';n.setAttribute('role','status');const b=el('button','ask',uiText('Reload'));b.type='button';b.onclick=()=>reloadKeepingDraft(n);n.append(' ',b);$('offline-note')?.before(n)})}
+/* Updating keeps what the person was typing (ORI-SEC-008): the composer text is held for this account and chat for 10
+   minutes across the reload. A pending file or a reply in progress can't be carried over, so the reload waits for them. */
+const draftKey=()=>'orivia-update-draft:'+(globalThis.OriviaAccounts?.epoch||'guest');
+function reloadKeepingDraft(note){
+ if(busy){if(note)note.lastChild.textContent=uiText('Reload');$('status').textContent=uiText('Orivia is still replying. Reload when the reply has arrived.');return false}
+ if(pendingAttachment){$('status').textContent=uiText('Send or remove your attached file first, then reload. Files can’t be kept through an update.');return false}
+ try{const text=$('msg').value;if(text.trim())sessionStorage.setItem(draftKey(),JSON.stringify({text:text.slice(0,4000),chat:store.active,at:Date.now()}));else sessionStorage.removeItem(draftKey())}catch(_){}
+ location.reload();return true}
+function restoreUpdateDraft(){try{const raw=sessionStorage.getItem(draftKey());if(!raw)return;sessionStorage.removeItem(draftKey());const d=JSON.parse(raw);
+ if(!d||typeof d.text!=='string'||Date.now()-Number(d.at)>600000||$('msg').value)return;if(d.chat&&store.chats.some(c=>c.id===d.chat)&&store.active!==d.chat)openChat(d.chat);
+ $('msg').value=d.text;grow();tab('chat');$('status').textContent=uiText('Orivia was updated. Your unsent message is still here.')}catch(_){}}
+window.OriviaUpdate={reloadKeepingDraft,restoreUpdateDraft};
 function showOffline(){const n=$('offline-note');if(n)n.hidden=navigator.onLine!==false}
 window.addEventListener('online',showOffline);window.addEventListener('offline',showOffline);showOffline();
 let installPrompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;renderInstall()});window.addEventListener('appinstalled',()=>{installPrompt=null;renderInstall()});

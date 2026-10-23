@@ -1,0 +1,17 @@
+{
+ "check": "Update reload keeps the unsent draft; reload refused while a reply is in progress (local harness, headless Chrome; reply stubbed). Service-worker cache rules: tests/offline-updates.test.mjs runs the real worker.",
+ "ranAt": "2026-10-23T03:53:04.107Z",
+ "results": {
+  "upd-busy": {
+   "refused": true,
+   "status": "Orivia is still replying. Reload when the reply has arrived."
+  },
+  "upd-save": "reloading",
+  "upd-save check": {
+   "composer": "My unsent question about the visa medical",
+   "status": "Orivia was updated. Your unsent message is still here.",
+   "draftKeyLeft": false,
+   "chatTab": "All"
+  }
+ }
+}

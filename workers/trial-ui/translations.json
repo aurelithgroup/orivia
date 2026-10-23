@@ -2890,5 +2890,17 @@
   "Stopped. Your earlier version is back.": {
     "fr": "Arrêté. Votre version précédente est revenue.",
     "ar": "تم الإيقاف. عادت نسختك السابقة."
+  },
+  "Orivia is still replying. Reload when the reply has arrived.": {
+    "fr": "Orivia répond encore. Rechargez quand la réponse est arrivée.",
+    "ar": "لا يزال Orivia يرد. أعد التحميل بعد وصول الرد."
+  },
+  "Send or remove your attached file first, then reload. Files can’t be kept through an update.": {
+    "fr": "Envoyez ou retirez d’abord votre fichier joint, puis rechargez. Les fichiers ne peuvent pas être conservés lors d’une mise à jour.",
+    "ar": "أرسل الملف المرفق أو أزله أولاً، ثم أعد التحميل. لا يمكن الاحتفاظ بالملفات أثناء التحديث."
+  },
+  "Orivia was updated. Your unsent message is still here.": {
+    "fr": "Orivia a été mis à jour. Votre message non envoyé est toujours là.",
+    "ar": "تم تحديث Orivia. رسالتك غير المرسلة لا تزال هنا."
   }
 }
