@@ -93,7 +93,15 @@
    // Done marks are private to the student (staff totals are paused; Ina 1374ec9).
    if(prog)out.push(node('p','tiny','Your Done marks are private: only you can see them.'));
    out.push(node('p','tiny','Application progress from your university’s own systems is not connected yet.'));
-   const manage=node('a','btn quiet','Manage membership');manage.href='/platform';out.push(manage);body.replaceChildren(...out);
+   const manage=node('a','btn quiet','Manage membership');manage.href='/platform';out.push(manage);
+   // Leaving (ORI-STUDENT-008): says what changes and what stays, asks twice, then closes the space.
+   const leaveNote=node('p','tiny','Leaving ends your membership: its members-only guides and dates close for you and it won’t send you alerts. Your own chats, plans, reminders and files stay yours. Copies you already saved or downloaded aren’t changed, and nothing on anyone else’s device is erased.');
+   const leaveMsg=node('p','tiny');leaveMsg.setAttribute?.('role','status');
+   const leave=node('button','btn quiet small','Leave '+m.name,true);leave.type='button';leave.onclick=async()=>{
+    if(leave.dataset.sure!=='1'){leave.dataset.sure='1';leave.textContent=t('Tap again to leave');return}
+    leave.disabled=true;try{await post('/api/me/orgs/'+encodeURIComponent(m.organisationId)+'/leave',id,{confirm:'leave'});if(!current(id,g))return;window.OriviaChat?.clearOrgContextFor?.(m.organisationId);close();leaveAddress();refresh()}
+    catch(_){leave.disabled=false;leave.dataset.sure='';leave.textContent='Leave '+m.name;leaveMsg.textContent=t('Couldn’t leave. If you’re this organisation’s only admin, hand over to another admin first; otherwise try again.')}};
+   out.push(leaveNote,leave,leaveMsg);body.replaceChildren(...out);
   }catch(_){if(current(id,g))body.replaceChildren(node('p','notice','This space couldn’t be opened. Your access may have changed. Close it and refresh your spaces.'));}
  }
  async function refresh(){

@@ -11,7 +11,7 @@ assert.ok(nav.includes('body[data-nav-signed-in] header.top .wordmark{position:a
 assert.ok(page.includes('.life-heading h1,#calendar-panel .jhead h2,#settings-view .section>h2,#empty>h2{font-family:Georgia'));
 // 3. Calendar: one quiet Add to calendar button, Remove behind ⋯ (still "Tap again"), no amber-filled links.
 assert.ok(chat.includes("button(uiText('Add to calendar')+' ▾','cal-add'")&&chat.includes("rm.hidden=true;const more=button('⋯','cal-more'"));
-assert.ok(chat.includes("rm.textContent=uiText('Tap again to remove')"),'removal still asks twice');
+assert.ok(chat.includes("rm.textContent=uiText('Tap again to remove it from Orivia. Copies you added to your phone’s calendar stay.')"),'removal still asks twice');
 assert.doesNotMatch(page,/\.ev \.acts a\.dev\{background:var\(--amber\)/);
 // 4. Chat: names not shown, still read by screen readers.
 assert.ok(page.includes('.bubble>b{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)'));

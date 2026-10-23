@@ -1,0 +1,26 @@
+{
+ "purpose": "Independent check of requirements marked 'existing' against their acceptance criteria (founder instruction, 23 Oct). verified = a named test exercises the criterion; partial = some of it; gap = not met or not tested, with the fix.",
+ "items": [
+  {"id":"ORI-AI-001","verdict":"verified","evidence":"tests/research-agent.test.mjs (model-chosen route, policy fallback); tests/research-loop.test.mjs (404/dead pages handled, no hardcoded names: synthetic schools)"},
+  {"id":"ORI-AI-002","verdict":"verified","evidence":"tests/assistant.test.mjs:44 (experience claims need a community source and can't rest on government); tests/research-web-evidence.test.mjs:53 (listing site vs regulator kept apart)"},
+  {"id":"ORI-AI-003","verdict":"verified","evidence":"tests/research-web-evidence.test.mjs:64 (own websites, labelled); tests/school-sites.test.mjs:102-106 (identity not established → candidates, no site read)"},
+  {"id":"ORI-AI-004","verdict":"verified","evidence":"tests/research-loop.test.mjs:206,233-237 (Grade never converted to Year); :114 (Dubai: no regulator connected, said plainly); tests/research-agent.test.mjs:58 (emirate vs city)"},
+  {"id":"ORI-AI-005","verdict":"verified","evidence":"tests/answer-accuracy.test.mjs (Gold/Silver price mixing rejected); tests/research-loop.test.mjs:227,230 (menu curricula and related-school sections excluded); tests/school-sites.test.mjs:109 (never another school's facts)"},
+  {"id":"ORI-AI-006","verdict":"verified","evidence":"tests/research-web-evidence.test.mjs:53 (site suggests British but SPEA lists American, stated); tests/school-task-integration.test.mjs (contradictory evidence kept)"},
+  {"id":"ORI-AI-007","verdict":"verified","evidence":"tests/research-loop.test.mjs:58,73-77 (coverage.complete false; 'all' pages further without repeats, honest coverage)"},
+  {"id":"ORI-AI-008","verdict":"verified","evidence":"tests/school-task-integration.test.mjs (expand without repeats, topic change); tests/research-loop.test.mjs:200 (a fresh find doesn't inherit earlier constraints)"},
+  {"id":"ORI-AI-009","verdict":"gap→fixed","evidence":"Before: safeQuery only stripped 'my son …' phrases inside the query; a stated name could be searched. Fixed 7c1396c: conversationNames + server-side removal; tests/assistant-safety.test.mjs (fails on the old code)."},
+  {"id":"ORI-AI-010","verdict":"gap→fixed","evidence":"Before: read_page accepted any https host, so an injected page could send Orivia to a collector URL. Fixed 7c1396c: page-only hosts and name-carrying URLs refused; SSRF guards (https, no IP/localhost/ports/credentials, same-host redirects) were already in makeTools.fetchPage. tests/assistant-safety.test.mjs."},
+  {"id":"ORI-AI-011","verdict":"verified","evidence":"tests/assistant.test.mjs:136-147 (limit reached: no model call it can't finish); tests/research-agent.test.mjs + research-schools (search unavailable); tests/school-sites.test.mjs:106 (uncertain identity → candidates)"},
+  {"id":"ORI-AI-012","verdict":"verified","evidence":"tests/assistant.test.mjs:174-183 (Manchester Facebook room, deposit before viewing, pressure → scam-aware help and a landlord message drafted from the conversation)"},
+  {"id":"ORI-CHAT-001","verdict":"verified","evidence":"tests/research-loop.test.mjs (find → more → all → named check → correction → contacts); tests/research-follow-through.test.mjs; tests/assistant.test.mjs (landlord draft)"},
+  {"id":"ORI-CHAT-002","verdict":"verified","evidence":"tests/research-follow-through.test.mjs:18-20 ('yes please' → contacts, no new permission question)"},
+  {"id":"ORI-CHAT-011","verdict":"verified","evidence":"tests/chat-presentation-modules.test.mjs:5-6 ('hi' then a schools question → useful title; a manual title never changes)"},
+  {"id":"ORI-CHAT-012","verdict":"verified","evidence":"Search runs over store.chats, loaded from the account-scoped chats record; tests/account-client.test.mjs (real accounts.js scoping, other people's data preserved and separate)"},
+  {"id":"ORI-HOME-003","verdict":"verified","evidence":"profileForAI sends movedFrom/movingTo/city only (chat.js), never nationality or status; tests/chat-history.test.mjs"},
+  {"id":"ORI-HOME-007","verdict":"verified","evidence":"tests/onboarding-consent.test.mjs (agreement remembered; no second welcome)"},
+  {"id":"ORI-HOME-010","verdict":"gap→fixed","evidence":"Before: the settings record wasn't account-scoped, so tone, suggestions and natural voice carried to the next account. Fixed: settings scoped per account, language/theme/size device-wide; tests/settings-scope.test.mjs."},
+  {"id":"ORI-UX-008","verdict":"gap","evidence":"Account deletion explains its consequences; chat, file and reminder deletion only ask 'Tap again' without saying what stays or goes.","fix":"consequence text for each (in progress)"},
+  {"id":"ORI-STUDENT-008","verdict":"gap","evidence":"No way for a student to leave a university: only admin removal exists (organisations.mjs has no leave route).","fix":"leave route + student-space control with an explanation (in progress)"}
+ ]
+}

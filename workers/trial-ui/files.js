@@ -66,7 +66,7 @@
   const info=el('div','file-info'),name=el('strong','',f.name),meta=el('small','tiny',size(f.size)+' · '+new Date(f.createdAt).toLocaleDateString());info.append(name,meta);
   const actions=el('div','file-actions');
   const b=(label,fn,cls='ask')=>{const x=el('button',cls,t(label));x.type='button';x.onclick=fn;return x};
-  const del=b('Delete',async()=>{if(!del.dataset.armed){del.dataset.armed='1';del.textContent=t('Tap again to delete');setTimeout(()=>{delete del.dataset.armed;del.textContent=t('Delete')},4000);return}
+  const del=b('Delete',async()=>{if(!del.dataset.armed){del.dataset.armed='1';del.textContent=t('Tap again to delete this file from your Library. Chats that already read it keep what Orivia read.');setTimeout(()=>{delete del.dataset.armed;del.textContent=t('Delete')},4000);return}
    try{await store().remove(f.id);say(t('Deleted.'));await render()}catch(e){say(why(e),true)}});
   const ren=b('Rename',()=>{const form=el('form','row file-rename'),input=el('input');input.value=f.name;input.maxLength=120;input.setAttribute('aria-label',t('New name'));
    const save=el('button','btn small',t('Save'));save.type='submit';form.append(input,save);

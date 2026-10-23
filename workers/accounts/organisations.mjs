@@ -188,6 +188,16 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
    const b=await body(['share']);if(typeof b.share!=='boolean')deny(400,'invalid_sharing');
    if(b.share)await q('DELETE FROM organisation_progress_private WHERE org_id=? AND user_id=?',oid,actor).run();else await q('INSERT INTO organisation_progress_private(org_id,user_id) VALUES (?,?) ON CONFLICT DO NOTHING',oid,actor).run();
    return json({sharing:b.share})}
+  /* Leaving (ORI-STUDENT-008): the person ends their own membership (or cancels a pending request). Access to members-only
+     guides, dates and future alerts stops at once because every route checks an active membership; their Done marks for
+     this organisation are removed; personal chats, plans and files are untouched. The only admin must hand over first. */
+  m=path.match(/^\/api\/me\/orgs\/([^/]+)\/leave$/);
+  if(m&&req.method==='POST'){const oid=m[1];const b=await body(['confirm']);if(b.confirm!=='leave')deny(400,'confirmation_required');
+   const mem=await q("SELECT role,status FROM organisation_memberships WHERE org_id=? AND user_id=? AND status IN ('active','requested')",oid,actor).first();if(!mem)deny(404,'not_a_member');
+   if(mem.role==='admin'&&mem.status==='active'&&!await q("SELECT 1 AS yes FROM organisation_memberships WHERE org_id=? AND role='admin' AND status='active' AND user_id<>?",oid,actor).first())deny(409,'transfer_organisation_admin_first');
+   await write(q("UPDATE organisation_memberships SET status='left',updated_at=? WHERE org_id=? AND user_id=? AND status IN ('active','requested')",clock(),oid,actor),actor,oid,'membership.left',actor);
+   try{await ensureProgress();await q('DELETE FROM organisation_progress WHERE org_id=? AND user_id=?',oid,actor).run()}catch(_){}
+   return json({ok:true,status:'left'})}
   m=path.match(/^\/api\/me\/orgs\/([^/]+)$/);
   if(m){const oid=m[1];if(req.method==='GET'){await member(oid,'space.view');return json({organisation:publicOrg(await org(oid)),content:(await all("SELECT * FROM organisation_content WHERE org_id=? AND status='published' ORDER BY updated_at DESC LIMIT 100",oid)).map(content),progress:await (async()=>{await ensureProgress();const done=(await all('SELECT content_id FROM organisation_progress WHERE org_id=? AND user_id=?',oid,actor)).map(r=>r.content_id);return {available:true,done,private:true}})(),applicationProgress:{available:false,reason:'institution_integration_not_connected'},personalDataShared:false})}if(req.method==='DELETE'){await org(oid);await body([]);const current=await q("SELECT * FROM organisation_memberships WHERE org_id=? AND user_id=? AND status IN ('active','requested')",oid,actor).first();if(!current)deny(404,'membership_not_found');if(current.role==='admin')deny(409,'transfer_admin_first');await db.batch([q("UPDATE organisation_memberships SET status='left',updated_at=? WHERE org_id=? AND user_id=?",clock(),oid,actor),audit(actor,oid,'membership.left',actor)]);return json({left:true,personalDataChanged:false})}}
   deny(404,'not_found');

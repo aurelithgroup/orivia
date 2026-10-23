@@ -3078,5 +3078,29 @@
   "You decide what is shared, so read it first. Orivia blocks replies it knows were based on your documents or a university guide, and older replies it can’t check, but it can’t guarantee your own text is free of private details.": {
     "fr": "C’est vous qui décidez de ce qui est partagé : relisez d’abord. Orivia bloque les réponses qu’il sait basées sur vos documents ou un guide universitaire, ainsi que les réponses plus anciennes qu’il ne peut pas vérifier, mais il ne peut pas garantir que votre propre texte ne contient pas d’informations privées.",
     "ar": "أنت من يقرر ما تتم مشاركته، فاقرأه أولاً. يحظر Orivia الردود التي يعرف أنها مبنية على مستنداتك أو على دليل جامعي، والردود الأقدم التي لا يمكنه التحقق منها، لكنه لا يضمن خلو نصك من التفاصيل الخاصة."
+  },
+  "Tap again to delete this chat for good. Reminders you saved and files in your Library stay.": {
+    "fr": "Touchez à nouveau pour supprimer définitivement cette conversation. Les rappels enregistrés et les fichiers de votre bibliothèque restent.",
+    "ar": "اضغط مرة أخرى لحذف هذه المحادثة نهائيًا. تبقى التذكيرات المحفوظة والملفات في مكتبتك."
+  },
+  "Tap again to delete this file from your Library. Chats that already read it keep what Orivia read.": {
+    "fr": "Touchez à nouveau pour supprimer ce fichier de votre bibliothèque. Les conversations qui l’ont déjà lu gardent ce qu’Orivia en a lu.",
+    "ar": "اضغط مرة أخرى لحذف هذا الملف من مكتبتك. تحتفظ المحادثات التي قرأته بما قرأه Orivia منه."
+  },
+  "Tap again to remove it from Orivia. Copies you added to your phone’s calendar stay.": {
+    "fr": "Touchez à nouveau pour le retirer d’Orivia. Les copies ajoutées au calendrier de votre téléphone restent.",
+    "ar": "اضغط مرة أخرى لإزالته من Orivia. تبقى النسخ التي أضفتها إلى تقويم هاتفك."
+  },
+  "Leaving ends your membership: its members-only guides and dates close for you and it won’t send you alerts. Your own chats, plans, reminders and files stay yours. Copies you already saved or downloaded aren’t changed, and nothing on anyone else’s device is erased.": {
+    "fr": "Quitter met fin à votre adhésion : ses guides et dates réservés aux membres ne vous sont plus accessibles et elle ne vous enverra plus d’alertes. Vos conversations, plans, rappels et fichiers restent à vous. Les copies déjà enregistrées ou téléchargées ne changent pas, et rien n’est effacé sur l’appareil de quelqu’un d’autre.",
+    "ar": "المغادرة تنهي عضويتك: تُغلق أمامك أدلتها ومواعيدها المخصصة للأعضاء ولن ترسل لك تنبيهات. تبقى محادثاتك وخططك وتذكيراتك وملفاتك ملكًا لك. لا تتغير النسخ التي حفظتها أو نزّلتها، ولا يُمحى شيء على جهاز أي شخص آخر."
+  },
+  "Tap again to leave": {
+    "fr": "Touchez à nouveau pour quitter",
+    "ar": "اضغط مرة أخرى للمغادرة"
+  },
+  "Couldn’t leave. If you’re this organisation’s only admin, hand over to another admin first; otherwise try again.": {
+    "fr": "Impossible de quitter. Si vous êtes le seul administrateur, transmettez d’abord ce rôle ; sinon réessayez.",
+    "ar": "تعذّرت المغادرة. إن كنت المسؤول الوحيد عن هذه الجهة فسلّم الدور لمسؤول آخر أولاً؛ وإلا فحاول مرة أخرى."
   }
 }

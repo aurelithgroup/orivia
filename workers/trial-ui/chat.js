@@ -255,7 +255,7 @@ function renderOrgContext(){
  box.replaceChildren(label,x,personal);box.hidden=false;
 }
 const ORG_AI_NOTICE='orivia-org-ai-notice-v1';
-window.OriviaChat={aiNoticeSeen(){try{return (globalThis.OriviaAccountStorage?.storage||localStorage).getItem(ORG_AI_NOTICE)==='yes'}catch(_){return false}},markAiNotice(){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(ORG_AI_NOTICE,'yes')}catch(_){}},useOrgContext(o){if(!o||!/^[A-Za-z0-9-]{1,64}$/.test(String(o.org))||!/^[A-Za-z0-9-]{1,64}$/.test(String(o.content)))return;
+window.OriviaChat={clearOrgContextFor(org){let changed=false;for(const c of store.chats)if(c.orgContext&&c.orgContext.org===org){delete c.orgContext;changed=true}if(pendingOrgContext&&pendingOrgContext.org===org)pendingOrgContext=null;if(changed)persist();renderOrgContext();return changed},aiNoticeSeen(){try{return (globalThis.OriviaAccountStorage?.storage||localStorage).getItem(ORG_AI_NOTICE)==='yes'}catch(_){return false}},markAiNotice(){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(ORG_AI_NOTICE,'yes')}catch(_){}},useOrgContext(o){if(!o||!/^[A-Za-z0-9-]{1,64}$/.test(String(o.org))||!/^[A-Za-z0-9-]{1,64}$/.test(String(o.content)))return;
  newChat({org:String(o.org),content:String(o.content),title:String(o.title||'').slice(0,150),orgName:String(o.orgName||'').slice(0,80)});
  const m=$('msg');if(m&&!m.value)m.value='Help me with “'+String(o.title||'this guide').slice(0,120)+'”: what do I need to do?';m?.focus()}};
 function whenShort(t){const d=new Date(t),now=new Date();const same=d.toDateString()===now.toDateString();const y=new Date(now);y.setDate(now.getDate()-1);
@@ -277,7 +277,7 @@ function chatRow(c){
  menu.append(button(c.pinned?'Unpin':'Pin','btn quiet small',()=>{c.pinned=!c.pinned;persist();renderChats()}));
  menu.append(button(c.archived?'Unarchive':'Archive','btn quiet small',()=>{c.archived=!c.archived;if(c.archived&&c.id===store.active){store.active=null;turns=[];clearChatCards();draw()}persist();renderChats()}));
  const del=button('Delete','btn text small danger',()=>{
-  if(del.dataset.sure!=='1'){del.dataset.sure='1';del.textContent=uiText('Tap again to delete this chat for good');return}
+  if(del.dataset.sure!=='1'){del.dataset.sure='1';del.textContent=uiText('Tap again to delete this chat for good. Reminders you saved and files in your Library stay.');return}
   store.chats=store.chats.filter(x=>x!==c);if(c.id===store.active){store.active=null;turns=[];clearChatCards();draw()}persist();renderChats();
  });
  menu.append(del);row.append(menu);return row;
@@ -781,7 +781,7 @@ function eventRow(e,past){
   if(links.length===1)acts.append(links[0]);
   else{const options=el('div','cal-options');options.hidden=true;options.append(...links);const add=button(uiText('Add to calendar')+' ▾','cal-add',()=>{options.hidden=!options.hidden;add.setAttribute('aria-expanded',String(!options.hidden))});add.setAttribute('aria-expanded','false');acts.append(add);acts.optionsBox=options}
  }
- const rm=button('Remove','danger',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=uiText('Tap again to remove');return}removeEvent(e.id)});
+ const rm=button('Remove','danger',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=uiText('Tap again to remove it from Orivia. Copies you added to your phone’s calendar stay.');return}removeEvent(e.id)});
  // Remove sits behind ⋯ so the card isn't a row of buttons.
  rm.hidden=true;const more=button('⋯','cal-more',()=>{rm.hidden=!rm.hidden;more.setAttribute('aria-expanded',String(!rm.hidden))});more.setAttribute('aria-label',uiText('More options'));more.setAttribute('aria-expanded','false');
  acts.append(more,rm);if(acts.optionsBox)acts.append(acts.optionsBox);
@@ -1487,8 +1487,15 @@ function researchBlock(srcs,research){
 const settingsKey='orivia-private-settings-v1';
 const SET_DEFAULT={theme:'system',size:'standard',tone:'friendly',suggest:true};
 setupDictation();
-function readSettings(){try{const d=JSON.parse((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(settingsKey)||'{}');return {...SET_DEFAULT,...(d&&typeof d==='object'?d:{})}}catch(_){return {...SET_DEFAULT}}}
-function writeSettings(patch){const n={...readSettings(),...patch};try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(settingsKey,JSON.stringify(n))}catch(_){}applySettings();renderSettings()}
+/* Settings (ORI-HOME-010): personal defaults (tone, suggestions, natural voice, microphone…) belong to the account and are
+   stored in its scoped copy, so another account on this device starts from the defaults. Device display choices
+   (language, theme, text size) are kept device-wide as well, because the sign-in screen needs them. */
+const DEVICE_SETTINGS=['language','theme','size'];
+function deviceSettings(){try{const d=JSON.parse(localStorage.getItem(settingsKey)||'{}');return Object.fromEntries(DEVICE_SETTINGS.filter(k=>d&&d[k]!==undefined).map(k=>[k,d[k]]))}catch(_){return {}}}
+function readSettings(){try{const d=JSON.parse((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(settingsKey)||'{}');return {...SET_DEFAULT,...(d&&typeof d==='object'?d:{}),...deviceSettings()}}catch(_){return {...SET_DEFAULT,...deviceSettings()}}}
+function writeSettings(patch){const n={...readSettings(),...patch};if(globalThis.OriviaAccounts?.user)for(const k of DEVICE_SETTINGS)delete n[k];try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(settingsKey,JSON.stringify(n))}catch(_){}
+ if(DEVICE_SETTINGS.some(k=>k in patch))try{const dev=JSON.parse(localStorage.getItem(settingsKey)||'{}');for(const k of DEVICE_SETTINGS)if(k in patch)dev[k]=patch[k];localStorage.setItem(settingsKey,JSON.stringify(dev))}catch(_){}
+ applySettings();renderSettings()}
 function applySettings(){
  const s=readSettings(),root=document.documentElement;
  if(s.theme==='light'||s.theme==='dark')root.dataset.theme=s.theme;else delete root.dataset.theme;
@@ -1937,7 +1944,7 @@ $('start').onclick=()=>{
  enterApp()};
 $('clear').onclick=()=>{
  if(busy)return;const b=$('clear');
- if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent=uiText('Tap again to delete this chat');setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('Delete this chat')},4000);return}
+ if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent=uiText('Tap again to delete this chat for good. Reminders you saved and files in your Library stay.');setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('Delete this chat')},4000);return}
  store.chats=store.chats.filter(c=>c.id!==store.active);store.active=null;persist();turns=[];clearChatCards();draw();renderChats();b.dataset.sure='';b.textContent=uiText('Delete this chat');tab('chat')};
 // A proposal only. Saved events are never sent to the model and never changed by this module.
 function safeCalendarChange(v){
