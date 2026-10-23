@@ -72,6 +72,9 @@
    const org=d.organisation?.name||m.name,from=node('span','org-from','From '+org,true);from.dataset.org=org;
    const back=node('button','btn quiet small','← My Orivia');back.type='button';back.onclick=()=>{close();leaveAddress()};out.unshift(back);
    out.push(node('p','tiny','Everything below is published by '+org+'. Check dates and requirements with them if anything is unclear.',true));
+   // Who to contact (ORI-UNI-015 settings): only details staff supplied, as links the person chooses to open.
+   const sc=d.studentContact;if(sc&&sc.label){const help=node('div','card org-contact');help.append(node('strong','','Need help? '+sc.label,true));const row=node('div','org-actions');const a=(label,href,ext)=>{const x=node('a','btn quiet small',label);x.href=href;if(ext){x.target='_blank';x.rel='noopener noreferrer'}return x};
+    if(sc.phone)row.append(a('Call','tel:'+sc.phone.replace(/[^\d+]/g,'')));if(sc.email)row.append(a('Email','mailto:'+sc.email));if(sc.website)row.append(a('Website ↗',sc.website,true));if(row.childElementCount)help.append(row);out.push(help)}
    const content=d.content||[],byId=new Map(content.map(c=>[c.id,c]));
    // Progress: the person's own Done marks. The university sees totals only (never names, nothing under the minimum).
    const prog=d.progress&&d.progress.available?d.progress:null,done=new Set(prog?.done||[]);

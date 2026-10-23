@@ -353,8 +353,8 @@
   },
   {
    "id": "ORI-UNI-015",
-   "verdict": "gap",
-   "evidence": "Institution admins have overview, welcome, guides, members, invitations, counts and records tabs, but no settings for notification categories, retention/contact policy, service owners or export permissions, and no audit history view (audit rows are written). To build."
+   "verdict": "gap→fixed",
+   "evidence": "Built: Settings tab (admins edit, editors read-only) for device-alert kinds the organisation may send, who students should contact (shown in the student space), service owners (active staff only), whether editors may download aggregate counts, and how long former members stay listed; Activity tab for admins (last 100 changes, areas not values, students anonymous); counts CSV (aggregate, formula-safe). Admin-only, recent sign-in, revision-checked, audited; unknown fields refused. tests/org-settings.test.mjs proves every other table is byte-identical after each change (no retroactive consent, no wider access, no cap changes); new routes added to tests/staff-tenant-matrix.test.mjs (209 hostile calls). Screenshot docs/evidence/screens/uni-015-settings-phone.png."
   },
   {
    "id": "ORI-STUDENT-001",

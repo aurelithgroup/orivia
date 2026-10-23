@@ -12,7 +12,7 @@ const wrap=sql=>{const statement=(text,args=[])=>({bind:(...v)=>statement(text,v
  return {prepare:text=>statement(text),exec:async text=>sql.exec(text),batch:async stmts=>{sql.exec('BEGIN IMMEDIATE');try{const out=[];for(const s of stmts)out.push(await s.all());sql.exec('COMMIT');return out}catch(e){sql.exec('ROLLBACK');throw e}}}};
 const sql=new DatabaseSync(':memory:');sql.exec('PRAGMA foreign_keys=ON;'+['schema','organisations','feedback','platform-audit'].map(n=>fs.readFileSync('workers/accounts/'+n+'.sql','utf8')).join('\n'));
 sql.exec("CREATE TABLE IF NOT EXISTS organisation_progress(org_id TEXT NOT NULL, user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE, content_id TEXT NOT NULL, done_at INTEGER NOT NULL, PRIMARY KEY(org_id,user_id,content_id))");
-const T=Date.parse('2026-10-23T09:00:00Z');
+const T=Date.now(); // real time: admin changes need a sign-in within 15 minutes
 const origin='https://accounts.example.test',env={ACCOUNTS_ENABLED:'1',ACCOUNTS_ORIGIN:origin,ACCOUNTS_SECRET:'test-only-tenant-matrix-secret-1234567890',ACCOUNTS_DB:wrap(sql),
  ACCOUNTS_EMAIL_ENABLED:'1',ACCOUNTS_FROM:'signin@example.test',ACCOUNTS_EMAIL:{send(){throw Error('No real email in tests')}},ORGANISATIONS_ENABLED:'1'};
 const outbox=[],auth=createAccountAuth(env,{deliver:m=>outbox.push(m)});let ip=0;
@@ -31,7 +31,8 @@ r=await call(adminB,'/api/orgs/'+B+'/content','POST',{kind:'guide',title:'Rivers
 await call(adminB,'/api/orgs/'+B+'/content/'+bPublic,'PATCH',{revision:1,status:'published'});
 r=await call(adminB,'/api/orgs/'+B+'/codes','POST',{label:'Poster',contentId:bPublic});assert.equal(r.status,201,JSON.stringify(r.data));const bCode=r.data.code.id;
 sql.prepare("INSERT INTO organisation_progress VALUES (?,?,?,1)").run(B,studentB.id,bContent);
-const snapshot=()=>JSON.stringify(['organisation_memberships','organisation_content','organisation_invitations','organisation_public_codes','organisation_progress','organisation_progress_private','organisation_arrivals','organisations'].map(t=>{try{return sql.prepare('SELECT * FROM '+t+' WHERE '+(t==='organisations'?'id':'org_id')+'=? ORDER BY 1,2').all(B)}catch(e){return 'missing '+t}}));
+r=await call(adminB,'/api/orgs/'+B+'/settings');r=await call(adminB,'/api/orgs/'+B+'/settings','PATCH',{revision:r.data.revision,settings:{studentContact:{label:'Riverside student hub',email:'hub@riverside.example'}}});assert.equal(r.status,200,JSON.stringify(r.data));
+const snapshot=()=>JSON.stringify(['organisation_memberships','organisation_content','organisation_invitations','organisation_public_codes','organisation_progress','organisation_progress_private','organisation_arrivals','organisation_settings','organisations'].map(t=>{try{return sql.prepare('SELECT * FROM '+t+' WHERE '+(t==='organisations'?'id':'org_id')+'=? ORDER BY 1,2').all(B)}catch(e){return 'missing '+t}}));
 const before=snapshot();assert.ok(!before.includes('missing'),before.slice(0,200));
 // Every staff route, with the methods it answers. {o} is the organisation in the path; objects are B's.
 const routes=o=>[['GET',`/api/orgs/${o}/summary`],['GET',`/api/orgs/${o}/progress`],['GET',`/api/orgs/${o}/arrival`],['PATCH',`/api/orgs/${o}/arrival`,{country:'uk',region:'x',town:'y',reason:'study',revision:0}],
@@ -39,7 +40,7 @@ const routes=o=>[['GET',`/api/orgs/${o}/summary`],['GET',`/api/orgs/${o}/progres
  ['GET',`/api/orgs/${o}/members`],['DELETE',`/api/orgs/${o}/members/${studentB.id}`,{}],['POST',`/api/orgs/${o}/members/${studentB.id}/reinstate`,{confirm:'allow new join request'}],['POST',`/api/orgs/${o}/members/${editorB.id}/role`,{role:'admin',expectedRole:'editor',confirm:'change organisation role'}],
  ['POST',`/api/orgs/${o}/requests/${pendingB.id}/decision`,{decision:'approve'}],
  ['GET',`/api/orgs/${o}/content`],['POST',`/api/orgs/${o}/content`,{kind:'guide',title:'x',body:'y',visibility:'members'}],['PATCH',`/api/orgs/${o}/content/${bContent}`,{revision:1,title:'hijacked',status:'published'}],['DELETE',`/api/orgs/${o}/content/${bContent}`,{}],
- ['GET',`/api/orgs/${o}/codes`],['POST',`/api/orgs/${o}/codes`,{label:'x',contentId:bPublic}],['GET',`/api/orgs/${o}/codes/${bCode}`],['POST',`/api/orgs/${o}/codes/${bCode}/revoke`,{}],['GET',`/api/orgs/${o}/records`]];
+ ['GET',`/api/orgs/${o}/codes`],['POST',`/api/orgs/${o}/codes`,{label:'x',contentId:bPublic}],['GET',`/api/orgs/${o}/codes/${bCode}`],['POST',`/api/orgs/${o}/codes/${bCode}/revoke`,{}],['GET',`/api/orgs/${o}/records`],['GET',`/api/orgs/${o}/settings`],['PATCH',`/api/orgs/${o}/settings`,{revision:0,settings:{exports:{editorsMayExportCounts:true}}}],['GET',`/api/orgs/${o}/audit`],['GET',`/api/orgs/${o}/export/counts.csv`]];
 const leaks=res=>JSON.stringify(res.data||'').match(/Members-only text|ben@riverside|bella@riverside|pat@riverside|Riverside deposit guide/);
 let checked=0;
 async function refuse(who,label,o){for(const [m,p,b] of routes(o)){const res=await call(who,p,m,b);checked++;
