@@ -28,8 +28,8 @@ const S={
 'UX-007':['existing',CODE],'UX-008':['existing','Two-tap removes for calendar and library; '+CODE],'UX-009':['existing',CODE],'UX-010':['existing',CODE],
 'HOME-001':['released','Home released.'],'HOME-002':['released','Honest country captions (design pass).'],'HOME-003':['existing',CODE],'HOME-004':['existing','Organisation arrival; '+CODE],
 'HOME-005':['deferred by scope',NOTYET],'HOME-006':['existing',CODE],'HOME-007':['existing',CODE],'HOME-008':['existing',CODE],'HOME-009':['deferred by scope',NOTYET],'HOME-010':['existing',CODE],
-'CHAT-001':['existing','Assistant intent tests; '+CODE],'CHAT-002':['existing',CODE],'CHAT-003':['deferred by scope',NOTYET],'CHAT-004':['released','Copy (Chat refresh).'],
-'CHAT-005':['deferred by scope',NOTYET+' Needs message versions (with CHAT-006).'],'CHAT-006':['deferred by scope',NOTYET],
+'CHAT-001':['existing','Assistant intent tests; '+CODE],'CHAT-002':['existing',CODE],'CHAT-003':['locally verified','Conversation versions (Ina 5bdfcf8, integrated 2b4e9d3): every earlier version kept and switchable with Previous/Next; only the selected one is sent; survives refresh. tests/chat-versions.test.mjs, tests/chat-versions-integration.test.mjs; browser docs/evidence/chat-versions-browser-2026-10-23.json.','Ina live check'],'CHAT-004':['released','Copy (Chat refresh).'],
+'CHAT-005':['locally verified','Edit creates a new version with Save and send / Cancel and an explanation; earlier answers stay in the earlier version; a Stop or failure restores the earlier version (browser-found fix).','Ina live check'],'CHAT-006':['locally verified','Regenerate sends one request without duplicating the question; earlier answer kept; no automatic reminder (explicit Review/Save; browser: calendar count unchanged until Save); controls re-enabled after a reply (browser-found fix).','Ina live check; real provider'],
 'CHAT-007':['locally verified','Ratings (set/change/remove) stored with the account; 30-day totals in the owner overview; tests/feedback.test.mjs; harness click test.','Ina live check'],
 'CHAT-008':['locally verified','Report a problem: reply text off by default; disclosure says the report is linked to the account, the team can read the note and any included reply, the review list omits name and email (Ina finding 3). Only a 4xx says nothing was saved; a lost response says it could not confirm and Try again reuses the request id (finding 4, tested server and client).','Privacy/retention wording before production (Ina)'],
 'CHAT-009':['deferred by scope',NOTYET],'CHAT-010':['deferred by scope',NOTYET],'CHAT-011':['existing',CODE],'CHAT-012':['existing','Pin/archive/search; '+CODE],
@@ -93,7 +93,7 @@ const S={
 'QA-003':['in progress','Awaiting Ina.','Ina review'],'QA-004':['in progress','After Ina’s review.','Founder acceptance'],'QA-005':['locally verified','Ina’s five findings (a4e6dcf) fixed at source with behavioural tests; a step 9 Members-tab crash found by a browser check, fixed with a guard.'],
 'QA-006':['locally verified','Production not touched.'],'QA-007':['locally verified','The candidate receipt (docs/evidence/pilot-candidate-*.json) + this ledger.'],'QA-008':['locally verified','Readiness list states what is left.'],
 };
-const NEW=new Set(['UX-003','UX-004','CHAT-007','CHAT-008','LIB-001','LIB-002','LIB-003','LIB-004','LIB-006','CAL-001','OWNER-001','OWNER-002','OWNER-007','OWNER-009','UNI-001','UNI-008','PERF-008','PERF-009','SEC-005','AUTH-004']);
+const NEW=new Set(['UX-003','UX-004','CHAT-007','CHAT-008','LIB-001','LIB-002','LIB-003','LIB-004','LIB-006','CAL-001','OWNER-001','OWNER-002','OWNER-007','OWNER-009','UNI-001','UNI-008','PERF-008','PERF-009','SEC-005','AUTH-004','CHAT-003','CHAT-005','CHAT-006']);
 const out=[],missing=[];
 for(const r of spec.requirements){const k=r.id.replace(/^ORI-/,''),v=S[k];if(!v){missing.push(r.id);continue}
  if(!VOCAB.includes(v[0]))throw Error(r.id+' bad status '+v[0]);

@@ -99,3 +99,8 @@ The founder dislikes the citation numbers. Cleo has changed her own files:
 
 - **Candidate:** `8c5710f` on pilot `a9a77d8a`: account-exit audio cleanup.
 - **Report:** `docs/ina-pilot-ready-3-2026-10-22.md`.
+
+## Cleo → Ina: PILOT READY 4 (23 Oct)
+
+- **Candidate:** `2b4e9d3` on pilot `8306e1e3`: your conversation versions, plus four fixes found in the browser check.
+- **Report:** `docs/ina-pilot-ready-4-2026-10-23.md`.

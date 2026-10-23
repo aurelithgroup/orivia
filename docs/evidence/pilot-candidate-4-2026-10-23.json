@@ -1,0 +1,851 @@
+{
+ "state": "PILOT_READY",
+ "sourceSha": "2b4e9d3f2dcf42891d6793ccd78c8a506bd7b111",
+ "branch": "myorivia-release-plan",
+ "workerVersion": "8306e1e3-a373-47a3-87aa-c3ea3471a1f8",
+ "workerScript": "orivia-research-pilot",
+ "bundleSha256": "cf66e72cbd166b7127df6ff6bcacb21d5bb4ced70b5f81a755ebd4314876da3",
+ "environment": "isolated pilot (Cloudflare Access; accounts DB orivia-accounts-pilot-test 8cd85061; R2 orivia-files-pilot; budget DB bd521420 shared with production)",
+ "migrationIds": [
+  "none new in this candidate; feedback.sql was applied to pilot DB 8cd85061 for the previous candidate (22 Oct 16:43 UTC)"
+ ],
+ "productionChanged": false,
+ "productionVersion": "b9e32ffc-e13d-4c5b-85cf-d7cbdf4a3f94 (unchanged, checked after deploy)",
+ "inaFindings": {
+  "source": "Ina handoff: ina/chat-versioning-2026-10-22 5bdfcf8 (and candidate 3 review: audio-exit fix confirmed in source)",
+  "fixedIn": [
+   "2b4e9d3"
+  ],
+  "items": {
+   "choose one implementation": "kept Ina's 5bdfcf8; Cleo's parallel draft stashed (stash 'Cleo edit/regenerate draft'), not combined",
+   "browser test edit → regenerate → switch → refresh": "pass (docs/evidence/chat-versions-browser-2026-10-23.json)",
+   "reminders": "pass: no calendar entry until Save reminder; existing events unchanged",
+   "attachments": "pass: a version containing an attachment message keeps it; a pending file blocks version changes (Ina's guard, code-level)",
+   "Stop": "FOUND AND FIXED: emptied the new version; now restores the earlier version",
+   "failure": "FOUND AND FIXED: left an empty conversation; now restores the earlier version",
+   "storage failure": "pass: no request, conversation unchanged, honest message",
+   "account exit": "guest harness: sign-in screen opened mid-reply; reply filed in the same (guest) chat; real account switches are discarded by the existing epoch check (not exercised here)",
+   "also fixed": "controls stayed disabled after every reply; version notice moved out of the reply text"
+  }
+ },
+ "newInThisCandidate": [
+  "Conversation versions: Edit, Regenerate, Previous/Next (Ina 5bdfcf8)",
+  "Integration fixes from the browser check (2b4e9d3)"
+ ],
+ "requirements": {
+  "counts": {
+   "locally verified": 42,
+   "in progress": 6,
+   "existing": 83,
+   "released": 24,
+   "deferred by scope": 54,
+   "blocked external": 8,
+   "pilot verified": 2
+  },
+  "p0Counts": {
+   "locally verified": 36,
+   "in progress": 5,
+   "existing": 56,
+   "released": 16,
+   "deferred by scope": 28,
+   "blocked external": 8,
+   "pilot verified": 1
+  },
+  "verifiedIds": [
+   "ORI-GOV-001",
+   "ORI-GOV-002",
+   "ORI-GOV-004",
+   "ORI-GOV-005",
+   "ORI-GOV-006",
+   "ORI-GOV-007",
+   "ORI-GOV-008",
+   "ORI-GOV-009",
+   "ORI-GOV-010",
+   "ORI-UX-003",
+   "ORI-UX-004",
+   "ORI-CHAT-003",
+   "ORI-CHAT-005",
+   "ORI-CHAT-006",
+   "ORI-CHAT-007",
+   "ORI-CHAT-008",
+   "ORI-PERF-008",
+   "ORI-PERF-009",
+   "ORI-LIB-001",
+   "ORI-LIB-002",
+   "ORI-LIB-003",
+   "ORI-LIB-004",
+   "ORI-LIB-006",
+   "ORI-CAL-001",
+   "ORI-AUTH-004",
+   "ORI-OWNER-001",
+   "ORI-OWNER-002",
+   "ORI-OWNER-007",
+   "ORI-OWNER-009",
+   "ORI-UNI-001",
+   "ORI-UNI-008",
+   "ORI-CONNECT-006",
+   "ORI-BUSINESS-006",
+   "ORI-SEC-002",
+   "ORI-SEC-005",
+   "ORI-APP-008",
+   "ORI-QA-001",
+   "ORI-QA-002",
+   "ORI-QA-005",
+   "ORI-QA-006",
+   "ORI-QA-007",
+   "ORI-QA-008",
+   "ORI-NOTIFY-001",
+   "ORI-NOTIFY-004"
+  ],
+  "unverifiedIds": [
+   "ORI-GOV-003",
+   "ORI-PERF-001",
+   "ORI-VOICE-002",
+   "ORI-BUSINESS-005",
+   "ORI-QA-003",
+   "ORI-QA-004",
+   "ORI-UX-001",
+   "ORI-UX-005",
+   "ORI-UX-007",
+   "ORI-UX-008",
+   "ORI-UX-009",
+   "ORI-UX-010",
+   "ORI-HOME-003",
+   "ORI-HOME-004",
+   "ORI-HOME-006",
+   "ORI-HOME-007",
+   "ORI-HOME-008",
+   "ORI-HOME-010",
+   "ORI-CHAT-001",
+   "ORI-CHAT-002",
+   "ORI-CHAT-011",
+   "ORI-CHAT-012",
+   "ORI-AI-001",
+   "ORI-AI-002",
+   "ORI-AI-003",
+   "ORI-AI-004",
+   "ORI-AI-005",
+   "ORI-AI-006",
+   "ORI-AI-007",
+   "ORI-AI-008",
+   "ORI-AI-009",
+   "ORI-AI-010",
+   "ORI-AI-011",
+   "ORI-AI-012",
+   "ORI-PERF-003",
+   "ORI-PERF-005",
+   "ORI-PERF-007",
+   "ORI-JOURNEY-001",
+   "ORI-JOURNEY-002",
+   "ORI-JOURNEY-003",
+   "ORI-JOURNEY-004",
+   "ORI-JOURNEY-006",
+   "ORI-LIB-007",
+   "ORI-LIB-008",
+   "ORI-LIB-010",
+   "ORI-CAL-002",
+   "ORI-CAL-003",
+   "ORI-CAL-005",
+   "ORI-CAL-006",
+   "ORI-CAL-007",
+   "ORI-CAL-008",
+   "ORI-CAL-010",
+   "ORI-AUTH-005",
+   "ORI-AUTH-007",
+   "ORI-AUTH-010",
+   "ORI-OWNER-015",
+   "ORI-UNI-002",
+   "ORI-UNI-003",
+   "ORI-UNI-006",
+   "ORI-UNI-007",
+   "ORI-UNI-009",
+   "ORI-UNI-012",
+   "ORI-UNI-015",
+   "ORI-STUDENT-001",
+   "ORI-STUDENT-002",
+   "ORI-STUDENT-004",
+   "ORI-STUDENT-007",
+   "ORI-STUDENT-008",
+   "ORI-METRIC-002",
+   "ORI-METRIC-005",
+   "ORI-METRIC-008",
+   "ORI-FILES-006",
+   "ORI-VOICE-004",
+   "ORI-VOICE-005",
+   "ORI-VOICE-007",
+   "ORI-VOICE-008",
+   "ORI-NOTIFY-002",
+   "ORI-NOTIFY-003",
+   "ORI-NOTIFY-005",
+   "ORI-NOTIFY-006",
+   "ORI-BUSINESS-001",
+   "ORI-LEGAL-003",
+   "ORI-LEGAL-005",
+   "ORI-LEGAL-006",
+   "ORI-SEC-001",
+   "ORI-SEC-003",
+   "ORI-SEC-004",
+   "ORI-SEC-010",
+   "ORI-APP-001",
+   "ORI-HOME-005",
+   "ORI-HOME-009",
+   "ORI-CHAT-009",
+   "ORI-CHAT-010",
+   "ORI-PERF-002",
+   "ORI-PERF-004",
+   "ORI-PERF-006",
+   "ORI-JOURNEY-005",
+   "ORI-JOURNEY-007",
+   "ORI-JOURNEY-008",
+   "ORI-JOURNEY-009",
+   "ORI-JOURNEY-010",
+   "ORI-LIB-005",
+   "ORI-LIB-009",
+   "ORI-CAL-009",
+   "ORI-AUTH-002",
+   "ORI-AUTH-003",
+   "ORI-AUTH-006",
+   "ORI-AUTH-008",
+   "ORI-OWNER-003",
+   "ORI-OWNER-004",
+   "ORI-OWNER-005",
+   "ORI-OWNER-006",
+   "ORI-OWNER-008",
+   "ORI-OWNER-010",
+   "ORI-OWNER-011",
+   "ORI-OWNER-012",
+   "ORI-OWNER-013",
+   "ORI-OWNER-014",
+   "ORI-UNI-004",
+   "ORI-UNI-005",
+   "ORI-UNI-010",
+   "ORI-UNI-013",
+   "ORI-STUDENT-006",
+   "ORI-CONNECT-001",
+   "ORI-CONNECT-003",
+   "ORI-CONNECT-004",
+   "ORI-CONNECT-005",
+   "ORI-METRIC-001",
+   "ORI-METRIC-004",
+   "ORI-METRIC-006",
+   "ORI-METRIC-007",
+   "ORI-FILES-002",
+   "ORI-VOICE-001",
+   "ORI-BUSINESS-002",
+   "ORI-BUSINESS-003",
+   "ORI-LEGAL-004",
+   "ORI-SEC-006",
+   "ORI-SEC-007",
+   "ORI-SEC-008",
+   "ORI-SEC-009",
+   "ORI-APP-002",
+   "ORI-APP-003",
+   "ORI-APP-004"
+  ],
+  "blockedExternalIds": [
+   "ORI-UNI-014",
+   "ORI-STUDENT-003",
+   "ORI-CONNECT-002",
+   "ORI-BUSINESS-004",
+   "ORI-LEGAL-001",
+   "ORI-LEGAL-002",
+   "ORI-APP-005",
+   "ORI-APP-007"
+  ],
+  "releasedIds": [
+   "ORI-UX-002",
+   "ORI-UX-006",
+   "ORI-HOME-001",
+   "ORI-HOME-002",
+   "ORI-CHAT-004",
+   "ORI-CHAT-013",
+   "ORI-CHAT-014",
+   "ORI-CHAT-015",
+   "ORI-PERF-010",
+   "ORI-CAL-004",
+   "ORI-AUTH-001",
+   "ORI-AUTH-009",
+   "ORI-UNI-011",
+   "ORI-STUDENT-005",
+   "ORI-METRIC-003",
+   "ORI-FILES-001",
+   "ORI-FILES-003",
+   "ORI-FILES-004",
+   "ORI-FILES-005",
+   "ORI-FILES-007",
+   "ORI-FILES-008",
+   "ORI-VOICE-003",
+   "ORI-VOICE-006",
+   "ORI-APP-006"
+  ],
+  "ledger": "docs/evidence/requirements-ledger-2026-10-22.json"
+ },
+ "tests": [
+  {
+   "name": "node --check js/buddy.js",
+   "status": "pass",
+   "evidence": ""
+  },
+  {
+   "name": "node --check js/orivia-ai-bridge.js",
+   "status": "pass",
+   "evidence": ""
+  },
+  {
+   "name": "node --check workers/orivia-ai-preview.mjs",
+   "status": "pass",
+   "evidence": ""
+  },
+  {
+   "name": "node tests/spea-directory-feed.test.mjs",
+   "status": "pass",
+   "evidence": "SPEA official feed: captured live data, metadata-derived filters, strict records, budgets, honest sources and end-to-end list answer pass."
+  },
+  {
+   "name": "node tests/openai-pilot.test.mjs",
+   "status": "pass",
+   "evidence": "OpenAI pilot gates, no retries, bounded calls, private usage accounting and error handling pass."
+  },
+  {
+   "name": "node tests/transport-assistant-card.test.mjs",
+   "status": "pass",
+   "evidence": "Trip-to-card: chosen driving mode, origin and follow-up retained, registered official campus source, assistant route path and encoded driving links passed"
+  },
+  {
+   "name": "node tests/place-card.test.mjs",
+   "status": "pass",
+   "evidence": "Place cards: bounded same-origin raster preview, redirect/type/size failure, sourced details, map chooser, Save/reload/My Life, and illustration fallback passed"
+  },
+  {
+   "name": "node tests/handoff-cards.test.mjs",
+   "status": "pass",
+   "evidence": "Handoff cards: translated messages, sourced destinations, map encoding, manual speech/language, close/focus, no geolocation, and scripted response integration passed"
+  },
+  {
+   "name": "node tests/assistant.test.mjs",
+   "status": "pass",
+   "evidence": "Assistant: source kinds by address, answer check (contacts, amounts, claim/source fit, own site, jurisdiction), cards never guessed, one source per page, relevant quotes, private search terms, memory carried and cleaned, ask, budget-aware w"
+  },
+  {
+   "name": "node tests/assistant-timing.test.mjs",
+   "status": "pass",
+   "evidence": "Assistant timing: concurrent deduplication, policy separation, retry, request isolation, bounded cache and whole-turn evidence preservation passed"
+  },
+  {
+   "name": "node tests/reply-arrival.test.mjs",
+   "status": "pass",
+   "evidence": "Reply arrival: full text saved immediately, new reply only, reduced motion, history position and progress scrolling passed"
+  },
+  {
+   "name": "node tests/dictation.test.mjs",
+   "status": "pass",
+   "evidence": "Dictation: language choice, Cancel/Stop races, stale sessions, permissions, failures, no speech, limits, unsupported browser and no auto-send passed"
+  },
+  {
+   "name": "node tests/calendar-changes.test.mjs",
+   "status": "pass",
+   "evidence": "Calendar changes: proposals, matching, ambiguity, edit in place, delete, Undo, storage failure, stale data and no calendar disclosure passed"
+  },
+  {
+   "name": "node tests/inline-calendar-routing.test.mjs",
+   "status": "pass",
+   "evidence": "Legacy calendar: edit vs add, current consent on first submit, basic creation and stale form cleanup passed"
+  },
+  {
+   "name": "node tests/i18n.test.mjs",
+   "status": "pass",
+   "evidence": "Languages: complete dictionary pairs, selected/saved language, RTL, repeated switches, unchanged messages/quotes/values, progress and provider preference passed"
+  },
+  {
+   "name": "node tests/buddy-smoke.js",
+   "status": "pass",
+   "evidence": "Buddy smoke checks passed"
+  },
+  {
+   "name": "node tests/ai-bridge.test.js",
+   "status": "pass",
+   "evidence": "AI bridge: 13 checks passed"
+  },
+  {
+   "name": "node tests/ai-chat-consent.test.js",
+   "status": "pass",
+   "evidence": "Private AI consent and open-ended first message tests passed"
+  },
+  {
+   "name": "node tests/native-calendar.test.cjs",
+   "status": "pass",
+   "evidence": "Private chat tabs, locally saved calendar and Google Calendar draft: passed"
+  },
+  {
+   "name": "node tests/live-official-and-reminders.test.mjs",
+   "status": "pass",
+   "evidence": "Live official reader & explicit calendar alarms: checks passed"
+  },
+  {
+   "name": "node tests/official-sources.test.mjs",
+   "status": "pass",
+   "evidence": "Official source trust policy, Heriot-Watt contacts, and travel handoff: passed"
+  },
+  {
+   "name": "node tests/journey-sources.test.mjs",
+   "status": "pass",
+   "evidence": "Verified journey resource / link construction checks passed"
+  },
+  {
+   "name": "node --experimental-sqlite tests/journey-api.test.mjs",
+   "status": "pass",
+   "evidence": "Journey API v1: list, match, step, place, problems, freshness, CORS, and existing auth: passed"
+  },
+  {
+   "name": "node tests/journey-adapter-loop.test.mjs",
+   "status": "pass",
+   "evidence": "Journey adapter: no loop, AI phrases checked facts: passed"
+  },
+  {
+   "name": "node tests/natural-entry.test.mjs",
+   "status": "pass",
+   "evidence": "Natural-language first contact: messy student, parent, brief fragment, no assumed visa: passed"
+  },
+  {
+   "name": "node --test tests/journey-intelligence.test.mjs",
+   "status": "pass",
+   "evidence": "  }"
+  },
+  {
+   "name": "node tests/transport-actions.test.mjs",
+   "status": "pass",
+   "evidence": "Transport actions: commute links, broad origin, \"time\" follow-up, visa→transport, no stray reminders, no made-up numbers: passed"
+  },
+  {
+   "name": "node tests/device-handoffs.test.mjs",
+   "status": "pass",
+   "evidence": "Device handoffs: destination lookup, Apple and Google routes, explicit calendar import contract passed"
+  },
+  {
+   "name": "node tests/guide-cards.test.mjs",
+   "status": "pass",
+   "evidence": "Journey cards: reusable, decision-only, three choices, no nagging, refreshers, route-aware nol guide: passed"
+  },
+  {
+   "name": "node tests/settings-calendar.test.mjs",
+   "status": "pass",
+   "evidence": "Settings and Calendar: tone, guide suggestions, theme override, safe reminders: passed"
+  },
+  {
+   "name": "node tests/research-display.test.mjs",
+   "status": "pass",
+   "evidence": "Research display (fixtures): compact links, accessible names, retained evidence, vetted citations and visible failures: passed"
+  },
+  {
+   "name": "node tests/chat-history.test.mjs",
+   "status": "pass",
+   "evidence": "Chat history and origin: migration, new chat, refresh, menus, active-only to AI, end session vs clear, origin field: passed"
+  },
+  {
+   "name": "node tests/beta-start.test.mjs",
+   "status": "pass",
+   "evidence": "Beta Start: pending verification, error preservation, retry and consent passed"
+  },
+  {
+   "name": "node --experimental-sqlite tests/research.test.mjs",
+   "status": "pass",
+   "evidence": "Worker follow-up routing and enabled-search capability prompt passed"
+  },
+  {
+   "name": "node tests/school-task-integration.test.mjs",
+   "status": "pass",
+   "evidence": "School task integration: expand without repeats, named lookup with contradictory evidence, named contacts, state bounds and topic change passed"
+  },
+  {
+   "name": "node tests/research-follow-through.test.mjs",
+   "status": "pass",
+   "evidence": "Real backend organisation cards and natural contact follow-ups: passed"
+  },
+  {
+   "name": "node tests/research-schools.test.mjs",
+   "status": "pass",
+   "evidence": "Per-fact quotes: every fact in a school claim has its own verbatim quote; unquoted facts are dropped: passed"
+  },
+  {
+   "name": "node tests/information-cards.test.mjs",
+   "status": "pass",
+   "evidence": "Information cards: sourced facts and contacts only, safe links, drafts without assumptions, shortlist saved: passed"
+  },
+  {
+   "name": "node tests/spea-reader.test.mjs",
+   "status": "pass",
+   "evidence": "SPEA reader: captured pages, beyond page 1, bounded batches and cursor, year filter, budget and failures, name lookup with candidates: passed"
+  },
+  {
+   "name": "node tests/school-sites.test.mjs",
+   "status": "pass",
+   "evidence": "School sites: SPEA identity first, domain established only by regulator link or regulator-listed email (never rank, title, name or phone), facts tied to their page, differences flagged, bounds and budget kept: passed"
+  },
+  {
+   "name": "node tests/research-loop.test.mjs",
+   "status": "pass",
+   "evidence": "Research loop: Sharjah conversation (find → more → all → named check → correction → contacts → compare), exact listing + proven site, Dubai without regulator, user link, list contacts, rules fallback, budgets, tool limits, model validation "
+  },
+  {
+   "name": "node --experimental-sqlite tests/research-loop-worker.test.mjs",
+   "status": "pass",
+   "evidence": "Research loop through the Worker: opt-in, authenticated, quota first, model understanding, ordinary chat untouched, switch off restores the old path: passed"
+  },
+  {
+   "name": "node tests/site-captures.test.mjs",
+   "status": "pass",
+   "evidence": "Site captures: 2 raw capture(s), 2 checked against expectations: passed"
+  },
+  {
+   "name": "node tests/site-reader-layouts.test.mjs",
+   "status": "pass",
+   "evidence": "Site reader layouts: request-ranked links (SIPS layout), compact year tables and labels with sections, Year vs Grade, labelled curriculum values, no curriculum from IGCSE/A Level/EYFS alone, end-to-end link: passed"
+  },
+  {
+   "name": "node tests/site-captures-navigation.test.mjs",
+   "status": "pass",
+   "evidence": "Real captures: ranking (no role/location pages over curriculum/contact), year-page following, whole-school facts only, honest Year 6 answer: passed"
+  },
+  {
+   "name": "node tests/research-agent.test.mjs",
+   "status": "pass",
+   "evidence": "Research agent: Ina’s case study (model-chosen route, complete filtered listing, caveats), policy fallback, invalid choices rejected, early stop, change of route for an unlisted school, no-regulator honesty, contacts follow-up, budgets: pas"
+  },
+  {
+   "name": "node --experimental-sqlite tests/research-web-evidence.test.mjs",
+   "status": "pass",
+   "evidence": "Web evidence: reworded searches, listing sites, own websites, leads checked against the regulator, conflicts stated, labelled sources, no-regulator city, early stop overruled, pilot search pool: passed"
+  },
+  {
+   "name": "node --experimental-sqlite tests/spend-ledger.test.mjs",
+   "status": "pass",
+   "evidence": "Spend ledger: atomic shared day/month limits, refund only known usage, uncertain kept, idempotent, fail-closed, transport integration: passed"
+  },
+  {
+   "name": "node tests/browser-directory.test.mjs",
+   "status": "pass",
+   "evidence": "Browser directory (scripted fake): counter-ahead guard, under-render, timeout, host/method/navigation checks, exhausted allowance, close in finally, action limit, year not confirmed by membership, long lists paged without loss, late launche"
+  },
+  {
+   "name": "node --experimental-sqlite tests/research-pilot.test.mjs",
+   "status": "pass",
+   "evidence": "Research pilot entry: private only, auth/quota first, OpenAI only with named consent + switch + confirmed rates, shared ledger, browser behind its own switch and allowance, public Worker untouched: passed"
+  },
+  {
+   "name": "node --experimental-sqlite tests/provider-comparison.test.mjs",
+   "status": "pass",
+   "evidence": "Provider comparison (scripted): 9 conversations × 2 providers, same enforced outcomes, aggregate metrics only, scripted/live kept apart: passed"
+  },
+  {
+   "name": "node --experimental-sqlite tests/public-beta.test.mjs",
+   "status": "pass",
+   "evidence": "Public beta: fails closed, human check, signed cookie, per-person and daily limits, private trial unchanged: passed"
+  },
+  {
+   "name": "node tests/ai-preview.test.mjs",
+   "status": "pass",
+   "evidence": "AI preview backend: signed-login requirement, host checks and unverified-claim guards tested"
+  },
+  {
+   "name": "node tests/ai-journey-tools.test.mjs",
+   "status": "pass",
+   "evidence": "Journey tools: validation, matching, check-ups, uncertain placement and source-preserving retrieval passed"
+  },
+  {
+   "name": "node tests/home-dashboard.test.mjs",
+   "status": "pass",
+   "evidence": "Home submit: new conversation, automatic send, old chat retained, blocked messages retained and empty draft preserved"
+  },
+  {
+   "name": "node tests/chat-motion.test.mjs",
+   "status": "pass",
+   "evidence": "Checked reply reveal: progressive words, exact source DOM restored, reduced motion, bounded finish and cleanup passed"
+  },
+  {
+   "name": "node tests/home-destination-photo.test.mjs",
+   "status": "pass",
+   "evidence": "Destination hero: current vs future country, origin excluded, both bundled JPEGs, empty/failure fallback and no remote requests passed"
+  },
+  {
+   "name": "node tests/organisation-home.test.mjs",
+   "status": "pass",
+   "evidence": "Organisation Home: student-only cards, pending state, plain-text content, account-bound requests, logout clearing, late-response isolation and access-loss handling passed. Transport scripted."
+  },
+  {
+   "name": "node tests/account-mail.test.mjs",
+   "status": "pass",
+   "evidence": "Account mail: verified-only recipient restriction, safe envelope, unchanged paid transport and private test page passed. Delivery scripted."
+  },
+  {
+   "name": "node --experimental-sqlite tests/accounts.test.mjs",
+   "status": "pass",
+   "evidence": "Accounts: real Better Auth on D1-shaped SQLite; hashed one-use OTP, secure session restoration/sign-out, CSRF, cross-user isolation, conflict protection, size rejection, email caps and deletion passed. Emails scripted only."
+  },
+  {
+   "name": "node tests/account-client.test.mjs",
+   "status": "pass",
+   "evidence": "Account client: user namespaces, no automatic import, selected-category import, guest preservation, unsynced-copy protection and returning to guest passed. Auth transport scripted."
+  },
+  {
+   "name": "node tests/onboarding-consent.test.mjs",
+   "status": "pass",
+   "evidence": "Integrated onboarding: original consent/widget controls, explicit AI agreement, human-check gate, configuration failure, provider disclosure, abandoned screens and fallback restoration passed. Scripted DOM only."
+  },
+  {
+   "name": "node tests/organisation-arrival.test.mjs",
+   "status": "pass",
+   "evidence": "Organisation arrival: branded landing, fragment persistence through sign-in, explicit joining, locked campus settings, pending privacy, approved content and personal exit passed. Scripted transport/DOM only."
+  },
+  {
+   "name": "node --experimental-sqlite tests/notifications.test.mjs",
+   "status": "pass",
+   "evidence": "Notifications: real SQL and encrypted Web Push generation; opt-in, due times, deduplication, cancellation, private membership boundaries, endpoint safety, session/account cleanup passed. Push transport scripted only."
+  },
+  {
+   "name": "node tests/notification-client.test.mjs",
+   "status": "pass",
+   "evidence": "Notification client: no automatic permission prompt, Not now, explicit device subscription/category opt-in, permission denial and guest behaviour passed. Scripted browser APIs only."
+  },
+  {
+   "name": "node --experimental-sqlite tests/public-release.test.mjs",
+   "status": "pass",
+   "evidence": "Public release: explicit gate, public consent, no tester login, private entry preserved, human verification and origin required before any provider call. Scripted transport only."
+  },
+  {
+   "name": "node tests/content-details.test.mjs",
+   "status": "pass",
+   "evidence": "Content details: dates and time zones, contacts, sources and update actions validated; nothing invented; kinds kept apart."
+  },
+  {
+   "name": "node tests/university-actions.test.mjs",
+   "status": "pass",
+   "evidence": "University actions: labelled content, buttons only for supplied details, safe links, related guides, dates converted, confirmed and saved once."
+  },
+  {
+   "name": "node --experimental-sqlite tests/university-chat.test.mjs",
+   "status": "pass",
+   "evidence": "University chat: members-only, published-only, same-organisation reads each message; labelled source that never backs official rules; not kept in memory; removable label."
+  },
+  {
+   "name": "node --experimental-sqlite tests/installable.test.mjs",
+   "status": "pass",
+   "evidence": "Installable: manifest and icons, versioned app worker (offline app pages, never API calls), honest offline text, install guidance, push off."
+  },
+  {
+   "name": "node tests/chat-presentation.test.mjs",
+   "status": "pass",
+   "evidence": "Standalone presentation hook checks passed"
+  },
+  {
+   "name": "node tests/ina-voice-text.test.mjs",
+   "status": "pass",
+   "evidence": "Voice text: lossless bounded chunks for long unspaced, multilingual and astral text passed"
+  },
+  {
+   "name": "node tests/answer-accuracy.test.mjs",
+   "status": "pass",
+   "evidence": "Answer accuracy: figures stay with what the source states them for (nol Gold/Silver), correct statements pass."
+  },
+  {
+   "name": "node tests/reply-language.test.mjs",
+   "status": "pass",
+   "evidence": "Reply language: stated by the model for Listen, code-written replies in fr/ar, clearer own-site correction."
+  },
+  {
+   "name": "node --experimental-sqlite tests/natural-voice.test.mjs",
+   "status": "pass",
+   "evidence": "Natural voice: only the reply text, own $1/day meter inside the OpenAI limits, word-for-word check, gates, phone fallback."
+  },
+  {
+   "name": "node --experimental-sqlite tests/files.test.mjs",
+   "status": "pass",
+   "evidence": "Files: private per account, type from content, limits, no cross-account access, account deletion removes them, app wiring."
+  },
+  {
+   "name": "node --experimental-sqlite tests/files-to-chat.test.mjs",
+   "status": "pass",
+   "evidence": "Files to Chat: read once inside the OpenAI limits, labelled evidence, figures from the document only, gates, app wiring."
+  },
+  {
+   "name": "node --experimental-sqlite tests/notification-isolation.test.mjs",
+   "status": "pass",
+   "evidence": "Notification isolation: pilot scheduler bound to the pilot database, honest counters, generic lock-screen text only."
+  },
+  {
+   "name": "node tests/library.test.mjs",
+   "status": "pass",
+   "evidence": "Library: five tabs, files moved with the same ids, a view over saved guides, chat shortlists and discoveries; the only write is hiding a discovery, nothing sent."
+  },
+  {
+   "name": "node tests/design-pass.test.mjs",
+   "status": "pass",
+   "evidence": "Design pass: header, titles, calendar, chat labels, Home wording, Settings: in place and translated."
+  },
+  {
+   "name": "node tests/week-swipe-links.test.mjs",
+   "status": "pass",
+   "evidence": "Week swipe (LTR/RTL, threshold, vertical rejection) and brand link colours (AA contrast both themes): pass."
+  },
+  {
+   "name": "node --experimental-sqlite tests/feedback.test.mjs",
+   "status": "pass",
+   "evidence": "Feedback lost-response handling (server idempotent, client says it could not confirm): pass."
+  },
+  {
+   "name": "node tests/library-discoveries.test.mjs",
+   "status": "pass",
+   "evidence": "Library discoveries: 106 of 106 shown via paging, dedupe and favourites, removal stored once with Restore, chats unchanged: pass."
+  },
+  {
+   "name": "node --experimental-sqlite tests/owner-overview.test.mjs",
+   "status": "pass",
+   "evidence": "Owner overview: exact defined counts, authoritative budgets or Unavailable, search, privacy, and refusal for students, staff and visitors: pass."
+  },
+  {
+   "name": "node --experimental-sqlite tests/university-overview.test.mjs",
+   "status": "pass",
+   "evidence": "University overview: joins, drafts, past/undated/upcoming dates and contacts missing details from this organisation only; staff allowed, students and outsiders refused: pass."
+  },
+  {
+   "name": "node tests/listen-startup.test.mjs",
+   "status": "pass",
+   "evidence": "Listen startup: shared in-flight pieces, account-isolated reuse, bounded cache, immediate feedback, short first piece, timing, limits unchanged: pass."
+  },
+  {
+   "name": "node tests/voice-account-exit.test.mjs",
+   "status": "pass",
+   "evidence": "Voice account exit: immediate cleanup (cache, in-flight, requests, URLs, player), late A response neither cached nor played, B generates its own, Stop/replay reuse kept: pass."
+  },
+  {
+   "name": "node tests/chat-versions.test.mjs",
+   "status": "pass",
+   "evidence": "Versions: preserved originals, nested edits, reload, safe limits, selected-only requests; actual regenerate sends once and creates no reminder: passed"
+  },
+  {
+   "name": "node tests/chat-versions-integration.test.mjs",
+   "status": "pass",
+   "evidence": "Version integration fixes: stop/failure roll back, controls re-enabled after a reply, notice outside the reply text: pass."
+  },
+  {
+   "name": "node tests/navigation.test.mjs",
+   "status": "pass",
+   "evidence": "Navigation: spaces only from server memberships, addressable spaces, text-only menus, sign-out to other tabs, routes agree."
+  },
+  {
+   "name": "node --experimental-sqlite tests/myorivia-release.test.mjs",
+   "status": "pass",
+   "evidence": "myorivia.app: fails closed, app paths only, /join links, consent v1, accounts on (orivia-beta unchanged), push off, human check before any model call, consent remembered per version. Scripted only."
+  },
+  {
+   "name": "node --experimental-sqlite tests/organisations.test.mjs",
+   "status": "pass",
+   "evidence": "Organisations: real account sessions and SQL, full owner → admin → invite → request → approval → student flow; forged roles, cross-tenant access, stale writes, expiry/revocation, public-code isolation and personal-vault preservation passed."
+  },
+  {
+   "name": "node tests/platform-ui.test.mjs",
+   "status": "pass",
+   "evidence": "Organisation dashboards (connected): session-only roles, contract endpoints only, plain-text content, unfinished features labelled, no demo data: passed"
+  },
+  {
+   "name": "Headless Chrome: Ina Library repro (105 items, remove, reload, restore)",
+   "status": "pass",
+   "evidence": "docs/evidence/library-discoveries-browser-2026-10-22.json"
+  },
+  {
+   "name": "Headless Chrome: owner console with fixture API (counts, budgets incl. Unavailable, search, 390px and 1280px, no overflow)",
+   "status": "pass",
+   "evidence": "tools/browser-checks/jobs-owner.json; docs/evidence/screens/owner-overview-*.png"
+  },
+  {
+   "name": "Headless Chrome: university overview (queue rows, draft opens focused in Guides, Review requests opens Members, empty state, 390px)",
+   "status": "pass",
+   "evidence": "tools/browser-checks/jobs-university.json; docs/evidence/screens/university-overview-*.png"
+  },
+  {
+   "name": "Headless Chrome: Listen with simulated 600 ms voice (preparing, Stop, reuse, no duplicate requests)",
+   "status": "pass",
+   "evidence": "docs/evidence/listen-startup-browser-2026-10-22.json"
+  },
+  {
+   "name": "Pilot read-only SQL with the overview queries",
+   "status": "pass",
+   "evidence": "1 organisation, 1 active student, 1 active staff, 0 requests, 4 published, 0 drafts, 0 open feedback, 1 owner; OpenAI meter 2026-10 $5.345, today $1.1852; voice today $0.1206"
+  },
+  {
+   "name": "Live pilot behind Cloudflare Access",
+   "status": "pass",
+   "evidence": "GET /api/admin/overview unauthenticated → 302 to Access sign-in"
+  },
+  {
+   "name": "Authenticated owner/student permission check on the deployed pilot",
+   "status": "unverified",
+   "evidence": "Cleo cannot pass Access; covered by real-session SQLite tests (owner-overview, university-overview) and Ina’s review"
+  },
+  {
+   "name": "Real OpenAI Listen latency and physical devices",
+   "status": "unverified",
+   "evidence": "Not measured: needs signed-in pilot traffic and a phone"
+  },
+  {
+   "name": "Headless Chrome: conversation versions (edit, regenerate, switch, refresh, reminders, attachment message, Stop, failure, storage failure, exit)",
+   "status": "pass",
+   "evidence": "docs/evidence/chat-versions-browser-2026-10-23.json"
+  }
+ ],
+ "testRun": {
+  "ranAt": "2026-10-23T03:40:57.251Z",
+  "sha": "2b4e9d3f2dcf42891d6793ccd78c8a506bd7b111",
+  "cleanTree": true,
+  "total": 93,
+  "failed": 0
+ },
+ "latency": {
+  "sampleCount": 1,
+  "runs": [
+   {
+    "event": "orivia-listen",
+    "source": "natural",
+    "firstAudioMs": 1234
+   },
+   {
+    "event": "orivia-listen",
+    "source": "natural-reused",
+    "firstAudioMs": 67
+   },
+   {
+    "event": "orivia-listen",
+    "source": "natural-reused",
+    "firstAudioMs": 72
+   }
+  ],
+  "limitations": [
+   "Listen timings come from the local harness with a simulated 600 ms voice server: they show the client path and reuse, not OpenAI generation time.",
+   "No chat reply latency samples: the pilot is behind Access and the founder is not asked to test."
+  ]
+ },
+ "externalBlockers": [
+  "University SSO, student records, visa/government status (partner access)",
+  "Public operator/contact details for Privacy and Terms",
+  "Payment provider",
+  "Apple/Android accounts, signing and review",
+  "Physical-device checks (touch swipe, installed app, push, audio startup)",
+  "Production push stays off until Privacy approval and a device check"
+ ],
+ "findings": [
+  "Production defect (from candidate 2): admin Members tab on myorivia.app (b9e32ffc) throws since step 9; fixed in source, not released.",
+  "Release gates (Ina): feedback Privacy/retention wording; authenticated pilot checks. Simulated replies and voice are not provider evidence.",
+  "Each version stores a full copy of the conversation (limit 30): long chats with many versions use more storage; a full device shows the existing storage warning, nothing is evicted."
+ ],
+ "privacyNoticeVersions": [
+  "orivia-document-consent-v3-2026-10-22 (unchanged)",
+  "Feedback: in-form disclosure updated (no consent version; Privacy/retention text pending Ina)"
+ ],
+ "settingsParityChecked": false,
+ "settingsParityNote": "Not applicable until a production promotion is requested.",
+ "rollback": {
+  "codeVersion": "a9a77d8a-bffa-40f9-8c53-baf36f1809a1 (candidate 3)",
+  "databasePlan": "No schema change. Versions live inside the synced chats record; older code ignores them."
+ },
+ "inaReview": "pending",
+ "founderProductionDecision": "pending"
+}
