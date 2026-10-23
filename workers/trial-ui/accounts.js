@@ -166,6 +166,18 @@
    const data={format:'orivia-personal-export',version:1,exportedAt:new Date().toISOString(),account:{name:user.name,email:user.email},source:'current device account copy',unsynced:!!native.getItem(dirtyKey()),data:snapshot()};
    const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const link=el('a');link.href=url;link.download='orivia-personal-data-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }catch(e){fail(e)}},true));
+  // Accounts remembered on this device (ORI-AUTH-002/003/006). Switching asks the server, then reloads so every screen is
+  // rebuilt for the new account (nothing of the old one stays on screen); the page never sees a session token.
+  const devices=el('section','card');box.append(devices);
+  const loadDevices=async()=>{try{const result=await api('/api/account/device-accounts');if(scope!==panelOwner||screen!=='account')return;
+   devices.replaceChildren(el('h3','','Accounts on this device'),el('p','tiny','Switch between accounts you have signed in to on this device without signing in again, while their sign-in is still valid. Each account’s chats and plans stay separate.'));
+   for(const a of result.accounts){const row=el('div','auth-choice');const label=el('span','',(a.name&&a.name!==a.email?a.name+' · ':'')+a.email);row.append(label);
+    if(a.active)row.append(el('span','tiny','This account'));
+    else if(a.ref){row.append(btn('Switch',async()=>{try{if(scope!==panelOwner)return;callbacks.cancelReply?.();await api('/api/account/device-accounts/switch',{method:'POST',body:{ref:a.ref}});callbacks.leave?.();location.reload()}catch(e){note(e.status===404?'That account needs to sign in again on this device.':'Could not switch accounts. Please try again.');loadDevices()}},true));
+     const rm=btn('Remove from this device',async()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=t('Tap again to remove');return}try{await api('/api/account/device-accounts/remove',{method:'POST',body:{ref:a.ref}});note('Removed from this device. That account is signed out here; its saved data in the account is kept.');loadDevices()}catch(e){note('Could not remove that account. Please try again.')}},true);row.append(rm)}
+    devices.append(row)}
+   devices.append(btn('Add another account',()=>{if(scope!==panelOwner)return;callbacks.cancelReply?.();signIn()},true));
+  }catch(_){if(scope===panelOwner&&screen==='account')devices.replaceChildren(el('p','notice','Could not load the accounts on this device.'),btn('Try again',loadDevices,true))}};loadDevices();
   const sessions=el('section','card');box.append(sessions);
   const loadSessions=async()=>{try{const result=await api('/api/account/sessions');if(scope!==panelOwner||screen!=='account')return;sessions.replaceChildren(el('h3','','Signed-in sessions'),el('p','tiny','Browser descriptions are reported by the browser and may be inaccurate. Signing out does not erase copies already downloaded or stored on another device.'));
    for(const item of result.sessions){const row=el('p','tiny');row.textContent=(item.current?t('This session'):t('Other session'))+' · '+(item.userAgent||t('Browser not reported'))+' · '+t('Signed in')+' '+new Date(item.createdAt).toLocaleString();sessions.append(row)}

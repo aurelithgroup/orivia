@@ -2902,5 +2902,49 @@
   "Orivia was updated. Your unsent message is still here.": {
     "fr": "Orivia a été mis à jour. Votre message non envoyé est toujours là.",
     "ar": "تم تحديث Orivia. رسالتك غير المرسلة لا تزال هنا."
+  },
+  "Accounts on this device": {
+    "fr": "Comptes sur cet appareil",
+    "ar": "الحسابات على هذا الجهاز"
+  },
+  "Switch between accounts you have signed in to on this device without signing in again, while their sign-in is still valid. Each account’s chats and plans stay separate.": {
+    "fr": "Passez d’un compte à l’autre parmi ceux connectés sur cet appareil sans vous reconnecter, tant que leur connexion est valide. Les conversations et plans de chaque compte restent séparés.",
+    "ar": "بدّل بين الحسابات التي سجّلت الدخول إليها على هذا الجهاز دون تسجيل الدخول مرة أخرى، ما دام تسجيل دخولها صالحًا. تبقى محادثات وخطط كل حساب منفصلة."
+  },
+  "This account": {
+    "fr": "Ce compte",
+    "ar": "هذا الحساب"
+  },
+  "Switch": {
+    "fr": "Changer",
+    "ar": "تبديل"
+  },
+  "Remove from this device": {
+    "fr": "Retirer de cet appareil",
+    "ar": "إزالة من هذا الجهاز"
+  },
+  "That account needs to sign in again on this device.": {
+    "fr": "Ce compte doit se reconnecter sur cet appareil.",
+    "ar": "يحتاج هذا الحساب إلى تسجيل الدخول مرة أخرى على هذا الجهاز."
+  },
+  "Could not switch accounts. Please try again.": {
+    "fr": "Impossible de changer de compte. Réessayez.",
+    "ar": "تعذّر تبديل الحساب. حاول مرة أخرى."
+  },
+  "Removed from this device. That account is signed out here; its saved data in the account is kept.": {
+    "fr": "Retiré de cet appareil. Ce compte est déconnecté ici ; ses données enregistrées dans le compte sont conservées.",
+    "ar": "تمت الإزالة من هذا الجهاز. تم تسجيل خروج هذا الحساب هنا؛ وتُحفظ بياناته المحفوظة في الحساب."
+  },
+  "Could not remove that account. Please try again.": {
+    "fr": "Impossible de retirer ce compte. Réessayez.",
+    "ar": "تعذّرت إزالة هذا الحساب. حاول مرة أخرى."
+  },
+  "Add another account": {
+    "fr": "Ajouter un autre compte",
+    "ar": "إضافة حساب آخر"
+  },
+  "Could not load the accounts on this device.": {
+    "fr": "Impossible de charger les comptes de cet appareil.",
+    "ar": "تعذّر تحميل الحسابات على هذا الجهاز."
   }
 }

@@ -1,6 +1,7 @@
 import {sendAccountMail} from './mail.mjs';
 import {betterAuth} from 'better-auth';
 import {emailOTP} from 'better-auth/plugins/email-otp';
+import {multiSession} from 'better-auth/plugins/multi-session';
 export function accountConfig(env){
  let origin='';try{const u=new URL(env.ACCOUNTS_ORIGIN);if(u.protocol==='https:'&&!u.username&&!u.password&&u.pathname==='/'&&!u.search&&!u.hash)origin=u.origin}catch(_){}
  const enabled=env.ACCOUNTS_ENABLED==='1'&&!!env.ACCOUNTS_DB&&typeof env.ACCOUNTS_SECRET==='string'&&env.ACCOUNTS_SECRET.length>=32&&!!origin;
@@ -11,7 +12,8 @@ export function authOptions(env,{database=env.ACCOUNTS_DB,deliver}={}){
  return {appName:'Orivia',baseURL:c.origin,basePath:'/api/auth',secret:env.ACCOUNTS_SECRET,database,trustedOrigins:[c.origin,...(c.apple?['https://appleid.apple.com']:[])],logger:{disabled:true},emailAndPassword:{enabled:false},socialProviders,
  session:{expiresIn:7*86400,updateAge:86400,freshAge:900,cookieCache:{enabled:false}},account:{storeStateStrategy:'database',accountLinking:{enabled:false}},user:{deleteUser:{enabled:true}},
  advanced:{useSecureCookies:true,cookiePrefix:'orivia_account',ipAddress:{ipAddressHeaders:['cf-connecting-ip']},defaultCookieAttributes:{httpOnly:true,secure:true,sameSite:'lax',path:'/'}},rateLimit:{enabled:true,storage:'database',window:60,max:20},
- plugins:[emailOTP({otpLength:6,expiresIn:300,allowedAttempts:5,storeOTP:'hashed',rateLimit:{window:60,max:3},async sendVerificationOTP({email,otp,type}){
+ // multiSession: remembers up to 4 accounts on a device (ORI-AUTH-002). Its endpoints are reached only through /api/account/device-accounts.
+ plugins:[multiSession({maximumSessions:4}),emailOTP({otpLength:6,expiresIn:300,allowedAttempts:5,storeOTP:'hashed',rateLimit:{window:60,max:3},async sendVerificationOTP({email,otp,type}){
  if(!c.email||type!=='sign-in')throw Error('Email unavailable');if(deliver)return deliver({email,otp,type});await reserveEmail(env);
  await sendAccountMail(env,{to:email,from:{email:env.ACCOUNTS_FROM,name:'Orivia'},subject:'Your Orivia sign-in code',text:'Your Orivia sign-in code is '+otp+'. It expires in 5 minutes. Do not share it. If you did not request it, ignore this email.',html:'<p>Your Orivia sign-in code is <strong>'+otp+'</strong>.</p><p>It expires in 5 minutes. Do not share it. If you did not request it, ignore this email.</p>'});}})]};
 }

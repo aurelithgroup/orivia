@@ -57,6 +57,26 @@ export async function handleAccountRequest(req,env,ctx,options={}){
    const sessions=await auth.api.listSessions({headers:req.headers});
    return json({sessions:sessions.map(s=>({current:s.id===session.session.id,createdAt:s.createdAt,updatedAt:s.updatedAt,expiresAt:s.expiresAt,userAgent:s.userAgent||null}))});
   }
+  /* Accounts remembered on this device (ORI-AUTH-002/003/006), using Better Auth's multi-session plugin on the server only:
+     the plugin's own endpoints stay blocked (AUTH_PATHS) because they return raw session tokens. The page gets an opaque
+     reference (HMAC of the token), and switch/remove look the session up again from this device's signed cookies, so a
+     forged reference, another device's session or an arbitrary user id can't be activated. */
+  if(url.pathname.startsWith('/api/account/device-accounts')){
+   const ref=async token=>{const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(String(env.ACCOUNTS_SECRET)),{name:'HMAC',hash:'SHA-256'},false,['sign']);return Array.from(new Uint8Array(await crypto.subtle.sign('HMAC',k,new TextEncoder().encode('device-account:'+token))).slice(0,16),b=>b.toString(16).padStart(2,'0')).join('')};
+   const list=async()=>{let items=[];try{items=await auth.api.listDeviceSessions({headers:req.headers})}catch(_){items=[]}
+    const out=[];for(const it of Array.isArray(items)?items:[])if(it?.session?.token&&it.user?.id)out.push({ref:await ref(it.session.token),token:it.session.token,id:it.user.id,name:it.user.name||'',email:it.user.email||'',active:it.user.id===owner});
+    if(!out.some(a=>a.active))out.unshift({ref:null,token:null,id:owner,name:session.user.name||'',email:session.user.email||'',active:true});return out};
+   if(url.pathname==='/api/account/device-accounts'&&req.method==='GET')return json({accounts:(await list()).map(({ref,name,email,active})=>({ref,name,email,active}))});
+   const forward=res=>{const out=json({ok:true},res.ok?200:401);for(const c of res.headers.getSetCookie?.()||[])out.headers.append('Set-Cookie',c);return out};
+   if(req.method==='POST'&&['/api/account/device-accounts/switch','/api/account/device-accounts/remove'].includes(url.pathname)){
+    if(!expected)return json({error:'account_header_required'},428);
+    const body=await boundedJson(req,300);if(!body||typeof body.ref!=='string'||!/^[0-9a-f]{32}$/.test(body.ref))return json({error:'invalid_account'},400);
+    const target=(await list()).find(a=>a.ref===body.ref);if(!target)return json({error:'not_on_this_device'},404);
+    if(url.pathname.endsWith('/switch')){if(target.active)return json({ok:true,unchanged:true});return forward(await auth.api.setActiveSession({headers:req.headers,body:{sessionToken:target.token},asResponse:true}))}
+    return forward(await auth.api.revokeDeviceSession({headers:req.headers,body:{sessionToken:target.token},asResponse:true}));
+   }
+   return json({error:'not_found'},404);
+  }
   if(url.pathname==='/api/account/sessions/revoke-others'&&req.method==='POST'){
    if(!expected)return json({error:'account_header_required'},428);
    const body=await boundedJson(req,200);if(body?.confirm!=='sign out other sessions')return json({error:'confirmation_required'},400);
