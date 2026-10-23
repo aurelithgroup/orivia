@@ -580,7 +580,12 @@ function destinationCards(items,sources,turn=null){
   const actions=el('div','place-actions'),maps=el('div','place-map-choice');maps.hidden=true;maps.setAttribute('role','group');maps.setAttribute('aria-label',uiText('Choose your map app'));
   const go=button('Take me there →','btn place-go',()=>{maps.hidden=!maps.hidden;go.setAttribute('aria-expanded',String(!maps.hidden))});go.setAttribute('aria-expanded','false');
   maps.append(el('p','tiny',uiText('Choose your map app')));
-  for(const [label,url]of [['Google Maps',links.google],['Apple Maps',links.apple]]){if(!url)continue;const a=el('a','btn quiet small',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';maps.append(a)}
+  const appLinks=el('div','place-map-links'),fill=l=>{appLinks.replaceChildren();for(const [label,url]of [['Google Maps',l.google],['Apple Maps',l.apple]]){if(!url)continue;const a=el('a','btn quiet small',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';appLinks.append(a)}};fill(links);maps.append(appLinks);
+  // Current location (ORI-CAL-006): Orivia never reads it. Directions without a starting point make the map app start from
+  // where the person is, and the map app asks for location itself, only when opened. A typed starting point stays possible.
+  if(d.route?.origin){let fromHere=false;const here=button('Start from where I am instead','btn text small',()=>{const now=fromHere=!fromHere;fill(now?mapSearchLinks({...d,route:{...d.route,origin:''}}):links);here.setAttribute('aria-pressed',String(now));hereNote.hidden=!now});here.setAttribute('aria-pressed','false');
+   const hereNote=el('p','tiny',uiText('Your map app will ask for your location when it opens. Orivia doesn’t see it. If you say no, type a nearby landmark in the map app or ask Orivia for directions from there.'));hereNote.hidden=true;maps.append(here,hereNote)}
+  else if(d.route)maps.append(el('p','tiny',uiText('Directions start from where you are: your map app may ask for your location. Orivia doesn’t see it. To start somewhere else, tell Orivia the starting point.')))
   const saved=()=>Array.isArray(turn?.meta?.savedPlaces)&&turn.meta.savedPlaces.includes(placeIdentity(d));
   const pin=button(saved()?'♥ Saved':'♡ Save','btn place-save',()=>{
    if(!turn)return;turn.meta=turn.meta||{};const ids=new Set(Array.isArray(turn.meta.savedPlaces)?turn.meta.savedPlaces:[]);ids.has(placeIdentity(d))?ids.delete(placeIdentity(d)):ids.add(placeIdentity(d));turn.meta.savedPlaces=[...ids];
@@ -2087,6 +2092,8 @@ function calendarLinks(e){
 function zoneInstant(date,time,tz){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(date))||!/^\d{2}:\d{2}$/.test(String(time||'')))return null;
  const [y,mo,d]=date.split('-').map(Number),[h,mi]=time.split(':').map(Number),wall=Date.UTC(y,mo-1,d,h,mi);
+ // Impossible dates and times (30 February, 24:00) are refused, never rolled over into another day.
+ const check=new Date(wall);if(h>23||mi>59||check.getUTCFullYear()!==y||check.getUTCMonth()!==mo-1||check.getUTCDate()!==d)return null;
  const offset=at=>{try{const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).formatToParts(new Date(at)).map(x=>[x.type,x.value]));return Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute)-at}catch(_){return NaN}};
  let at=wall-offset(wall);at=wall-offset(at);return Number.isFinite(at)?new Date(at):null;
 }

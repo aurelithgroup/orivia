@@ -195,6 +195,91 @@
    "id": "ORI-SEC-010",
    "verdict": "gap→fixed",
    "evidence": "Before: switches existed but several off states were untested and there was no runbook. Fixed: docs/incident-controls.md (each switch, what stops, what people see, its test; rollback record and order of moves); tests/incident-switches.test.mjs (sign-in email, files, university spaces off: unavailable state, nothing sent/stored/read); research-off check added to tests/research-pilot.test.mjs."
+  },
+  {
+   "id": "ORI-CAL-002",
+   "verdict": "verified",
+   "evidence": "tests/calendar-changes.test.mjs: proposals reviewed before applying, matching the intended reminder, ambiguity asks (AM or PM?), edit in place keeps unspecified fields, delete, Undo (refuses after a later edit), storage failure, and \"I am lost\"/\"what?\"/\"quoi?\"/Arabic never replay the earlier \"Move the reminder to 12pm\"."
+  },
+  {
+   "id": "ORI-CAL-003",
+   "verdict": "gap→fixed",
+   "evidence": "Before: an impossible date or time (30 February, 24:00) rolled over into another day instead of being refused. Fixed in zoneInstant. New tests/time-correctness.test.mjs: UK spring-forward gap shown as the real time (02:30 BST) before adding, repeated fall-back hour labelled GMT, Dubai day boundaries, unclear times refused, Dubai→London travel keeps the same moment under real device zones (TZ child processes); source zone shown in the review line (tests/university-actions.test.mjs)."
+  },
+  {
+   "id": "ORI-CAL-005",
+   "verdict": "verified",
+   "evidence": "tests/transport-assistant-card.test.mjs (chosen driving mode retained, encoded driving links), tests/device-handoffs.test.mjs (Apple and Google routes), tests/place-card.test.mjs (driving stays driving in both map apps, also when starting from the current location)."
+  },
+  {
+   "id": "ORI-CAL-006",
+   "verdict": "gap→fixed",
+   "evidence": "Before: no explicit current-location choice. Built without Orivia ever reading location: \"Start from where I am instead\" removes the starting point so the map app uses its own permission when opened, with a plain explanation and a landmark fallback; a route with no start says the same. tests/place-card.test.mjs (links, mode kept, toggle back, no navigator.geolocation anywhere in the app)."
+  },
+  {
+   "id": "ORI-CAL-007",
+   "verdict": "verified",
+   "evidence": "tests/transport-actions.test.mjs (no made-up numbers, broad origin asks), tests/transport-assistant-card.test.mjs (registered official source), tests/handoff-cards.test.mjs (sourced destinations only); no ETA, price or live arrival is produced without a source."
+  },
+  {
+   "id": "ORI-CAL-008",
+   "verdict": "verified",
+   "evidence": "tests/handoff-cards.test.mjs:9-32: English, Arabic and user-language tabs (missing user-language version refused, not relabelled), large message, Listen in the selected language, Close stops speech and returns focus, nothing sent externally, no geolocation."
+  },
+  {
+   "id": "ORI-CAL-010",
+   "verdict": "verified",
+   "evidence": "Microphone only on the dictation button (tests/dictation.test.mjs), photos/camera only through the file picker on tap, notifications only after an explicit choice and never blocking (tests/notification-client.test.mjs:8-11), location never requested by Orivia (tests/place-card.test.mjs). Declines leave typed chat and navigation working."
+  },
+  {
+   "id": "ORI-PERF-003",
+   "verdict": "verified",
+   "evidence": "tests/assistant-timing.test.mjs (concurrent identical searches/pages deduplicated within a turn, bounded cache, request isolation, policy checks unchanged); one shared memberships request for menu, Home and Library (nav.js, reused 4 s, tests/navigation.test.mjs)."
+  },
+  {
+   "id": "ORI-PERF-005",
+   "verdict": "verified",
+   "evidence": "Replies are verified whole (verifyReply) before anything is shown; only activity lines stream, never reply text. tests/truthful-progress.test.mjs (no partial reply streaming), tests/assistant.test.mjs (rejected unsupported claim never displayed; corrected reply shown)."
+  },
+  {
+   "id": "ORI-PERF-007",
+   "verdict": "verified",
+   "evidence": "New tests/truthful-progress.test.mjs: a page that answered 503 is never counted as read, counts match what loaded, \"Checking every fact against the sources\" names the verification stage; progress labels carry no personal details (tests/assistant.test.mjs:164-165)."
+  },
+  {
+   "id": "ORI-JOURNEY-001",
+   "verdict": "verified (acceptance); draft generation not built",
+   "evidence": "A goal with no reviewed guide gets no guide (tests/journey-intelligence.test.mjs:25,35,73-74 return null) and ordinary sourced chat help instead, so no false reviewed guide appears. Evidence-grounded personalised draft plans for uncovered goals are not built; tracked under JOURNEY-003."
+  },
+  {
+   "id": "ORI-JOURNEY-002",
+   "verdict": "verified",
+   "evidence": "tests/guide-cards.test.mjs: offer card with Follow guide / Save for later / Not now; Not now never saves; not offered again while following or after decline; refreshers only when asked."
+  },
+  {
+   "id": "ORI-JOURNEY-003",
+   "verdict": "gap",
+   "evidence": "Guides carry steps with source and review date, cost/time only when known (never invented), waiting-for and a \"how to check\" line, and applicability rules. Missing: explicit step dependencies (\"what blocks it\"), owner per step, and completion criteria as data. To build."
+  },
+  {
+   "id": "ORI-JOURNEY-004",
+   "verdict": "gap",
+   "evidence": "Steps support not started, in progress, waiting, done and not sure; Done is personal and never shown as approval. Missing: ready, waiting for organisation vs waiting for you, blocked, not applicable, Undo/history and the source of each state. To build."
+  },
+  {
+   "id": "ORI-JOURNEY-006",
+   "verdict": "in audit",
+   "evidence": "\"Ask Orivia about this step\" prepares Chat with the guide and step named; context label, return-to-plan and account-switch behaviour still to verify."
+  },
+  {
+   "id": "ORI-LIB-007",
+   "verdict": "gap",
+   "evidence": "Search and type tabs exist and filtered views never cross accounts (store is account-scoped). Missing: sort (recent / alphabetical / pinned) and filter by country/space. To build."
+  },
+  {
+   "id": "ORI-LIB-010",
+   "verdict": "verified",
+   "evidence": "Files show \"N of 100 MB used\", refuse new uploads with allowance_full and a plain message (tests/files.test.mjs:57-60); device saves that fail say so and change nothing (tests/library-discoveries.test.mjs quota case, tests/calendar-changes.test.mjs storage failure); no eviction or truncation code exists."
   }
  ]
 }

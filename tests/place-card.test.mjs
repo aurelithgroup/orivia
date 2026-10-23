@@ -27,6 +27,16 @@ const restored=ctx.destinationCards(JSON.parse(JSON.stringify(out.destinations))
 const imageCard=ctx.destinationCards([{...out.destinations[0],image:photo}],sources,turn);const img=walk(imageCard).find(n=>n.tag==='img');assert.ok(img);assert.equal(img.referrerPolicy,'no-referrer');img.onerror();assert.equal(img.removed,true);
 assert.equal(ctx.safeDestinations([{...out.destinations[0],image:{data:'data:image/svg+xml;base64,PHN2Zz4=',sourceUrl:source}}],sources)[0].image,null);
 assert.ok(!/geolocation|iframe|innerHTML/.test(part));
+// Directions from where the person is (ORI-CAL-006, ORI-CAL-005): Orivia never reads location (no navigator in this
+// context: any use would throw); the map app starts from the device's position instead, keeping the chosen mode.
+{const routed=[{...out.destinations[0],route:{origin:'Al Garhoud metro station',mode:'driving'}}];const n=walk(ctx.destinationCards(routed,sources,turn));
+ const hrefs=()=>walk(n.find(x=>x.className==='place-map-links')).filter(x=>x.tag==='a').map(x=>x.href);
+ assert.ok(hrefs()[0].includes('origin=Al+Garhoud')&&hrefs()[0].includes('travelmode=driving'));assert.ok(hrefs()[1].includes('dirflg=d'));
+ const here=n.find(x=>x.textContent==='Start from where I am instead');here.onclick();assert.equal(here.attrs['aria-pressed'],'true');
+ assert.ok(hrefs().every(h=>!/origin=|saddr=/.test(h)),'no starting point: the map app uses its own location');assert.ok(hrefs()[0].includes('travelmode=driving'),'driving stays driving');
+ assert.ok(n.some(x=>/doesn’t see it/.test(x.textContent)&&!x.hidden));here.onclick();assert.ok(hrefs()[0].includes('origin=Al+Garhoud'),'and back to the typed start');
+ const open=walk(ctx.destinationCards([{...out.destinations[0],route:{origin:'',mode:'walking'}}],sources,turn));assert.ok(open.some(x=>/Directions start from where you are/.test(x.textContent)));
+ assert.ok(!/navigator.geolocation/.test(js),'the app never asks the browser for location')}
 console.log('Place cards: bounded same-origin raster preview, redirect/type/size failure, sourced details, map chooser, Save/reload/My Life, and illustration fallback passed');
 
 // Real assistant orchestration, scripted model/pages: optional photo is attached after the evidence check.
