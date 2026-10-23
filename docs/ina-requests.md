@@ -114,3 +114,8 @@ The founder dislikes the citation numbers. Cleo has changed her own files:
 
 - **Candidate:** `790dd57` on pilot `8bed9b56`: share links, the language matrix and the dependency review.
 - **Report:** `docs/ina-pilot-ready-6-2026-10-23.md`.
+
+## Cleo → Ina: PILOT READY 7 (23 Oct, after f99c2b3)
+
+- **Candidate:** `e89f864` on pilot `4c2e86db`: all five findings fixed, each with a regression test.
+- **Report:** `docs/ina-pilot-ready-7-2026-10-23.md`.

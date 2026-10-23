@@ -1,7 +1,7 @@
 {
  "specVersion": 1,
- "candidateSha": "790dd57",
- "pilotVersion": "8bed9b56-362c-4609-8ac2-1ca97706a481",
+ "candidateSha": "e89f864",
+ "pilotVersion": "4c2e86db-6998-4e30-874c-bcce9d1c3971",
  "productionVersion": "b9e32ffc",
  "counts": {
   "locally verified": 58,
@@ -28,8 +28,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "Built on the integrated app (a846926 → candidate); every CI command passes on a clean tree at the candidate (count and results in the candidate receipt).",
    "dependency": null
   },
@@ -39,8 +39,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "Baseline a846926 = spec baselineSha; production b9e32ffc recorded before work.",
    "dependency": null
   },
@@ -50,7 +50,7 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "in progress",
-   "testedSha": "790dd57",
+   "testedSha": "e89f864",
    "environment": "—",
    "evidence": "Cleo integrated one candidate; Ina’s independent review pending.",
    "dependency": "Ina review"
@@ -61,8 +61,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "No founder test requested during this build.",
    "dependency": null
   },
@@ -72,8 +72,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "This ledger: most of the spec is not built; see counts.",
    "dependency": null
   },
@@ -83,8 +83,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "Only additive CREATE TABLE IF NOT EXISTS (feedback.sql) on the pilot test DB 8cd85061; production DBs untouched.",
    "dependency": null
   },
@@ -94,8 +94,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "Candidate, evidence and blocker list supplied at cut-off.",
    "dependency": null
   },
@@ -105,8 +105,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "orivia-production still b9e32ffc after deploy (wrangler deployments list); no budget, provider, email, purchase, share or store action.",
    "dependency": null
   },
@@ -116,8 +116,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "Every entry uses only the eight GOV-009 words (checked by this script).",
    "dependency": null
   },
@@ -127,8 +127,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "Secret-pattern scan of tracked files clean; no participant data. Finding: older public pages/config link to *.habeebahsallah27.workers.dev (exposes the founder’s username).",
    "dependency": "Move public links to a custom domain"
   },
@@ -140,7 +140,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Shared shell: app, /platform and /manage reachable from the space menu; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Shared shell: app, /platform and /manage reachable from the space menu; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -160,8 +160,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "--link #7A5300 light / #F5C842 dark, underline, AA contrast computed on 8 surfaces; tests/week-swipe-links.test.mjs; harness computed style.",
    "dependency": "Ina live check in both themes"
   },
@@ -171,8 +171,8 @@
    "priority": "P1",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "App links, staff/owner console and refusal page use brand tokens; source citations keep their own style.",
    "dependency": "Full screen audit incl. auth emails"
   },
@@ -184,7 +184,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -206,7 +206,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -217,7 +217,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Two-tap removes for calendar and library; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Two-tap removes for calendar and library; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -228,7 +228,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -239,7 +239,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -272,7 +272,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -283,7 +283,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Organisation arrival; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Organisation arrival; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -305,7 +305,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -316,7 +316,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -327,7 +327,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -349,7 +349,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -360,7 +360,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Assistant intent tests; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Assistant intent tests; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -371,7 +371,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -380,8 +380,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Conversation versions (Ina 5bdfcf8, integrated 2b4e9d3): every earlier version kept and switchable with Previous/Next; only the selected one is sent; survives refresh. tests/chat-versions.test.mjs, tests/chat-versions-integration.test.mjs; browser docs/evidence/chat-versions-browser-2026-10-23.json.",
    "dependency": "Ina live check"
   },
@@ -402,8 +402,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Edit creates a new version with Save and send / Cancel and an explanation; earlier answers stay in the earlier version; a Stop or failure restores the earlier version (browser-found fix).",
    "dependency": "Ina live check"
   },
@@ -413,8 +413,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Regenerate sends one request without duplicating the question; earlier answer kept; no automatic reminder (explicit Review/Save; browser: calendar count unchanged until Save); controls re-enabled after a reply (browser-found fix).",
    "dependency": "Ina live check; real provider"
   },
@@ -424,8 +424,8 @@
    "priority": "P1",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Ratings (set/change/remove) stored with the account; 30-day totals in the owner overview; tests/feedback.test.mjs; harness click test.",
    "dependency": "Ina live check"
   },
@@ -435,8 +435,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Report a problem: reply text off by default; disclosure says the report is linked to the account, the team can read the note and any included reply, the review list omits name and email (Ina finding 3). Only a 4xx says nothing was saved; a lost response says it could not confirm and Try again reuses the request id (finding 4, tested server and client).",
    "dependency": "Privacy/retention wording before production (Ina)"
   },
@@ -446,10 +446,10 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
-   "evidence": "Reviewed text-only snapshot of ticked messages; files, document-based and university members-only replies can't be selected (reason shown); audience, contents and expiry shown before creating (tests/shares.test.mjs with real sessions; browser docs/evidence/share-browser-2026-10-23.json).",
-   "dependency": "Ina live check; production routing of /s/ for public viewing"
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
+   "evidence": "Durable per-reply origin stamp (meta.origin v1); document- or university-based replies and unstamped older replies stay excluded after context clearing, version switching and reload (tests/share-provenance.test.mjs, Ina f99c2b3 reproductions). Dialog states it can't guarantee the person's own text.",
+   "dependency": "Ina live check; Privacy wording"
   },
   {
    "id": "ORI-CHAT-010",
@@ -457,10 +457,10 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
-   "evidence": "Hashed 256-bit links; read-only escaped noindex page with source attribution, no cookies, grants nothing; withdraw, delete, expiry and account deletion stop it; unknown/revoked/expired look identical.",
-   "dependency": "Ina live check"
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
+   "evidence": "Front door and production route /s/<token> to the read-only page (tests/share-routing.test.mjs: active, HEAD, unknown/expired/revoked identical, unframeable, private APIs unchanged). Expiry stops access but doesn't delete the stored snapshot (docs/backups.md).",
+   "dependency": "Production release decision; Privacy wording"
   },
   {
    "id": "ORI-CHAT-011",
@@ -470,7 +470,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -481,7 +481,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Pin/archive/search; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Pin/archive/search; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -525,7 +525,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "runAssistantTurn decide/act/verify; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "runAssistantTurn decide/act/verify; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -536,7 +536,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Source classes in assistant; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Source classes in assistant; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -547,7 +547,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -558,7 +558,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -569,7 +569,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "verifyReply claim kinds; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "verifyReply claim kinds; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -580,7 +580,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -591,7 +591,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -602,7 +602,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -613,7 +613,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -624,7 +624,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -635,7 +635,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -646,7 +646,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -655,7 +655,7 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "in progress",
-   "testedSha": "790dd57",
+   "testedSha": "e89f864",
    "environment": "—",
    "evidence": "Timing log (orivia-assistant: steps, model/tool ms) exists; numbers-only tail script ready. 0 live samples: pilot traffic is behind Access and the founder is not asked to test.",
    "dependency": "Ina or reviewer sends the 3 benchmark classes on the pilot"
@@ -701,7 +701,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "verifyReply before display; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "verifyReply before display; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -723,7 +723,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -732,8 +732,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Preparing message at the tap; first natural piece ~1 sentence; click-to-first-audio recorded (orivia-listen). Harness with simulated 600 ms voice: ~1.0–1.2 s first audio, 51–72 ms on reuse. OpenAI latency not measured.",
    "dependency": "Real-provider and device measurement"
   },
@@ -743,8 +743,8 @@
    "priority": "P1",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Session-only audio reuse per account (memory, 24 pieces / 8 MB), in-flight sharing; Stop keeps a piece in progress for replay. Account exit, account change and Clear saved data run resetVoiceSession(): cache, in-flight, requests, player and audio URLs cleared at once; late responses never cached or played (Ina 7c701fb; tests/voice-account-exit.test.mjs; docs/evidence/voice-account-exit-browser-2026-10-22.json).",
    "dependency": null
   },
@@ -767,7 +767,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -778,7 +778,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Guide offer card; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Guide offer card; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -789,7 +789,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -800,7 +800,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -822,7 +822,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -875,8 +875,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Tabs All, Files, Guides, Places and services, Shortlists over existing records (no copies); tests/library.test.mjs.",
    "dependency": "Saved conversations/links section not built"
   },
@@ -886,8 +886,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "All eligible discoveries shown, 30 per page with Show more (Ina finding 1: no cap). Behavioural test on 105 items runs the shipped module; headless repro in docs/evidence/library-discoveries-browser-2026-10-22.json.",
    "dependency": "Ina live check"
   },
@@ -897,8 +897,8 @@
    "priority": "P1",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "♥ favourite and Shortlisted label both survive duplicate mentions (Ina finding 5; tested with an older shortlisted organisation and a newer duplicate).",
    "dependency": null
   },
@@ -908,8 +908,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Each discovery links to its chat and source site.",
    "dependency": null
   },
@@ -930,8 +930,8 @@
    "priority": "P1",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Remove/Restore stored once in the account-scoped Library state (store.library), never in messages; earlier per-message removals migrated read-only; a failed save undoes the change (Ina finding 2). Browser: 0 messages changed, persists across reload.",
    "dependency": null
   },
@@ -943,7 +943,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Search and section filters; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Search and section filters; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -954,7 +954,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -976,7 +976,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "No eviction; storage-full warnings; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "No eviction; storage-full warnings; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -985,8 +985,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "48px horizontal threshold, vertical rejection, pointercancel, one week per gesture, RTL reversed, arrows kept; unit + headless Chrome pointer test.",
    "dependency": "Real touch device check"
   },
@@ -998,7 +998,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Review card and two-tap Remove; no Undo yet; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Review card and two-tap Remove; no Undo yet; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1031,7 +1031,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1042,7 +1042,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1053,7 +1053,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1064,7 +1064,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1086,7 +1086,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1106,8 +1106,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Better Auth 1.7.11 multi-session (max 4) behind /api/account/device-accounts; Add another account, list, Switch without credentials (browser with real local accounts: docs/evidence/device-accounts-browser-2026-10-23.json).",
    "dependency": "Ina signed-in pilot check"
   },
@@ -1117,8 +1117,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Opaque HMAC references only; switch/remove re-resolve from this device's signed cookies with the current account header; forged refs, user ids, another device's session and expired sessions refused (tests/device-accounts.test.mjs, real sessions).",
    "dependency": null
   },
@@ -1128,8 +1128,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Account epoch binding and X-Orivia-Account 409 (existing); voice audio now cleared immediately on account exit or change (Ina 7c701fb).",
    "dependency": "Full multi-account switching (AUTH-002/003)"
   },
@@ -1141,7 +1141,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Partial: account header per request; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Partial: account header per request; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1150,8 +1150,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Accounts on this device (switch, remove from this device = revoke that session, others kept) plus existing session list, sign out other sessions and log out.",
    "dependency": null
   },
@@ -1163,7 +1163,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Verified email required for organisation and owner actions; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Verified email required for organisation and owner actions; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1196,7 +1196,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Last owner cannot delete; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Last owner cannot delete; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1205,8 +1205,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "GET /api/admin/overview: organisations, active students/staff, join requests, open invitations, published/draft content, open feedback, each defined; tests/owner-overview.test.mjs (exact counts, refusal for visitor/student/admin/non-member); rendered at 1280px and 390px (docs/evidence/screens).",
    "dependency": "Ina signed-in check on the pilot"
   },
@@ -1216,8 +1216,8 @@
    "priority": "P1",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Organisation search (name, web name, city; % literal) with per-organisation totals and direct actions (invite first admin; open dashboard when also staff).",
    "dependency": null
   },
@@ -1271,8 +1271,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Budgets read from the server meters only (OpenAI and voice spend_meter, search research_usage, sign-in email account_mail_meter); otherwise Unavailable. Pilot read-only check: shared OpenAI meter $5.35 this month.",
    "dependency": "Actual-cost report vs 250 AED target (BUSINESS-005)"
   },
@@ -1293,8 +1293,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Feedback queue linked from the overview (Feedback to review); support inbox not built.",
    "dependency": "Support inbox"
   },
@@ -1361,7 +1361,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Owner view excludes member lists and chats; feedback queue excludes identities; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Owner view excludes member lists and chats; feedback queue excludes identities; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1370,8 +1370,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Needs attention queue from this organisation’s records: join requests, drafts, past/undated key dates, upcoming dates, contacts missing details; each opens its workflow (browser: draft focused in Guides, Review requests opens Members); tests/university-overview.test.mjs.",
    "dependency": "Ina signed-in check"
   },
@@ -1383,7 +1383,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1394,7 +1394,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1427,7 +1427,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1438,7 +1438,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1447,8 +1447,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Admin Members tab crash fixed: \"constreq=\" threw in strict mode since step 9 (dffc2ea). Guard test added. Production still has the bug until released.",
    "dependency": "Production release (founder decision)"
   },
@@ -1460,7 +1460,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1493,7 +1493,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1526,7 +1526,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1537,7 +1537,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1548,7 +1548,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1570,7 +1570,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Organisation context with server membership check; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Organisation context with server membership check; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1603,7 +1603,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Editable email draft card, never claims submission; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Editable email draft card, never claims submission; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1614,7 +1614,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1623,8 +1623,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Read-only adapter contract and synthetic fixture adapter; configured only with credential AND agreement (tests/connectors.test.mjs, docs/connectors.md).",
    "dependency": "Real partner (blocked external)"
   },
@@ -1645,9 +1645,9 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
-   "evidence": "Signed (HMAC), fresh (5 min), strict schema, idempotent by event id, routed by the verifying connection, never regresses a newer source version (synthetic).",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
+   "evidence": "Signed, fresh, strict schema, idempotent, routed by the verifying connection, never regresses; event and status written in one atomic batch so a failure between them can be retried (Ina f99c2b3 repro passes).",
    "dependency": "Polling with backoff when a partner exists"
   },
   {
@@ -1656,8 +1656,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Source event id/version, occurred/received/recorded times, last sync; status keeps its asserting party (university submitted ≠ authority approved).",
    "dependency": null
   },
@@ -1667,8 +1667,8 @@
    "priority": "P1",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Revoked connections refuse queued, correctly signed updates (410); partner credential revocation remains external.",
    "dependency": null
   },
@@ -1678,8 +1678,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "docs/connectors.md separates connector software (fixture-tested) from any live university integration (none).",
    "dependency": null
   },
@@ -1689,8 +1689,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "docs/metrics.md defines every console metric (source, time basis, roles, limits); tests/metric-definitions.test.mjs fails on an undocumented metric.",
    "dependency": null
   },
@@ -1702,7 +1702,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Logs carry codes and timings only; feedback stores no identity in the queue; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Logs carry codes and timings only; feedback stores no identity in the queue; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1744,8 +1744,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Owner-only CSV of directory totals: ≤100 rows, optional search, no names/emails, quoted cells, formula-start cells prefixed with an apostrophe, platform_audit row per export without the search text (tests/owner-overview.test.mjs, metric-definitions.test.mjs).",
    "dependency": null
   },
@@ -1768,7 +1768,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1834,7 +1834,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1865,8 +1865,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "docs/language-matrix.md tracks 10 languages separately for UI, reply, dictation, natural and device voice; tests/language-matrix.test.mjs fails on claims the code/tests don't support.",
    "dependency": null
   },
@@ -1876,7 +1876,7 @@
    "priority": "P1",
    "owner": "Cleo",
    "status": "in progress",
-   "testedSha": "790dd57",
+   "testedSha": "e89f864",
    "environment": "—",
    "evidence": "French and Arabic UI translations; 8 of 10 languages missing.",
    "dependency": "Translations"
@@ -1900,7 +1900,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Arabic RTL; swipe RTL-aware; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Arabic RTL; swipe RTL-aware; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1911,7 +1911,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Dictation never sends; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Dictation never sends; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1933,7 +1933,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1944,7 +1944,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1966,7 +1966,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1977,7 +1977,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -1999,7 +1999,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -2021,7 +2021,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -2063,7 +2063,7 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "in progress",
-   "testedSha": "790dd57",
+   "testedSha": "e89f864",
    "environment": "—",
    "evidence": "Caps: OpenAI $5/day $20/month; voice $1/$5; search 10/100; email 10/100. No actual-cost report yet.",
    "dependency": "Cost report"
@@ -2074,8 +2074,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "No limit or plan changed tonight (config unchanged).",
    "dependency": null
   },
@@ -2109,7 +2109,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Versioned document consent; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Versioned document consent; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -2131,7 +2131,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -2142,7 +2142,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Demo organisations labelled Demo; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Demo organisations labelled Demo; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -2162,8 +2162,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "Secret-pattern scan clean; secrets stay in Worker settings (deploy script never reads them).",
    "dependency": null
   },
@@ -2175,7 +2175,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -2186,7 +2186,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "UI builds text nodes; feedback inputs validated server-side; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "UI builds text nodes; feedback inputs validated server-side; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -2195,8 +2195,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Feedback reports idempotent by request id (test).",
    "dependency": null
   },
@@ -2206,10 +2206,10 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
-   "evidence": "docs/backups.md (D1 Time Travel, exports, additive schema, R2 has no automatic backup). Pilot restore drill: 27 tables, 56 rows, integrity ok, 0 FK violations, migrations idempotent, counts equal live (docs/evidence/restore-drill-pilot-2026-10-23.json); CI drill on a synthetic dump.",
-   "dependency": "R2 backup decision (founder); live Time Travel restore only by decision"
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
+   "evidence": "docs/backups.md: D1 Time Travel, exports, restore drill (27 tables, counts equal live); client rollback compatibility tested per build (tools/rollback-compat.mjs): roll back only to 5bdfcf8 or later once versions are live; retention of withdrawn/expired shares stated.",
+   "dependency": "R2 backup decision (founder)"
   },
   {
    "id": "ORI-SEC-007",
@@ -2217,8 +2217,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Real app service worker tested: private API/chat/account pages never cached or served offline; shell only; old caches removed. Offline refresh opens as guest (no signed-in data shown); offline send keeps the message.",
    "dependency": "Installed-app device check"
   },
@@ -2228,8 +2228,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "Update Reload keeps the unsent draft (same account/chat, 10 min) and waits while a reply or file is pending (browser: docs/evidence/offline-updates-browser-2026-10-23.json); competing workers on overlapping scopes are unregistered.",
    "dependency": "Installed-app device check"
   },
@@ -2239,8 +2239,8 @@
    "priority": "P1",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "pilot 8bed9b56-362c-4609-8ac2-1ca97706a481 (local tests + local browser harness; live pilot check is Ina’s)",
+   "testedSha": "e89f864",
+   "environment": "pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971 (local tests + local browser harness; live pilot check is Ina’s)",
    "evidence": "docs/dependencies.md: accounts deps 0 findings; pilot's 7 high findings are in puppeteer's local browser downloader, none bundled (source map checked); browser rendering off; no automatic downgrade.",
    "dependency": "Update @cloudflare/puppeteer when patched"
   },
@@ -2252,7 +2252,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Switches FILES_ENABLED, DOCUMENTS_ENABLED, VOICE_ENABLED, OPENAI_PILOT; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Switches FILES_ENABLED, DOCUMENTS_ENABLED, VOICE_ENABLED, OPENAI_PILOT; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -2263,7 +2263,7 @@
    "status": "existing",
    "testedSha": null,
    "environment": "source",
-   "evidence": "Install button and manifest; source at 790dd57 (pre-existing; not re-tested against the new acceptance)",
+   "evidence": "Install button and manifest; source at e89f864 (pre-existing; not re-tested against the new acceptance)",
    "dependency": null
   },
   {
@@ -2338,8 +2338,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "No enrolment, payment or submission made.",
    "dependency": null
   },
@@ -2349,8 +2349,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "Every CI command passes on a clean tree at the candidate; the receipt lists each command and result.",
    "dependency": null
   },
@@ -2360,8 +2360,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "One candidate deployed to the isolated pilot; frozen for review.",
    "dependency": null
   },
@@ -2371,7 +2371,7 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "in progress",
-   "testedSha": "790dd57",
+   "testedSha": "e89f864",
    "environment": "—",
    "evidence": "Awaiting Ina.",
    "dependency": "Ina review"
@@ -2382,7 +2382,7 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "in progress",
-   "testedSha": "790dd57",
+   "testedSha": "e89f864",
    "environment": "—",
    "evidence": "After Ina’s review.",
    "dependency": "Founder acceptance"
@@ -2393,8 +2393,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "Ina’s five findings (a4e6dcf) fixed at source with behavioural tests; a step 9 Members-tab crash found by a browser check, fixed with a guard.",
    "dependency": null
   },
@@ -2404,8 +2404,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "Production not touched.",
    "dependency": null
   },
@@ -2415,8 +2415,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "The candidate receipt (docs/evidence/pilot-candidate-*.json) + this ledger.",
    "dependency": null
   },
@@ -2426,8 +2426,8 @@
    "priority": "P0",
    "owner": "Cleo",
    "status": "locally verified",
-   "testedSha": "790dd57",
-   "environment": "local + pilot 8bed9b56-362c-4609-8ac2-1ca97706a481",
+   "testedSha": "e89f864",
+   "environment": "local + pilot 4c2e86db-6998-4e30-874c-bcce9d1c3971",
    "evidence": "Readiness list states what is left.",
    "dependency": null
   }
