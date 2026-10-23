@@ -2118,6 +2118,11 @@ function zoneInstant(date,time,tz){
 window.OriviaCalendar={
  instant:zoneInstant,
  hasOrganisationItem(tag){loadEvents();return events.some(e=>e.source?.org===tag.org&&e.source?.content===tag.content)},
+ organisationItem(tag){loadEvents();const e=events.find(e=>e.source?.org===tag.org&&e.source?.content===tag.content);return e?JSON.parse(JSON.stringify(e)):null},
+ // The university changed a date the person had added (ORI-UNI-006): only on their tap, never automatically.
+ updateOrganisationDate(o){loadEvents();const e=events.find(e=>e.source?.org===o.org&&e.source?.content===o.content);if(!e)return {ok:false,reason:'missing'};
+  const at=o.time?zoneInstant(o.date,o.time,o.timeZone):new Date(o.date+'T09:00');if(!at||!Number.isFinite(at.getTime()))return {ok:false,reason:'invalid'};if(at.getTime()<Date.now())return {ok:false,reason:'past'};
+  e.at=at.toISOString();e.title=String(o.title).trim().slice(0,100);if(o.time)delete e.allDay;else e.allDay=true;e.source={...e.source,revision:Number(o.revision)||e.source.revision};storeEvents();renderEvents();renderUpcoming();return {ok:true,event:JSON.parse(JSON.stringify(e))}},
  addOrganisationDate(o){
   loadEvents();if(events.some(e=>e.source?.org===o.org&&e.source?.content===o.content))return {ok:false,reason:'duplicate'};
   const at=o.time?zoneInstant(o.date,o.time,o.timeZone):new Date(o.date+'T09:00');

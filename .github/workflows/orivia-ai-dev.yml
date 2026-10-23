@@ -183,6 +183,7 @@ jobs:
           node tests/consent-scope.test.mjs
           node tests/plan-steps.test.mjs
           node --experimental-sqlite tests/org-settings.test.mjs
+          node --experimental-sqlite tests/dates-announcements.test.mjs
           node --experimental-sqlite tests/owner-overview.test.mjs
           node --experimental-sqlite tests/university-overview.test.mjs
           node tests/listen-startup.test.mjs

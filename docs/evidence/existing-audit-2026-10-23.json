@@ -338,8 +338,8 @@
   },
   {
    "id": "ORI-UNI-006",
-   "verdict": "gap",
-   "evidence": "Past dates can’t be added (\"This date has passed\") but stay listed, updates have no end date, and editing a date doesn’t explain what happens to copies students already added. To build."
+   "verdict": "gap→fixed",
+   "evidence": "Built: updates take an optional Show until date and stop appearing for students after it (staff Overview lists ended updates); past key dates fold into a Past dates group without calendar buttons; staff can now edit existing content in the console (revision-checked), and editing a published date explains that students keep their own calendar copy until they choose to update it; a student whose saved copy is out of date sees both times and an Update my calendar button (nothing changes automatically; a new date in the past changes nothing). tests/dates-announcements.test.mjs; screenshot docs/evidence/screens/uni-006-edit-date-phone.png."
   },
   {
    "id": "ORI-UNI-007",

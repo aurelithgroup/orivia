@@ -3,10 +3,11 @@
  *  date:    {date:'YYYY-MM-DD', time?:'HH:MM', timeZone?:IANA zone (required with a time)}
  *  contact: {phone?, email?, website?}   (at least one when details are given)
  *  guide:   {sourceUrl?}
- *  update:  {relatedId?: a guide in the same organisation, actionLabel?, actionUrl?} (label and link go together) */
+ *  update:  {relatedId?: a guide in the same organisation, actionLabel?, actionUrl?, showUntil?: 'YYYY-MM-DD'}
+ *           (label and link go together; after showUntil students no longer see the update) */
 export class DetailsError extends Error{constructor(field){super('invalid_details:'+field);this.field=field}}
 const bad=f=>{throw new DetailsError(f)};
-const ALLOWED={date:['date','time','timeZone'],contact:['phone','email','website'],guide:['sourceUrl'],update:['relatedId','actionLabel','actionUrl']};
+const ALLOWED={date:['date','time','timeZone'],contact:['phone','email','website'],guide:['sourceUrl'],update:['relatedId','actionLabel','actionUrl','showUntil']};
 
 export function validDate(s){if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s))return false;const [y,m,d]=s.split('-').map(Number);const t=new Date(Date.UTC(y,m-1,d));return y>=2000&&y<=2100&&t.getUTCFullYear()===y&&t.getUTCMonth()===m-1&&t.getUTCDate()===d}
 export function validTime(s){return typeof s==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(s)}
@@ -39,6 +40,7 @@ export async function normaliseDetails(kind,input,{relatedIdOk=async()=>false}={
   const label=s('actionLabel'),url=s('actionUrl');const hasL=!!label,hasU=!!url;
   if(hasL!==hasU)bad('action');
   if(hasL){if(typeof label!=='string'||label.length>60||/[\u0000-\u001f<>]/.test(label))bad('actionLabel');if(!validHttps(url))bad('actionUrl');set('actionLabel',label);set('actionUrl',url)}
+  const until=s('showUntil');if(until!==undefined&&until!==null&&until!==''){if(!validDate(until))bad('showUntil');set('showUntil',until)}
  }
  return Object.keys(out).length?out:null;
 }

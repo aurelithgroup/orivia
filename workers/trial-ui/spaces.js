@@ -49,7 +49,15 @@
   const wrap=node('div','org-cal'),cal=window.OriviaCalendar,tag={org:m.organisationId,content:c.id,revision:c.revision};
   const done=text=>{wrap.replaceChildren(node('p','tiny org-saved',text))};
   if(!cal){wrap.append(node('p','tiny','Your calendar isn’t available here.'));return wrap}
-  if(cal.hasOrganisationItem(tag)){done('✓ Already in your calendar');return wrap}
+  const mineSaved=cal.organisationItem?cal.organisationItem(tag):(cal.hasOrganisationItem(tag)?{source:{revision:c.revision}}:null);
+  if(mineSaved){const want=det.time?cal.instant(det.date,det.time,det.timeZone):new Date(det.date+'T09:00');
+   // Changed since they added it: say so, show both, and update only if they ask.
+   if((Number(mineSaved.source?.revision)||0)<(Number(c.revision)||0)&&want&&Math.abs(new Date(mineSaved.at).getTime()-want.getTime())>=60000){
+    const was=new Date(mineSaved.at).toLocaleString(undefined,{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+    wrap.append(node('p','tiny org-changed',org+' changed this date after you added it. Your calendar still has '+was+'.',true));
+    const up=node('button','btn small','Update my calendar');up.type='button';up.onclick=()=>{const r=cal.updateOrganisationDate({...tag,title:c.title,date:det.date,time:det.time,timeZone:det.timeZone});
+     if(r.ok)done('✓ Updated in your calendar');else if(r.reason==='past')done('The new date has passed. Your calendar wasn’t changed.');else wrap.append(node('p','tiny','It couldn’t be updated. Please try again.'))};wrap.append(up);return wrap}
+   done('✓ Already in your calendar');return wrap}
   const add=node('button','btn small','Add to my calendar');add.type='button';
   add.onclick=()=>{
    const confirm=node('div','org-confirm');confirm.append(node('p','tiny','Add “'+c.title+'” ('+orgWhen(det)+') to your Orivia calendar? It’s saved for you only; '+org+' isn’t told.',true));
@@ -83,7 +91,8 @@
    const groups=[['update','Updates'],['date','Important dates'],['guide','Guides'],['contact','Useful contacts']];
    const link=(label,href,ext)=>{const a=node('a','btn quiet small',label);a.href=href;if(ext){a.target='_blank';a.rel='noopener noreferrer'}return a};
    for(const [kind,label] of groups){
-    const items=content.filter(c=>c.kind===kind);if(!items.length)continue;
+    const todayIso=new Date().toISOString().slice(0,10),past=c=>kind==='date'&&c.details?.date&&c.details.date<todayIso;
+    const items=content.filter(c=>c.kind===kind&&!past(c)),gone=content.filter(c=>c.kind===kind&&past(c));if(!items.length&&!gone.length)continue;
     const group=node('section','organisation-group');group.append(node('h3','',label));
     for(const c of items){
      const item=node('article','card org-item');item.id='org-item-'+c.id;const det=c.details&&typeof c.details==='object'?c.details:{};
@@ -101,6 +110,7 @@
       if(det.actionLabel&&det.actionUrl)actions.append(link(det.actionLabel+' ↗',det.actionUrl,true))}
      if(actions.childElementCount)item.append(actions);group.append(item);
     }
+    if(gone.length){const fold=document.createElement('details');fold.className='org-past';const sum=document.createElement('summary');sum.textContent=t('Past dates')+' ('+gone.length+')';fold.append(sum);for(const c of gone){const it=node('article','card org-item');it.id='org-item-'+c.id;it.append(node('strong','',c.title,true),node('p','org-when',orgWhen(c.details),true));fold.append(it)}group.append(fold)}
     out.push(group);
    }
    if(!content.length)out.push(node('p','notice','Your organisation hasn’t published anything here yet.'));
