@@ -1574,8 +1574,8 @@ const journeysKey='orivia-private-journeys-v1',offeredKey='orivia-private-offere
 const JID=/^[a-z]+(\.[a-z]+){1,3}$/;
 const STATE_LABEL={active:'Active',waiting:'Waiting',paused:'Paused',saved:'Saved for later',done:'Completed'};
 const STATE_ORDER={active:0,paused:1,saved:2,done:3};
-const STEP_LABEL={not_started:'Not started',in_progress:'In progress',waiting:'Waiting',done:'Done',unsure:'Not sure'};
-const STEP_MARK={not_started:'',in_progress:'•',waiting:'◷',done:'✓',unsure:'?'};
+// Step states, history and dependencies live in plan-steps.js (ORI-JOURNEY-003/004).
+const PLAN=window.OriviaPlan,STEP_LABEL=PLAN.LABEL,STEP_MARK=PLAN.MARK;
 function readJourneys(){
  try{const d=JSON.parse((globalThis.OriviaAccountStorage?.storage||localStorage).getItem(journeysKey)||'{}');if(!d||typeof d!=='object'||Array.isArray(d))return {};
   for(const v of Object.values(d)){
@@ -1583,6 +1583,7 @@ function readJourneys(){
    if(v.status==='following')v.status='active';
    if(!v.stepStatus||typeof v.stepStatus!=='object')v.stepStatus={};
    if(Array.isArray(v.done)){for(const s of v.done)v.stepStatus[s]='done';delete v.done} // older saves
+   v.stepStatus=PLAN.migrate(v.stepStatus); // one older "waiting" state → waiting for them
   }
   return d}catch(_){return {}}
 }
@@ -1591,8 +1592,8 @@ function setJourney(id,patch){if(!JID.test(id))return;const d=readJourneys();d[i
 function removeJourney(id){const d=readJourneys();delete d[id];writeJourneys(d);renderJourneys()}
 function offered(){try{const d=JSON.parse(sessionStorage.getItem(offeredKey)||'[]');return Array.isArray(d)?d.filter(x=>typeof x==='string'&&JID.test(x)):[]}catch(_){return []}}
 function markOffered(id){const o=offered();if(!o.includes(id)){o.push(id);try{sessionStorage.setItem(offeredKey,JSON.stringify(o.slice(-30)))}catch(_){}}}
-const doneCount=v=>Object.values(v?.stepStatus||{}).filter(x=>x==='done').length;
-const shownState=v=>v.status==='active'&&Object.values(v.stepStatus||{}).includes('waiting')?'waiting':v.status;
+const doneCount=v=>Object.values(v?.stepStatus||{}).filter(x=>PLAN.finished(x)).length; // done or not applicable
+const shownState=v=>v.status==='active'&&Object.values(v.stepStatus||{}).some(x=>x==='waiting_org'||x==='waiting_you'||x==='blocked')?'waiting':v.status;
 /* Sent with each chat message so Orivia reads the same record: journey ids, journey states and step states only */
 function guidesForAI(){
  const d=readJourneys(),ids=Object.keys(d).filter(k=>JID.test(k)).sort((a,b)=>String(d[b].updated).localeCompare(String(d[a].updated)));
@@ -1765,6 +1766,9 @@ async function openGuide(id,opts={}){
  const go=n=>{i=n;store({step:i,stepTitle:g.steps[i].title});draw()}; // moving never changes a step's status
  const draw=()=>{
   const s=g.steps[i],mine=readJourneys()[id],status=mine?.status||null,ss=mine?.stepStatus||{},cur=ss[s.id]||'not_started',n=doneCount(mine);
+  const showAs=k=>mine?PLAN.shown(mine,g.steps,k):'not_started',when=t=>new Date(t).toLocaleDateString(uiLanguage(),{day:'numeric',month:'short'});
+  // One change at a time, recorded with its history so it can be undone (ORI-JOURNEY-004).
+  const record=(to,note)=>{const e=PLAN.change(readJourneys()[id],s.id,to,Date.now(),note);store({stepStatus:e.stepStatus,history:e.history,notes:e.notes,stepTitle:s.title,step:i});opts.keepScroll=true;draw()};
   body.replaceChildren();
   const head=el('div','jhead');head.append(button('← Journeys','ask',()=>tab('journeys')),button('Chat','chip-btn',()=>tab('chat')));body.append(head);
   const meta=el('div','row');if(status)meta.append(pill(shownState(mine)));meta.append(el('span','kicker','Checked guide · Reviewed '+reviewed(g.checkedAt)+(g.fresh?'':' · due for review: confirm with the official source')));body.append(meta);
@@ -1772,14 +1776,20 @@ async function openGuide(id,opts={}){
   if(!mine){const f=el('div','row');f.append(button('Follow this guide','btn small',()=>{setJourney(id,{status:'active',step:i,stepTitle:s.title,stepStatus:{},title:g.title,steps:g.steps.length,titles});draw()}),button('Save for later','btn quiet small',()=>{setJourney(id,{status:'saved',step:0,stepStatus:{},title:g.title,steps:g.steps.length,titles});draw()}));body.append(f,el('p','tiny',uiText('You’re previewing. Follow it to keep track of each step; progress is saved on this device.')))}
   if(status==='paused'){const p=el('div','banner');p.append(el('span','',uiText('This journey is paused. Your progress is kept.')),button('Resume','btn small',()=>{setJourney(id,{status:'active'});draw()}));body.append(p)}
   body.append(el('p','tiny','Step '+(i+1)+' of '+g.steps.length+(mine?' · '+n+' done':'')),bar(mine?n:i+1,g.steps.length,mine?undefined:'Step '+(i+1)+' of '+g.steps.length));
+  // What comes next and what blocks it (ORI-JOURNEY-003). Steps are in order: each follows the ones before it.
+  if(mine&&status==='active'){const nx=PLAN.next(mine,g.steps);if(nx&&nx.index!==i){const b=el('div','plan-next');b.append(el('span','tiny',uiText('Next for you')+': '+nx.title+' ('+uiText(STEP_LABEL[nx.state])+')'),button('Open','btn text small',()=>go(nx.index)));body.append(b)}}
+  body.append(el('p','tiny plan-scope',uiText('Fees and timings appear only where the official source states them. If one isn’t shown, it isn’t known: check with the office.')));
   /* All steps, with the person's own statuses; tap one to read it */
   const all=el('details','steps');all.append(el('summary','',uiText('All steps')));const ol=el('ol');
-  g.steps.forEach((x,k)=>{const st=ss[x.id]||'not_started';const li=el('li');const b=button('','linkish'+(k===i?' here':''),()=>go(k));
+  g.steps.forEach((x,k)=>{const st=showAs(k);const li=el('li');const b=button('','linkish'+(k===i?' here':''),()=>go(k));
    b.append(el('span','mark '+st,STEP_MARK[st]),el('span','',x.title));if(mine&&st!=='not_started')b.append(el('span','tiny',' · '+STEP_LABEL[st]));if(k===i)b.setAttribute('aria-current','step');li.append(b);ol.append(li)});
   all.append(ol);body.append(all);
   /* The step, in sections */
   const card=el('section','step');
-  const sh=el('div','jtop');sh.append(el('p','kicker','Step '+(i+1)));if(mine)sh.append(el('span','sstate '+cur,STEP_LABEL[cur]));card.append(sh,el('h3','',s.title));
+  const sh=el('div','jtop');sh.append(el('p','kicker','Step '+(i+1)));if(mine)sh.append(el('span','sstate '+showAs(i),STEP_LABEL[showAs(i)]));card.append(sh,el('h3','',s.title));
+  // Earlier steps that aren't finished block this one; each links back to it.
+  const before=mine?PLAN.blockers(mine,g.steps,i):[];if(before.length&&cur!=='done'&&cur!=='not_applicable'){const bl=el('div','plan-blockers');bl.append(el('p','tiny',uiText('Before this step')+':'));for(const x of before.slice(0,3)){const k=g.steps.findIndex(y=>y.id===x.id);bl.append(button(x.title+' · '+uiText(STEP_LABEL[x.state==='not_started'?'not_started':x.state]),'btn text small',()=>go(k)))}if(before.length>3)bl.append(el('p','tiny','+'+(before.length-3)+' '+uiText('more')));card.append(bl)}
+  if(cur==='blocked'&&mine?.notes?.[s.id])card.append(el('p','hint',uiText('Blocked')+': '+mine.notes[s.id]));
   const about=s.info.slice(0,2).map(p=>el('p','',p));
   if(s.info.length>2){const more=el('details','more-text');more.append(el('summary','',uiText('Read more')),...s.info.slice(2).map(p=>el('p','',p)));about.push(more)}
   card.append(...[
@@ -1796,18 +1806,26 @@ async function openGuide(id,opts={}){
   if(mine&&status!=='paused'){
    const box=el('section','statusbox');box.append(el('h4','',uiText('Where are you with this step?')));
    const opts2=el('div','seg');opts2.setAttribute('role','radiogroup');opts2.setAttribute('aria-label','Status of '+s.title);
-   for(const st of s.statuses){const b=button(STEP_LABEL[st],'seg-btn'+(cur===st?' on':''),()=>{store({stepStatus:{...ss,[s.id]:st},stepTitle:s.title,step:i});opts.keepScroll=true;draw()});b.setAttribute('role','radio');b.setAttribute('aria-checked',String(cur===st));opts2.append(b)}
+   for(const st of PLAN.statesFor(s)){const b=button(STEP_LABEL[st],'seg-btn'+(cur===st?' on':''),()=>{if(st==='blocked'){blockedNote.hidden=false;blockedInput.focus?.();return}record(st)});b.setAttribute('role','radio');b.setAttribute('aria-checked',String(cur===st));opts2.append(b)}
    box.append(opts2);
+   // Blocked asks what's in the way (optional, kept with the step on this account).
+   const blockedNote=el('div','plan-blocked-note');blockedNote.hidden=true;const blockedInput=document.createElement('input');blockedInput.type='text';blockedInput.maxLength=200;blockedInput.placeholder=uiText('What’s in the way? (optional)');blockedInput.setAttribute('aria-label',uiText('What’s in the way?'));
+   blockedNote.append(blockedInput,button('Mark as blocked','btn small',()=>record('blocked',blockedInput.value)));box.append(blockedNote);
+   // Where the state came from, and Undo for the last change.
+   const lc=PLAN.lastChange(mine,s.id);if(lc)box.append(el('p','tiny plan-source',uiText('You marked this')+' '+uiText(STEP_LABEL[lc.to])+' · '+when(lc.at)));
+   const last=PLAN.normEntry(mine).history.at(-1),canUndo=last&&PLAN.undo(mine);if(canUndo){const tl=g.steps.find(x=>x.id===last.step)?.title||'';box.append(button(uiText('Undo')+': '+tl+' → '+uiText(STEP_LABEL[last.from]),'btn text small',()=>{const u=PLAN.undo(readJourneys()[id]);if(!u)return;store({stepStatus:u.entry.stepStatus,history:u.entry.history,notes:u.entry.notes});opts.keepScroll=true;draw()}))}
    if(cur==='unsure'){box.append(el('p','hint','That’s okay. It won’t count as done.'+(s.confirm?' How to check: '+s.confirm:'')));const a=button('Ask Orivia to help me check','ask',()=>{});a.dataset.ask='I’m not sure about this step of “'+g.title+'”: '+s.title;box.append(a)}
-   if(cur==='waiting')box.append(el('p','hint',s.waitingFor?'Waiting for: '+s.waitingFor:'Marked as waiting. You can come back to it any time.'));
-   if(cur==='done'&&i<g.steps.length-1)box.append(el('p','hint',uiText('Nice. Go to the next step when you’re ready.')));
+   if(cur==='waiting_org')box.append(el('p','hint',s.waitingFor?'Waiting for: '+s.waitingFor:'Marked as waiting for them. You can come back to it any time.'));
+   if(cur==='waiting_you')box.append(el('p','hint',uiText('Something here needs you. Ask Orivia if you’re not sure what.')));
+   if(cur==='not_applicable')box.append(el('p','hint',uiText('Skipped as not applicable to you. Later steps no longer wait for it.')));
+   if(cur==='done')box.append(el('p','hint',uiText('Done is your own record, not an official approval or result.')+(i<g.steps.length-1?' '+uiText('Go to the next step when you’re ready.'):'')));
    body.append(box);
   }
   const nav=el('div','row spread');
   nav.append(i>0?button('← Previous','btn quiet small',()=>go(i-1)):el('span'));
   nav.append(i<g.steps.length-1?button('Next step →','btn small',()=>go(i+1)):button('Back to Journeys','btn quiet small',()=>tab('journeys')));
   body.append(nav);
-  if(status==='active'&&n===g.steps.length){const fin=el('div','banner');fin.append(el('span','',uiText('Every step is marked done. Finished with this guide?')),button('Mark journey completed','btn small',()=>{setJourney(id,{status:'done'});draw()}));body.append(fin)}
+  if(status==='active'&&n===g.steps.length){const fin=el('div','banner');fin.append(el('span','',uiText('Every step is done or not applicable. Finished with this guide?')),button('Mark journey completed','btn small',()=>{setJourney(id,{status:'done'});draw()}));body.append(fin)}
   if(status==='done')body.append(el('p','tiny',uiText('You marked this journey completed. That’s your own record, not official confirmation of any outcome.')));
   if(g.problems.length){body.append(el('h3','',uiText('Things that might go wrong')));for(const p of g.problems){const det=el('details','problem');det.append(el('summary','',p.question));if(p.answer)det.append(el('p','',p.answer));
    if(p.steps.length){const ol2=el('ol');for(const x of p.steps){const li=el('li');li.append(el('strong','',x.title));if(x.body)li.append(el('p','',x.body));const sub=list(x.list);if(sub)li.append(sub);if(x.tip)li.append(el('p','tiny',x.tip));ol2.append(li)}det.append(ol2)}

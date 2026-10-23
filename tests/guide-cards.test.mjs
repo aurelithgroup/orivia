@@ -95,8 +95,8 @@ r = await worker.fetch(new Request(HOST + '/v1/guides/dubai.nol'), env, {}); ass
 
 /* Step statuses: Waiting only where the guide has something to wait for; reading ahead never marks anything */
 const nol = guideContent('dubai.nol'), eid = guideContent('dubai.eid.student');
-assert.ok(nol.steps.every(s => !s.statuses.includes('waiting')), 'nothing to wait for in the nol guide');
-assert.ok(eid.steps.find(s => s.id === 'medical').statuses.includes('waiting'));
+assert.ok(nol.steps.every(s => !s.statuses.includes('waiting_org')), 'nothing to wait for in the nol guide');
+assert.ok(eid.steps.find(s => s.id === 'medical').statuses.includes('waiting_org'));
 assert.ok(eid.steps.every(s => s.statuses.includes('unsure') && s.statuses.includes('done')));
 assert.doesNotMatch(js, /Mark this step done/, 'marking done is a status choice, not a Next button');
 const goFn = js.slice(js.indexOf('const go=n=>'), js.indexOf('\n', js.indexOf('const go=n=>')));
@@ -106,7 +106,7 @@ assert.doesNotMatch(goFn, /stepStatus/, 'moving between steps never changes a st
 const progress = { 'dubai.eid.student': { permit: 'done', arrive: 'done', medical: 'waiting' } };
 d = await post([u("I'm a university student and I need help with my residence visa")], { following: ['dubai.eid.student'], progress });
 assert.equal(d.journey.from, 'journeys'); assert.equal(d.journey.currentStep, 'medical');
-assert.match(prompt, /THEIR OWN PROGRESS/); assert.match(prompt, /Waiting: Your medical fitness test/); assert.match(prompt, /step 3 of 8/);
+assert.match(prompt, /THEIR OWN PROGRESS/); assert.match(prompt, /Waiting for the organisation: Your medical fitness test/); assert.match(prompt, /step 3 of 8/);
 assert.doesNotMatch(d.reply, /Are you in the UAE now/, 'no re-asking what Journeys already knows');
 d = await post([u('where was I?')], { following: ['dubai.eid.student'], progress });
 assert.equal(d.guideOffer.kind, 'refresher'); assert.match(prompt, /First step not done: Your medical fitness test/);

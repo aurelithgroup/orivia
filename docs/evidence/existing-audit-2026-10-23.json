@@ -258,13 +258,13 @@
   },
   {
    "id": "ORI-JOURNEY-003",
-   "verdict": "gap",
-   "evidence": "Guides carry steps with source and review date, cost/time only when known (never invented), waiting-for and a \"how to check\" line, and applicability rules. Missing: explicit step dependencies (\"what blocks it\"), owner per step, and completion criteria as data. To build."
+   "verdict": "gap→fixed (against acceptance)",
+   "evidence": "The guide view now says what comes next (first unfinished step and its state) and what blocks the current step (earlier unfinished steps, each linked; a blocked note), and states that fees and timings appear only where the official source states them. Plans carry goal, city scope, applicability rules, ordered steps, sources with review dates, waiting-for and how-to-check from the reviewed journey data. Per-step owner and completion criteria are only as rich as that data (waitingFor, confirm); the generated journey data is not edited here. tests/plan-steps.test.mjs."
   },
   {
    "id": "ORI-JOURNEY-004",
-   "verdict": "gap",
-   "evidence": "Steps support not started, in progress, waiting, done and not sure; Done is personal and never shown as approval. Missing: ready, waiting for organisation vs waiting for you, blocked, not applicable, Undo/history and the source of each state. To build."
+   "verdict": "gap→fixed",
+   "evidence": "Built plan-steps.js: not started, in progress, waiting on me, waiting for them, blocked (with an optional note), done, not applicable, not sure, plus Ready shown when everything earlier is finished; every change recorded with time and source (\"You marked this … · date\"), Undo of the last change (refused if the step changed elsewhere since); older \"waiting\" saves migrate; server reads the same states. Done says it is the person’s own record, not an official approval. tests/plan-steps.test.mjs; browser check docs/evidence/screens/journey-004-step-states-phone.png."
   },
   {
    "id": "ORI-JOURNEY-006",

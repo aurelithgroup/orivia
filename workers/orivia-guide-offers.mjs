@@ -53,14 +53,15 @@ export const GUIDES={
 const ID=/^[a-z]+(?:\.[a-z]+){1,3}$/;
 const WHERE_WAS_I=/\b(where was i|where am i up to|what do i do next|what'?s my next step|my journeys?|my guides?|continue my (?:guide|journey))\b/i;
 const txt=v=>typeof v==='string'?v:'';
-export const STEP_STATUSES=['not_started','in_progress','waiting','done','unsure'];
+// The person's step states (plan-steps.js). 'waiting' is an older save, read as waiting for them.
+export const STEP_STATUSES=['not_started','in_progress','waiting_you','waiting_org','waiting','blocked','done','not_applicable','unsure'];
 /* The person's own ticks, in words the AI can use. Never inferred, never changed here. */
 export function progressSummary(id,steps){
  const d=journey(id);if(!d||!steps)return '';
  const j=d.journey,name=sid=>j.steps.find(x=>x.id===sid)?.title;
  const of=st=>j.steps.filter(x=>steps[x.id]===st).map(x=>x.title);
- const next=j.steps.find(x=>steps[x.id]!=='done');
- const parts=[['Done',of('done')],['In progress',of('in_progress')],['Waiting',of('waiting')],['Not sure',of('unsure')]].filter(([,v])=>v.length).map(([k,v])=>k+': '+v.join('; '));
+ const next=j.steps.find(x=>steps[x.id]!=='done'&&steps[x.id]!=='not_applicable');
+ const parts=[['Done',of('done')],['Not applicable to them',of('not_applicable')],['In progress',of('in_progress')],['Waiting on them (their action)',of('waiting_you')],['Waiting for the organisation',[...of('waiting_org'),...of('waiting')]],['Blocked',of('blocked')],['Not sure',of('unsure')]].filter(([,v])=>v.length).map(([k,v])=>k+': '+v.join('; '));
  return 'THEIR OWN PROGRESS in “'+j.title+'” (ticked by them in Journeys, the same record the Journeys tab shows): '+(parts.join('. ')||'nothing ticked yet')+'.'+(next?' First step not done: '+next.title+'.':' Every step is ticked.')+' Use this instead of re-asking. Never change it yourself: if they say they finished something, offer to mark it and tell them they can tap the step’s status in Journeys.';
 }
 /* A problem's help comes as a short answer, calm words plus steps, or a choice of situations */
@@ -134,7 +135,7 @@ export function guideContent(id){
    bring:(s.bring||[]).map(b=>b&&b.item).filter(x=>typeof x==='string'),tips:list(s.tips),
    cost:typeof s.cost==='string'?s.cost:'',time:typeof s.time==='string'?s.time:'',waitingFor:typeof s.waitingFor==='string'?s.waitingFor:'',
    staffQuestion:typeof s.staffQuestion==='string'?s.staffQuestion:'',expect:txt(s.expect),
-   statuses:STEP_STATUSES.filter(x=>x!=='waiting'||s.waitingFor||s.appointment),
+   statuses:STEP_STATUSES.filter(x=>x!=='waiting'&&(x!=='waiting_org'||s.waitingFor||s.appointment)),
    confirm:txt((j.checkups||[]).find(c=>c.step===s.id&&c.confirm)?.confirm)})),
   problems:(j.problems||[]).map(problemHelp).filter(p=>p.question&&(p.answer||p.steps.length)),
   fullGuideUrl:'https://aurelithgroup.github.io/orivia/?j='+encodeURIComponent(j.id)};
