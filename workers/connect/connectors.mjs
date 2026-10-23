@@ -70,10 +70,11 @@ export async function receiveUpdate(db,conn,env,{headers,body,now=Date.now()}){
  // One atomic batch (D1 batches are transactions; Ina f99c2b3): the event log row and the status change are written
  // together or not at all, so a failure between them can't leave an event that later retries treat as already applied.
  // Idempotent: the same event id for this organisation is recorded once. Newer source versions win; an older or equal one
- // stays in the event log but doesn't change the current status, so re-running the status write for a duplicate is harmless.
+ // stays in the event log but doesn't change the current status, so re-running the status write for a duplicate is harmless. The status SELECT reads the original event log row,
+ // not the new request body: a reused event id cannot change its subject, version or meaning.
  const [ins,cur]=await db.batch([
   db.prepare('INSERT INTO connector_events(org_id,event_id,person_ref,status,source_version,occurred_at,received_at) VALUES (?,?,?,?,?,?,?) ON CONFLICT(org_id,event_id) DO NOTHING RETURNING event_id').bind(conn.orgId,e.eventId,personRef,e.status,e.sourceVersion,e.occurredAt,received),
-  db.prepare('INSERT INTO connector_status(org_id,person_ref,status,source_version,source_event_id,occurred_at,received_at,recorded_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(org_id,person_ref) DO UPDATE SET status=excluded.status,source_version=excluded.source_version,source_event_id=excluded.source_event_id,occurred_at=excluded.occurred_at,received_at=excluded.received_at,recorded_at=excluded.recorded_at WHERE excluded.source_version>connector_status.source_version RETURNING status').bind(conn.orgId,personRef,e.status,e.sourceVersion,e.eventId,e.occurredAt,received,now)]);
+  db.prepare('INSERT INTO connector_status(org_id,person_ref,status,source_version,source_event_id,occurred_at,received_at,recorded_at) SELECT org_id,person_ref,status,source_version,event_id,occurred_at,received_at,? FROM connector_events WHERE org_id=? AND event_id=? ON CONFLICT(org_id,person_ref) DO UPDATE SET status=excluded.status,source_version=excluded.source_version,source_event_id=excluded.source_event_id,occurred_at=excluded.occurred_at,received_at=excluded.received_at,recorded_at=excluded.recorded_at WHERE excluded.source_version>connector_status.source_version RETURNING status').bind(now,conn.orgId,e.eventId)]);
  await db.prepare('UPDATE connector_sync SET last_success_at=? WHERE org_id=?').bind(now,conn.orgId).run().catch(()=>{});
  if(!ins?.results?.length)return {status:200,duplicate:true};
  const applied=!!cur?.results?.length;return {status:200,applied,stale:!applied};
