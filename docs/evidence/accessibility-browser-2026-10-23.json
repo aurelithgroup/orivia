@@ -1,0 +1,27 @@
+{
+ "check": "UX-005 and UX-009 in the real app (local harness, headless Chrome). Keyboard: real key events through Chrome input; zoom: CSS zoom; Arabic via the app language switch.",
+ "ranAt": "2026-10-23T08:32:53.877Z",
+ "keyboard": [
+  "kb-order focus trail [\"Chats|BUTTON\",\"Home|BUTTON\",\"Sign in|BUTTON\",\"Settings|BUTTON\",\"Edit|BUTTON\",\"Copy reply|BUTTON\",\"Listen to this reply|BUTTON\",\"Helpful|BUTTON\",\"Not helpful|BUTTON\",\"More options|SUMMARY\",\"Message Orivia…|TEXTAREA\",\"Speak your message|BUTTON\",\"Send|BUTTON\",\"Home|BUTTON\",\"Chat|BUTTON\",\"Library|BUTTON\",\"My Life|BUTTON\",\"Calendar|BUTTON\"]",
+  "kb-order result \"ok\"",
+  "kb-send focus trail []",
+  "kb-send result \"{\\\"sentShown\\\":false,\\\"composer\\\":\\\"Keyboard only question\\\",\\\"status\\\":\\\"Orivia is temporarily unavailable. Please try again.\\\"}\"",
+  "kb-nav focus trail []",
+  "kb-nav result \"{\\\"view\\\":\\\"library\\\",\\\"focused\\\":\\\"Library\\\"}\"",
+  "kb-settings-escape focus trail []",
+  "kb-settings-escape result \"{\\\"view\\\":\\\"settings-view\\\"}\""
+ ],
+ "zoom": [
+  "zoom-en-1x-390 result \"{\\\"lang\\\":\\\"en\\\",\\\"zoom\\\":1,\\\"dir\\\":\\\"ltr\\\",\\\"overflowX\\\":false,\\\"controls\\\":{\\\"send\\\":\\\"visible\\\",\\\"composer\\\":\\\"visible\\\",\\\"menu\\\":\\\"visible\\\",\\\"settings\\\":\\\"visible\\\"},\\\"tabsClipped\\\":[],\\\"smallTargets\\\":[\\\"Home\\\"]}\"",
+  "zoom-ar-1x-390 result \"{\\\"lang\\\":\\\"ar\\\",\\\"zoom\\\":1,\\\"dir\\\":\\\"rtl\\\",\\\"overflowX\\\":false,\\\"controls\\\":{\\\"send\\\":\\\"visible\\\",\\\"composer\\\":\\\"visible\\\",\\\"menu\\\":\\\"visible\\\",\\\"settings\\\":\\\"visible\\\"},\\\"tabsClipped\\\":[],\\\"smallTargets\\\":[\\\"الرئيسية\\\"]}\"",
+  "zoom-ar-2x-390 result \"{\\\"lang\\\":\\\"ar\\\",\\\"zoom\\\":2,\\\"dir\\\":\\\"rtl\\\",\\\"overflowX\\\":true,\\\"controls\\\":{\\\"send\\\":\\\"visible\\\",\\\"composer\\\":\\\"visible\\\",\\\"menu\\\":\\\"visible\\\",\\\"settings\\\":\\\"visible\\\"},\\\"tabsClipped\\\":[],\\\"smallTargets\\\":[]}\"",
+  "zoom-en-2x-1280 result \"{\\\"lang\\\":\\\"en\\\",\\\"zoom\\\":2,\\\"dir\\\":\\\"ltr\\\",\\\"overflowX\\\":false,\\\"controls\\\":{\\\"send\\\":\\\"visible\\\",\\\"composer\\\":\\\"visible\\\",\\\"menu\\\":\\\"clipped 0..0 of 1280\\\",\\\"settings\\\":\\\"visible\\\"},\\\"tabsClipped\\\":[],\\\"smallTargets\\\":[]}\"",
+  "zoom-ar-2x-1280 result \"{\\\"lang\\\":\\\"ar\\\",\\\"zoom\\\":2,\\\"dir\\\":\\\"rtl\\\",\\\"overflowX\\\":false,\\\"controls\\\":{\\\"send\\\":\\\"visible\\\",\\\"composer\\\":\\\"visible\\\",\\\"menu\\\":\\\"clipped 0..0 of 1280\\\",\\\"settings\\\":\\\"visible\\\"},\\\"tabsClipped\\\":[],\\\"smallTargets\\\":[]}\"",
+  "zoom-en-1x-390-large result \"{\\\"lang\\\":\\\"en\\\",\\\"zoom\\\":1,\\\"dir\\\":\\\"ltr\\\",\\\"overflowX\\\":false,\\\"controls\\\":{\\\"send\\\":\\\"visible\\\",\\\"composer\\\":\\\"visible\\\",\\\"menu\\\":\\\"visible\\\",\\\"settings\\\":\\\"visible\\\"},\\\"tabsClipped\\\":[],\\\"smallTargets\\\":[\\\"Home\\\"]}\""
+ ],
+ "notes": [
+  "Reply action row now wraps (it pushed the ⋯ menu off-screen at 200% in Arabic).",
+  "At 200% on a 390px phone (195 CSS px, below the 320 CSS px reflow requirement) the page still scrolls 27px sideways in Arabic; no element is wider than the viewport at CSS level, so this is a zoom rendering effect. Desktop 200% and large text: no overflow.",
+  "The menu button reads 0 width at desktop size because desktop uses the sidebar."
+ ]
+}

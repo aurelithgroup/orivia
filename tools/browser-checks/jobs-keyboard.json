@@ -1,0 +1,63 @@
+[
+ {
+  "name": "kb-order",
+  "path": "?view=chat",
+  "wait": 3000,
+  "keys": [
+   {
+    "key": "Tab",
+    "times": 18,
+    "trail": true
+   }
+  ],
+  "js": "'ok'"
+ },
+ {
+  "name": "kb-send",
+  "path": "?view=chat",
+  "wait": 3000,
+  "keys": [
+   {
+    "key": "Tab",
+    "times": 11
+   },
+   {
+    "text": "Keyboard only question"
+   },
+   {
+    "key": "Enter"
+   }
+  ],
+  "js": "(async()=>{await new Promise(r=>setTimeout(r,1500));const u=[...document.querySelectorAll('#history .bubble.user')].map(b=>b.textContent);return JSON.stringify({sentShown:u.some(t=>t.includes('Keyboard only question')),composer:document.getElementById('msg').value,status:document.getElementById('status').textContent.slice(0,80)})})()"
+ },
+ {
+  "name": "kb-nav",
+  "path": "?view=chat",
+  "wait": 3000,
+  "keys": [
+   {
+    "key": "Tab",
+    "times": 16
+   },
+   {
+    "key": "Enter"
+   }
+  ],
+  "js": "(async()=>{await new Promise(r=>setTimeout(r,500));const v=[...document.querySelectorAll('.view')].find(x=>!x.hidden&&x.offsetParent!==null);return JSON.stringify({view:v&&v.id,focused:document.activeElement?.textContent?.trim().slice(0,20)})})()"
+ },
+ {
+  "name": "kb-settings-escape",
+  "path": "?view=chat",
+  "wait": 3000,
+  "keys": [
+   {
+    "key": "Tab",
+    "times": 4
+   },
+   {
+    "key": "Enter"
+   }
+  ],
+  "js": "(async()=>{await new Promise(r=>setTimeout(r,500));const v=[...document.querySelectorAll('.view')].find(x=>!x.hidden);return JSON.stringify({view:v&&v.id})})()"
+ }
+]

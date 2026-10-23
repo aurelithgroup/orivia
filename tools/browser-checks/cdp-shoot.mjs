@@ -19,6 +19,14 @@ for(const job of jobs){
  await send('Emulation.setDeviceMetricsOverride',{width:job.width||390,height:job.height||844,deviceScaleFactor:job.width>600?1:2,mobile:!(job.width>600)});
  if(!job.keep)await send('Storage.clearDataForOrigin',{origin:'http://localhost:8793',storageTypes:'all'});
  await send('Page.navigate',{url:'http://localhost:8793/'+(job.path||'')});await sleep(job.wait||2500);
+ // Optional real key presses before the job's JS: [{key:'Tab',times:3,trail:true},{text:'hello'},{key:'Enter'}]; focus trail recorded.
+ if(job.keys){const codes={Tab:9,Enter:13,Escape:27,ArrowDown:40,ArrowUp:38,' ':32};const trail=[];
+  for(const k of job.keys){if(k.text){await send('Input.insertText',{text:k.text});continue}
+   for(let n=0;n<(k.times||1);n++){const vk=codes[k.key]||0,mods=k.shift?8:0,extra=k.key==='Enter'?{text:String.fromCharCode(13)}:{};
+    await send('Input.dispatchKeyEvent',{type:'keyDown',key:k.key,code:k.key,windowsVirtualKeyCode:vk,nativeVirtualKeyCode:vk,modifiers:mods,...extra});
+    await send('Input.dispatchKeyEvent',{type:'keyUp',key:k.key,code:k.key,windowsVirtualKeyCode:vk,nativeVirtualKeyCode:vk,modifiers:mods});await sleep(60);
+    if(k.trail){const r=await send('Runtime.evaluate',{expression:"(()=>{const e=document.activeElement;return e?(e.getAttribute('aria-label')||e.textContent||e.placeholder||e.id||e.tagName).trim().slice(0,40)+'|'+e.tagName:''})()"});trail.push(r.result?.result?.value)}}}
+  console.log(job.name,'focus trail',JSON.stringify(trail));await sleep(200)}
  if(job.js){const r=await send("Runtime.evaluate",{expression:job.js,awaitPromise:true});console.log(job.name,'result',JSON.stringify(r.result?.result?.value));if(r.result?.exceptionDetails)console.log(job.name,'js error',JSON.stringify(r.result.exceptionDetails.exception?.description||r.result.exceptionDetails).slice(0,400));await sleep(job.after||800)}
  // Optional follow-up on the same page (e.g. after the job reloaded it), without navigating again.
  if(job.check){const r=await send("Runtime.evaluate",{expression:job.check,awaitPromise:true});console.log(job.name,"check result",JSON.stringify(r.result?.result?.value))}
