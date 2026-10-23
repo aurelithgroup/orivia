@@ -1,4 +1,0 @@
-.orivia-reference{display:inline-flex;align-items:center;max-width:100%;vertical-align:baseline;margin-inline:.3em;padding:.12em .5em;border:1px solid var(--line,#dedbd4);border-radius:999px;font-size:.72em;line-height:1.5;color:var(--focus,#815b13);background:transparent;text-decoration:none;overflow-wrap:anywhere}
-.orivia-reference:hover{text-decoration:underline}
-.orivia-reference:focus-visible{outline:2px solid currentColor;outline-offset:3px}
-@media(prefers-reduced-motion:reduce){.orivia-reference{transition:none}}

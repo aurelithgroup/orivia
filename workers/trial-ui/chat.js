@@ -320,11 +320,26 @@ function renderChats(){
  $('archived-count').textContent=String(archived.length);
 }
 let chatsReturnFocus=null;
-function openChats(){chatsReturnFocus=document.activeElement;renderChats();$('chats-drawer').hidden=false;$('new-chat').focus()}
+function openChats(){if(window.matchMedia?.('(min-width:1000px)').matches)setDesktopSidebar(false);chatsReturnFocus=document.activeElement;renderChats();$('chats-drawer').hidden=false;$('new-chat').focus()}
 function closeChats(){if($('chats-drawer').hidden)return;$('chats-drawer').hidden=true;(chatsReturnFocus||$('open-chats')).focus?.()}
 $('open-chats').onclick=openChats;$('storage-manage').onclick=openChats;$('close-chats').onclick=closeChats;$('new-chat').onclick=()=>newChat(null); // never pass the click event in as a university guide
 $('chats-drawer').addEventListener('click',e=>{if(e.target.id==='chats-drawer')closeChats()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('chats-drawer').hidden)closeChats()});
+
+// Desktop sidebar preference affects layout only; mobile keeps its existing drawer.
+let desktopSidebarCollapsed=false;
+try{desktopSidebarCollapsed=localStorage.getItem('orivia.sidebar.collapsed')==='1'}catch{}
+function setDesktopSidebar(collapsed){
+ desktopSidebarCollapsed=Boolean(collapsed);
+ document.body.dataset.sidebar=desktopSidebarCollapsed?'collapsed':'expanded';
+ const toggle=$('desktop-nav-toggle');
+ if(toggle)toggle.setAttribute('aria-expanded',String(!desktopSidebarCollapsed));
+ try{localStorage.setItem('orivia.sidebar.collapsed',desktopSidebarCollapsed?'1':'0')}catch{}
+}
+setDesktopSidebar(desktopSidebarCollapsed);
+if($('desktop-nav-toggle'))$('desktop-nav-toggle').onclick=()=>{
+ if(window.matchMedia('(min-width:1000px)').matches){renderChats();setDesktopSidebar(!desktopSidebarCollapsed)}
+};
 
 // Desktop uses the same chat records and controls as the phone drawer, not a second history.
 if($('chat-search'))$('chat-search').oninput=()=>renderChats();
@@ -962,6 +977,7 @@ $('life-places-open').onclick=()=>{const box=$('saved-places-section');box.hidde
 if(window.OriviaNav)window.OriviaNav.onSettings=()=>tab('settings');
 try{if(new URLSearchParams(location.search).get('view')==='settings')queueMicrotask(()=>{tab('settings');history.replaceState(null,'',location.pathname)})}catch(_){}
 function tab(which){
+ for(const b of document.querySelectorAll('[data-sidebar-tab]')){if(b.dataset.sidebarTab===which)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')}
  const views={home:'home',chat:'chat',library:'library',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view',settings:'settings-view'};
  if(!views[which])return;
  if(which==='chat')try{renderOrgContext()}catch(_){}
@@ -1019,6 +1035,7 @@ function renderInstall(){const box=$('install-box');if(!box)return;box.replaceCh
 var guidesReturnTab='home';
 let lastTab='chat';
 for(const b of document.querySelectorAll('nav.bottom [data-tab]'))b.onclick=()=>tab(b.dataset.tab);
+for(const b of document.querySelectorAll('[data-sidebar-tab]'))b.onclick=()=>tab(b.dataset.sidebarTab);
 loadEvents();
 /* Ask Orivia from anywhere: fills the message box in Chat */
 function ask(text,send){
