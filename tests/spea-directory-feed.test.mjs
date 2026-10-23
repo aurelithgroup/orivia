@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {directoryConfig,readSpeaDirectoryFeed} from '../workers/orivia-spea-directory-feed.mjs';
+import {runAgentTurn} from '../workers/orivia-research-agent.mjs';
+import {REGULATORS,makeTools} from '../workers/orivia-research-loop.mjs';
+const fixture=f=>readFileSync(new URL('./fixtures/'+f,import.meta.url),'utf8');
+const html=fixture('spea-directory-feed-config.html'),live=JSON.parse(fixture('spea-directory-feed-live.json'));
+assert.equal(live.data.search.total,27);assert.equal(live.data.search.results.length,27,'captured real endpoint result');
+assert.equal(directoryConfig(html,'british').optionId,'ea66652a-d56c-45b0-b63e-d56aa190d9a5');
+assert.equal(directoryConfig(html,'unknown'),null);assert.equal(directoryConfig('<p>no metadata</p>','british'),null);
+let mode='ok',posts=0;
+const fetcher=async(url,init={})=>{
+ if(url==='https://spea.shj.ae/en/education-institutes/schools')return new Response(html,{headers:{'Content-Type':'text/html'}});
+ assert.equal(url,'https://spea.shj.ae/api/graphql-proxy');assert.equal(init.method,'POST');assert.equal(init.redirect,'manual');posts++;
+ const body=JSON.parse(init.body);assert(!JSON.stringify(body).includes('private child name'));assert.match(body.query,/^query VerticalFilterList/);
+ if(mode==='redirect')return new Response('',{status:302,headers:{location:'https://evil.example'}});
+ const data=structuredClone(live);
+ if(mode==='duplicate')data.data.search.results[1]=data.data.search.results[0];
+ if(mode==='wrong-curriculum')data.data.search.results[0].curriculum.jsonValue.fields.Value.value='American';
+ if(mode==='mismatch')data.data.search.total=28;
+ return Response.json(data);
+};
+const tools=()=>makeTools({fetcher});
+let result=await readSpeaDirectoryFeed({curriculum:'british'},tools(),{fetcher});
+assert.equal(result.complete,true);assert.equal(result.items.length,27);assert.equal(result.browserMs,0);assert(result.items.every(x=>x.sourceUrl==='https://spea.shj.ae/en/education-institutes/schools'));
+result=await readSpeaDirectoryFeed({curriculum:'british',year:6},tools(),{fetcher});assert.deepEqual(result.unappliedFilters,['year']);assert(result.items.every(x=>!x.fields.grades));
+for(const testMode of ['redirect','duplicate','wrong-curriculum','mismatch']){mode=testMode;result=await readSpeaDirectoryFeed({curriculum:'british'},tools(),{fetcher});assert.equal(result.complete,false,testMode+' cannot establish completeness')}
+mode='ok';live.data.search.results[0].curriculum.jsonValue.fields.Name.value='البريطاني';result=await readSpeaDirectoryFeed({curriculum:'british'},tools(),{fetcher});assert.equal(result.complete,true);assert.equal(result.items[0].fields.curriculum.value,'British');assert.equal(result.items[0].fields.curriculum.quote,'البريطاني');
+mode='ok';const full=tools();full.used.fetches=24;const before=posts;result=await readSpeaDirectoryFeed({curriculum:'british'},full,{fetcher});assert.equal(result.complete,false);assert.equal(posts,before,'fetch budget prevents POST');
+const regulator={...REGULATORS[0],listFiltered:(filter,t)=>readSpeaDirectoryFeed(filter,t,{fetcher})};
+const understanding={research:true,source:'scripted',intent:'all',topic:'school',location:{country:'uae',city:'Sharjah'},constraints:{curriculum:'british',year:null},organisations:[]};
+const answer=await runAgentTurn({messages:[{role:'user',content:'List all British curriculum schools in Sharjah'}]}, {},{understanding,regulator,fetcher});
+assert.equal(answer.research.coverage.complete,true);assert.equal(answer.organisations.length,8);assert.match(answer.reply,/27 of 27/);assert.match(answer.reply,/shown 8 of the 27/);assert.match(answer.reply,/Sharjah Private Education Authority/);assert.match(answer.reply,/haven’t opened each school/);assert.equal(answer.research.process.metrics.browserMs,0);
+assert(answer.liveSources.every(s=>s.url==='https://spea.shj.ae/en/education-institutes/schools'),'directory cited, not unvisited profile pages');
+console.log('SPEA official feed: captured live data, metadata-derived filters, strict records, budgets, honest sources and end-to-end list answer pass.');

@@ -1,0 +1,164 @@
+# Pilot assistant (consent v3): the model leads, code checks
+
+Status, 18 Oct 2026 (Cleo): built, offline-tested and live-tested for 3 turns on the private pilot. `OPENAI_PILOT` is `1` in `wrangler.jsonc` (founder, 18 Oct: on for consenting testers before the 21 Oct mentor meeting; the daily and monthly limits still apply). Testers without the v3 tick are unaffected.
+
+## What it is
+
+`workers/orivia-assistant.mjs` handles the whole conversation for a tester who ticked consent `openai-assistant-pilot-v3`. The model (gpt-6.1-sol through `workers/orivia-openai-pilot.mjs`) reads the chat, the task memory and the evidence so far. Each step it does one of three things:
+
+- calls up to 4 tools at once;
+- asks one question;
+- writes the reply.
+
+**Tools.** All of them go through the existing bounded tools in `orivia-research-loop.mjs`:
+
+- `web_search`: search terms are passed through `safeQuery`, so no personal details are sent.
+- `read_page`: any public https page.
+- `official_directory`: SPEA's data feed, behind the same `SPEA_DIRECTORY_FEED` switch as before.
+
+**Evidence ledger.** Each page read becomes an `E` item holding a URL, title and excerpt. Its source kind comes from the address:
+
+- `government`
+- `regulator`
+- `website`
+- `listing`
+- `community`
+
+**Answer check (`verifyReply`).** Every reply is checked before anyone sees it:
+
+- Each sentence has a kind, and the kind decides which sources can back it (`CLAIM_SOURCES`). A rule needs a government or regulator page. An organisation's own process needs its own website, judged by the page's address, never its title. An experience needs a community page. A listing proves only that a name is listed.
+- Every phone number, email, link, amount, percentage and 3+ digit number must appear in the evidence it cites. General sentences may contain none of them.
+- Cards keep only names and contacts that appear on a cited page. A wrong value is dropped, never guessed.
+- After 3 rejected replies the turn returns `null`, and the normal flow answers instead.
+
+**Rendering.** Code adds the `[n]` citations, labels experiences, and builds `liveSources` and `organisations` in the shape `trial-ui/chat.js` already shows. Community pages now show as "People's experiences".
+
+**Memory.** It goes back to the device as `research.taskContext.task.assistant`: goal, criteria, corrections, shown, shortlist, open questions, and up to 10 evidence excerpts of 700 characters each. `cleanMemory` re-checks it every turn, and the source kind is always recomputed from the URL.
+
+**Routing.** `orivia-ai-private-trial.mjs` checks the AI quota and daily caps first (`admit()`, counted once), then calls `hooks.assistant`. The route planner keeps its own code path. `orivia-research-pilot.mjs` creates one OpenAI transport per message and shares it with the fallback research path. One provider failure therefore stops OpenAI for the whole message (tested), and the fallback carries on with Workers AI.
+
+**About me.** Shared by default, per the founder's decision on 18 Oct. The UI only sends it while "Use About me in chats" is on. "Moved from" is labelled as not being nationality or status.
+
+## Limits
+
+- **Transport:** 12 calls a turn. Input up to 40 KB per call. Output up to 1,200 tokens for a step and 2,500 for a reply.
+- **Ledger:** $1 a day and $10 a month. Both were raised on 18 Oct at the founder's request (from $0.50 a day and $5 a month); it is set in `wrangler.jsonc` so deploys keep it.
+- **Search and fetch:** the existing pilot limits (8 searches and 32 page reads a turn, 50 searches a day, 1,000 a month).
+
+## Live results, 18 Oct (full deployed conversation, consent v3, conversation A)
+
+| Turn | Outcome | Model calls | Searches / pages | Time | Cost |
+|---|---|---|---|---|---|
+| "moving to dubai w my 10yo, need a british school" (first run) | 3 replies rejected: `not-own-site`, so it fell back | 5 (+7 fallback) | 2 / 4 | 50 s + fallback | ≈ $0.07 |
+| Same, after the fix (the own site is now found from the school named in the sentence) | Verified reply: 3 KHDA-sourced schools, says the list is incomplete, asks about area and budget | 3 | 1 / 3 | 23 s | ≈ $0.02 |
+| "Year 6, near Al Barsha" | Verified: 3 schools; flagged that KHDA's record and Dubai Heights' own site disagree; recovered from a 404 | 5 | 3 / 9 | 43 s | ≈ $0.07 |
+| "are those the only ones?" | Verified: "No, a starting shortlist", added 2 new schools without repeating, asked where in Al Barsha | 3 | 1 / 8 | 27 s | ≈ $0.04 |
+
+The OpenAI meter for 18 Oct closed at $0.391, with no reservations left open. That includes $0.103 kept from the failed 10:19 run.
+
+## Known gaps (next)
+
+1. **Completeness.** For "are those the only ones?" it should say what would make the list complete (KHDA's directory) and offer to work through it in batches. There is no KHDA or ADEK directory tool yet.
+2. **Cost and latency of later turns.** Input grows with the evidence carried (36 KB by turn 2). Trim to the evidence cited last turn plus new reads. Target under $0.05 and 30 s.
+3. **No progress events yet.** `research.progress` holds the model's step notes ("Finding contact details"), but the UI still shows "Orivia is thinking…". Streaming them needs a streamed response.
+4. **Conversations B (UK) and C (bank account) and turns A4–A8 are not run yet.** The daily limit stopped testing at 3 turns.
+5. **Listing-only answers.** When only listing sites mention a school, the reply must use `listing` sentences. The model sometimes tries `organisation_fact` first, which costs a retry.
+
+## Tests
+
+- `tests/assistant.test.mjs` (scripted):
+  - source kinds and the answer check (invented phone or fee, rule from a listing site, someone else's site, experience from a government page);
+  - cards never guessed;
+  - search terms stay private;
+  - memory carried and cleaned, and a follow-up answered from carried evidence without re-reading the page;
+  - a question asked, and fallback after failures.
+- `tests/research-pilot.test.mjs`:
+  - v3 routing;
+  - Workers AI not used for the tester;
+  - About me shared, name never sent;
+  - a v2 tick doesn't count;
+  - caps checked before any model call;
+  - one failure means one attempt across both paths.
+
+## Fixes after the founder's hospital conversation, 18 Oct
+
+The first two turns ("I need a hospital, no insurance or Emirates ID", then "Sharjah, vomiting and high fever") were good, verified answers. Turns 3 and 4 ("what hospital can I go to?") came back as a school-shaped list naming "Kings College", taken from Wikipedia. Two causes:
+
+1. **The $0.50 daily limit ran out mid-turn.** Ledger tickets 12:49 and 12:52 UTC: the next reservation was refused. The assistant then handed over to the old research path.
+2. **The old path writes lists for schools only.** Its wording ("official school register", "curriculum") and its school-style name extraction came out for a hospital question.
+
+Fixed (commit after 9e498c2):
+
+- **The old agent declines lists outside schools.** `runAgentTurn` returns `null` for `find`/`list-all`/`more` unless the topic is `school` or `nursery`. Named organisations are still handled.
+- **The assistant plans around money.** Before each model call it checks what is left (`ai.budgetLeft()`) against what a reply could cost (`ai.costOf()`):
+  - if a step plus a reply won't fit, it tells the model to reply now;
+  - if not even a reply fits, or the transport refuses a reservation, it returns `limitReply()`: an honest "can't check sources right now, won't guess" message that keeps the memory. It adds emergency numbers (998/999 in the UAE, 999/111 in the UK) when recent messages mention health or safety.
+  - Verified live: the limit reply came back for "im in sharjah… find me a hospital" with no OpenAI call.
+- **One page, one source.** A second read of the same URL merges into the same evidence item, so there are no more duplicate `[1][2]` citations for the NHS page.
+- **Quotes:** `<nav>` and "Skip to main content" are dropped from page text. A claim's quote is now the best-matching passage (`bestQuote`), or nothing if no passage matches, never the site's menu.
+- **Jurisdiction:**
+  - `personRegion()` reads UAE or UK from the conversation, then About me, then memory.
+  - A rule or regulatory claim can't rest only on the other country's official pages.
+  - A source from the other country is titled "(UK guidance)" or "(UAE guidance)".
+  - The model is told to use such pages as general information and say whose guidance it is.
+
+## Daily limit (decided 18 Oct)
+
+The money reservation is deliberately conservative: input bytes at the input rate, plus the maximum output. A research turn reserves up to about $0.10 but costs $0.02–0.07. With $0.50 a day, that allows roughly 6–8 research turns a day. The founder raised the daily limit to $1 (month still $10), roughly doubling that. Deployed as version 9d1a7d6e.
+
+## Milestone 1 live run, 18 Oct evening (full deployed conversations, consent v3)
+
+Testing limits for this run, approved by the founder: OpenAI $5 a day and $20 a month, and pilot searches 150 a day (code ceiling 200; the month stays at 1,000). Day totals: OpenAI ≈ $2.66 (including the old $0.10) and 134 Brave searches.
+
+| Conversation | Result | Fixes made during the run (all generic, no topic code) |
+|---|---|---|
+| A, Dubai British school, Year 6, Al Barsha | 8/8 verified. A4 ("Dubai Collge") was rerun after a fix | Own-site check for names made of common words ("Dubai College" → dubaicollege.org) and for group sites by a non-listing page title; stop rewriting when a rewrite fails for the same reasons |
+| B, GP in Edinburgh (UK) | 8/8. B2 and B3 were rerun after fixes; B5 asked one fair clarifying question | Search limit was exhausted; the model's unreadable steps went to Workers AI chat, which invented a practice. Now: tolerant JSON reading; an honest "couldn't check" reply instead of a hand-over; never two questions in a row |
+| C, bank account without Emirates ID (Abu Dhabi → Dubai) | 8/8. C4 and C6 were rerun after fixes | Short names and acronyms (wio.io, bankfab.com) recognised, not fan sites; model timeout 20 s → 55 s and replies capped at 1,800 tokens (~250 words); C3 pointed to the Central Bank register for a complete list |
+| Unseen-topic probes | Towed car in Sharjah (Sharjah Municipality); degree attestation **in Arabic** (UAE foreign and higher-education ministries); National Insurance on a UK Student visa (GOV.UK). All verified | The route planner's keyword trigger was taking over the towed-car question: it now keeps a message only when a destination was named |
+
+Also live now:
+
+- progress messages inside the chat, written from real steps ("Searching: …", "Read 6 pages, searched 3 times · deciding what to check next");
+- salvaged replies, which keep the verified sentences and say what was left out;
+- "are those all?" now names where a complete list would come from.
+
+Still open:
+
+1. Turn time is often 40–90 s.
+2. Forums (Reddit) can't be read, so "what do people say" answers have no community evidence yet.
+3. The interface labels around replies ("SOURCES", "Official source", the footer that mentions "emirate") are English-only and not region-aware.
+4. Card fact labels sometimes show only a value.
+5. The `browser` meter shows 134 s recorded on 18 Oct from before this run (Browser Run is switched off and its limits are 0).
+
+## Hidden housing test, 18 Oct: trace and fixes
+
+**Trace of the founder's conversation:**
+
+- **Provider and route.** No OpenAI ledger entries exist for it, so the v3 consent was off on that device. All four replies came from basic mode: Workers AI chat, with no sources and closing offers.
+- **"Which institution is handling it?"** This came from `planResearch` in `orivia-research-plan.mjs`. Its keyword topic "institution" (from "uni") plus no named organisation produced a fixed clarification, even though the request was "write me a message".
+- **"Too many messages at once."** The private trial's daily counter (one row per UTC day, shared with the public beta in `orivia-beta-budget`) had reached `DAILY_CAP`=60. The server said "Daily private AI trial limit reached", but the page shows every non-beta 429 as "too many messages". Retrying couldn't help before midnight UTC, and each attempt also used the per-minute `AI_QUOTA` (5 a minute, one key for all private testers), because that was checked first.
+
+**General fixes (commits bf9e06a and the one after it):**
+
+- **Limits:**
+  - the daily cap is checked before the per-minute quota;
+  - assistant turns have their own counter (`assistant:<pool>:<day>`, `ASSISTANT_DAILY_CAP`=300) and quota key;
+  - the pilot's Workers AI counter is now `pilot:<day>`, no longer shared with the beta;
+  - refusals return `daily_limit` or `rate_limit` with `retryAfter`;
+  - the page says which limit was hit and when it resets, puts the message back in the box (no duplicate bubbles), and counts the Send button down.
+- **Visible mode.** The status line says "Research test (OpenAI) · facts checked…" or "Basic mode · the OpenAI research test is off on this device (turn it on in Settings)".
+- **Writing requests** (`isWritingRequest`) are never research or a canned clarification in the old path. Basic chat now writes the message to whoever the person is dealing with, and is told not to end on offers.
+- **Assistant drafting.** The `draft` field holds who it's to, the channel, the subject and the text. Facts in it must appear in what the person said or in cited evidence, and [placeholders] are used otherwise. The page shows it in an editable box with Copy; edits are kept with the chat; nothing is ever sent.
+
+**Live replay of the whole conversation (deployed, 18 Oct, 18:00–18:10 UTC):**
+
+- **Basic mode (consent off):** no institution question and no lockout; turn 4 wrote the message to the landlord. Llama still sometimes ends with "Would you like me to…?" despite the rule.
+- **Research test (consent on):** six turns, all model-written.
+  - Turn 1: Manchester Student Homes advice and its free contract check, with phone and email, plus England's deposit caps from GOV.UK.
+  - Turns 2–3: firm, specific answers to the actual questions.
+  - Turn 4, "Write me a message": an editable message to the person offering the room in about 20 s, from one model call with no research and no question.
+  - "the landlord i mean": readdressed to the landlord.
+  - "make it shorter and less formal": a three-sentence version.
+  - The edited text survived a page reload, and Copy worked.
+- **Not tested live:** the per-minute rate-limit countdown, since a single tester can't send 5 assistant turns a minute while each takes 20–60 s. It is covered by `tests/research-pilot.test.mjs`.

@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orivia for Institutions</title>
+<link rel="icon" href="icons/favicon.svg?v=3" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Atkinson+Hyperlegible:wght@400;700&family=Montserrat:wght@700;800&family=IBM+Plex+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--ground:#E9ECE7;--surface:#fff;--surface2:#F3F5F1;--ink:#18222D;--muted:#56616C;--line:#D6DBD4;--navy:#1C2733;--amber:#F2B90F;--focus:#2F6FEB;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;--body:"Atkinson Hyperlegible",system-ui,sans-serif;--arabic:"IBM Plex Sans Arabic",Tahoma,sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ground:#0B1015;--surface:#141B23;--surface2:#1A232D;--ink:#E6EAEE;--muted:#9AA5B0;--line:#29333E}}
+:root[data-theme="dark"]{--ground:#0B1015;--surface:#141B23;--surface2:#1A232D;--ink:#E6EAEE;--muted:#9AA5B0;--line:#29333E}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;padding:24px 16px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header a{color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px}
+.mark{width:30px;height:30px}
+.wm{font-family:"Montserrat",sans-serif;font-weight:800;letter-spacing:.18em}
+h1{font-family:var(--display);font-stretch:85%;font-weight:800;font-size:clamp(28px,5vw,44px);line-height:1.05;margin:0}
+.lead{color:var(--muted);max-width:60ch;margin:0}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:14px}
+label{font-weight:700;font-size:14px;display:flex;flex-direction:column;gap:6px}
+select,input{font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface2);color:var(--ink);width:100%}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:480px){.row{grid-template-columns:1fr}}
+.hint{font-size:13px;color:var(--muted);font-weight:400}
+.btn{font:inherit;font-weight:700;border:0;border-radius:12px;padding:12px 16px;cursor:pointer;min-height:44px}
+.btn-primary{background:var(--amber);color:var(--navy)}
+.btn-quiet{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.link{font-family:ui-monospace,Menlo,monospace;font-size:13px;word-break:break-all;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.poster{background:#1C2733;color:#F4F6F7;border-radius:20px;padding:28px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.poster .pm{display:flex;align-items:center;gap:10px}
+.poster .pm .wm{color:#fff}
+.poster h2{font-family:var(--display);font-stretch:85%;font-weight:800;font-size:28px;line-height:1.1;margin:0;color:#F2B90F}
+.poster .ar{font-family:var(--arabic);font-size:22px;font-weight:700;color:#F2B90F}
+.poster .qr{background:#fff;border-radius:14px;padding:8px;line-height:0}
+.poster .qr svg{width:220px;height:220px}
+.poster small{color:#A9B4BE;font-size:13px}
+.poster .tag{font-size:14px;color:#A9B4BE}
+.note{font-size:14px;color:var(--muted)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+@media print{body{background:#fff;padding:0}.wrap>*:not(.print-me){display:none}.grid{display:block}.grid>.card:first-child{display:none}.print-me .card{border:0}.btns,.link,.note{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="./"><svg class="mark" viewBox="0 0 306 310" aria-hidden="true"><path fill="currentColor" d="M0 0 L0 168 C0 248 60 302 136 308 L136 160 C136 70 78 4 0 0 Z"/><path fill="#F2B90F" d="M160 308 L160 190 C160 108 222 44 306 40 L306 172 C306 254 240 302 160 308 Z"/></svg><span class="wm">ORIVIA</span></a>
+    <span class="hint">for universities and organisations</span>
+  </header>
+  <div>
+    <h1>Make a QR code that opens the right step.</h1>
+    <p class="lead">Choose the journey and the step your newcomers are on. Their phone opens Orivia straight there, in their language, with your own instructions on top.</p>
+  </div>
+  <div class="grid print-me">
+    <div class="card">
+      <label>City<select id="city"></select></label>
+      <label>Journey<select id="journey"></select></label>
+      <label>Open at<select id="stage"></select><span class="hint">Pick the step people are on when they see this code. For an arrival email, that’s usually “Arrive”.</span></label>
+      <div class="row">
+        <label>Language<select id="lang"><option value="">Let them choose</option></select></label>
+        <label>Your organisation<select id="partner"><option value="">None</option></select><span class="hint">Adds your own instructions to the steps.</span></label>
+      </div>
+      <label><span><input type="checkbox" id="test" style="width:auto"> Test session</span><span class="hint">Shows a “Download log” button so you can export what testers tapped. Nothing is sent anywhere.</span></label>
+      <span class="link" id="link"></span>
+      <div class="btns"><button class="btn btn-quiet" id="copy">Copy link</button><button class="btn btn-quiet" id="open">Open it</button></div>
+    </div>
+    <div class="card">
+      <div class="poster" id="poster">
+        <div class="pm"><svg class="mark" viewBox="0 0 306 310" aria-hidden="true"><path fill="#fff" d="M0 0 L0 168 C0 248 60 302 136 308 L136 160 C136 70 78 4 0 0 Z"/><path fill="#F2B90F" d="M160 308 L160 190 C160 108 222 44 306 40 L306 172 C306 254 240 302 160 308 Z"/></svg><span class="wm">ORIVIA</span></div>
+        <h2 id="pTitle"></h2><div class="ar" id="pAr" dir="rtl" lang="ar"></div>
+        <div class="qr" id="qr"></div>
+        <span class="tag">Scan with your phone camera. No app to download.</span>
+        <small id="pBy"></small>
+      </div>
+      <div class="btns"><button class="btn btn-primary" id="dl">Download QR (SVG)</button><button class="btn btn-quiet" id="png">Download QR (PNG)</button><button class="btn btn-quiet" onclick="print()">Print poster</button></div>
+      <p class="note">Test the code with your own phone before printing.</p>
+    </div>
+  </div>
+</div>
+<script src="js/content.js"></script>
+<script src="js/content-edinburgh.js"></script>
+<script>window.UI = UI;</script>
+<script src="js/partners.js"></script>
+<script src="js/qr.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const BASE = location.origin + location.pathname.replace(/partners\.html$/, '');
+const CITY = {dubai:'Dubai', edinburgh:'Edinburgh'};
+const LANGS = [['en','English'],['ar','العربية'],['fr','Français'],['fil','Filipino'],['hi','हिन्दी'],['ur','اردو']];
+LANGS.forEach(([c,n]) => $('lang').insertAdjacentHTML('beforeend', `<option value="${c}">${n}</option>`));
+Object.keys(DATA.cities).forEach(c => $('city').insertAdjacentHTML('beforeend', `<option value="${c}">${CITY[c]||c}</option>`));
+function fillJourneys(){
+  const c = $('city').value;
+  $('journey').innerHTML = Object.entries(DATA.journeys).filter(([,j]) => j.city === c).map(([id,j]) => `<option value="${id}">${j.title.en}</option>`).join('');
+  $('partner').innerHTML = '<option value="">None</option>' + Object.entries(DATA.partners).filter(([,p]) => p.city === c).map(([id,p]) => `<option value="${id}">${p.name.en}${p.demo?' (example)':''}</option>`).join('');
+  fillStages();
+}
+function fillStages(){
+  const j = DATA.journeys[$('journey').value];
+  $('stage').innerHTML = '<option value="">The start (overview)</option>' + j.stages.map((s,i) => `<option value="${s.id}">${i+1}. ${s.label.en}: ${s.title.en}</option>`).join('');
+  update();
+}
+function url(){
+  const q = new URLSearchParams(); q.set('j', $('journey').value);
+  if($('stage').value) q.set('s', $('stage').value);
+  if($('lang').value) q.set('lang', $('lang').value);
+  if($('partner').value) q.set('p', $('partner').value);
+  if($('test').checked) q.set('test', '1');
+  return BASE + '?' + q.toString();
+}
+function update(){
+  const u = url(), j = DATA.journeys[$('journey').value], p = DATA.partners[$('partner').value];
+  $('link').textContent = u;
+  $('qr').innerHTML = qrSvg(u, {size:220});
+  $('pTitle').textContent = 'Step-by-step help: ' + j.title.en;
+  $('pAr').textContent = 'مساعدة خطوة بخطوة: ' + j.title.ar;
+  $('pBy').textContent = p ? 'With ' + p.name.en + (p.demo ? ' (example)' : '') : '';
+}
+['city'].forEach(id => $(id).addEventListener('change', fillJourneys));
+$('journey').addEventListener('change', fillStages);
+['stage','lang','test'].forEach(id => $(id).addEventListener('change', update));
+$('partner').addEventListener('change', () => {
+  const p = DATA.partners[$('partner').value], keep = $('stage').value;
+  if(p && p.entry && $('journey').value !== p.entry.j){ $('journey').value = p.entry.j; fillStages();
+    $('stage').value = [...$('stage').options].some(o => o.value === keep) ? keep : p.entry.s; }
+  update();
+});
+$('copy').addEventListener('click', () => { navigator.clipboard && navigator.clipboard.writeText(url()); $('copy').textContent = 'Copied'; setTimeout(()=>$('copy').textContent='Copy link', 1500); });
+$('open').addEventListener('click', () => window.open(url(), '_blank', 'noopener'));
+function save(name, blob){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+$('dl').addEventListener('click', () => save('orivia-qr.svg', new Blob([qrSvg(url(), {size:1024})], {type:'image/svg+xml'})));
+$('png').addEventListener('click', () => {
+  const img = new Image(), c = document.createElement('canvas'); c.width = c.height = 1024;
+  img.onload = () => { c.getContext('2d').drawImage(img, 0, 0, 1024, 1024); c.toBlob(b => save('orivia-qr.png', b)); };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(qrSvg(url(), {size:1024}));
+});
+fillJourneys();
+</script>
+</body>
+</html>

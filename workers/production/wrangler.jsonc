@@ -1,0 +1,47 @@
+{
+  // myorivia.app production (newest Orivia: assistant, accounts, onboarding, organisations).
+  // No route of its own: only the front door reaches it, through its APP service binding.
+  // Secrets (never in this file): OPENAI_API_KEY, BRAVE_SEARCH_API_KEY, TURNSTILE_SECRET, SESSION_SECRET, ACCOUNTS_SECRET.
+  "name": "orivia-production",
+  "main": "../orivia-production.mjs",
+  "account_id": "dca77f1ed4a6d4407bc82e27b4581f7d",
+  "compatibility_date": "2026-10-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true, "head_sampling_rate": 1, "logs": { "enabled": true, "invocation_logs": false } },
+  "ai": { "binding": "AI" },
+  "ratelimits": [{ "name": "AI_QUOTA", "namespace_id": "602117", "simple": { "limit": 10, "period": 60 } }],
+  "d1_databases": [
+    // Shared money ledger with the pilot and orivia-beta: the same $5/day and $20/month cover all of them.
+    { "binding": "BUDGET_DB", "database_name": "orivia-beta-budget", "database_id": "bd521420-65a0-4b7d-9bf2-801010c7ca86" },
+    // Founder decision (21 Oct): production takes over the existing accounts database (owner, Northbay, test students).
+    { "binding": "ACCOUNTS_DB", "database_name": "orivia-accounts-private", "database_id": "3ebd10d5-01e5-4a01-b846-977f1bb2d5b3" }
+  ],
+  "send_email": [{ "name": "ACCOUNTS_EMAIL", "allowed_sender_addresses": ["login@auth.aurelithgroup.org"] }],
+  // Files (founder-approved, Ina review OK e1b10eb, 22 Oct): production's own private bucket in Western Europe.
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "orivia-files-production" }],
+  "vars": {
+    // Files and Files to Chat. Device push stays off (orivia-production.mjs) until Privacy is approved.
+    "FILES_ENABLED": "1", "DOCUMENTS_ENABLED": "1",
+    "PUBLIC_RELEASE": "1", "PUBLIC_BETA": "1", "PUBLIC_HOST": "myorivia.app",
+    "OPENAI_PILOT": "1", "OPENAI_INPUT_USD_PER_M": "2", "OPENAI_OUTPUT_USD_PER_M": "10",
+    "PILOT_OPENAI_DAY_USD": "5", "PILOT_OPENAI_MONTH_USD": "20",
+    // Natural voice for Listen (founder-approved 22 Oct). Its 'voice' meter is in the shared ledger, so $1/day and $5/month
+    // cover the pilot and production together, and every voice cost also counts inside the OpenAI limits above.
+    "VOICE_ENABLED": "1", "VOICE_DAY_USD": "1", "VOICE_MONTH_USD": "5",
+    "VOICE_TEXT_IN_USD_PER_M": "0.6", "VOICE_TEXT_OUT_USD_PER_M": "2.4", "VOICE_AUDIO_OUT_USD_PER_M": "20",
+    "DAILY_CAP": "60", "PERSON_DAILY_CAP": "60", "ASSISTANT_DAILY_CAP": "60",
+    "RESEARCH_ENABLED": "1", "RESEARCH_LOOP": "1", "RESEARCH_AGENT": "1", "RESEARCH_AGENT_STEPS": "12",
+    "RESEARCH_TURN_FETCHES": "32", "RESEARCH_TURN_SEARCHES": "8", "SPEA_DIRECTORY_FEED": "1",
+    // Public search limits stay 10/day and 100/month (same pool as orivia-beta, so not raised by adding production).
+    "SEARCH_DAILY_CAP": "10", "SEARCH_MONTHLY_CAP": "100",
+    "BROWSER_DIRECTORY": "0", "BROWSER_DAY_SECONDS": "0", "BROWSER_MONTH_SECONDS": "0",
+    "ACCOUNTS_ENABLED": "1", "ACCOUNTS_UI": "1", "ACCOUNTS_ORIGIN": "https://myorivia.app",
+    "ACCOUNTS_FROM": "login@auth.aurelithgroup.org", "ACCOUNTS_EMAIL_ENABLED": "1", "ACCOUNTS_EMAIL_MODE": "sending",
+    // Founder: keep 10/day and 100/month for the demo. Counted in the shared accounts database.
+    "ACCOUNTS_EMAIL_DAY_CAP": "10", "ACCOUNTS_EMAIL_MONTH_CAP": "100",
+    "ORGANISATIONS_ENABLED": "1", "NOTIFICATIONS_ENABLED": "1",
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFe8Fvouuv7HFxMf"
+  }
+}
