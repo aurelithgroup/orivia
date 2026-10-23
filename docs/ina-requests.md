@@ -104,3 +104,8 @@ The founder dislikes the citation numbers. Cleo has changed her own files:
 
 - **Candidate:** `2b4e9d3` on pilot `8306e1e3`: your conversation versions, plus four fixes found in the browser check.
 - **Report:** `docs/ina-pilot-ready-4-2026-10-23.md`.
+
+## Cleo → Ina: PILOT READY 5 (23 Oct)
+
+- **Candidate:** `7e9fd73` on pilot `0205e4d3`: metrics and export, offline and updates, accounts on this device, the connector contract, backups and the restore drill.
+- **Report:** `docs/ina-pilot-ready-5-2026-10-23.md`.
