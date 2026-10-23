@@ -35,7 +35,7 @@ r=await run({replay:false,fail:true});assert.equal(r.rolledBack,null);
 r=await run({replay:true,reply:'Answer for this version'});
 assert.equal(r.turns.at(-1).content,'Answer for this version');assert.equal(r.turns.at(-1).meta.versionNote,true);
 assert.ok(!r.turns.at(-1).content.includes('new conversation version'));
-assert.equal(JSON.stringify(r.turns.at(-1).meta.origin),JSON.stringify({v:1,documents:false,university:false}),'every reply is stamped with what its request carried (share provenance)');
+assert.equal(JSON.stringify(r.turns.at(-1).meta.origin),JSON.stringify({v:2,documents:false,university:false,unknown:true}),'every reply is stamped; without the origin helper it fails closed as unknown');
 // Controls disabled only because a reply was in progress are released when it ends.
 assert.ok(r.locked.every(b=>b.disabled===false&&!b.dataset.busyLock),'Edit/Regenerate re-enabled');
 // Wiring.

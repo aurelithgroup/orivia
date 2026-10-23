@@ -2205,7 +2205,10 @@ async function sendChat(e,replay=null){
   {const ctx=chatDocuments().length?documentContext():null,me=turns.at(-1);if(ctx&&(ctx.used<ctx.total||ctx.cut)&&me?.role==='user'){me.meta={...(me.meta||{}),documentContext:{used:ctx.used,total:ctx.total,cut:ctx.cut}};save();draw()}}
   // Reply origin (Ina f99c2b3): what this request carried, stamped on the reply for good, so clearing a university
   // context, switching versions or reloading can't later make a document- or university-based answer shareable.
-  const sentWith={documents:!!(chatDocuments().length&&pilotConsent()),university:!!currentOrgContext()};
+  // v2 (Ina 1f797f2): computed over exactly the turns sent (chatMessages' latest 12) plus this request's own document and
+  // university context, so a follow-up that restates earlier members-only or document details inherits that origin.
+  // Frozen here, before the request; without the helper it fails closed as unknown.
+  const originStamp=window.OriviaReplyOrigin?window.OriviaReplyOrigin.forRequest(sentTurns,{documents:!!(chatDocuments().length&&pilotConsent()),university:!!currentOrgContext()}):{v:2,documents:false,university:false,unknown:true};
   const res=await fetch('/v1/chat',{method:'POST',signal:controller.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),...(currentOrgContext()?{orgContext:{org:currentOrgContext().org,content:currentOrgContext().content}}:{}),...(chatDocuments().length&&pilotConsent()?{documents:documentsForMessage()}:{}),researchContext:currentResearchContext(sentTurns),language:uiLanguage(),style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
   const {r,d}=await readReply(res,chatId);
   if((globalThis.OriviaAccounts?.epoch||'')!==accountAtSend)return;
@@ -2227,7 +2230,7 @@ async function sendChat(e,replay=null){
    if(why==='rate_limit'||(r.status===429&&!why))cooldown(wait||60);
    return}
   if(typeof d.reply!=='string'||!d.reply.trim())throw Error('empty');
-  const meta={replyRef:newId(),origin:{v:1,documents:sentWith.documents,university:sentWith.university}};const change=safeCalendarChange(d.calendarChange);if(change)meta.calendarChange={proposal:change,status:'pending'};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
+  const meta={replyRef:newId(),origin:{...originStamp}};const change=safeCalendarChange(d.calendarChange);if(change)meta.calendarChange={proposal:change,status:'pending'};const vetted=safeSources(d.liveSources);if(vetted.length)meta.sources=vetted;if(d.research&&typeof d.research==='object')meta.research=safeResearch(d.research);
   if(vetted.length&&Array.isArray(d.organisations)){const orgs=d.organisations.slice(0,8);if(safeOrgs(orgs,vetted).length){meta.organisations=JSON.parse(JSON.stringify(orgs));if(['list','single','choose'].includes(d.cardMode))meta.cardMode=d.cardMode}}
   const dr=safeDraft(d.draft);if(dr)meta.draft=dr;
   // The language the reply was written in (from the server), so Listen picks the right voice instead of guessing.
