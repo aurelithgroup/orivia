@@ -1,0 +1,23 @@
+name: Task 3 Worker dry-run
+on:
+  push:
+    branches:
+      - ina/founder-ai-sponsorship-block-3-2026-10-25
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  worker-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned account dependencies
+        run: npm ci --prefix workers/accounts --ignore-scripts --no-fund --no-audit
+      - name: Install pinned pilot dependencies
+        run: npm ci --prefix workers/pilot --ignore-scripts --no-fund --no-audit
+      - name: Dry-run Worker compilation (no deployment)
+        run: npm run check --prefix workers/pilot
