@@ -1,0 +1,91 @@
+{
+  "task": 4,
+  "status": "CORRECTION_DEPLOYED_LIVE_ACCEPTANCE_INCOMPLETE",
+  "sourceCommit": "bb3c60a072a79c998280ba01f501e428c8e9eb8f",
+  "branch": "ina/founder-ai-sponsorship-block-3-2026-10-25",
+  "incident": {
+    "initialVersion": "952807c4-06ca-4edd-9ec2-0ccc8af47b11",
+    "liveOwnerResult": "FAIL_USER_REPORTED_LOADING_SCREEN",
+    "confirmedCauses": [
+      "Identifier minification renamed __name to o inside serialized browser functions; the served wrapper declared __name only. Reproduced ReferenceError: o is not defined from the actual compiled function source.",
+      "The Task 3 owner view called founderCommercialPanel without an implementation. Actual nonminified compiled browser test reproduced founderCommercialPanel is not defined."
+    ],
+    "rollbackDeployment": "ac77c777-7fee-4ed5-a01a-00163f2b997a",
+    "rolledBackTo": "e055308c-3db8-4e87-8d33-09b645e92e99",
+    "rollbackServingReadbackVerified": true,
+    "databaseRestorePerformed": false
+  },
+  "correction": [
+    "Set pilot minify=false to preserve serialized helper names; deploy without --minify.",
+    "Define founderCommercialPanel within serialized mountPlatform; explicit saved draft/review/approval/withdrawal forms use existing revision-checked owner APIs.",
+    "Extend browser harness to load the actual compiled Worker; add founder/member fixture browser coverage and panel/config regression assertions."
+  ],
+  "deployment": {
+    "worker": "orivia-research-pilot",
+    "version": "00963c9e-f9fe-4043-8d9b-84f2d10e3f2b",
+    "id": "969ba116-4c49-4dd3-9341-8d929835f266",
+    "createdAt": "2026-10-25T11:54:29.649253Z",
+    "traffic": 100,
+    "bundleSha256": "805e98ee7035074c52b8e1c5fb6d62849c019574a853f32d579f943ed5fc7a05",
+    "startupMs": 43,
+    "upload": "Strict inheritance of every binding. Gzip used only to transport the bundle to connector; decompressed SHA-256 checked before uploading the exact nonminified JS.",
+    "firstPartySourcesMatchSourcemap": 67
+  },
+  "preservation": {
+    "bindings": 59,
+    "allBindingsExactlyPreserved": true,
+    "productionSettingsExactlyUnchanged": true,
+    "productionDeploymentUnchanged": true,
+    "secretValuesRead": false,
+    "secretsChanged": false,
+    "budgetLimitsChanged": false,
+    "budgetCountersReset": false,
+    "paymentsEnabled": false,
+    "rollbackVersionAvailable": true
+  },
+  "verification": {
+    "localRegression": {
+      "total": 133,
+      "failed": 0,
+      "receipt": "task-4-correction-regression-2026-10-25.json"
+    },
+    "compiledJourneyBrowser": {
+      "passed": true,
+      "transport": "Real local Better Auth, SQLite and Worker HTTP routes; fictional owner and source. No provider calls.",
+      "checks": [
+        "create with structured editor",
+        "separate review/publish",
+        "draft isolation",
+        "form values survive reopening",
+        "restore requires new review",
+        "withdrawal removes catalogue and detail",
+        "saved personal completion survives withdrawal with warning",
+        "390px layout",
+        "no browser errors"
+      ]
+    },
+    "compiledFounderMemberBrowser": {
+      "passed": true,
+      "scope": "Actual compiled pilot bundle; local Chromium, SQLite and Better Auth; fictional accounts only. Not live acceptance.",
+      "checks": [
+        "owner dashboard renders",
+        "founder draft/review controls",
+        "campaign draft/review/approval/withdrawal controls",
+        "member API eligibility",
+        "unrelated member denied",
+        "member cannot access owner page/API",
+        "member dashboard renders",
+        "signed-out owner page denied",
+        "390px layout",
+        "no browser errors"
+      ]
+    },
+    "workerBuild": "PASS",
+    "servingVersionReadback": "PASS",
+    "liveOwnerAfterCorrection": "PENDING_USER_REFRESH",
+    "liveMember": "NOT_RUN",
+    "liveAcceptanceComplete": false
+  },
+  "remaining": "Retry the corrected management page in the user's authenticated browser, then complete actual owner/member lifecycle, eligibility, expiry, concurrency, audit and UAE/UK/layout checks. Local fixture tests are not live sign-off.",
+  "productionModified": false
+}

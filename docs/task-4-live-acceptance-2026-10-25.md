@@ -1,5 +1,19 @@
 # Task 4 — Pilot deployment and live acceptance (25 October 2026)
 
+## Current status — correction deployed; acceptance incomplete
+
+The first candidate **failed the owner's live loading check**. It was rolled back to the previous serving version, with rollback confirmed through the deployment API. Investigation reproduced two errors from the compiled code: minification renamed a serialized helper, and the owner view called a missing founder-panel function.
+
+Both were corrected in source commit `bb3c60a072a79c998280ba01f501e428c8e9eb8f`. The actual nonminified Worker bundle passed local Chromium owner/member and Journey lifecycle tests with real local Better Auth/SQLite and fictional accounts, plus all 133 workflow checks. This includes rendering owner management and the member dashboard, founder draft/review, sponsor draft/review/approval/withdrawal, member eligibility, unrelated-member denial, owner-page/API denial for members, signed-out denial and 390px layout. **These are local fixture results, not live acceptance.**
+
+Corrected pilot version: `00963c9e-f9fe-4043-8d9b-84f2d10e3f2b`; serving deployment: `969ba116-4c49-4dd3-9341-8d929835f266`, confirmed at 100% traffic on 25 October 2026 at 15:54:29 Dubai. All 59 existing bindings match exactly. Production settings and deployment remain unchanged; no secret, budget, payment or database binding was changed. Previous serving version `e055308c-3db8-4e87-8d33-09b645e92e99` remains available. No database restore was performed.
+
+**Next:** the user refreshes the existing authenticated management tab. Live owner/member acceptance remains open; no live sponsor delivery or payment is claimed.
+
+Current evidence: [incident, rollback, correction and deployment](evidence/task-4-dashboard-correction-2026-10-25.json), [correction regression receipt](evidence/task-4-correction-regression-2026-10-25.json).
+
+## Initial attempt — historical record, superseded above
+
 **Acceptance INCOMPLETE. No sign-off.** The candidate is deployed only to the protected research pilot. Authenticated owner and member browser acceptance remains blocked by sign-in.
 
 ## Deployment evidence
