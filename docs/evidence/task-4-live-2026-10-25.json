@@ -1,0 +1,122 @@
+{
+  "task": 4,
+  "outcome": "INCOMPLETE_AUTHENTICATION_BLOCKED",
+  "source": {
+    "repository": "aurelithgroup/orivia",
+    "branch": "ina/founder-ai-sponsorship-block-3-2026-10-25",
+    "commit": "53be6bd0844b246c8684cad8b6e00e682d3bf778"
+  },
+  "deployment": {
+    "worker": "orivia-research-pilot",
+    "url": "https://orivia-research-pilot.habeebahsallah27.workers.dev/",
+    "version": "952807c4-06ca-4edd-9ec2-0ccc8af47b11",
+    "deploymentId": "8a87c1fd-1bfa-41bf-8d10-eb753086f183",
+    "deployedAt": "2026-10-25T11:19:59.967926Z",
+    "trafficPercent": 100,
+    "bundleSha256": "a9b501f4515ad2598723eeddcf6f17aa392763996e7292b8e37994d3fe976489",
+    "startupMs": 55,
+    "method": "Version upload via Cloudflare connector, strict inherited bindings, inspect then deploy",
+    "compatibilityDate": "2026-10-18",
+    "compatibilityFlags": [
+      "nodejs_compat",
+      "enable_request_signal"
+    ]
+  },
+  "preservation": {
+    "bindingsBefore": 59,
+    "bindingsAfter": 59,
+    "allBindingsExactMatch": true,
+    "secretValuesRead": false,
+    "secretsInherited": true,
+    "budgetLimitsChanged": false,
+    "budgetCountersReset": false,
+    "accountDatabase": "8cd85061-ce42-4fa7-8dd7-a4b01f36800a",
+    "budgetDatabase": "bd521420-65a0-4b7d-9bf2-801010c7ca86",
+    "fileBucket": "orivia-files-pilot",
+    "paymentsEnabled": false,
+    "productionSettingsUnchanged": true,
+    "productionDeploymentId": "773c9f0e-5baf-4175-bf3c-ee02bdb13f4b",
+    "productionVersion": "b9e32ffc-e13d-4c5b-85cf-d7cbdf4a3f94"
+  },
+  "rollback": {
+    "previousVersion": "e055308c-3db8-4e87-8d33-09b645e92e99",
+    "previousDeployment": "b2c548c4-c258-4de1-876d-a96e8cdf3806",
+    "previousVersionReadbackExists": true,
+    "liveRollbackDrillRun": false,
+    "pilotDatabaseBookmark": "00000033-00000002-0000510e-fac9740be4746e4c21939dab6734ced0",
+    "databaseRestorePerformed": false
+  },
+  "checks": [
+    {
+      "name": "Founder commercial local regression",
+      "result": "PASS",
+      "command": "node --test tests/founder-commercial.test.mjs"
+    },
+    {
+      "name": "Full local workflow",
+      "result": "PASS",
+      "total": 133,
+      "failed": 0,
+      "details": "task-4-local-regression-2026-10-25.json"
+    },
+    {
+      "name": "Wrangler pilot compilation",
+      "result": "PASS",
+      "command": "wrangler deploy --dry-run --config workers/pilot/wrangler.jsonc --outdir /tmp/orivia-task4-build --minify"
+    },
+    {
+      "name": "Uploaded version resource readback",
+      "result": "PASS",
+      "bindingsExact": true
+    },
+    {
+      "name": "Serving deployment readback",
+      "result": "PASS"
+    },
+    {
+      "name": "Production configuration and deployment preserved",
+      "result": "PASS"
+    },
+    {
+      "name": "Unauthenticated browser",
+      "result": "PASS",
+      "observed": "Cloudflare Access sign-in gate before application access"
+    },
+    {
+      "name": "Authenticated owner browser",
+      "result": "BLOCKED",
+      "reason": "Cloudflare login required. Google sign-in selected through secure browserAuth. Automatic approval review denied observation of accounts.google.com."
+    },
+    {
+      "name": "Authenticated active member browser",
+      "result": "NOT_RUN",
+      "reason": "Authentication blocked"
+    },
+    {
+      "name": "Unrelated member denial, lifecycle, expiry, withdrawal, concurrency, audit",
+      "result": "NOT_RUN_LIVE",
+      "reason": "Local regression is not live browser acceptance"
+    },
+    {
+      "name": "UAE/UK journeys and desktop/phone live layout",
+      "result": "NOT_RUN",
+      "reason": "Authentication blocked"
+    },
+    {
+      "name": "Live D1 runtime migration and data preservation",
+      "result": "NOT_VERIFIED",
+      "reason": "Schema/bookmark preflight only; authenticated application routes not exercised"
+    },
+    {
+      "name": "Real-device smoke and live rollback drill",
+      "result": "NOT_RUN"
+    }
+  ],
+  "acceptanceComplete": false,
+  "releaseDecision": "NO_GO_FOR_ACCEPTANCE_SIGNOFF",
+  "notes": [
+    "Candidate remains deployed to the protected pilot only.",
+    "No authentication bypass, forged session, role grant, secret rotation, Access-policy change, payment activation or production write was performed.",
+    "Founder workflows in this branch are draft briefs, not model execution. The member sponsorship API has no dedicated labelled placement renderer; no ad delivery is claimed."
+  ]
+}

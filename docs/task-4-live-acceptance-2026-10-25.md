@@ -1,31 +1,58 @@
-# Task 4 — Live acceptance gate (2026-10-25)
+# Task 4 — Pilot deployment and live acceptance (25 October 2026)
 
-## Verified
-- Cloudflare inventory includes orivia-research-pilot, orivia-production and orivia-api.
-- Latest research pilot deployment: 2026-10-23T09:43:18Z (Candidate 9); predates Task 2/3 development branches.
-- Latest production deployment: 2026-10-22T15:31:12Z. No deployment changed during this review.
-- GitHub full regression suite 83/83 successful: https://github.com/aurelithgroup/orivia/actions/runs/40182203006
-- Pilot Worker dry-run successful: https://github.com/aurelithgroup/orivia/actions/runs/40182329897
-- Public web retrieval could not access the URLs; this does not establish a site outage.
+**Acceptance INCOMPLETE. No sign-off.** The candidate is deployed only to the protected research pilot. Authenticated owner and member browser acceptance remains blocked by sign-in.
 
-## Live acceptance NOT completed
-- Task 2 and 3 changes are not on the current deployed pilot.
-- Authenticated owner/member browser acceptance, D1 pilot migration, rollback and real-device smoke tests have not been run.
-- No payment processing, sponsorship delivery or autonomous AI spending was enabled.
+## Deployment evidence
 
-## Required go/no-go gates
-1. Build reviewed Task 2+3 branch for isolated pilot and verify D1 bindings, rollback point and flags.
-2. Deploy exclusively to the pilot, with captured commit hash and deployment ID.
-3. Run actual owner lifecycle: founder draft; sponsor draft; review; approve; expiry; withdraw; audit; concurrency.
-4. Run active-member, unrelated-member and signed-out denial tests; verify no paid placements in cited facts or ranking.
-5. Verify UAE and UK journeys, desktop and phone layout, preservation of existing data, console logs and rollback.
-6. Save redacted evidence and explicit go/no-go decision.
+- Repository: `aurelithgroup/orivia`; branch: `ina/founder-ai-sponsorship-block-3-2026-10-25`.
+- Built source: `53be6bd0844b246c8684cad8b6e00e682d3bf778`, clean tracked checkout.
+- Worker: `orivia-research-pilot`.
+- Version: `952807c4-06ca-4edd-9ec2-0ccc8af47b11`.
+- Serving deployment: `8a87c1fd-1bfa-41bf-8d10-eb753086f183`, 100%, confirmed by Cloudflare API readback.
+- Deployed: 2026-10-25 11:19:59 UTC / 15:19:59 Dubai.
+- Bundle SHA-256: `a9b501f4515ad2598723eeddcf6f17aa392763996e7292b8e37994d3fe976489`.
+- Cloudflare startup validation: 55 ms.
 
-Outcome: NO-GO for live release until tested against a deployed candidate. Automated development tests have passed.
-## Additional deployment preflight (2026-10-25)
-- Cloudflare settings read-only inspection confirmed pilot ACCOUNTS_DB id 8cd85061-ce42-4fa7-8dd7-a4b01f36800a, production ACCOUNTS_DB id 3ebd10d5-01e5-4a01-b846-977f1bb2d5b3. Separate pilot and production R2 buckets confirmed.
-- BUDGET_DB is shared across environments. Spending caps and counters must be preserved; do not reset them.
-- Pilot flags show ACCOUNTS_ENABLED=1, ORGANISATIONS_ENABLED=1, OPENAI_PILOT=1, BROWSER_DIRECTORY=0, NOTIFICATION_SCHEDULER=pilot. These existing flags were read but not changed.
-- The documented release procedure requires wrangler deploy --keep-vars to retain account-specific settings; replacing the Worker through the API without a verified bundle and retained bindings could disrupt founder sign-in.
-- **Blocker:** there is no authenticated browser-based acceptance evidence for the new branch, and the GitHub build runs were dry-run only. No safe pilot release method was actually executed from this session. Production and pilot deployments unchanged.
-- Task 4 remains NO-GO until a dedicated pilot release and live acceptance runs are evidenced.
+Wrangler CLI had no authenticated session. The Cloudflare connector uploaded the locally compiled module through the version API with `bindings_inherit=strict`, inheriting every live binding by name. The latest version was checked before upload, the uploaded resources were inspected, and the current deployment was checked again before changing pilot traffic. No force override was used.
+
+All **59 bindings exactly matched** before and after deployment, including secret references, email configuration, Access settings, rate limit, provider flags and budgets. Secret values were neither read nor replaced. The existing compatibility date was retained; the branch's `enable_request_signal` flag was added alongside `nodejs_compat`.
+
+Pilot accounts D1 and R2 remain separate from production. The budget D1 is shared; no limits were raised and no counters were reset. No payment integration was enabled.
+
+Production settings were read back unchanged. Production deployment remains `773c9f0e-5baf-4175-bf3c-ee02bdb13f4b`, version `b9e32ffc-e13d-4c5b-85cf-d7cbdf4a3f94`. There were no production writes.
+
+## Actual verification
+
+| Check | Result |
+| --- | --- |
+| Targeted founder/sponsorship local regression | PASS |
+| Complete local workflow commands | PASS: 133, failures: 0 |
+| Wrangler pilot dry-run compilation | PASS |
+| Uploaded version bindings and runtime readback | PASS |
+| Serving pilot deployment readback | PASS |
+| Production settings/deployment preservation | PASS |
+| Anonymous browser access | Access sign-in gate observed |
+| Authenticated owner browser lifecycle | BLOCKED |
+| Authenticated member/unrelated-member browser | NOT RUN |
+| Live expiry, withdrawal, audit and concurrency | NOT RUN |
+| UAE/UK journeys; desktop/phone live layouts | NOT RUN |
+| Live runtime D1 migration and account-data preservation | NOT VERIFIED |
+| Real-device smoke and live rollback drill | NOT RUN |
+
+The browser reached Cloudflare Access and then Cloudflare sign-in. The secure authentication request returned `submitted` with Google selected; this does **not** prove login success. Automatic approval review then denied observation of `accounts.google.com`, stating that the separate Google authentication origin lacked approval. No alternate route, forged session, role grant or security bypass was attempted. Explicit approval for that sign-in origin is needed to continue.
+
+The founder feature on this branch consists of reviewed draft briefs, not autonomous model execution. The member sponsorship endpoint has no dedicated placement renderer on this branch. Local API tests do not establish visible sponsor delivery or live acceptance.
+
+## Rollback capability
+
+Previous serving version `e055308c-3db8-4e87-8d33-09b645e92e99` was retained and successfully read back after deployment. Previous deployment was `b2c548c4-c258-4de1-876d-a96e8cdf3806`.
+
+To revert code, create a deployment on **orivia-research-pilot only** with strategy `percentage` and versions `[{"version_id":"e055308c-3db8-4e87-8d33-09b645e92e99","percentage":100}]`, then read back the serving deployment and bindings. Do not change routes, secrets, database bindings or production.
+
+Pilot D1 pre-deployment Time Travel bookmark: `00000033-00000002-0000510e-fac9740be4746e4c21939dab6734ced0`. Schema-only inspection was performed. No database restore was performed. A database restore is a separate operation that can discard newer data; routine code rollback must not restore D1 automatically. The new workflow tables are additive, but actual remote initialization and old-version compatibility have not yet been exercised.
+
+## Remaining acceptance gate
+
+Complete normal Access and account sign-in, verify actual owner/member roles, and use clearly labelled disposable pilot records for the owner draft/review/approval/withdrawal, stale revision/concurrency, expiry, member eligibility and unrelated-member denial checks. Verify audit, journey behaviour, layouts and console errors; inspect runtime D1 initialization and existing data. Record each actual result. A failed or blocked check keeps acceptance incomplete.
+
+Machine-readable receipts: [live deployment and acceptance](evidence/task-4-live-2026-10-25.json), [all local workflow commands](evidence/task-4-local-regression-2026-10-25.json).
