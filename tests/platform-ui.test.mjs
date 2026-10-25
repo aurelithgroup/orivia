@@ -2,6 +2,7 @@
    The full owner → admin → invitation → request → approval → student-space flow was clicked through in Chromium against
    the real organisation handler (see docs/organisation-dashboards.md). Run: node tests/platform-ui.test.mjs */
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {platformPage,mountPlatform} from '../workers/accounts/platform-ui.mjs';
 const js=mountPlatform.toString();
 assert.doesNotThrow(()=>new Function('('+js+')'),'served as /platform.js: must parse on its own (no outside references)');
@@ -10,9 +11,12 @@ assert.doesNotMatch(js,/innerHTML|outerHTML|insertAdjacentHTML|document\.write/,
 assert.match(js,/'X-Orivia-Account':user\.id/,'every request carries the signed-in account');
 assert.match(js,/credentials:'same-origin'/);
 // Only endpoints in Ina's contract (docs/organisation-backend.md)
-const used=[...js.matchAll(/'(\/api\/[a-z/]+)/g)].map(m=>m[1]);
+const used=[...js.matchAll(/'(\/api\/[a-z/-]+)/g)].map(m=>m[1]);
 const allowed=['/api/account/session','/api/me/memberships','/api/me/orgs/','/api/admin/orgs','/api/admin/orgs/','/api/orgs/','/api/invitations/inspect','/api/invitations/join','/api/public/codes/','/api/account/feedback/queue','/api/admin/overview','/api/admin/export/'];
+allowed.push('/api/admin/founder-workflows','/api/admin/sponsorships');
 for(const u of used)assert.ok(allowed.some(a=>u===a||u.startsWith(a)),'unexpected endpoint '+u);
+assert.match(js,/async function founderCommercialPanel\(/,'the serialized dashboard contains its founder panel implementation');
+assert.match(readFileSync(new URL('../workers/pilot/wrangler.jsonc',import.meta.url),'utf8'),/"minify"\s*:\s*false/,'pilot browser serialization requires stable generated helper names');
 assert.doesNotMatch(js,/\/api\/invitations\/[^ij']/,'invitation tokens never go in a URL');
 assert.match(js,/location\.hash\.match\(\/\^#join=/,'join links read from the fragment');
 // The space menu comes only from the server's memberships and platform roles

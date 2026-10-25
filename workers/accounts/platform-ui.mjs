@@ -150,6 +150,40 @@ export function mountPlatform(){
  // Founder overview (ORI-OWNER-001/002/007/009): real counts with definitions, budgets from the server's own meters or
  // "Unavailable", an organisation directory with search and direct actions. Never chats, files, student marks or identities.
  let ownerQuery='';
+ // This must remain inside mountPlatform: the browser receives this function's source.
+ async function founderCommercialPanel(){
+  const box=panel(h('h3',null,'Founder drafts and sponsorship review'));
+  box.append(h('p',{class:'small muted'},'Saved briefs do not run AI or send messages. Sponsorship review does not collect payment or change factual answers or source ranking.'));
+  const [workflows,campaigns,directory]=await Promise.all([api('/api/admin/founder-workflows'),api('/api/admin/sponsorships'),api('/api/admin/orgs')]);
+  const input=(label,value='',type='text',max=4000)=>{const el=h(type==='textarea'?'textarea':'input',{...(type==='textarea'?{rows:4}:{type}),value,maxlength:max,'aria-label':label});return el};
+  const choice=(label,values,value)=>h('select',{'aria-label':label},...values.map(([key,text])=>h('option',{value:key,selected:key===value},text)));
+  const save=(label,run)=>{const button=h('button',{type:'button',class:'btn'},label);button.onclick=act(button,run);return button};
+  const confirmation=label=>{const el=h('input',{type:'checkbox','aria-label':label});return {el,row:h('label',{class:'check'},el,' '+label)}};
+  const checked=el=>{if(!el.checked)throw Error('Review and tick the confirmation before saving.')};
+  const briefs=h('div',{class:'stack'}),briefSelect=choice('Saved founder brief',[['','New draft'],...workflows.items.map(w=>[w.id,w.title+' · '+w.status+' · revision '+w.revision])],'');
+  const briefForm=h('div',{class:'stack'});
+  const drawBrief=()=>{const current=workflows.items.find(w=>w.id===briefSelect.value),locked=current?.status==='archived';
+   const kind=choice('Brief kind',[['guide_brief','Guide brief'],['partner_outreach','Partner outreach'],['sponsorship_copy','Sponsorship copy'],['launch_checklist','Launch checklist']],current?.kind||'guide_brief');kind.disabled=!!current;
+   const title=input('Brief title',current?.title||'','text',120),brief=input('Brief text',current?.brief||'','textarea'),status=choice('Brief status',[['draft','Draft'],['reviewed','Reviewed'],['archived','Archived']],current?.status||'draft'),yes=confirmation('Save this brief only. Do not execute AI, send messages or publish a campaign.');
+   const fields=[field('Brief kind',kind),field('Brief title',title),field('Brief text',brief),field('Brief status',status)];
+   if(locked){for(const el of [title,brief,status])el.disabled=true;briefForm.replaceChildren(...fields,h('p',{class:'small muted'},'Archived briefs are read-only.'));return}
+   briefForm.replaceChildren(...fields,yes.row,save(current?'Save founder brief':'Create founder draft',async()=>{checked(yes.el);await api('/api/admin/founder-workflows'+(current?'/'+current.id:''),current?'PATCH':'POST',{kind:kind.value,title:title.value,brief:brief.value,status:status.value,...(current?{revision:current.revision}:{}),confirm:true});flash={kind:'good',text:'Brief saved. No AI request, message or campaign was sent.'};await render()}));
+  };briefSelect.onchange=drawBrief;drawBrief();briefs.append(field('Saved founder brief',briefSelect),briefForm);box.append(h('details',null,h('summary',null,'Founder brief workbench'),briefs));
+  const campaignSelect=choice('Saved sponsorship campaign',[['','New campaign draft'],...campaigns.items.map(c=>[c.id,c.label+' · '+c.status+' · revision '+c.revision])],''),campaignForm=h('div',{class:'stack'});
+  const drawCampaign=()=>{const current=campaigns.items.find(c=>c.id===campaignSelect.value),locked=current?.status==='withdrawn';
+   const organisations=directory.organisations.filter(o=>o.status==='active'),org=choice('Campaign organisation',organisations.map(o=>[o.id,o.name]),current?.orgId||organisations[0]?.id);org.disabled=!!current;
+   const partner=input('Sponsor name',current?.partnerName||'','text',120),label=input('Sponsored placement label',current?.label||'Sponsored · ','text',140),destination=input('Sponsor HTTPS destination',current?.destination||'','url',500),disclosure=input('Sponsor disclosure',current?.disclosure||'Sponsored placement. This does not affect factual answers or source ranking.','textarea',280),review=input('Campaign review note',current?.reviewNote||'','textarea',1000);
+   // Preserve exact saved instants; ISO timestamps make the scheduling time zone explicit.
+   const starts=input('Starts at (UTC ISO)',new Date(current?.startsAt||Date.now()).toISOString(),'text',40),ends=input('Ends at (UTC ISO)',new Date(current?.endsAt||Date.now()+864e5).toISOString(),'text',40),yes=confirmation('I reviewed this exact campaign, its audience, dates and sponsorship disclosure.');
+   const payload=status=>({orgId:org.value,partnerName:partner.value,label:label.value,destination:destination.value,disclosure:disclosure.value,reviewNote:review.value,startsAt:Date.parse(starts.value),endsAt:Date.parse(ends.value),status,...(current?{revision:current.revision}:{}),confirm:true});
+   const submit=status=>async()=>{checked(yes.el);const body=payload(status);if(!Number.isSafeInteger(body.startsAt)||!Number.isSafeInteger(body.endsAt)||!/(?:Z|[+-]\d{2}:\d{2})$/.test(starts.value)||!/(?:Z|[+-]\d{2}:\d{2})$/.test(ends.value))throw Error('Use a full date and time with Z for UTC or an explicit time-zone offset.');await api('/api/admin/sponsorships'+(current?'/'+current.id:''),current?'PATCH':'POST',body);flash={kind:'good',text:'Campaign '+status+'. No payment was collected and factual answers are unchanged.'};await render()};
+   const fields=[field('Campaign organisation',org),field('Sponsor name',partner),field('Sponsored placement label',label),field('Sponsor HTTPS destination',destination),field('Sponsor disclosure',disclosure),field('Starts at (UTC ISO)',starts),field('Ends at (UTC ISO)',ends),field('Campaign review note',review)];
+   if(locked){for(const el of [partner,label,destination,disclosure,starts,ends,review])el.disabled=true;campaignForm.replaceChildren(...fields,h('p',{class:'small muted'},'Withdrawn campaigns cannot be edited.'));return}
+   const actions=[save(current?'Save campaign draft':'Create campaign draft',submit('draft'))];
+   if(current){actions.push(save('Submit saved campaign for review',submit('in_review')));if(current.status==='in_review')actions.push(save('Approve reviewed campaign',submit('approved')));actions.push(save('Withdraw campaign',submit('withdrawn')))}
+   campaignForm.replaceChildren(...fields,yes.row,h('p',{class:'small muted'},current?'Saved status: '+current.status+' · revision '+current.revision+'. Approval requires the unchanged saved review candidate and a written review note.':'Save a draft before submitting it for review.'),h('div',{class:'row'},...actions));
+  };campaignSelect.onchange=drawCampaign;drawCampaign();box.append(h('details',null,h('summary',null,'Sponsorship campaign workbench'),field('Saved sponsorship campaign',campaignSelect),campaignForm));return box;
+ }
  async function ownerView(){
   let ov=null,ovError=false;try{ov=await api('/api/admin/overview')}catch(_){ovError=true}
   let list=[],listError=false;try{list=(await api('/api/admin/orgs?q='+encodeURIComponent(ownerQuery))).organisations}catch(_){listError=true}

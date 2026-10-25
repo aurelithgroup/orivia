@@ -1,6 +1,8 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "orivia-research-pilot",
+  // Browser modules use function.toString(). Keep generated helper names stable.
+  "minify": false,
   "main": "index.mjs",
   "account_id": "dca77f1ed4a6d4407bc82e27b4581f7d",
   "compatibility_date": "2026-10-18",
