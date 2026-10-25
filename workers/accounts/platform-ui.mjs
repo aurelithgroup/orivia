@@ -58,7 +58,7 @@ export function mountPlatform(){
   let memberSearch='',memberPages=1,editingContent=null;
   let user=null,me={platformRoles:[],memberships:[]},space=location.pathname==='/manage'?'owner':(()=>{const o=new URLSearchParams(location.search).get('org');return o&&/^[A-Za-z0-9-]{1,64}$/.test(o)?'org:'+o:'home'})(),tab='overview',flash=null;
  /* ---- tiny DOM helper: text is always text ---- */
- function h(tag,props,...kids){const n=document.createElement(tag);if(props)for(const [k,v] of Object.entries(props)){if(v===undefined||v===null||v===false)continue;if(k==='class')n.className=v;else if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(v===true)n.setAttribute(k,'');else n.setAttribute(k,String(v))}for(const k of kids.flat()){if(k===null||k===undefined||k===false)continue;n.append(k instanceof Node?k:document.createTextNode(String(k)))}return n}
+ function h(tag,props,...kids){const n=document.createElement(tag);if(props)for(const [k,v] of Object.entries(props)){if(v===undefined||v===null||v===false)continue;if(k==='value')continue;else if(k==='class')n.className=v;else if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(v===true)n.setAttribute(k,'');else n.setAttribute(k,String(v))}for(const k of kids.flat()){if(k===null||k===undefined||k===false)continue;n.append(k instanceof Node?k:document.createTextNode(String(k)))}if(props&&Object.hasOwn(props,'value'))n.value=props.value??'';return n}
  const chip=(text,kind)=>h('span',{class:'chip '+kind},text);
  const panel=(...kids)=>h('section',{class:'panel'},...kids);
  const empty=(title,text,...more)=>h('div',{class:'empty'},h('strong',null,title),h('p',{class:'small muted'},text),...more);
@@ -68,11 +68,12 @@ export function mountPlatform(){
  async function api(path,method='GET',body){const r=await fetch(path,{method,credentials:'same-origin',cache:'no-store',headers:{...(user?{'X-Orivia-Account':user.id}:{}),...(body!==undefined?{'Content-Type':'application/json'}:{})},...(body===undefined?{}:{body:JSON.stringify(body)})});let d={};try{d=await r.json()}catch(_){}if(!r.ok)throw new ApiError(r.status,d.error);return d}
  function act(button,fn){return async e=>{e&&e.preventDefault&&e.preventDefault();if(button)button.disabled=true;try{await fn()}catch(err){flash={kind:'err',text:err.message};if(err.code==='content_conflict'||err.code==='account_changed'){}await render()}finally{if(button&&button.isConnected)button.disabled=false}}}
  const field=(label,input,hint)=>h('label',{class:'field'},label,input,hint?h('span',{class:'hint'},hint):null);
+ const restored=window.OriviaRestoredUI({h,panel,field,api,act,getUser:()=>user,message:text=>{flash={kind:'good',text}},refresh:async()=>{await refreshMe();await render()}});
  const orgOf=id=>me.memberships.find(m=>m.organisationId===id);
  const fmtDate=ms=>new Date(ms).toLocaleString(undefined,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 
  /* ---- Space menu: only what the server says this account has ---- */
- function spaceMenu(){const sel=$('space');sel.replaceChildren(h('option',{value:'home'},'My Orivia'));if(me.platformRoles.includes('owner'))sel.append(h('option',{value:'owner'},'Orivia management'));
+ function spaceMenu(){const sel=$('space');sel.replaceChildren(h('option',{value:'home'},'My Orivia'));if(me.platformRoles.includes('support'))sel.append(h('option',{value:'support'},'Orivia support'));if(me.platformRoles.includes('owner'))sel.append(h('option',{value:'owner'},'Orivia management'));
   for(const m of me.memberships.filter(m=>m.status==='active'))sel.append(h('option',{value:'org:'+m.organisationId},m.name+(m.role==='student'?'':' · '+(m.role==='admin'?'admin':'editor'))));
   sel.value=[...sel.options].some(o=>o.value===space)?space:'home';sel.onchange=()=>{space=sel.value;tab='overview';flash=null;render()}}
  async function refreshMe(){me=await api('/api/me/memberships');spaceMenu()}
@@ -95,7 +96,8 @@ export function mountPlatform(){
   const view=$('view');const out=[];
   if(flash)out.push(h('p',{class:'notice '+(flash.kind==='err'?'err':'good'),role:flash.kind==='err'?'alert':'status'},flash.text));
   try{
-   if(space==='home')out.push(...await homeView());
+   const partner=location.hash.match(/^#partner=([a-f0-9]{64})$/);if(partner)out.push(await restored.partner(partner[1]));else if(space==='home')out.push(...await homeView());
+   else if(space==='support')out.push(await restored.escalations());
    else if(space==='owner')out.push(...await ownerView());
    else if(space.startsWith('org:')){const oid=space.slice(4),m=orgOf(oid);if(!m)out.push(deniedView('You’re not a member of this organisation.'));else if(m.role==='student')out.push(...await studentView(oid));else out.push(...await staffView(oid,m))}
   }catch(err){out.push(err.status===403||err.status===404?deniedView(err.message):h('p',{class:'notice err',role:'alert'},err.message))}
@@ -108,10 +110,10 @@ export function mountPlatform(){
   const tokenInput=h('input',{id:'invite-link',placeholder:'Paste the link you were sent',autocomplete:'off'});
   const open=h('button',{class:'btn',type:'submit'},'Open invitation');
   const form=h('form',{onsubmit:act(open,async()=>{const m=String(tokenInput.value).match(/join=([a-f0-9]{64})/)||String(tokenInput.value).trim().match(/^([a-f0-9]{64})$/);if(!m)throw new ApiError(400,'invitation_not_found');await inviteView(m[1])})},field('Invitation link',tokenInput,'From a university or organisation email or QR code.'),h('div',{class:'row'},open));
-  return [panel(h('div',{class:'row'},h('h2',{class:'grow'},'Your organisations'),chip('Signed in','c-ok')),
+  return [...await restored.notices(),panel(h('div',{class:'row'},h('h2',{class:'grow'},'Your organisations'),chip('Signed in','c-ok')),
    active.length?h('div',{class:'list'},active.map(m=>h('div',{class:'item'},h('div',{class:'grow'},h('strong',null,m.name),' ',m.demo?chip('Demo','c-demo'):null,h('p',{class:'small muted'},m.role==='student'?'Member':m.role==='admin'?'Staff admin':'Staff editor')),h('button',{class:'btn quiet',type:'button',onclick:()=>{space='org:'+m.organisationId;tab='overview';spaceMenu();render()}},'Open')))):empty('No organisations yet','When a university or employer invites you, it appears here inside your own Orivia. Your chats and plans stay private.'),
    waiting.length?h('div',{class:'stack'},waiting.map(m=>h('div',{class:'note'},chip('Waiting for approval','c-wait'),' ',m.name+': your request is with its staff. You’ll see it here once they approve.'))):null),
-   panel(h('h3',null,'Have an invitation?'),form)];
+   panel(h('h3',null,'Have an invitation?'),form),await restored.privacyPanel()];
  }
 
  async function inviteView(token){
@@ -195,14 +197,14 @@ export function mountPlatform(){
    listError?h('p',{class:'small muted'},'Organisations couldn’t be loaded. Reload to try again.'):list.length?h('div',{class:'list'},rows):ownerQuery?empty('No matches','No organisation’s name, web name or city contains “'+ownerQuery+'”.'):empty('No organisations yet','Create one to give its staff a dashboard and its members a space inside their Orivia.'));
   dir.id='owner-directory';
   return [panel(h('div',{class:'row'},h('h2',{class:'grow'},'Orivia management'),chip('Owner','c-ok')),h('p',{class:'small muted'},'Platform totals, budgets, organisations and Chat feedback. Member lists, chats, files and student progress aren’t visible here.')),
-   overview,budgets,dir,panel(h('h3',null,'Add an organisation'),form),fb,
-   panel(h('div',{class:'row'},h('h3',{class:'grow'},'Not connected yet'),chip('Coming later','c-demo')),h('p',{class:'small muted'},'Partners and sponsorships, communications, releases and privacy requests are designed but not built on the server yet.'))].filter(Boolean);
+   overview,budgets,await restored.workbench(),dir,panel(h('h3',null,'Add an organisation'),form),fb,
+   panel(h('div',{class:'row'},h('h3',{class:'grow'},'Not connected yet'),chip('Coming later','c-demo')),h('p',{class:'small muted'},'Operational records are in the workbench. Institution SSO, live application records and payment collection need separate integrations.'))].filter(Boolean);
  }
 
  async function staffView(oid,m){
   const pre='/api/orgs/'+encodeURIComponent(oid),admin=m.role==='admin';
   const summary=await api(pre+'/summary');const org=summary.organisation;
-  const tabs=[['overview','Overview'],...(admin?[['arrival','Student welcome']]:[]),['guides','Guides and information'],['members','Members'],['invitations','Invitations and QR codes'],['counts','Counts'],['records','Application records'],['settings','Settings'],...(admin?[['activity','Activity']]:[])];
+  const tabs=[['overview','Overview'],...(admin?[['arrival','Student welcome']]:[]),['guides','Guides and information'],['processes','Process templates'],['support','Support'],['members','Members'],['invitations','Invitations and QR codes'],['counts','Counts'],['records','Application records'],['settings','Settings'],...(admin?[['activity','Activity']]:[])];
   const tabBar=h('div',{class:'tabs',role:'tablist','aria-label':org.name},tabs.map(([k,l])=>h('button',{class:'tab',type:'button',role:'tab','aria-selected':String(tab===k),onclick:()=>{tab=k;render()}},l)));
   const count=(role,status)=>summary.counts.filter(c=>(!role||c.role===role)&&c.status===status).reduce((a,c)=>a+c.count,0);
   // Needs attention: real records from this organisation, each opening the workflow that resolves it.
@@ -233,7 +235,7 @@ export function mountPlatform(){
   }
   if(tab==='overview'){
    body=[todo,h('div',{class:'kpis'},h('div',{class:'kpi'},h('span',{class:'small muted'},'Members'),h('strong',null,count('student','active'))),h('div',{class:'kpi'},h('span',{class:'small muted'},'Waiting for approval'),h('strong',null,count('student','requested'))),h('div',{class:'kpi'},h('span',{class:'small muted'},'Staff'),h('strong',null,count('admin','active')+count('editor','active')))),
-    h('div',{class:'kpis'},h('div',{class:'kpi'},h('span',{class:'small muted'},'Joined in the last 30 days'),h('strong',null,summary.activity?.joinedLast30Days??0)),h('div',{class:'kpi'},h('span',{class:'small muted'},'Invitation uses'),h('strong',null,summary.activity?.invitationUses??0)),h('div',{class:'kpi'},h('span',{class:'small muted'},'Published guides and dates'),h('strong',null,(summary.activity?.published||[]).filter(p=>['guide','date'].includes(p.kind)).reduce((a,p)=>a+p.count,0)))),
+    h('div',{class:'kpis'},h('div',{class:'kpi'},h('span',{class:'small muted'},'New student memberships · last 30 days'),h('strong',null,summary.activity?.joinedLast30Days??0)),h('div',{class:'kpi'},h('span',{class:'small muted'},'Invitation uses'),h('strong',null,summary.activity?.invitationUses??0)),h('div',{class:'kpi'},h('span',{class:'small muted'},'Published guides and dates'),h('strong',null,(summary.activity?.published||[]).filter(p=>['guide','date'].includes(p.kind)).reduce((a,p)=>a+p.count,0)))),
     await (async()=>{const pr=(await api(pre+'/progress')).progress;
      const intro=h('p',{class:'small muted'},'Students can mark your guides and key dates as done. You see totals only, never names, and only when at least '+pr.minimum+' students share their progress. Students can switch sharing off.');
      if(pr.reason==='reporting_paused')return panel(h('div',{class:'row'},h('h3',{class:'grow'},'Student progress'),chip('Paused','c-demo')),h('p',{class:'small muted'},'Students can mark your guides and key dates as done for themselves. Totals are paused while we agree how to report them without revealing any one student’s progress. Their marks stay private.'));
@@ -316,10 +318,14 @@ export function mountPlatform(){
      return h('div',{class:'stack'},h('div',{class:'item'},h('div',{class:'grow'},h('strong',null,c.label),' ',chip(c.revoked?'Withdrawn':'Public',c.revoked?'c-warn':'c-ok'),h('p',{class:'small muted'},'Opens public information only. Never grants membership.')),c.revoked?null:show,c.revoked?null:admin?withdraw:h('span',{class:'small muted'},'An admin can withdraw this code.')),out)})):null);
    body=parts;
   }
+  if(tab==='support')body=[await restored.supportPanel(oid,admin)];
+  if(tab==='processes')body=[await restored.processes(oid,admin)];
+  if(tab==='guides')body.unshift(await restored.guideDraft(oid));
   if(tab==='counts'){const a=summary.activity||{},KIND={guide:'Guides',date:'Key dates',contact:'Contacts',update:'Updates'};
-   body=[h('h3',null,'Counts'),h('div',{class:'kpis'},h('div',{class:'kpi'},h('span',{class:'small muted'},'Joined in the last 30 days'),h('strong',null,a.joinedLast30Days??0)),h('div',{class:'kpi'},h('span',{class:'small muted'},'Student invitation uses'),h('strong',null,a.invitationUses??0)),h('div',{class:'kpi'},h('span',{class:'small muted'},'Members'),h('strong',null,count('student','active')))),
+   body=[h('h3',null,'Counts'),h('div',{class:'kpis'},h('div',{class:'kpi'},h('span',{class:'small muted'},'New student memberships · last 30 days'),h('strong',null,a.joinedLast30Days??0)),h('div',{class:'kpi'},h('span',{class:'small muted'},'Student invitation uses'),h('strong',null,a.invitationUses??0)),h('div',{class:'kpi'},h('span',{class:'small muted'},'Members'),h('strong',null,count('student','active')))),
     h('div',{class:'list'},(a.published||[]).map(p=>h('div',{class:'item'},h('div',{class:'grow'},h('strong',null,KIND[p.kind]||p.kind)),h('span',null,p.count+' published')))),
     h('div',{class:'row'},h('p',{class:'note grow'},'Guide views and QR opens aren’t tracked. Orivia never reads private conversations to fill this page.'),chip('Views not tracked','c-demo'))]}
+  if(tab==='counts')body.push(h('p',{class:'small muted'},summary.activity?.definition||'Membership records, not engagement.'),restored.countChart('New student memberships by UTC day',summary.activity?.dailyMemberships),restored.countChart('Published content',(summary.activity?.published||[]).map(x=>({label:x.kind,count:x.count}))),restored.countChart('Student membership states',summary.counts.filter(x=>x.role==='student').map(x=>({label:x.status,count:x.count}))));
   // Institution settings (ORI-UNI-015): admins change them; editors see them read-only. Nothing here widens access.
   if(tab==='settings'){const d=await api(pre+'/settings'),s=d.settings,ro=!d.canEdit;
    const check=(label,on)=>{const i=h('input',{type:'checkbox'});i.checked=!!on;i.disabled=ro;return [i,h('label',{class:'check'},i,' ',label)]};
@@ -354,7 +360,7 @@ export function mountPlatform(){
   leave.onclick=()=>{const yes=h('button',{class:'btn danger',type:'button'},'Leave '+org.name);yes.onclick=act(yes,async()=>{await api('/api/me/orgs/'+encodeURIComponent(oid),'DELETE',{});await refreshMe();space='home';flash={kind:'good',text:'You left '+org.name+'. Your chats and personal plans are unchanged.'};await render()});
    leave.replaceWith(h('div',{class:'stack'},h('p',null,'If you leave:'),h('ul',{class:'small',style:'margin:0;padding-left:18px'},h('li',null,org.name+'’s guides, dates, contacts and updates disappear from your Orivia, and its staff no longer see you as a member.'),h('li',null,'Your chats and anything you saved to your own calendar stay yours.'),h('li',null,'Anything you downloaded or screenshotted stays on your device but won’t update, so it may go out of date.')),h('div',{class:'row'},yes,h('button',{class:'btn quiet',type:'button',onclick:()=>render()},'Stay'))))};
   return [panel(h('div',{class:'row'},h('h2',{class:'grow'},'Your '+org.name+' space'),org.demo?chip('Demo organisation','c-demo'):null),h('p',{class:'small muted'},'Information from '+org.name+'. Your chats, calendar and About me aren’t shared with them.')),
-   section('Service updates',by('update'),'No updates right now.'),section('Guides',by('guide'),org.name+' hasn’t published guides yet.'),section('Key dates',by('date'),'No dates yet.'),section('Contacts',by('contact'),'No contacts yet.'),
+   await restored.supportPanel(oid),await restored.processes(oid,false,true),section('Service updates',by('update'),'No updates right now.'),section('Guides',by('guide'),org.name+' hasn’t published guides yet.'),section('Key dates',by('date'),'No dates yet.'),section('Contacts',by('contact'),'No contacts yet.'),
    panel(h('div',{class:'row'},h('h3',{class:'grow'},'Application progress'),chip('Not connected yet','c-demo')),h('p',{class:'small muted'},'Updates from '+org.name+'’s own systems will appear here once a reviewed integration exists. Your own steps stay private unless you choose to share them.')),
    panel(leave)];
  }

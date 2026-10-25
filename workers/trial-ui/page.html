@@ -12,7 +12,7 @@ html,body{height:100%}
 body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .app{max-width:680px;margin:0 auto;height:100%;display:flex;flex-direction:column;background:var(--surface)}
 @media (min-width:700px){.app{border-inline:1px solid var(--line)}}
-header.top{background:var(--sign);color:var(--signInk);display:flex;align-items:center;gap:10px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px}
+header.top{background:var(--sign);color:var(--signInk);display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px}
 .brand{display:flex;align-items:center;gap:9px;color:var(--signInk)}
 .brand-mark{width:22px;height:22px;flex:none}
 .brand .wordmark{font-family:"Montserrat",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:600;font-size:18px;letter-spacing:.06em;line-height:1}
@@ -380,7 +380,7 @@ a.src strong{font-size:14px;overflow-wrap:anywhere}
 /* Bottom navigation with Help in the middle */
 nav.bottom{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end;border-top:1px solid var(--line);background:var(--surface);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
 nav.bottom button{border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:600;padding:4px 2px;min-height:48px;border-radius:12px}
-nav.bottom button svg{width:24px;height:24px}
+nav.bottom button span{max-width:100%;overflow-wrap:anywhere}nav.bottom button svg{width:24px;height:24px}
 nav.bottom button.active{color:var(--ink)}
 nav.bottom button.active svg{color:var(--ink)}
 nav.bottom button.active span::after{content:"";display:block;height:3px;border-radius:2px;background:var(--amber);margin:2px auto 0;width:18px}
@@ -711,7 +711,7 @@ nav.bottom button.active,nav.bottom button.active svg{color:#a66b00}
    <label class="set-row toggle" id="voice-row" hidden><span>Natural voice for Listen<small class="tiny">Replies you tap Listen on are read by an AI-generated voice from OpenAI. Only that reply’s text is sent. Off: your phone’s own voice reads them.</small></span><input type="checkbox" id="set-voice" role="switch" checked></label>
    <label class="set-row toggle" id="pilot-row" hidden><span>Research test: use OpenAI<small class="tiny" id="pilot-text"></small></span><input type="checkbox" id="set-pilot" role="switch"></label>
   </section>
-  <section class="set-group"><h3>Device permissions</h3><div id="permission-centre"></div></section><section class="set-group"><h3>Profile sharing</h3><div id="profile-disclosure"></div></section><section class="set-group"><h3>Privacy &amp; data</h3>
+  <section class="set-group"><h3>Device permissions</h3><div id="permission-centre"></div></section><section class="set-group"><div id="response-diagnostics"></div></section><section class="set-group"><div id="account-access"></div></section><section class="set-group"><h3>Profile sharing</h3><div id="profile-disclosure"></div></section><section class="set-group"><h3>Privacy &amp; data</h3>
    <p class="tiny" data-device-copy="Your chats, calendar, journeys, About me and settings are saved in this browser on this device. They aren’t in an account and don’t sync, and anyone using this device can open them. Messages are sent to Cloudflare Workers AI to get a reply. Orivia never needs passport, visa or ID numbers." data-account-copy="Your chats, reminders, journeys and About you are saved to your private account. Display and research-consent settings stay on this device. Orivia never needs passport, visa or ID numbers.">Your chats, calendar, journeys, About me and settings are saved in this browser on this device. They aren’t in an account and don’t sync, and anyone using this device can open them. Messages are sent to Cloudflare Workers AI to get a reply. Orivia never needs passport, visa or ID numbers.</p>
    <button id="end-session" type="button" class="btn quiet">End session</button>
    <p class="tiny" data-device-copy="Goes back to the welcome screen. Your saved chats, journeys, calendar and My Life stay on this device. This isn’t an account log-out and doesn’t protect them: Orivia doesn’t have accounts yet, so anyone using this device can still open them. To remove them, use Clear saved data." data-account-copy="Open Your account to sync, review your data or log out.">Goes back to the welcome screen. Your saved chats, journeys, calendar and My Life stay on this device. This isn’t an account log-out and doesn’t protect them: Orivia doesn’t have accounts yet, so anyone using this device can still open them. To remove them, use Clear saved data.</p>

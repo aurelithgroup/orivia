@@ -22,12 +22,12 @@ export async function handleFeedbackRequest(req,env,{owner,verified,json,readJso
    return json({rating:b.rating,reason});
   }
   if(path==='/api/account/feedback/report'&&req.method==='POST'){
-   const b=await readJson(req,12000);
+   const b=await readJson(req,80000);
    const requestId=typeof b?.requestId==='string'&&/^[A-Za-z0-9-]{8,64}$/.test(b.requestId)?b.requestId:null;if(!requestId)return json({error:'invalid_request'},400);
    if(!CATEGORIES.includes(b.category))return json({error:'invalid_category'},400);
    const note=typeof b.note==='string'?b.note.trim().slice(0,1000):'';const ref=b.replyId==null?null:replyRef(b.replyId);if(b.replyId!=null&&!ref)return json({error:'invalid_reply'},400);
    // Off by default: the reply text is kept only when the person explicitly included it, and only that one reply.
-   const excerpt=b.includeReply===true&&typeof b.replyText==='string'?b.replyText.slice(0,4000):null;
+   if(b.includeReply===true&&typeof b.replyText==='string'&&b.replyText.length>16000)return json({error:'reply_too_large'},413);const excerpt=b.includeReply===true&&typeof b.replyText==='string'?b.replyText:null;
    // Idempotent: a retry with the same request id returns the first receipt and creates nothing new.
    const prior=await db.prepare('SELECT id FROM feedback_reports WHERE user_id=? AND request_id=?').bind(owner,requestId).first();
    if(prior)return json({receipt:receiptOf(prior.id),status:'received',repeat:true});

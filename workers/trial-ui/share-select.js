@@ -18,16 +18,18 @@
    if(excluded){}
    else if(t.role==='assistant'&&docChat&&(firstDoc<0||i>firstDoc))excluded='document';
    else if(t.role==='assistant'&&orgChat)excluded='university';
+   else if(String(t.content||'').length>16000)excluded='too_long';
    else if(!String(t.content||'').trim())excluded='empty';
    const sources=t.role==='assistant'?(safeSources(t.meta?.sources)||[]).filter(s=>s.category!=='document').map(s=>({title:String(s.title||s.host||'Source').slice(0,140),url:s.url})):[];
-   return {index:i,role:t.role,content:String(t.content||'').slice(0,4000),sources,excluded};
+   return {index:i,role:t.role,content:String(t.content||'').slice(0,16000),sources,excluded};
   });
  }
  // Default selection: the chosen reply and the question just before it, when both may be shared.
  function defaults(list,replyIndex){const sel=new Set();const r=list[replyIndex];if(r&&!r.excluded){sel.add(replyIndex);const q=list[replyIndex-1];if(q&&q.role==='user'&&!q.excluded)sel.add(replyIndex-1)}return sel}
  function payload(list,selected,title,days){
+  if(list.filter(x=>selected.has(x.index)&&!x.excluded).length>20)throw Error('too_many_messages');
   const messages=list.filter(x=>selected.has(x.index)&&!x.excluded).slice(0,20).map(x=>({role:x.role,content:x.content,...(x.sources.length?{sources:x.sources.slice(0,8)}:{})}));
-  return {title:String(title||'').trim().slice(0,120),messages,expiresInDays:[1,7,30].includes(Number(days))?Number(days):7};
+  const result={title:String(title||'').trim().slice(0,120),messages,expiresInDays:[1,7,30].includes(Number(days))?Number(days):7};if(unescape(encodeURIComponent(JSON.stringify(result))).length>120000)throw Error('share_too_large');return result;
  }
  root.OriviaShare={candidates,defaults,payload};
 })(typeof window!=='undefined'?window:globalThis);

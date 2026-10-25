@@ -35,10 +35,11 @@ const lower=s=>clean(s).toLowerCase();
    these phrases (nationalities, "a", "in", ...) are never treated as names. */
 const NOT_NAMES=new Set(['a','an','the','in','at','from','going','moving','starting','british','american','indian','french','arabic','emirati','pakistani','filipino','egyptian','new','year','grade','called','named','also','very','not','still','here','there','mr','mrs','ms','miss','dr','he','she','they','we','it','my','our','and','or','to','of','for','is','was','will']);
 export function conversationNames(messages,profile){
- const out=new Set(),add=s=>{for(const w of String(s||'').split(/\s+/)){const x=w.replace(/[^\p{L}'-]/gu,'');if(x.length>=2&&!NOT_NAMES.has(x.toLowerCase()))out.add(x)}};
+ const out=new Set(),add=s=>{for(const w of String(s||'').split(/\s+/)){const x=w.replace(/[^\p{L}\p{M}'-]/gu,'');if(x.length>=2&&!NOT_NAMES.has(x.toLowerCase()))out.add(x)}};
  const rel='(?:son|daughter|child|kid|kids|baby|boy|girl|husband|wife|partner|fianc[eé]e?|brother|sister|mother|mum|mom|father|dad|friend|flatmate|roommate|landlord|landlady)';
  const name="(\\p{Lu}[\\p{L}'-]+(?:\\s+\\p{Lu}[\\p{L}'-]+)?)";
  const patterns=[new RegExp('\\b(?:[Mm]y|[Oo]ur)\\s+'+rel+"(?:'s name is|,|\\s+is called|\\s+called|\\s+named|\\s+is)?\\s+"+name,'gu'),new RegExp('\\b(?:[Nn]amed|[Cc]alled)\\s+'+name,'gu'),new RegExp('\\bmy name is\\s+'+name,'giu')];
+ const explicit=[[/\b(?:je m'appelle|mon nom est|ma fille s'appelle|mon fils s'appelle)\s+([\p{L}\p{M}'-]+)/giu,1],[/(?:اسمي|اسم ابنتي|اسم ابني)\s+([\p{L}\p{M}]+)/gu,1],[/\b(?:ang pangalan ko ay|pangalan ng anak ko ay)\s+([\p{L}\p{M}'-]+)/giu,1],[/(?:मेरा नाम|मेरी बेटी का नाम|मेरे बेटे का नाम)\s+([\p{L}\p{M}]+)/gu,1],[/(?:میرا نام|میری بیٹی کا نام|میرے بیٹے کا نام)\s+([\p{L}\p{M}]+)/gu,1],[/(?:我叫|我的名字是|我女儿叫|我儿子叫)([\p{Script=Han}]{1,6})/gu,1],[/(?:আমার নাম|আমার মেয়ের নাম|আমার ছেলের নাম)\s+([\p{L}\p{M}]+)/gu,1],[/(?:എന്റെ പേര്|എന്റെ മകളുടെ പേര്|എന്റെ മകന്റെ പേര്)\s+([\p{L}\p{M}]+)/gu,1],[/(?:меня зовут|мою дочь зовут|моего сына зовут)\s+([\p{L}\p{M}'-]+)/giu,1]];patterns.push(...explicit.map(x=>x[0]));
  for(const m of (Array.isArray(messages)?messages:[]).filter(m=>m&&m.role==='user'))for(const re of patterns)for(const x of String(m.content||'').matchAll(re))add(x[1]);
  if(profile&&typeof profile==='object')for(const k of ['displayName','name','childName'])if(typeof profile[k]==='string')add(profile[k]);
  return [...out];
@@ -46,7 +47,7 @@ export function conversationNames(messages,profile){
 export function safeQuery(q,names=[]){
  for(const n of Array.isArray(names)?names:[])q=String(q||'').replace(new RegExp('(^|[^\\p{L}])'+n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^\\p{L}])','giu'),'$1 ');
  let s=clean(q).replace(/https?:\/\/\S+/g,' ').replace(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi,' ').replace(/\+?\d[\d ()-]{5,}\d/g,' ')
-  .replace(/\b(?:my|our) (?:son|daughter|child|kids?|husband|wife|name)\b[^,.;]*/gi,' ').replace(/[^\p{L}\p{N}&.'"() -]+/gu,' ').replace(/\s+/g,' ').trim();
+  .replace(/\b(?:my|our) (?:son|daughter|child|kids?|husband|wife|name)\b[^,.;]*/gi,' ').replace(/[^\p{L}\p{M}\p{N}&.'"() -]+/gu,' ').replace(/\s+/g,' ').trim();
  if((s.match(/"/g)||[]).length%2)s=s.replace(/"/g,'');
  return s.slice(0,140);
 }
@@ -76,7 +77,7 @@ export function validateUnderstanding(raw,{messages,profile={},task=null}){
  const shownNames=(task?.shown||[]).map(s=>s.name).filter(Boolean),mentioned=lower(allText(messages));
  const orgs=[];
  for(const o of Array.isArray(d.organisations)?d.organisations.slice(0,3):[]){
-  const name=clean(o?.name).replace(/[^\p{L}\p{N}&.' ()-]/gu,' ').slice(0,90).trim();const url=typeof o?.url==='string'?o.url.trim():'';
+  const name=clean(o?.name).replace(/[^\p{L}\p{M}\p{N}&.' ()-]/gu,' ').slice(0,90).trim();const url=typeof o?.url==='string'?o.url.trim():'';
   const okUrl=url&&urlsIn(said).includes(url.replace(/[.,;:!?]+$/,''))?url:'';
   const nameWords=lower(name).split(' ').filter(w=>w.length>2&&!['the','school','private','pvt','international','sharjah','dubai'].includes(w));
   const okName=name.length>=3&&(saidLower.includes(lower(name))||shownNames.some(n=>lower(n)===lower(name))||(nameWords.length&&nameWords.every(w=>mentioned.includes(w))));
@@ -136,6 +137,7 @@ export const placeWritten=(msgs,city)=>!!city&&(msgs||[]).some(m=>m?.role==='use
 /** shareProfile:false (an outside pilot provider): the model sees only the conversation. No saved-profile city, and the task's
  * place only if the person actually wrote it in this conversation. Code still uses the profile when validating. */
 export async function understandRequest({messages,profile={},task=null},{ai=null,shareProfile=true}={}){
+ profile=profile&&typeof profile==='object'?profile:{};
  const msgs=(Array.isArray(messages)?messages:[]).filter(m=>m&&['user','assistant'].includes(m.role)).slice(-10).map(m=>({role:m.role,content:String(m.content||'').slice(0,700)}));
  if(ai?.run){
   try{

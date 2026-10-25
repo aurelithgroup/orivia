@@ -8,7 +8,7 @@
  const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n};
  const size=b=>b<1024*1024?Math.max(1,Math.round(b/1024))+' KB':(b/1024/1024).toFixed(b<10*1024*1024?1:0)+' MB';
  const user=()=>window.OriviaAccounts?.user||null;
- const ERRORS={file_too_large:'That file is over 10 MB. Try a smaller one or a photo instead.',allowance_full:'Your files are using all 100 MB. Delete some to add more.',
+ const ERRORS={file_too_large:'That file is over 10 MB. Try a smaller one or a photo instead.',allowance_full:'Your files are using your current storage allowance. Delete some to add more.',
   unsupported_type:'Only PDF, JPEG and PNG files can be saved.',daily_upload_limit:'You’ve added a lot of files today. Try again tomorrow.',files_unavailable:'Files aren’t available right now.',
   sign_in_required:'Sign in again to see your files.',account_changed:'Your account changed in another tab. Reload to continue.'};
 
@@ -25,7 +25,7 @@
  const call=async(path,opts={})=>{const u=user();const r=await fetch(path,{credentials:'same-origin',cache:'no-store',...opts,headers:{...(u?{'X-Orivia-Account':u.id}:{}),...(opts.headers||{})}});
   if(!r.ok){let e='';try{e=(await r.json()).error||''}catch(_){}throw Error(e||'http_'+r.status)}return r};
  const remote={
-  async list(){const d=await (await call('/api/account/files')).json();return {files:d.files||[],used:d.used||0}},
+  async list(){const d=await (await call('/api/account/files')).json();return {files:d.files||[],used:d.used||0,allowance:d.allowance}},
   async add(blob,name){return (await (await call('/api/account/files',{method:'POST',headers:{'Content-Type':blob.type||'application/octet-stream','X-File-Name':encodeURIComponent(name)},body:blob})).json()).file},
   async blob(id){return (await call('/api/account/files/'+encodeURIComponent(id))).blob()},
   async rename(id,name){await call('/api/account/files/'+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})})},
@@ -49,10 +49,10 @@
  const why=e=>t(e?.message==='photo_format'?'This photo’s format can’t be opened here. Save it as a JPEG and try again.':ERRORS[e?.message]||'Couldn’t do that. Check your connection and try again.');
 
  async function addFiles(list){
-  const files=[...list||[]];if(!files.length)return;
+  const files=[...list||[]],owner=user()?.id||'',epoch=window.OriviaAccounts?.epoch,current=()=>owner===(user()?.id||'')&&epoch===window.OriviaAccounts?.epoch;if(!files.length)return;
   for(const [i,f] of files.entries()){
    say(t('Saving')+' '+(files.length>1?(i+1)+'/'+files.length:'')+'…');
-   try{const p=await prepare(f);await store().add(p.blob,p.name,p.type)}catch(e){say(why(e),true);await render();return}
+   try{const p=/^image\//.test(f.type)?await window.OriviaImageReview.review(f,{isCurrent:current,onRetake:()=>$('files-camera-input').click()}):await prepare(f);if(!current())return;if(!p)continue;await store().add(p.blob,p.name,p.type);if(!current())return}catch(e){say(why(e),true);await render();return}
   }
   say(files.length>1?t('Files saved.'):t('File saved.'));await render();
  }
@@ -80,15 +80,15 @@
  async function render(){
   const list=$('files-list');if(!list)return;const run=++rendering,u=user();
   $('files-note').textContent=t(u?'Saved privately to your account. Only you can open them. Orivia doesn’t read or check your documents.':'Saved only in this browser. Sign in to keep them in your private account. Orivia doesn’t read or check your documents.');
-  try{const {files,used}=await store().list();if(run!==rendering)return;
+  try{const {files,used,allowance}=await store().list();if(run!==rendering||u?.id!==user()?.id)return;
    list.replaceChildren(...files.map(row));if(!files.length)list.append(el('p','tiny',t('No files yet. Take a photo of a document or add a PDF.')));
-   $('files-usage').textContent=files.length?size(used)+' '+t('of 100 MB used'):''}
+   $('files-usage').textContent=files.length?size(used)+(u?(allowance?' of '+size(allowance)+' used':' used · allowance unavailable'):' '+t('of 100 MB used')):''}
   catch(e){if(run===rendering){list.replaceChildren();say(why(e),true)}}
  }
  function mount(){
   if(!$('files-list')||mount.done)return;mount.done=true;
   $('files-camera').onclick=()=>$('files-camera-input').click();$('files-add').onclick=()=>$('files-input').click();
-  for(const id of ['files-camera-input','files-input'])$(id).addEventListener('change',e=>{const files=e.target.files;addFiles(files).finally(()=>{e.target.value=''})});
+  for(const id of ['files-camera-input','files-input'])$(id).addEventListener('change',e=>{const files=[...e.target.files];e.target.value='';void addFiles(files)});
  }
  window.OriviaFiles={render:()=>{mount();return render()},prepare,LIMIT,list:()=>store().list(),blob:id=>store().blob(id)};
 })();

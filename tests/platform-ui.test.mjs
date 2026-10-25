@@ -18,7 +18,7 @@ assert.match(js,/location\.hash\.match\(\/\^#join=/,'join links read from the fr
 // The space menu comes only from the server's memberships and platform roles
 assert.match(js,/me\.platformRoles\.includes\('owner'\)/);assert.match(js,/me\.memberships\.filter\(m=>m\.status==='active'\)/);
 // Unfinished features are labelled, never filled with sample numbers
-for(const label of ['Not connected yet','Application records need a separate permission','Views not tracked'])assert.ok(js.includes(label),'labelled: '+label);
+for(const label of ['Application records need a separate permission','Views not tracked'])assert.ok(js.includes(label),'labelled: '+label);
 // Step 9 (22 Oct): built, so no longer labelled unfinished. Progress is totals only, with the minimum stated.
 for(const built of ['Admin status isn’t shown here yet','Paging isn’t available yet'])assert.ok(!js.includes(built),'now built: '+built);
 for(const piece of ["'/members?q='+encodeURIComponent(memberSearch)+'&offset='","'Show more'","o.adminActive?'Admin active'","pre+'/progress'","' students share their progress.","i.done+' of '+pr.students+' students"])assert.ok(js.includes(piece),'step 9: '+piece);

@@ -76,7 +76,7 @@ export function createPilotWorker({launchBrowser,fetcher,publicRelease=false,voi
    voice:({env,input,reply})=>providerAllowed(env)&&consentedToOpenAI(input?.preferences,env)?handleVoice(input,env,{reply,...(voiceConnect?{connect:voiceConnect}:{})}):reply({error:'voice_unavailable'},503),
    research:async({env,preferences})=>pilotResearchOptions({env,preferences,ctx},{launchBrowser,fetcher,getAI}),
    assistant:({env,preferences})=>{const ai=getAI(env,preferences);if(!ai)return null;
-    return ({messages,profile,context,localNow,orgContext,documents,reserve,onProgress})=>runAssistantTurn({messages,profile,context,localNow,orgContext,documents,calendarChangeUI:preferences?.calendarChangeUI===1,replyLanguage:preferences?.language},env,{ai,reserve,onProgress,...(fetcher?{fetcher}:{})})}
+    return ({messages,profile,context,localNow,orgContext,documents,reserve,onProgress,signal})=>runAssistantTurn({messages,profile,context,localNow,orgContext,documents,calendarChangeUI:preferences?.calendarChangeUI===1,replyLanguage:preferences?.language},env,{ai,reserve,onProgress,signal,...(fetcher?{fetcher}:{})})}
   });
   const res=await inner.fetch(req,env,ctx);
   const url=new URL(req.url);

@@ -1,3 +1,4 @@
+import {accountPlan} from './entitlements.mjs';
 /* Files (step 6, 22 Oct). A signed-in person's own documents: private per-account storage (R2 binding FILES, keys
  * u/<account>/<file>), reachable only through these routes after the session check in handler.mjs. No public URLs, no
  * sharing with organisations, nothing sent to an AI and nothing read or checked by Orivia. PDF, JPEG and PNG only (the
@@ -35,9 +36,10 @@ export async function handleFileRequest(req,env,{owner,expected,json,readJson,no
  const db=env.ACCOUNTS_DB,url=new URL(req.url),id=url.pathname.split('/')[4]||'';
  if(!['GET','HEAD'].includes(req.method)&&!expected)return json({error:'account_header_required'},428);
  if(!schemaReady.has(db)){for(const s of SCHEMA)await db.prepare(s).run();schemaReady.add(db)}
+ let plan;try{plan=await accountPlan(env,owner)}catch{if(!id&&req.method==='POST')return json({error:'access_unavailable'},503)}const limits=plan?.active?{...FILE_LIMITS,accountBytes:plan.limits.storageMb*1024*1024,files:plan.limits.maxFiles,dayUploads:plan.limits.dailyUploads}:FILE_LIMITS;
  if(!id&&req.method==='GET'){
   const rows=await db.prepare('SELECT id,name,type,size,created_at FROM account_files WHERE user_id=? ORDER BY created_at DESC LIMIT 500').bind(owner).all();
-  const u=await usage(db,owner);return json({files:(rows.results||[]).map(view),used:u.bytes,allowance:FILE_LIMITS.accountBytes,fileLimit:FILE_LIMITS.fileBytes});
+  const u=await usage(db,owner);return json({files:(rows.results||[]).map(view),used:u.bytes,allowance:plan?limits.accountBytes:null,fileLimit:FILE_LIMITS.fileBytes});
  }
  if(!id&&req.method==='POST'){
   const declared=Number(req.headers.get('Content-Length')||0);if(declared>FILE_LIMITS.fileBytes)return json({error:'file_too_large'},413);
@@ -45,14 +47,14 @@ export async function handleFileRequest(req,env,{owner,expected,json,readJson,no
   if(!bytes.length)return json({error:'empty_file'},400);
   const type=fileType(bytes);if(!type)return json({error:'unsupported_type'},415);
   let name='';try{name=decodeURIComponent(req.headers.get('X-File-Name')||'')}catch(_){}name=cleanName(name,type);
-  const u=await usage(db,owner);if(u.files>=FILE_LIMITS.files||u.bytes+bytes.length>FILE_LIMITS.accountBytes)return json({error:'allowance_full',used:u.bytes,allowance:FILE_LIMITS.accountBytes},413);
+  const u=await usage(db,owner);if(u.files>=limits.files||u.bytes+bytes.length>limits.accountBytes)return json({error:'allowance_full',used:u.bytes,allowance:plan?limits.accountBytes:null},413);
   const day=now().toISOString().slice(0,10);
-  const counted=await db.prepare('INSERT INTO account_file_meter(user_id,day,count) VALUES (?1,?2,1) ON CONFLICT(user_id) DO UPDATE SET count=CASE WHEN day=?2 THEN count+1 ELSE 1 END, day=?2 WHERE (CASE WHEN day=?2 THEN count+1 ELSE 1 END)<=?3 RETURNING count').bind(owner,day,FILE_LIMITS.dayUploads).first();
+  const counted=await db.prepare('INSERT INTO account_file_meter(user_id,day,count) VALUES (?1,?2,1) ON CONFLICT(user_id) DO UPDATE SET count=CASE WHEN day=?2 THEN count+1 ELSE 1 END, day=?2 WHERE (CASE WHEN day=?2 THEN count+1 ELSE 1 END)<=?3 RETURNING count').bind(owner,day,limits.dayUploads).first();
   if(!counted)return json({error:'daily_upload_limit'},429);
   const fid=newId(),created=now().toISOString();
   await env.FILES.put(key(owner,fid),bytes,{httpMetadata:{contentType:type}});
   // One statement checks the allowance again, so two uploads at once can't go over it together.
-  const row=await db.prepare('INSERT INTO account_files(id,user_id,name,type,size,created_at) SELECT ?1,?2,?3,?4,?5,?6 WHERE (SELECT COALESCE(SUM(size),0) FROM account_files WHERE user_id=?2)+?5<=?7 RETURNING id').bind(fid,owner,name,type,bytes.length,created,FILE_LIMITS.accountBytes).first();
+  const row=await db.prepare('INSERT INTO account_files(id,user_id,name,type,size,created_at) SELECT ?1,?2,?3,?4,?5,?6 WHERE (SELECT COALESCE(SUM(size),0) FROM account_files WHERE user_id=?2)+?5<=?7 AND (SELECT COUNT(*) FROM account_files WHERE user_id=?2)<?8 RETURNING id').bind(fid,owner,name,type,bytes.length,created,limits.accountBytes,limits.files).first();
   if(!row){await env.FILES.delete(key(owner,fid));return json({error:'allowance_full'},413)}
   return json({file:{id:fid,name,type,size:bytes.length,createdAt:created}},201);
  }

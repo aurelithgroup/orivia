@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/proactive-requirements
+      - ina/restore-block-1-2026-10-25
   workflow_dispatch:
 permissions:
   contents: read
@@ -221,3 +222,9 @@ jobs:
         run: node --experimental-sqlite tests/organisations.test.mjs
       - name: 'Organisation dashboards, connected (session-only roles, contract endpoints, labelled gaps)'
         run: node tests/platform-ui.test.mjs
+
+      - name: "Restored operations, privacy, stream and recovery regressions"
+        run: |
+          node --experimental-sqlite tests/restored-operations.test.mjs
+          node --experimental-sqlite tests/restored-safety.test.mjs
+          node --experimental-sqlite tests/recovery-delivery.test.mjs

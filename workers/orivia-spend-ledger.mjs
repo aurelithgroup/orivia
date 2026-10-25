@@ -64,7 +64,7 @@ export function createOpenAIBudget(env,db,opts={}){
  return {meter,rates,configured:!!rates&&meter.configured,
   async reserve(spec){if(!rates)return null;const max=maxCallCostMicro(rates,spec);const t=await meter.reserve(max);if(t)reserved.set(t,max);return t},
   async record(ticket,usage){
-   const ok=Number.isSafeInteger(usage?.inputTokens)&&Number.isSafeInteger(usage?.outputTokens)&&['completed','incomplete'].includes(usage?.status);
+   const ok=Number.isSafeInteger(usage?.inputTokens)&&Number.isSafeInteger(usage?.outputTokens)&&usage.inputTokens>=0&&usage.outputTokens>=0&&(['completed','incomplete'].includes(usage?.status)||usage?.status==='not-dispatched'&&usage.inputTokens===0&&usage.outputTokens===0);
    const actual=ok?Math.ceil(usage.inputTokens*rates.input+usage.outputTokens*rates.output):null; // anything else: keep the reservation
    await meter.settle(ticket,actual,ok?usage.status:'uncertain');reserved.delete(ticket);
   }};

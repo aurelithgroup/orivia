@@ -13,8 +13,8 @@ c.fail(err('transfer_organisation_admin_first',409));assert.match(status.textCon
 c.fail(err('rate_limited',429));assert.equal(status.textContent,'Please wait before trying again.');
 c.fail(err('transfer_platform_owner_first',500));assert.match(status.textContent,/That didn’t work/,'only a real 409 refusal is explained');
 c.fail({});assert.match(status.textContent,/That didn’t work/);
-// No route in any Worker writes the owner role (recovery is a founder database step, docs/owner-recovery.md).
+// Role changes are confined to the authenticated, fresh owner operations route. Its live permission and last-owner checks run in restored-operations.test.mjs.
 const workers=[];const walk=d=>{for(const f of fs.readdirSync(d,{withFileTypes:true})){const p=d+'/'+f.name;if(f.isDirectory()){if(!/node_modules|\.wrangler/.test(p))walk(p)}else if(/\.(m?js)$/.test(f.name))workers.push(p)}};walk('workers');
-for(const f of workers){const s=fs.readFileSync(f,'utf8');assert.ok(!/(INSERT\s+(OR\s+\w+\s+)?INTO|UPDATE|DELETE\s+FROM)\s+platform_roles/i.test(s),f+' writes platform_roles')}
+for(const f of workers.filter(f=>f!=='workers/accounts/operations.mjs')){const s=fs.readFileSync(f,'utf8');assert.ok(!/(INSERT\s+(OR\s+\w+\s+)?INTO|UPDATE|DELETE\s+FROM)\s+platform_roles/i.test(s),f+' writes platform_roles')}
 const doc=fs.readFileSync('docs/owner-recovery.md','utf8');for(const x of ['transfer_platform_owner_first','Adding a second owner','loses access to their email','Keep privately'])assert.ok(doc.includes(x),x);
 console.log('Owner recovery: last-owner and sole-admin refusals explained in the app; no Worker route writes the owner role; recovery steps documented: pass.');

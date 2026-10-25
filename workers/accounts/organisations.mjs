@@ -1,3 +1,5 @@
+import {mountRestoredUI} from './restored-ui.mjs';
+import {handleOperations} from './operations.mjs';
 import QRCode from 'qrcode/lib/core/qrcode.js';
 import SVG from 'qrcode/lib/renderer/svg-tag.js';
 import {platformPage,mountPlatform} from './platform-ui.mjs';
@@ -21,7 +23,7 @@ const PROGRESS_SQL=['CREATE TABLE IF NOT EXISTS organisation_progress(org_id TEX
  'CREATE TABLE IF NOT EXISTS organisation_progress_private(org_id TEXT NOT NULL, user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE, PRIMARY KEY(org_id,user_id))'];
 const progressReady=new WeakSet(),settingsReady=new WeakSet();
 const roles={admin:new Set(['org.view','content.draft','content.publish','members.manage','staff.manage','qr.public','qr.invite','qr.withdraw']),editor:new Set(['org.view','content.draft','qr.public']),student:new Set(['space.view'])};
-export const organisationRoute=p=>['/platform','/platform.js','/manage'].includes(p)||/^\/api\/(?:admin(?:\/|$)|orgs(?:\/|$)|invitations(?:\/|$)|public\/orgs(?:\/|$)|public\/codes(?:\/|$)|me\/(?:memberships|orgs)(?:\/|$))/.test(p);
+export const organisationRoute=p=>['/platform','/platform.js','/manage'].includes(p)||/^\/api\/(?:admin(?:\/|$)|orgs(?:\/|$)|invitations(?:\/|$)|partner(?:\/|$)|public\/orgs(?:\/|$)|public\/codes(?:\/|$)|me\/(?:memberships|orgs|notices|data-requests|support-consents)(?:\/|$))/.test(p);
 const keys=(b,allowed)=>{if(!b||typeof b!=='object'||Array.isArray(b)||Object.keys(b).some(k=>!allowed.includes(k)))deny(400,'invalid_fields')};
 const text=(v,min,max)=>{if(typeof v!=='string'||v.trim().length<min||v.length>max||/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v))deny(400,'invalid_text');return v.trim()};
 const email=v=>{const s=text(v,3,254).toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))deny(400,'invalid_email');return s};
@@ -68,7 +70,7 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
    if(!owner)return new Response(manageRefusal(!s?.user?.id,appHome(env)),{status:s?.user?.id?403:401,headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'",'Referrer-Policy':'no-referrer'}});
   }
   if(req.method==='GET'&&(path==='/platform'||path==='/manage'))return new Response(platformPage.replace('<html','<html data-app-home="'+appHome(env)+'"'),{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",'Referrer-Policy':'no-referrer'}});
-  if(req.method==='GET'&&path==='/platform.js')return new Response('(function(){const __name=f=>f;('+mountPlatform.toString()+')()})();',{headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
+  if(req.method==='GET'&&path==='/platform.js')return new Response('(function(){const __name=f=>f;window.OriviaRestoredUI=('+mountRestoredUI.toString()+');('+mountPlatform.toString()+')()})();',{headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 
   // No request supplies its own actor, organisation role or platform role.
   if(req.method==='GET'&&path.startsWith('/api/public/')){
@@ -79,7 +81,7 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
   }
   const session=await auth.api.getSession({headers:req.headers});if(!session?.user?.id)deny(401,'sign_in_required');const actor=session.user.id;
   if(!session.user.emailVerified)deny(403,'verified_email_required');
-  if(req.method!=='GET'){if(req.headers.get('X-Orivia-Account')!==actor)deny(409,'account_changed')}
+  if(req.method!=='GET'||req.headers.has('X-Orivia-Account')){if(req.headers.get('X-Orivia-Account')!==actor)deny(409,'account_changed')}
   const platform=async role=>!!await q('SELECT 1 AS yes FROM platform_roles WHERE user_id=? AND role=?',actor,role).first();
   const requireOwner=async()=>{if(!await platform('owner'))deny(403,'owner_required')};
    const ensureProgress=async()=>{if(progressReady.has(db))return;for(const s of PROGRESS_SQL)await q(s).run();progressReady.add(db)};
@@ -90,7 +92,7 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
   const org=async oid=>{const o=await q("SELECT * FROM organisations WHERE id=? AND status='active'",oid).first();if(!o)deny(404,'not_found');return o};
   const member=async(oid,permission)=>{await org(oid);const m=await q("SELECT * FROM organisation_memberships WHERE org_id=? AND user_id=? AND status='active'",oid,actor).first();if(!m||!roles[m.role]?.has(permission))deny(403,'permission_denied');return m};
   const fresh=()=>{const created=new Date(session.session?.createdAt).getTime();if(!Number.isFinite(created)||clock()-created>900000||created>clock()+60000)deny(403,'recent_sign_in_required')};
-  const body=async allowed=>{const b=await readJson(req,12000);keys(b,allowed);return b};
+  const body=async (allowed,limit=12000)=>{const b=await readJson(req,limit);keys(b,allowed);return b};
   const makeInvite=async(oid,role,b)=>{
    const recipient=b.recipientEmail?email(b.recipientEmail):null;if(role!=='student'&&!recipient)deny(400,'staff_email_required');
    const life=b.expiresInSeconds??604800;if(!Number.isInteger(life)||life<60||life>604800)deny(400,'invalid_expiry');
@@ -104,6 +106,7 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
    const link=role==='student'?url.origin+(appHome(env)==='/app'?'/join/'+slug:'/?organisation='+slug)+'#join='+raw:url.origin+'/platform#join='+raw;
    return json({invitation:{id:inv,role,label,expiresAt:at+life*1000,maxUses:max},joinUrl:link,token:raw,qrSvg:await qr(link)},201);
   };
+  const extra=await handleOperations(req,env,{path,url,db,q,all,json,deny,actor,session,clock,id,hash,token,requireOwner,fresh,body,member,org});if(extra)return extra;
   if(path==='/api/me/memberships'&&req.method==='GET')return json({platformRoles:(await all('SELECT role FROM platform_roles WHERE user_id=?',actor)).map(r=>r.role),memberships:(await all("SELECT m.org_id,m.role,m.status,o.name,o.slug,o.demo FROM organisation_memberships m JOIN organisations o ON o.id=m.org_id WHERE m.user_id=? AND m.status IN ('active','requested') AND o.status='active'",actor)).map(m=>({organisationId:m.org_id,name:m.name,slug:m.slug,demo:!!m.demo,role:m.role,status:m.status}))});
   // Founder overview: defined counts and authoritative budgets only (owner-overview.mjs). Owners only.
   // Directory export (ORI-METRIC-006): owner only, at most 100 rows, formula-safe, audited without the search text.
@@ -149,7 +152,7 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
    if(tail==='summary'&&req.method==='GET'){await member(oid,'org.view');const counts=await all('SELECT role,status,COUNT(*) AS count FROM organisation_memberships WHERE org_id=? GROUP BY role,status',oid);
     // Totals only: joins, invitation uses and published items. Nothing from anyone's personal Orivia.
     const since=clock()-30*86400000;
-    const activity={joinedLast30Days:(await q("SELECT COUNT(*) AS n FROM organisation_memberships WHERE org_id=? AND role='student' AND status IN ('active','requested') AND created_at>?",oid,since).first()).n,
+    const activity={definition:'Student membership records created in the last 30 days (UTC), active or requested. These are not unique engaged users.',dailyMemberships:await all("SELECT strftime('%Y-%m-%d',created_at/1000,'unixepoch') AS label,COUNT(*) AS count FROM organisation_memberships WHERE org_id=? AND role='student' AND status IN ('active','requested') AND created_at>=? GROUP BY label ORDER BY label",oid,since),joinedLast30Days:(await q("SELECT COUNT(*) AS n FROM organisation_memberships WHERE org_id=? AND role='student' AND status IN ('active','requested') AND created_at>?",oid,since).first()).n,
      invitationUses:(await q("SELECT COALESCE(SUM(uses),0) AS n FROM organisation_invitations WHERE org_id=? AND role='student'",oid).first()).n,
      published:await all("SELECT kind,COUNT(*) AS count FROM organisation_content WHERE org_id=? AND status='published' GROUP BY kind",oid)};
     return json({organisation:publicOrg(await org(oid)),counts,activity,tasks:await staffTasks(oid),analytics:{available:false,reason:'views_not_tracked'},applicationRecordsAvailable:false})}

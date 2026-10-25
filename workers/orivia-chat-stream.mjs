@@ -1,0 +1,9 @@
+/* Checked-answer streaming, not unverified provider tokens. No sleeps, no incomplete final answer. */
+export function chatStream({request,execute,fallback,waitUntil}){const controller=new AbortController(),channel=new TransformStream(),writer=channel.writable.getWriter(),encoder=new TextEncoder(),requestId=crypto.randomUUID();let sequence=-1,queue=Promise.resolve();const abort=()=>controller.abort();request.signal?.addEventListener('abort',abort,{once:true});if(request.signal?.aborted)abort();void writer.closed.catch(abort);
+ const send=frame=>{queue=queue.then(()=>{if(controller.signal.aborted)throw new DOMException('Cancelled','AbortError');return writer.write(encoder.encode(JSON.stringify({v:1,requestId,seq:++sequence,...frame})+'\n'))});return queue};
+ const work=(async()=>{try{await send({type:'start'});let result=await execute({signal:controller.signal,onProgress:label=>{void send({type:'progress',progress:String(label).slice(0,140)}).catch(abort)}});let status=200;if(controller.signal.aborted)return;if(!result){const next=await fallback(controller.signal);status=next.status;result=next.body}if(controller.signal.aborted)return;
+ if(status<400&&typeof result?.reply==='string'){if(result.reply.length>16000)throw Error('reply_too_large');const points=Array.from(result.reply);for(let i=0;i<points.length;i+=240)await send({type:'text',text:points.slice(i,i+240).join('')});const {reply,...metadata}=result;await send({type:'metadata',metadata})}
+ await send({type:'complete',status,result});
+ }catch(error){if(!controller.signal.aborted)try{await send({type:'error',status:503,error:'reply_unavailable'})}catch{abort()}}
+ finally{request.signal?.removeEventListener('abort',abort);try{await writer.close()}catch{abort()}}})();if(waitUntil)waitUntil(work);else void work.catch(abort);
+ return new Response(channel.readable,{headers:{'Content-Type':'application/x-ndjson; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}})}

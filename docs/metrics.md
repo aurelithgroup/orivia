@@ -58,3 +58,12 @@ Where Orivia has no measurement, the console says **Unavailable** or **Paused**,
 
 - **Not built:** product analytics beyond these counts (active users, journey completion, retention cohorts) (ORI-OWNER-005, METRIC-004/007).
 - **Rule:** no number for these will appear until it is defined here, with a source and roles.
+
+Restored console metrics (UTC; no private conversation data):
+
+| Field | Meaning |
+| --- | --- |
+| `definition` | Plain-language definition, not a numeric metric. |
+| `dailyMemberships` | Student membership records created in the last 30 days, grouped by UTC creation day; includes current active/requested records only. Not daily active users. |
+| `label` | UTC date or membership/content category in a chart. |
+| `count` | Number of matching records. A missing data series is unavailable; an empty successful query has zero records. |

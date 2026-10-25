@@ -6,7 +6,7 @@
    - Revoke, delete and expiry stop it immediately; account deletion removes it (FK cascade). */
 export const shareRoute=p=>p==='/api/account/shares'||/^\/api\/account\/shares\/[A-Za-z0-9-]{1,64}(\/revoke)?$/.test(p);
 export const publicShareRoute=p=>/^\/s\/[A-Za-z0-9_-]{20,100}$/.test(p);
-const DAYS=[1,7,30],LIMITS={messages:20,chars:4000,sources:8,title:120};
+const DAYS=[1,7,30],LIMITS={messages:20,chars:16000,sources:8,title:120};
 const enc=new TextEncoder();
 async function sha(s){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(s))),b=>b.toString(16).padStart(2,'0')).join('')}
 function token(){return btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}

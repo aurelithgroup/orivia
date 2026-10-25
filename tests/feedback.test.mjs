@@ -84,3 +84,5 @@ console.log('Feedback disclosures match what is stored: pass.');
  assert.equal(await msg(async()=>new Response('{"receipt":"FB-1"}',{status:201})),'ok');
  assert.ok(/const requestId=[^;]*;\s*form\.onsubmit/.test(chat.replace(/\r\n/g,'\n'))||chat.indexOf("const requestId='fb-'")<chat.indexOf('form.onsubmit=async'),'the request id is made once per form, so Try again reuses it');}
 console.log('Feedback lost-response handling (server idempotent, client says it could not confirm): pass.');
+// Full allowed replies are preserved with explicit inclusion; oversize content is refused instead of clipped.
+{const text='م'.repeat(16000),body={requestId:'fb-full-reply-0001',category:'technical',note:'Full reply test',includeReply:true,replyText:text};const r=await call('staff','POST','/api/account/feedback/report',body);assert.equal(r.status,201,JSON.stringify(r));assert.equal(sql.prepare('SELECT reply_excerpt FROM feedback_reports WHERE user_id=? AND request_id=?').get('staff',body.requestId).reply_excerpt,text);assert.equal((await call('staff','POST','/api/account/feedback/report',{...body,requestId:'fb-oversize-0001',replyText:text+'x'})).status,413);}
