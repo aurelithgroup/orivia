@@ -1,0 +1,32 @@
+{
+  "task": 4,
+  "acceptanceComplete": false,
+  "verificationMethod": "User operated their authenticated pilot browser; screenshots inspected. Pilot D1 queried read-only for the explicitly fictional campaign and audit action totals.",
+  "passedChecks": [
+    "Campaign draft saved; success banner inspected.",
+    "Saved campaign submitted for review; in_review success banner inspected.",
+    "Campaign approved with explicit review note; approved success banner inspected.",
+    "Campaign withdrawn and reopened; screenshot shows withdrawn revision 4.",
+    "Pilot D1 confirms the fictional campaign is withdrawn revision 4.",
+    "Pilot audit has one action each for sponsor.campaign.draft, sponsor.campaign.in_review, sponsor.campaign.approved and sponsor.campaign.withdrawn."
+  ],
+  "databaseReadback": {
+    "status": "withdrawn",
+    "revision": 4,
+    "auditActionCounts": {
+      "draft": 1,
+      "in_review": 1,
+      "approved": 1,
+      "withdrawn": 1
+    }
+  },
+  "notYetVerifiedLive": [
+    "Authenticated member and unrelated-member boundaries, including approved/withdrawn placement visibility",
+    "Campaign expiry and concurrent/stale changes",
+    "Complete UAE/UK Journey acceptance and phone layout",
+    "Earlier intermittent owner-loading error root cause"
+  ],
+  "next": "Use an existing ordinary Northbay demo member account for live member permission testing. Do not grant additional permissions or forge a session.",
+  "paymentsActivated": false,
+  "productionChanged": false
+}
