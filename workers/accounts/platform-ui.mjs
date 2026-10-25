@@ -197,7 +197,7 @@ export function mountPlatform(){
    listError?h('p',{class:'small muted'},'Organisations couldn’t be loaded. Reload to try again.'):list.length?h('div',{class:'list'},rows):ownerQuery?empty('No matches','No organisation’s name, web name or city contains “'+ownerQuery+'”.'):empty('No organisations yet','Create one to give its staff a dashboard and its members a space inside their Orivia.'));
   dir.id='owner-directory';
   return [panel(h('div',{class:'row'},h('h2',{class:'grow'},'Orivia management'),chip('Owner','c-ok')),h('p',{class:'small muted'},'Platform totals, budgets, organisations and Chat feedback. Member lists, chats, files and student progress aren’t visible here.')),
-   overview,budgets,await restored.workbench(),dir,panel(h('h3',null,'Add an organisation'),form),fb,
+   overview,budgets,await restored.workbench(),await founderCommercialPanel(),dir,panel(h('h3',null,'Add an organisation'),form),fb,
    panel(h('div',{class:'row'},h('h3',{class:'grow'},'Not connected yet'),chip('Coming later','c-demo')),h('p',{class:'small muted'},'Operational records are in the workbench. Institution SSO, live application records and payment collection need separate integrations.'))].filter(Boolean);
  }
 
