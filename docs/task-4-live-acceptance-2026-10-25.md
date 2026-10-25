@@ -1,6 +1,8 @@
 # Task 4 — Pilot deployment and live acceptance (25 October 2026)
 
-## Current status — correction deployed; acceptance incomplete
+## Current status — live owner recheck FAILED; acceptance incomplete
+
+The user subsequently supplied a screenshot of the corrected pilot's management page showing only “Something went wrong. Please try again.” This is a failed live check. The serving version and expected workflow schemas were verified read-only; there were zero founder drafts or campaigns. Available telemetry did not contain the failing HTTP request. Root cause is not yet confirmed. The next diagnostic is the failing request name and status in the user's Network panel. No additional deployment or data modification was made during this investigation. See [failed owner recheck](evidence/task-4-owner-recheck-failed-2026-10-25.json).
 
 The first candidate **failed the owner's live loading check**. It was rolled back to the previous serving version, with rollback confirmed through the deployment API. Investigation reproduced two errors from the compiled code: minification renamed a serialized helper, and the owner view called a missing founder-panel function.
 

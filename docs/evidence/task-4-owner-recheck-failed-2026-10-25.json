@@ -1,0 +1,20 @@
+{
+  "task": 4,
+  "acceptanceComplete": false,
+  "result": "FAIL_USER_REPORTED_OWNER_PAGE_ERROR",
+  "servingVersionVerified": "00963c9e-f9fe-4043-8d9b-84f2d10e3f2b",
+  "servingDeploymentVerified": "969ba116-4c49-4dd3-9341-8d929835f266",
+  "evidence": "User supplied a screenshot of /manage showing only Something went wrong. Please try again. No draft-save success was established.",
+  "readOnlyInvestigation": {
+    "founderWorkflowRows": 0,
+    "campaignRows": 0,
+    "platformRecordRows": 0,
+    "invalidPlatformRecordJsonRows": 0,
+    "partnerApplicationRows": 0,
+    "workflowTableDefinitionsMatchSource": true,
+    "pilotHttpErrorLogEventsAvailable": false,
+    "rootCauseConfirmed": false
+  },
+  "next": "Obtain the failing request name and HTTP status from the user's browser Network panel. Do not guess a code change or count local fixtures as live acceptance.",
+  "changesDuringInvestigation": "No deployment, database write, secret, permission, budget, payment or production change."
+}
