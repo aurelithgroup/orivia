@@ -1,0 +1,22 @@
+{
+  "task": 4,
+  "acceptanceComplete": false,
+  "verificationMethod": "User operated their authenticated pilot browser; assistant inspected supplied screenshots.",
+  "passedChecks": [
+    "Owner dashboard rendered on reload, including overview, budgets, organisation directory and founder controls.",
+    "Founder draft saved; UI confirmed no AI request, message or campaign sent.",
+    "After reload, saved draft reopened with original title/text and draft revision 1.",
+    "Review saved and reopened as reviewed revision 2 with original content.",
+    "An archive attempt from an older session was refused with a recent-sign-in requirement.",
+    "After the user signed in again, archive succeeded and reopened as archived revision 3; UI states archived briefs are read-only and editing controls are disabled."
+  ],
+  "historicalIssue": "An earlier management page displayed a generic error. A reload recovered it, but its cause has not been established. Do not mark that incident resolved or full acceptance complete.",
+  "notYetVerifiedLive": [
+    "Sponsorship draft/review/approval/withdrawal/expiry and concurrency",
+    "Active and unrelated member access boundaries",
+    "Journey acceptance, phone layout and complete audit verification"
+  ],
+  "next": "Create a clearly fictional sponsorship draft on the existing demo organisation; do not approve or publish it yet.",
+  "productionChanges": false,
+  "paymentActivation": false
+}
