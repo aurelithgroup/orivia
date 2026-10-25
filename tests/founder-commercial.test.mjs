@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {handleFounderCommercial} from '../workers/accounts/founder-commercial.mjs';
+const sql=new DatabaseSync(':memory:');
+sql.exec("PRAGMA foreign_keys=ON; CREATE TABLE user(id TEXT PRIMARY KEY);CREATE TABLE organisations(id TEXT PRIMARY KEY,status TEXT);CREATE TABLE organisation_memberships(org_id TEXT,user_id TEXT,status TEXT);CREATE TABLE platform_audit(id TEXT,actor_id TEXT,action TEXT,detail TEXT,created_at INTEGER);");
+for(const id of ['owner','student','outsider'])sql.prepare('INSERT INTO user VALUES (?)').run(id);
+sql.prepare("INSERT INTO organisations VALUES ('campus','active')").run();
+sql.prepare("INSERT INTO organisation_memberships VALUES ('campus','student','active')").run();
+const statement=(s,a=[])=>({bind:(...v)=>statement(s,v),run:async()=>sql.prepare(s).run(...a),first:async()=>sql.prepare(s).get(...a)||null,all:async()=>({results:sql.prepare(s).all(...a)})});
+const db={prepare:s=>statement(s)};
+let now=Date.parse('2026-10-25T00:00:00Z');
+async function request(actor,path,method='GET',payload){
+ const req=new Request('https://example.test'+path,{method,...(payload?{body:JSON.stringify(payload),headers:{'Content-Type':'application/json'}}:{})});
+ const c={path,db,q:(s,...a)=>statement(s,a),all:async(s,...a)=>sql.prepare(s).all(...a),json:(d,status=200)=>Response.json(d,{status}),deny:(status,code)=>{throw Object.assign(new Error(code),{status})},actor,clock:()=>now,id:()=>crypto.randomUUID(),requireOwner:async()=>{if(actor!=='owner')throw Object.assign(new Error('owner_required'),{status:403})},fresh:()=>{},body:async allowed=>{assert.ok(payload);assert.ok(Object.keys(payload).every(k=>allowed.includes(k)));return payload}};
+ try{const r=await handleFounderCommercial(req,{ACCOUNTS_DB:db},c);return {status:r.status,data:await r.json()}}catch(e){if(!e.status)throw e;return {status:e.status,data:{error:e.message}}}
+}
+const expect=(r,status)=>{assert.equal(r.status,status,JSON.stringify(r));return r.data};
+expect(await request('outsider','/api/admin/founder-workflows'),403);
+let w=expect(await request('owner','/api/admin/founder-workflows','POST',{kind:'guide_brief',title:'Prepare a relocation guide',brief:'Draft using approved sources only',status:'draft',confirm:true}),201);
+assert.equal(w.executed,false);assert.equal(w.published,false);
+expect(await request('owner','/api/admin/founder-workflows/'+w.item.id,'PATCH',{kind:'guide_brief',title:'Review guide',brief:'Check sources',status:'reviewed',revision:1,confirm:true}),200);
+expect(await request('owner','/api/admin/founder-workflows/'+w.item.id,'PATCH',{kind:'guide_brief',title:'Stale',brief:'Stale edit',status:'draft',revision:1,confirm:true}),409);
+const base={orgId:'campus',partnerName:'Example Partner',label:'Sponsored · Travel help',destination:'https://example.org/help',disclosure:'Paid placement, not an official recommendation.',reviewNote:'',startsAt:now-3600000,endsAt:now+86400000,confirm:true};
+expect(await request('owner','/api/admin/sponsorships','POST',{...base,status:'approved',reviewNote:'Reviewed placement thoroughly.'}),409);
+expect(await request('owner','/api/admin/sponsorships','POST',{...base,status:'draft',destination:'http://unsafe.example'}),400);
+let c=expect(await request('owner','/api/admin/sponsorships','POST',{...base,status:'draft'}),201);
+const id=c.item.id;
+assert.equal(expect(await request('student','/api/me/orgs/campus/sponsorships'),200).placements.length,0);
+expect(await request('owner','/api/admin/sponsorships/'+id,'PATCH',{...base,status:'in_review',revision:1}),200);
+expect(await request('owner','/api/admin/sponsorships/'+id,'PATCH',{...base,status:'approved',label:'Sponsored · changed',reviewNote:'Reviewed paid placement in detail.',revision:2}),409);
+c=expect(await request('owner','/api/admin/sponsorships/'+id,'PATCH',{...base,status:'approved',reviewNote:'Reviewed paid placement in detail.',revision:2}),200);
+assert.equal(c.item.status,'approved');
+const member=expect(await request('student','/api/me/orgs/campus/sponsorships'),200);
+assert.equal(member.placements.length,1);assert.equal(member.placements[0].kind,'sponsored_placement');
+assert.equal(member.neverRankingInput,true);
+expect(await request('outsider','/api/me/orgs/campus/sponsorships'),403);
+expect(await request('owner','/api/admin/sponsorships/'+id,'PATCH',{...base,status:'approved',reviewNote:'Still reviewed',revision:3}),409);
+expect(await request('owner','/api/admin/sponsorships/'+id,'PATCH',{...base,status:'withdrawn',revision:3}),200);
+assert.equal(expect(await request('student','/api/me/orgs/campus/sponsorships'),200).placements.length,0);
+console.log('Founder workflows and sponsor review/membership/withdrawal checks passed.');
