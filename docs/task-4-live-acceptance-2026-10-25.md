@@ -22,3 +22,10 @@
 6. Save redacted evidence and explicit go/no-go decision.
 
 Outcome: NO-GO for live release until tested against a deployed candidate. Automated development tests have passed.
+## Additional deployment preflight (2026-10-25)
+- Cloudflare settings read-only inspection confirmed pilot ACCOUNTS_DB id 8cd85061-ce42-4fa7-8dd7-a4b01f36800a, production ACCOUNTS_DB id 3ebd10d5-01e5-4a01-b846-977f1bb2d5b3. Separate pilot and production R2 buckets confirmed.
+- BUDGET_DB is shared across environments. Spending caps and counters must be preserved; do not reset them.
+- Pilot flags show ACCOUNTS_ENABLED=1, ORGANISATIONS_ENABLED=1, OPENAI_PILOT=1, BROWSER_DIRECTORY=0, NOTIFICATION_SCHEDULER=pilot. These existing flags were read but not changed.
+- The documented release procedure requires wrangler deploy --keep-vars to retain account-specific settings; replacing the Worker through the API without a verified bundle and retained bindings could disrupt founder sign-in.
+- **Blocker:** there is no authenticated browser-based acceptance evidence for the new branch, and the GitHub build runs were dry-run only. No safe pilot release method was actually executed from this session. Production and pilot deployments unchanged.
+- Task 4 remains NO-GO until a dedicated pilot release and live acceptance runs are evidenced.
