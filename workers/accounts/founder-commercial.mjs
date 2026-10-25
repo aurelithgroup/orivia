@@ -52,7 +52,7 @@ export async function handleFounderCommercial(req,env,c){
   return json({item:workflow(await q('SELECT * FROM founder_workflows WHERE id=?',newId).first()),previewOnly:true,executed:false,published:false},key?200:201);
  }
  const b=await body(['orgId','partnerName','label','destination','disclosure','reviewNote','startsAt','endsAt','status','revision','confirm']);
- if(b.confirm!==true||!bounded(b.partnerName,120)||!bounded(b.label,140)||!bounded(b.disclosure,280)||!bounded(b.reviewNote,1000,0)||!safeDestination(b.destination)||!['draft','in_review','approved','withdrawn'].includes(b.status)||!Number.isSafeInteger(b.startsAt)||!Number.isSafeInteger(b.endsAt)||b.endsAt<=b.startsAt||b.endsAt-b.startsAt>366*864e5||!bounded(b.orgId,64)||key&&!Number.isSafeInteger(b.revision))deny(400,'invalid_campaign');
+ if(b.confirm!==true||!bounded(b.partnerName,120)||!bounded(b.label,140)||!bounded(b.disclosure,280)||bounded(b.reviewNote,1000,0)===null||!safeDestination(b.destination)||!['draft','in_review','approved','withdrawn'].includes(b.status)||!Number.isSafeInteger(b.startsAt)||!Number.isSafeInteger(b.endsAt)||b.endsAt<=b.startsAt||b.endsAt-b.startsAt>366*864e5||!bounded(b.orgId,64)||key&&!Number.isSafeInteger(b.revision))deny(400,'invalid_campaign');
  if(!/sponsor|paid|advertis/i.test(b.label+' '+b.disclosure)||/official|verified by orivia|best ranked|recommended by orivia/i.test(b.label+' '+b.disclosure))deny(400,'clear_sponsor_disclosure_required');
  if(b.status==='approved'&&(!bounded(b.reviewNote,1000,10)||b.endsAt<=clock()))deny(400,'review_required');
  const org=await q("SELECT id FROM organisations WHERE id=? AND status='active'",b.orgId).first();if(!org)deny(400,'active_organisation_required');
