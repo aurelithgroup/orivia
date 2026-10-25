@@ -54,4 +54,4 @@ The browser-side `visibility` guard validates response shape **only**. It is not
 7. Mobile, keyboard, reduced-motion and screen-reader smoke tests.
 8. Deploy to the pilot/staging environment first, verify, then promote deliberately.
 
-Status: **frontend committed; backend and production integration pending**.
+Status: **frontend committed, existing authenticated `/api/admin/orgs` read endpoint connected for organisation counts and organisation summaries; new platform totals, financial reporting, feedback analytics, secure production route integration, browser/role tests, and deployment remain pending**. The live Worker contains the management UI, but its authoritative source is not verified in the accessible GitHub branch. Do not overwrite the live Worker with an older frontend bundle.
