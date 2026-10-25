@@ -228,3 +228,6 @@ jobs:
           node --experimental-sqlite tests/restored-operations.test.mjs
           node --experimental-sqlite tests/restored-safety.test.mjs
           node --experimental-sqlite tests/recovery-delivery.test.mjs
+
+      - name: "Journey governance, publication consistency and withdrawal"
+        run: node --experimental-sqlite tests/journey-governance.test.mjs

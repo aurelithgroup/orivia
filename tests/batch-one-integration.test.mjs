@@ -22,3 +22,6 @@ let release;ctx.loadGuide=()=>new Promise(r=>release=r);const pending=ctx.openGu
 scope='alice';dom.get('guide-view').hidden=false;const before=JSON.stringify(records),writer=ctx.localStorage.setItem;ctx.localStorage.setItem=()=>{throw Error('QuotaExceededError')};assert.equal(ctx.setJourney('uk.school',{label:'Unsaved label'}),false);assert.equal(JSON.stringify(records),before);assert.ok(dom.get('guide-body').textContent.includes('Couldn’t save'));ctx.localStorage.setItem=writer;
 assert.ok(page.includes('id="coverage-catalogue"'));assert.ok(page.includes('id="permission-centre"'));assert.ok(page.includes('id="lib-export-panel"'));
 console.log('Batch 1 integrated plan UI: real openGuide, save, prepare, Ask/return label, revision acceptance, completion preservation and account-switch race pass.');
+
+// Two guide opens in the same account: a late older response cannot replace the newer screen.
+{let first;const second={...latest,title:'Second guide screen'};ctx.loadGuide=()=>new Promise(r=>first=r);const older=ctx.openGuide('uk.school');ctx.loadGuide=async()=>second;await ctx.openGuide('uk.school');const visible=dom.get('guide-body').textContent;first(guide);await older;assert.equal(dom.get('guide-body').textContent,visible)}

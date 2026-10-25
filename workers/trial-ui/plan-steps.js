@@ -20,12 +20,12 @@
   const notes={};for(const [k,v] of Object.entries(x.notes&&typeof x.notes==='object'?x.notes:{}))if(ID.test(k)&&typeof v==='string'&&v.trim())notes[k]=v.trim().substring(0,200);
   return {...x,stepStatus:migrate(x.stepStatus),history,notes}}
  // Which states a step offers: "waiting for them" only where the step waits on someone else.
- function statesFor(step){return STATES.filter(s=>s!=='waiting_org'||!!(step&&(step.waitingFor||step.appointment)))}
+ function statesFor(step){return STATES.filter(s=>s!=='waiting_org'||!!(step&&(step.waitingFor||step.appointment||step.owner==='organisation')))}
  function stored(entry,stepId){return normEntry(entry).stepStatus[stepId]||'not_started'}
  // What the step shows: its stored state, or "ready" when nothing earlier is unfinished.
  function shown(entry,steps,i){const e=normEntry(entry),s=e.stepStatus[steps[i]?.id]||'not_started';if(s!=='not_started')return s;return blockers(e,steps,i).length?'not_started':'ready'}
  // Earlier unfinished steps (in order) block this one.
- function blockers(entry,steps,i){const e=normEntry(entry);return steps.slice(0,Math.max(0,i)).filter(x=>!finished(e.stepStatus[x.id]||'not_started')).map(x=>({id:x.id,title:x.title,state:e.stepStatus[x.id]||'not_started'}))}
+ function blockers(entry,steps,i){const e=normEntry(entry);const ids=Array.isArray(steps[i]?.dependsOn)?steps[i].dependsOn:null;return steps.slice(0,Math.max(0,i)).filter(x=>!ids||ids.includes(x.id)).filter(x=>!finished(e.stepStatus[x.id]||'not_started')).map(x=>({id:x.id,title:x.title,state:e.stepStatus[x.id]||'not_started'}))}
  // The first step that isn't finished, with its index; null when every step is done or not applicable.
  function next(entry,steps){const e=normEntry(entry);const i=steps.findIndex(x=>!finished(e.stepStatus[x.id]||'not_started'));return i<0?null:{index:i,id:steps[i].id,title:steps[i].title,state:shown(e,steps,i)}}
  // Record a change; returns a new entry. A blocked note is kept only while the step is blocked.

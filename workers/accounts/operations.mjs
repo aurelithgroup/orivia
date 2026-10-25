@@ -1,3 +1,4 @@
+import {handleJourneyGovernance} from './journey-governance.mjs';
 import {handleEntitlements} from './entitlements.mjs';
 import {SUPPORT_SQL,handleSupport} from './support-escalation.mjs';
 import {GUIDE_PACKAGES,customGuidePackage,draftInstitutionGuide} from './guide-drafts.mjs';
@@ -20,8 +21,9 @@ export function normaliseRecord(kind,input){if(!KINDS[kind]||!input||typeof inpu
  if(kind==='source'&&(!out.url||!['uae','uk','institutional'].includes(out.jurisdiction)||!date(out.checkedAt)||out.checkedAt.length!==10||!date(out.reviewDue)||out.reviewDue.length!==10||out.reviewDue<out.checkedAt||Date.parse(out.reviewDue)-Date.parse(out.checkedAt)>366*864e5))throw Error('invalid_review_date');return out}
 export const slugBase=name=>String(name).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,48)||'organisation';
 export async function handleOperations(req,env,c){const {path,url,db,q,all,json,deny,actor,session,clock,id,hash,token,requireOwner,fresh,body,member,org}=c;
- if(!/^\/api\/(?:admin\/(?:operations|onboarding|people|roles|runtime|metrics|privacy-requests|entitlements|support-escalations)|partner\/|me\/(?:notices|data-requests|support-consents|orgs\/[^/]+\/processes)|orgs\/[^/]+\/(?:support|processes|directory|draft-guide|guide-document|guide-packages))/.test(path))return null;
+ if(!/^\/api\/(?:admin\/(?:operations|onboarding|people|roles|runtime|metrics|privacy-requests|entitlements|support-escalations|journeys)|partner\/|me\/(?:notices|data-requests|support-consents|journey-gaps|orgs\/[^/]+\/processes)|orgs\/[^/]+\/(?:support|processes|directory|draft-guide|guide-document|guide-packages))/.test(path))return null;
  if(!ready.has(db)){for(const s of OPERATIONS_SQL)await q(s).run();ready.add(db)}const log=(action,target)=>q('INSERT INTO platform_audit(id,actor_id,action,detail,created_at) VALUES (?,?,?,?,?)',id(),actor,action,JSON.stringify({target}),clock());
+ const journey=await handleJourneyGovernance(req,env,c);if(journey)return journey;
  const support=await handleSupport(req,env,c);if(support)return support;const entitlements=await handleEntitlements(req,env,c);if(entitlements)return entitlements;
  const rowOut=r=>({id:r.id,kind:r.kind,title:r.title,data:JSON.parse(r.data),status:r.status,revision:r.revision,updatedAt:r.updated_at});
  const saved=async(kind,key)=>{const r=await q('SELECT * FROM platform_records WHERE id=? AND kind=?',key,kind).first();if(!r)deny(404,'not_found');return r};

@@ -67,3 +67,5 @@ Restored console metrics (UTC; no private conversation data):
 | `dailyMemberships` | Student membership records created in the last 30 days, grouped by UTC creation day; includes current active/requested records only. Not daily active users. |
 | `label` | UTC date or membership/content category in a chart. |
 | `count` | Number of matching records. A missing data series is unavailable; an empty successful query has zero records. |
+
+Journey governance coverage counts use the ten seeded catalogue families and their topics, separately for UAE and UK. A topic counts as covered only when a currently published, fresh reviewed template explicitly names its family, topic index and jurisdiction. Withdrawn/stale templates do not count. `request_count` counts stored topic requests across accounts, not unique active users or engagement; repeated requests for the same account/topic/jurisdiction contribute one. An empty successful request queue is zero requests, while an unavailable catalogue is reported as unavailable.

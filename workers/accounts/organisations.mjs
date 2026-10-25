@@ -1,3 +1,4 @@
+import {mountJourneyGovernanceUI} from './journey-governance-ui.mjs';
 import {mountRestoredUI} from './restored-ui.mjs';
 import {handleOperations} from './operations.mjs';
 import QRCode from 'qrcode/lib/core/qrcode.js';
@@ -23,7 +24,7 @@ const PROGRESS_SQL=['CREATE TABLE IF NOT EXISTS organisation_progress(org_id TEX
  'CREATE TABLE IF NOT EXISTS organisation_progress_private(org_id TEXT NOT NULL, user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE, PRIMARY KEY(org_id,user_id))'];
 const progressReady=new WeakSet(),settingsReady=new WeakSet();
 const roles={admin:new Set(['org.view','content.draft','content.publish','members.manage','staff.manage','qr.public','qr.invite','qr.withdraw']),editor:new Set(['org.view','content.draft','qr.public']),student:new Set(['space.view'])};
-export const organisationRoute=p=>['/platform','/platform.js','/manage'].includes(p)||/^\/api\/(?:admin(?:\/|$)|orgs(?:\/|$)|invitations(?:\/|$)|partner(?:\/|$)|public\/orgs(?:\/|$)|public\/codes(?:\/|$)|me\/(?:memberships|orgs|notices|data-requests|support-consents)(?:\/|$))/.test(p);
+export const organisationRoute=p=>['/platform','/platform.js','/manage'].includes(p)||/^\/api\/(?:admin(?:\/|$)|orgs(?:\/|$)|invitations(?:\/|$)|partner(?:\/|$)|public\/orgs(?:\/|$)|public\/codes(?:\/|$)|me\/(?:memberships|orgs|notices|data-requests|support-consents|journey-gaps)(?:\/|$))/.test(p);
 const keys=(b,allowed)=>{if(!b||typeof b!=='object'||Array.isArray(b)||Object.keys(b).some(k=>!allowed.includes(k)))deny(400,'invalid_fields')};
 const text=(v,min,max)=>{if(typeof v!=='string'||v.trim().length<min||v.length>max||/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v))deny(400,'invalid_text');return v.trim()};
 const email=v=>{const s=text(v,3,254).toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))deny(400,'invalid_email');return s};
@@ -70,7 +71,7 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
    if(!owner)return new Response(manageRefusal(!s?.user?.id,appHome(env)),{status:s?.user?.id?403:401,headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'",'Referrer-Policy':'no-referrer'}});
   }
   if(req.method==='GET'&&(path==='/platform'||path==='/manage'))return new Response(platformPage.replace('<html','<html data-app-home="'+appHome(env)+'"'),{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",'Referrer-Policy':'no-referrer'}});
-  if(req.method==='GET'&&path==='/platform.js')return new Response('(function(){const __name=f=>f;window.OriviaRestoredUI=('+mountRestoredUI.toString()+');('+mountPlatform.toString()+')()})();',{headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
+  if(req.method==='GET'&&path==='/platform.js')return new Response('(function(){const __name=f=>f;window.OriviaRestoredUI=('+mountRestoredUI.toString()+');window.OriviaJourneyGovernanceUI=('+mountJourneyGovernanceUI.toString()+');('+mountPlatform.toString()+')()})();',{headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 
   // No request supplies its own actor, organisation role or platform role.
   if(req.method==='GET'&&path.startsWith('/api/public/')){

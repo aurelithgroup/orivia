@@ -1,0 +1,50 @@
+{
+  "verifiedAt": "2026-10-25T07:15:46.773989+00:00",
+  "baseCommit": "240f2f7273bbbd0990f204e582e498ff04923a81",
+  "block": 2,
+  "scope": "Journey governance: create/edit, review, publish/withdraw, restore-as-draft, same-version app/AI, sources, coverage and personal history",
+  "developmentChecks": {
+    "total": 129,
+    "failed": 0
+  },
+  "additionalTargetedRechecks": [
+    "source revision/withdrawal/restoration safety",
+    "in-flight AI withdrawal",
+    "exact-version guide cards",
+    "explicit dependency and changed-criteria history",
+    "same-account delayed guide-open race"
+  ],
+  "browser": {
+    "passed": true,
+    "transport": "Real local Better Auth, SQLite and Worker HTTP routes; fictional owner and source. No provider calls.",
+    "checks": [
+      "create with structured editor",
+      "separate review/publish",
+      "draft isolation",
+      "form values survive reopening",
+      "restore requires new review",
+      "withdrawal removes catalogue and detail",
+      "saved personal completion survives withdrawal with warning",
+      "390px layout",
+      "no browser errors"
+    ]
+  },
+  "pilotBuild": "Wrangler 4.151.1 deploy --dry-run passed; no deployment",
+  "productionChanged": false,
+  "remoteDatabaseChanged": false,
+  "billingAndAppStoreChanged": false,
+  "sourceSha256": {
+    "workers/accounts/operations.mjs": "15451167797afc347c215857bf7fb5e9cc3c60da38cef1a52409920a1e68db41",
+    "workers/accounts/organisations.mjs": "236dd583a265d417e2b02cf64f6cd483b4a69abc3f2bd83fff31a4a872cecb2d",
+    "workers/accounts/restored-ui.mjs": "cd1448be8ee71e145f9926451163bca1bc7444333cc0f0c4280c8ed665a31fbc",
+    "workers/orivia-ai-private-trial.mjs": "06f1fd64d1b4ec201f340539b3aff1f31933d7662110e88733207b8a47428d70",
+    "workers/orivia-assistant.mjs": "e95d05afd3c28670d69ae6793be76f0154e4cee75232d1dd20865a9e91d7305a",
+    "workers/orivia-guide-offers.mjs": "9a16993038617a4b1a85374c1899489e92960e5350e7057983d5cd78f9255f93",
+    "workers/trial-ui/batch-tools.js": "af9022a896e964dceefc9004b3e979d91c3b2f00aeadfc64285d6d3012bd9f03",
+    "workers/trial-ui/chat.js": "53d520172ec7f711825505a46ae864ce5f044b544c4474341538aa32dd549493",
+    "workers/trial-ui/plan-steps.js": "10dc5bd08fa2417aec0dbe50ad43a7fb14276c30fea40b530c6950d725e007da",
+    "workers/accounts/journey-governance-ui.mjs": "43101c354c9b32b2499ca040882fc8895abc85f88a6593e34c4c1c23ecae2350",
+    "workers/accounts/journey-governance.mjs": "52ffa5f6298db6655176d9498ed61b834247bd1a26ef6eef292b526bee7e8752",
+    "workers/orivia-journey-registry.mjs": "025f03a40e998acd69420fac9da069f464d909698f1e5fe4649263f402814bc4"
+  }
+}

@@ -80,12 +80,12 @@ export function readGuideState(prefs){
   const clean={};for(const [sid,st] of Object.entries(steps).slice(0,30))if(/^[a-z0-9_-]{1,30}$/.test(sid)&&STEP_STATUSES.includes(st))clean[sid]=st;
   if(Object.keys(clean).length)progress[jid]=clean;
  }
- return {following:ids(g.following),saved:ids(g.saved),paused:ids(g.paused),done:ids(g.done),offered:ids(g.offered),progress};
+ return {versions:g.versions&&typeof g.versions==='object'?Object.fromEntries(Object.entries(g.versions).filter(([id,v])=>ID.test(id)&&typeof v==='string'&&/^[a-f0-9]{64}$/.test(v)).slice(0,30)):{},following:ids(g.following),saved:ids(g.saved),paused:ids(g.paused),done:ids(g.done),offered:ids(g.offered),progress};
 }
 function journey(id){const r=callJourneyApi('/api/v1/journeys/'+id);return r.status===200?r.data:null}
 
 /* Which card (if any) to show under this reply, and what the AI should know about it */
-export function guideOffer(messages,{trip,profile,prefs}={}){
+export function guideOffer(messages,{trip,profile,prefs,resolveGuide}={}){
  const users=(Array.isArray(messages)?messages:[]).filter(m=>m.role==='user').map(m=>String(m.content||''));
  const latest=users.at(-1)||'';
  const thread=users.slice(-6).join(' | ');
@@ -112,15 +112,16 @@ export function guideOffer(messages,{trip,profile,prefs}={}){
   }
  }
  if(!pick)return {offer:null,context};
- const d=journey(pick.id);if(!d)return {offer:null,context};
- const j=d.journey, g=GUIDES[pick.id];
+ const resolved=resolveGuide?resolveGuide(pick.id):undefined;const d=resolved===undefined?journey(pick.id):(resolved?{journey:resolved,verifiedOn:resolved.checkedAt,fresh:resolved.fresh}:null);if(!d)return {offer:null,context};
+ const j=d.journey, g=GUIDES[pick.id]||{summary:j.summary||''};
+ if(resolved&&pick.problemId)return {offer:null,context:'The current reviewed guide does not publish a remedy for that problem. Check current source evidence instead of using a bundled older remedy.'};
  const p=pick.problemId?j.problems.find(x=>x.id===pick.problemId):null;
- const offer={id:j.id,kind:pick.kind,title:j.title,summary:g.summary,steps:j.steps.length,checkedAt:d.verifiedOn,fresh:d.fresh,
+ const offer={id:j.id,kind:pick.kind,title:j.title,summary:j.summary||g.summary,steps:j.stepCount||j.steps.length,...(resolved?.version?{version:resolved.version,publicationRevision:resolved.publicationRevision}:{}),checkedAt:d.verifiedOn,fresh:d.fresh,
   status:state.following.includes(j.id)?'active':state.paused.includes(j.id)?'paused':state.saved.includes(j.id)?'saved':state.done.includes(j.id)?'done':null,
   ...(p?{problem:(({id,question,answer})=>({id,question,answer}))(problemHelp(p))}:{})};
  const what={offer:'offering it, with Follow guide, Save for later and Not now',refresher:'bringing the guide back for them',problem:'showing the checked answer for “'+(p?.question||'')+'” from that guide'}[pick.kind];
  context='GUIDE CARD: Under your reply, Orivia shows a card for the checked guide “'+j.title+'”, '+what+'. Mention it in one short, natural sentence (for example “I’ve put a step-by-step guide below if you’d like help getting set up”). Do not list its steps, prices or rules yourself.';
- if(pick.progress&&state.progress[j.id])context+='\n'+progressSummary(j.id,state.progress[j.id]);
+ if(pick.progress&&state.progress[j.id]&&!resolved)context+='\n'+progressSummary(j.id,state.progress[j.id]);else if(pick.progress&&resolved){if(resolved.metadataOnly)context+='\nOpen Journeys to inspect the current steps and compare the person’s saved version. Do not map older completion onto new instructions.';else if(state.versions[j.id]===resolved.version)context+='\nPersonal notes for this exact version: '+j.steps.filter(s=>state.progress[j.id]?.[s.id]).map(s=>s.title+': '+state.progress[j.id][s.id]).join('; ')+'. These are not official approvals.';else context+='\nTheir saved plan has a different or unknown version. Ask them to review changes in Journeys; do not map older completion onto new steps.'}
  return {offer,context};
 }
 
