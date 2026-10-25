@@ -4,6 +4,7 @@ on:
     branches:
       - feature/proactive-requirements
       - ina/restore-block-1-2026-10-25
+      - ina/founder-ai-sponsorship-block-3-2026-10-25
   workflow_dispatch:
 permissions:
   contents: read
@@ -18,6 +19,12 @@ jobs:
           node-version: '22'
       - name: "Install pinned account authentication dependencies"
         run: npm ci --prefix workers/accounts --ignore-scripts --no-fund --no-audit
+      - name: "Founder commercial syntax and review regression"
+        run: |
+          node --check workers/accounts/founder-commercial.mjs
+          node --check workers/accounts/operations.mjs
+          node --check workers/accounts/platform-ui.mjs
+          node --experimental-sqlite tests/founder-commercial.test.mjs
       - name: "Syntax checks"
         run: |
           node --check js/buddy.js
