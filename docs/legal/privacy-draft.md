@@ -146,7 +146,7 @@ Device alerts are **off** on myorivia.app for now. If they're switched on later,
 | Ratings and reports | Until reviewed. Deleted with your account |
 | University membership records | Kept after you leave, so that the university's own records add up. Deleted with your account |
 | Sign-in codes | Five minutes |
-| Recent database backups | Deleted records can be restored for up to **30 days** **[TO CONFIRM: Workers Paid is inferred from the restore window, not from billing]** |
+| Recent database backups | Deleted records can still be restored from our hosting provider's database backups for a limited period **[TO CONFIRM before publishing: the period. Don't state a number until it's confirmed from the plan or billing; a past restore point isn't a guarantee]** |
 
 ## Your choices and rights
 

@@ -47,7 +47,7 @@ export function personRegion(msgs,profile,memory){
  return look([profile?.city,profile?.movingTo].filter(Boolean).join(' '))||look((memory?.criteria||[]).map(c=>c.value).join(' ')+' '+(memory?.goal||''));
 }
 const REGION_NAME={uae:'UAE',uk:'UK'};
-/* Whose rules a UK page gives (29 Oct, founder): a nation, the whole UK ('uk'), one council ('local:<name>'), or 'unknown'.
+/* Whose rules a UK page gives (28 Oct, founder): a nation, the whole UK ('uk'), one council ('local:<name>'), or 'unknown'.
    An unrecognised host is unknown, never assumed UK-wide. Health, council and some benefit rules differ between nations.
    gov.uk alone doesn't make a page UK-wide (many of its guides are for England, or England and Wales): only its pages on
    matters the UK government runs for the whole UK (immigration, passports, national taxes) count as 'uk' by address;
@@ -68,7 +68,7 @@ const NATION_TEXT={england:/\bengland\b/i,scotland:/\bscotland\b/i,wales:/\bwale
 const UK_WIDE_TEXT=/\b(across|throughout|anywhere in|all of) the (UK|United Kingdom)\b|\bUK-wide\b|\bEngland, Scotland, Wales and Northern Ireland\b/i;
 export function nationOfEvidence(e){const n=nationOf(e?.url);if(n!=='uk'&&n!=='unknown')return n;const t=String(e?.excerpt||'');
  const hit=Object.keys(NATION_TEXT).filter(k=>NATION_TEXT[k].test(t));if(hit.length===1)return hit[0];return UK_WIDE_TEXT.test(t)?'uk':n}
-/* Whose rules a UAE page gives (29 Oct, founder): one emirate, 'federal' (listed federal authorities only), or 'unknown'.
+/* Whose rules a UAE page gives (28 Oct, founder): one emirate, 'federal' (listed federal authorities only), or 'unknown'.
    An unrecognised host is unknown, never assumed federal: a Dubai authority's page is not the rule in Sharjah. */
 const FEDERAL_HOST=/^(www\.)?(u\.ae|government\.ae|uaecabinet\.ae|icp\.gov\.ae|mohre\.gov\.ae|mofa\.gov\.ae|moi\.gov\.ae|mohap\.gov\.ae|moe\.gov\.ae|mof\.gov\.ae|tdra\.gov\.ae|tax\.gov\.ae|centralbank\.ae)$/i;
 const EMIRATE_HOST=[
@@ -86,14 +86,14 @@ const pickPlace=(t,map,strict)=>{const hit=Object.keys(map).filter(k=>map[k].tes
 const placeFrom=(map,strict=false)=>(msgs,profile,memory)=>{
  for(const m of [...(msgs||[])].reverse().filter(m=>m.role==='user')){const t=String(m.content||'');if(strict&&Object.keys(map).filter(k=>map[k].test(t)).length>1)return '';const r=pickPlace(t,map,strict);if(r)return r}
  return pickPlace([profile?.city,profile?.movingTo].filter(Boolean).join(' '),map,strict)||pickPlace((memory?.criteria||[]).map(c=>c.value).join(' ')+' '+(memory?.goal||''),map,strict)};
-/* Emirates (29 Oct, founder): where the person is is not whose rule a page gives. personEmirate is where they are: a
+/* Emirates (28 Oct, founder): where the person is is not whose rule a page gives. personEmirate is where they are: a
    residence phrase ("I'm in", "I live in", "based in", "moving to") wins, then their profile city, then a single emirate
    named. emiratesNamed lists every emirate the person's recent messages name. Neither decides whose rule a page is: the
    page's address does (emirateOf), and verifyReply makes any other emirate's rule say whose it is. */
 const RESIDENCE_CUE=/\b(?:i\s*['’]?m|i am|we\s*['’]?re|we are|i live|we live|living|based|staying|resident|moved|moving|relocat\w*)\s+(?:in|to)\s+(?:the\s+)?/i;
 const RESIDENCE=re=>new RegExp(RESIDENCE_CUE.source+re.source.replace(/^\\b/,''),'i');
 const userTexts=(msgs)=>[...(msgs||[])].filter(m=>m.role==='user').slice(-6).map(m=>String(m.content||''));
-// The same reading for UK nations (29 Oct): "I live in Glasgow, studying in Manchester" lives in Scotland, names both.
+// The same reading for UK nations (28 Oct): "I live in Glasgow, studying in Manchester" lives in Scotland, names both.
 const livesIn=map=>(msgs,profile,memory)=>{
  for(const t of userTexts(msgs).reverse()){const at=Object.keys(map).filter(k=>RESIDENCE(map[k]).test(t));if(at.length===1)return at[0];if(at.length>1)return ''}
  const home=pickPlace([profile?.city,profile?.movingTo].filter(Boolean).join(' '),map,true);if(home)return home;
@@ -110,7 +110,7 @@ export const personNation=livesIn(NATION_WORDS),nationsNamed=namedIn(NATION_WORD
  * - A page for the whole country, for the person's own place, or for a council the person named: fine.
  * - A page tied to another place: it must say whose rule it is, once a place is known or named (with none, it's read at
  *   country level, as the person gave no place to mismatch).
- * - Pages whose scope is unknown stay uncertain with or without a location (29 Oct, founder): the reply must say so
+ * - Pages whose scope is unknown stay uncertain with or without a location (28 Oct, founder): the reply must say so
  *   (qualified), or the model asks where the person is instead. */
 const QUALIFIER=/\b(doesn['’]t|does not|don['’]t|do not) (say|state|show|make clear) (where|whether|which|if)\b|\b(may|might) (not )?apply\b|\bdepends? on where\b|\bcheck (whether|if) (this|it|they|these) (rules? )?appl(y|ies)\b|\bnot clear (where|whether)\b|قد لا ينطبق|لا توضح|ne précise pas|peut ne pas s['’]appliquer/i;
 function placeError(fit,text,{country,lives,named,of,words,name,wide,wideName,unit,conversation,qualified}){
@@ -311,8 +311,8 @@ export function verifyReply(reply,ledger,{region='',nation='',nations=[],emirate
  const errors=[],byId=new Map(ledger.map(e=>[e.id,e]));const used=[];const use=e=>{if(!used.includes(e))used.push(e)};
  const sentences=Array.isArray(reply?.sentences)?reply.sentences.slice(0,ASSISTANT_LIMITS.sentences):[];
  const citedAnywhere=new Set(sentences.flatMap(s=>Array.isArray(s?.evidence)?s.evidence:[]));
- // A disagreement between official pages is explained in words, not only shown by two citations (29 Oct).
- // An answer from a page of unknown scope says so in words (29 Oct): "this page doesn't say whether it applies in …".
+ // A disagreement between official pages is explained in words, not only shown by two citations (28 Oct).
+ // An answer from a page of unknown scope says so in words (28 Oct): "this page doesn't say whether it applies in …".
  const qualified=sentences.some(s=>typeof s?.text==='string'&&QUALIFIER.test(s.text));
  const explained=sentences.some(s=>typeof s?.text==='string'&&/\b(differ|differs|different|disagree|disagrees|conflict|conflicting|inconsistent|don['’]t match|do not match|vary|varies)\b|تختلف|مختلف|متعارض|diff[èe]rent|contradictoire/i.test(s.text));
  if(!sentences.length)errors.push('reply has no sentences');

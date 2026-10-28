@@ -1,4 +1,4 @@
-# Privacy and Terms: reconciliation for the combined release (Cleo, 29 October)
+# Privacy and Terms: reconciliation for the combined release (Cleo, 28 October, Dubai)
 
 The drafts (`privacy-draft.md`, `terms-draft.md`) describe `myorivia-release-plan`.
 

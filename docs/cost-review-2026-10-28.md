@@ -1,4 +1,4 @@
-# Running costs against AED 250 a month (Cleo, 28 October; corrected 29 October)
+# Running costs against AED 250 a month (Cleo, 28 October, Dubai; corrected the same evening)
 
 AED 250 ≈ **$68.07** (AED 3.6725 = $1).
 
@@ -45,7 +45,7 @@ AED 250 ≈ **$68.07** (AED 3.6725 = $1).
 | Service | Billing | Invoice amount | Monthly equivalent | Covers, so not counted again |
 |---|---|---|---|---|
 | OpenAI | monthly, by use | **unknown** | unknown | Chat, research, documents, natural voice |
-| Cloudflare | monthly (plan plus usage) | **unknown** | unknown | Workers, Workers AI (backup provider), D1, R2, Browser Rendering, Email Sending, Turnstile, Access. **Plan: Workers Paid, inferred, not confirmed from billing.** A D1 restore point 9 days old exists, beyond the free plan's 7 days. R2 list prices checked 29 Oct: $0.015/GB-month, Class A $4.50/M, Class B $0.36/M, free 10 GB-month / 1M A / 10M B a month account-wide, no egress |
+| Cloudflare | monthly (plan plus usage) | **unknown** | unknown | Workers, Workers AI (backup provider), D1, R2, Browser Rendering, Email Sending, Turnstile, Access. **Plan: Workers Paid, inferred, not confirmed from billing.** A D1 restore point 9 days old exists, beyond the free plan's 7 days. R2 list prices checked 28 Oct: $0.015/GB-month, Class A $4.50/M, Class B $0.36/M, free 10 GB-month / 1M A / 10M B a month account-wide, no egress |
 | Brave Search API | monthly (plan) | **unknown** | unknown | All searches, pilot and public |
 | Domain `myorivia.app` | **yearly** | **unknown** | yearly ÷ 12 | The domain only. If it's registered through Cloudflare, it's billed apart from the plan and still listed only here |
 | Sender domain `auth.aurelithgroup.org` (parent `aurelithgroup.org`) | **yearly**, if billed separately | **unknown** | yearly ÷ 12 | The domain only. Leave it out if it's billed elsewhere for another purpose |
@@ -64,6 +64,6 @@ AED 250 ≈ **$68.07** (AED 3.6725 = $1).
 1. **Fill in section 3** from the invoices. Mark each "monthly" or "yearly ÷ 12".
 2. **Daily cap on demo days:** consider whether $5/day is enough for rehearsals. Raising it is a founder decision that changes production settings, so it waits for the hold to lift.
 3. **Record which Worker made each call** in the spend ticket, so testing and public use can be told apart. That's a schema change, so it's for after the hold.
-4. **File backup:** the decision is pending and nothing is created. The provisional cost of the proposal (copying, tombstones, reconciliation, no retained versions) is about $0 at today's 0 objects, $0.75/month at 50 GB and $3.00/month at 200 GB. It sits inside the Cloudflare line, not added separately. See `docs/backup-proposal-2026-10-29.md`.
+4. **File backup:** the decision is pending and nothing is created. The provisional cost of the proposal (copying, tombstones, reconciliation, no retained versions) is about $0 at today's 0 objects, $0.75/month at 50 GB and $3.00/month at 200 GB. It sits inside the Cloudflare line, not added separately. See `docs/backup-proposal-2026-10-28.md`.
 
 Nothing here changes limits, settings, payments or production.
