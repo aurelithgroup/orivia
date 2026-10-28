@@ -47,24 +47,29 @@ export function personRegion(msgs,profile,memory){
  return look([profile?.city,profile?.movingTo].filter(Boolean).join(' '))||look((memory?.criteria||[]).map(c=>c.value).join(' ')+' '+(memory?.goal||''));
 }
 const REGION_NAME={uae:'UAE',uk:'UK'};
-/* Health, council and some benefit rules differ between the UK nations (28 Oct: an England-only prescription charge was
-   accepted for someone in Glasgow). Only addresses that belong to one nation count; gov.uk speaks for the whole UK. */
-const NATION_HOST=[[/(^|\.)scot$/i,'scotland'],[/(^|\.)wales$/i,'wales'],[/(^|\.)(nidirect\.gov\.uk|hscni\.net)$/i,'northern-ireland'],[/(^|\.)nhs\.uk$/i,'england']];
-export function nationOf(url){let h='';try{h=new URL(url).hostname.toLowerCase()}catch(_){return ''}return (NATION_HOST.find(([re])=>re.test(h))||[])[1]||''}
+/* Whose rules a UK page gives (29 Oct, founder): a nation, the whole UK ('uk'), one council ('local:<name>'), or 'unknown'.
+   An unrecognised host is unknown, never assumed UK-wide. Health, council and some benefit rules differ between nations. */
+const NATION_HOST=[[/(^|\.)scot$/i,'scotland'],[/^(www\.)?scotland\.police\.uk$/i,'scotland'],[/(^|\.)wales$/i,'wales'],[/(^|\.)(nidirect\.gov\.uk|hscni\.net|psni\.police\.uk)$/i,'northern-ireland'],
+ [/(^|\.)(nhs\.uk|ofsted\.gov\.uk|cqc\.org\.uk)$/i,'england'],[/^(www\.)?(gov\.uk|legislation\.gov\.uk|parliament\.uk|fca\.org\.uk)$/i,'uk']];
+export function nationOf(url){let h='';try{h=new URL(url).hostname.toLowerCase()}catch(_){return ''}
+ const hit=(NATION_HOST.find(([re])=>re.test(h))||[])[1];if(hit)return hit;
+ const council=h.match(/^(?:www\.)?([a-z-]+)\.gov\.uk$/);return council?'local:'+council[1]:regionOf(url)==='uk'?'unknown':''}
 const NATION_WORDS={scotland:/\b(scotland|scottish|edinburgh|glasgow|aberdeen|dundee|inverness|stirling)\b/i,wales:/\b(wales|welsh|cardiff|swansea)\b/i,
  'northern-ireland':/\b(northern ireland|belfast|derry|londonderry)\b/i,england:/\b(england|london|manchester|birmingham|leeds|liverpool|bristol|sheffield|newcastle|nottingham|leicester|oxford|cambridge)\b/i};
 const NATION_NAME={scotland:'Scotland',wales:'Wales','northern-ireland':'Northern Ireland',england:'England'};
 // gov.uk speaks for the whole UK unless the page itself names one nation only ("In England, …"), as many guides do.
 const NATION_TEXT={england:/\bengland\b/i,scotland:/\bscotland\b/i,wales:/\bwales\b/i,'northern-ireland':/\bnorthern ireland\b/i};
-export function nationOfEvidence(e){const n=nationOf(e?.url);if(n)return n;const hit=Object.keys(NATION_TEXT).filter(k=>NATION_TEXT[k].test(String(e?.excerpt||'')));return hit.length===1?hit[0]:''}
-/* Emirate rules (28 Oct): a Dubai authority's page is not the rule in Sharjah. Federal pages (u.ae, icp.gov.ae, ministries,
-   the Central Bank) belong to no single emirate and count everywhere in the UAE. Only listed hosts are tied to an emirate. */
+export function nationOfEvidence(e){const n=nationOf(e?.url);if(n!=='uk')return n;const hit=Object.keys(NATION_TEXT).filter(k=>NATION_TEXT[k].test(String(e?.excerpt||'')));return hit.length===1?hit[0]:'uk'}
+/* Whose rules a UAE page gives (29 Oct, founder): one emirate, 'federal' (listed federal authorities only), or 'unknown'.
+   An unrecognised host is unknown, never assumed federal: a Dubai authority's page is not the rule in Sharjah. */
+const FEDERAL_HOST=/^(www\.)?(u\.ae|government\.ae|uaecabinet\.ae|icp\.gov\.ae|mohre\.gov\.ae|mofa\.gov\.ae|moi\.gov\.ae|mohap\.gov\.ae|moe\.gov\.ae|mof\.gov\.ae|tdra\.gov\.ae|tax\.gov\.ae|centralbank\.ae)$/i;
 const EMIRATE_HOST=[
  [/(^|\.)(dubai\.ae|rta\.ae|khda\.gov\.ae|dha\.gov\.ae|gdrfad\.gov\.ae|dubaipolice\.gov\.ae|dewa\.gov\.ae|dm\.gov\.ae|dld\.gov\.ae)$/i,'dubai'],
  [/(^|\.)(shj\.ae|sharjah\.ae|sewa\.gov\.ae|shjpolice\.gov\.ae|srta\.gov\.ae)$/i,'sharjah'],
  [/(^|\.)(abudhabi\.ae|tamm\.abudhabi|adek\.gov\.ae|doh\.gov\.ae|itc\.gov\.ae|adpolice\.gov\.ae)$/i,'abu-dhabi'],
  [/(^|\.)ajman\.ae$/i,'ajman'],[/(^|\.)rak\.ae$/i,'ras-al-khaimah'],[/(^|\.)fujairah\.ae$/i,'fujairah'],[/(^|\.)uaq\.ae$/i,'umm-al-quwain']];
-export function emirateOf(url){let h='';try{h=new URL(url).hostname.toLowerCase()}catch(_){return ''}return (EMIRATE_HOST.find(([re])=>re.test(h))||[])[1]||''}
+export function emirateOf(url){let h='';try{h=new URL(url).hostname.toLowerCase()}catch(_){return ''}
+ return (EMIRATE_HOST.find(([re])=>re.test(h))||[])[1]||(FEDERAL_HOST.test(h)?'federal':regionOf(url)==='uae'?'unknown':'')}
 const EMIRATE_WORDS={dubai:/\bdubai\b/i,sharjah:/\bsharjah\b/i,'abu-dhabi':/\b(abu dhabi|al ain)\b/i,ajman:/\bajman\b/i,'ras-al-khaimah':/\b(ras al khaimah|rak)\b/i,fujairah:/\bfujairah\b/i,'umm-al-quwain':/\b(umm al quwain|uaq)\b/i};
 const EMIRATE_NAME={dubai:'Dubai',sharjah:'Sharjah','abu-dhabi':'Abu Dhabi',ajman:'Ajman','ras-al-khaimah':'Ras Al Khaimah',fujairah:'Fujairah','umm-al-quwain':'Umm Al Quwain'};
 // One place named wins; several, then the one the person is in ("in/to/at <place>"); otherwise none.
@@ -73,10 +78,6 @@ const pickPlace=(t,map,strict)=>{const hit=Object.keys(map).filter(k=>map[k].tes
 const placeFrom=(map,strict=false)=>(msgs,profile,memory)=>{
  for(const m of [...(msgs||[])].reverse().filter(m=>m.role==='user')){const t=String(m.content||'');if(strict&&Object.keys(map).filter(k=>map[k].test(t)).length>1)return '';const r=pickPlace(t,map,strict);if(r)return r}
  return pickPlace([profile?.city,profile?.movingTo].filter(Boolean).join(' '),map,strict)||pickPlace((memory?.criteria||[]).map(c=>c.value).join(' ')+' '+(memory?.goal||''),map,strict)};
-/** Which UK nation / which emirate the person is dealing with, read like personRegion; '' when it can't be told.
- * Emirates are strict: people often live in one and use another's services ("in Sharjah, nol card for the Dubai Metro"),
- * so a message naming two emirates sets none. */
-export const personNation=placeFrom(NATION_WORDS);
 /* Emirates (29 Oct, founder): where the person is is not whose rule a page gives. personEmirate is where they are: a
    residence phrase ("I'm in", "I live in", "based in", "moving to") wins, then their profile city, then a single emirate
    named. emiratesNamed lists every emirate the person's recent messages name. Neither decides whose rule a page is: the
@@ -84,14 +85,28 @@ export const personNation=placeFrom(NATION_WORDS);
 const RESIDENCE_CUE=/\b(?:i\s*['’]?m|i am|we\s*['’]?re|we are|i live|we live|living|based|staying|resident|moved|moving|relocat\w*)\s+(?:in|to)\s+(?:the\s+)?/i;
 const RESIDENCE=re=>new RegExp(RESIDENCE_CUE.source+re.source.replace(/^\\b/,''),'i');
 const userTexts=(msgs)=>[...(msgs||[])].filter(m=>m.role==='user').slice(-6).map(m=>String(m.content||''));
-export function personEmirate(msgs,profile,memory){
- for(const t of userTexts(msgs).reverse()){const at=Object.keys(EMIRATE_WORDS).filter(k=>RESIDENCE(EMIRATE_WORDS[k]).test(t));if(at.length===1)return at[0];if(at.length>1)return ''}
- const home=pickPlace([profile?.city,profile?.movingTo].filter(Boolean).join(' '),EMIRATE_WORDS,true);if(home)return home;
- const named=emiratesNamed(msgs,null,memory);return named.length===1?named[0]:'';
-}
-export function emiratesNamed(msgs,profile,memory){
+// The same reading for UK nations (29 Oct): "I live in Glasgow, studying in Manchester" lives in Scotland, names both.
+const livesIn=map=>(msgs,profile,memory)=>{
+ for(const t of userTexts(msgs).reverse()){const at=Object.keys(map).filter(k=>RESIDENCE(map[k]).test(t));if(at.length===1)return at[0];if(at.length>1)return ''}
+ const home=pickPlace([profile?.city,profile?.movingTo].filter(Boolean).join(' '),map,true);if(home)return home;
+ const named=namedIn(map)(msgs,null,memory);return named.length===1?named[0]:'';
+};
+const namedIn=map=>(msgs,profile,memory)=>{
  const t=[...userTexts(msgs),profile?.city||'',profile?.movingTo||'',(memory?.criteria||[]).map(c=>c.value).join(' ')].join('\n');
- return Object.keys(EMIRATE_WORDS).filter(k=>EMIRATE_WORDS[k].test(t));
+ return Object.keys(map).filter(k=>map[k].test(t));
+};
+export const personEmirate=livesIn(EMIRATE_WORDS),emiratesNamed=namedIn(EMIRATE_WORDS);
+export const personNation=livesIn(NATION_WORDS),nationsNamed=namedIn(NATION_WORDS);
+/** Whether official pages can back a claim given where the person is and which places the chat names; '' when they can,
+ * else the end of the refusal. Only applies once a place is known or named; with none, rules are read at country level. */
+function placeError(fit,text,{lives,named,of,words,name,wide,wideName,unit,conversation}){
+ if(!lives&&!named.length)return '';
+ const said=String(conversation||'').toLowerCase(),js=fit.map(of);
+ if(js.some(j=>j===wide||j===lives||j.startsWith('local:')&&said.includes(j.slice(6).replace(/-/g,' '))))return '';
+ const why=lives?'the person is in '+name[lives]:'the conversation names '+named.map(k=>name[k]).join(' and ');
+ const tied=js.find(j=>name[j]);
+ if(tied){if(words[tied].test(text))return '';return `resting only on ${unit} pages for ${name[tied]} must say it is ${name[tied]}'s rule ("In ${name[tied]}, …"), because ${why}; for the person's own ${unit} use a ${wideName} page or one for it`}
+ return `can't rest only on pages whose jurisdiction is unknown (not a listed ${wideName} or ${unit} authority), because ${why}; use a ${wideName} page or one for the place it applies to, or kind "general" and say whose page it is`;
 }
 // What the chat screen calls each kind (workers/trial-ui/chat.js SOURCE_KIND).
 const CATEGORY={regulator:'official',government:'official',website:'organisation',listing:'directory',community:'community',university:'university',document:'document'};
@@ -222,7 +237,7 @@ function officialConflict(text,facts,evs,ledger,{region='',nation='',emirate=''}
  if(!named.length)return null;
  const said=new Set(amounts.map(f=>digits(f.value)));const cited=new Set(evs.map(e=>e.id));
  const applies=e=>['government','regulator'].includes(e.kind)&&(!region||!regionOf(e.url)||regionOf(e.url)===region)
-  &&(!nation||!nationOfEvidence(e)||nationOfEvidence(e)===nation)&&(!emirate||!emirateOf(e.url)||emirateOf(e.url)===emirate);
+  &&(!nation||['','uk','unknown',nation].includes(nationOfEvidence(e))||nationOfEvidence(e).startsWith('local:'))&&(!emirate||['','federal','unknown',emirate].includes(emirateOf(e.url)));
  for(const e of ledger){if(cited.has(e.id)||!applies(e))continue;
   for(const piece of String(e.excerpt||'').split(/(?<=[.!?])\s+|\n+/)){const low=piece.toLowerCase();const subject=named.find(w=>low.includes(w));if(!subject)continue;
    for(const m of piece.matchAll(MONEY)){const d=digits(m[0]);if(d&&!said.has(d))return {id:e.id,value:m[0].trim(),subject:subject[0].toUpperCase()+subject.slice(1)}}}}
@@ -277,7 +292,7 @@ export function checkedHandoff(reply,ledger,conversation='',replyLanguage='en'){
 }
 
 /** Check a proposed reply against the ledger. Returns {ok, errors[], sentences, orgs, used[]} (cards cleaned, never guessed). */
-export function verifyReply(reply,ledger,{region='',nation='',emirate='',emirates=[],conversation='',replyLanguage='en',today=''}={}){
+export function verifyReply(reply,ledger,{region='',nation='',nations=[],emirate='',emirates=[],conversation='',replyLanguage='en',today=''}={}){
  const errors=[],byId=new Map(ledger.map(e=>[e.id,e]));const used=[];const use=e=>{if(!used.includes(e))used.push(e)};
  const sentences=Array.isArray(reply?.sentences)?reply.sentences.slice(0,ASSISTANT_LIMITS.sentences):[];
  const citedAnywhere=new Set(sentences.flatMap(s=>Array.isArray(s?.evidence)?s.evidence:[]));
@@ -304,11 +319,11 @@ export function verifyReply(reply,ledger,{region='',nation='',emirate='',emirate
    // A rule or a regulator's status holds only where that government or regulator has authority.
    else if(region&&['official_rule','regulatory_status','official_listing'].includes(kind)&&fit.length&&fit.every(e=>regionOf(e.url)&&regionOf(e.url)!==region))
     errors.push(`sentence ${i+1}: a ${kind} claim for someone in the ${REGION_NAME[region]} cannot rest on ${REGION_NAME[regionOf(fit[0].url)]} official pages (use them only as general information, kind "general", and say whose guidance it is)`);
-   else if(nation&&(!region||region==='uk')&&['official_rule','regulatory_status','official_listing'].includes(kind)&&fit.length&&fit.every(e=>nationOfEvidence(e)&&nationOfEvidence(e)!==nation)&&!NATION_TEXT[nationOfEvidence(fit[0])].test(text))
-    errors.push(`sentence ${i+1}: a ${kind} claim for someone in ${NATION_NAME[nation]} cannot rest only on pages for ${NATION_NAME[nationOfEvidence(fit[0])]} (rules differ between UK nations; use a page for ${NATION_NAME[nation]}, or kind "general" and say whose rules they are)`);
-   else if((emirate||emirates.length)&&(!region||region==='uae')&&['official_rule','regulatory_status','official_listing'].includes(kind)&&fit.length&&fit.every(e=>emirateOf(e.url)&&emirateOf(e.url)!==emirate)&&!EMIRATE_WORDS[emirateOf(fit[0].url)].test(text)){
-    const P=EMIRATE_NAME[emirateOf(fit[0].url)],why=emirate?'the person is in '+EMIRATE_NAME[emirate]:'the conversation names '+emirates.map(k=>EMIRATE_NAME[k]).join(' and ');
-    errors.push(`sentence ${i+1}: a ${kind} claim resting only on emirate pages for ${P} must say it is ${P}'s rule ("In ${P}, …"), because ${why}; for the person's own emirate use a federal page or one for that emirate`)}
+   else if(['official_rule','regulatory_status','official_listing'].includes(kind)&&fit.length){
+    const pe=(!region||region==='uk')&&placeError(fit,text,{lives:nation,named:nations,of:nationOfEvidence,words:NATION_TEXT,name:NATION_NAME,wide:'uk',wideName:'UK-wide',unit:'nation',conversation})
+     ||(!region||region==='uae')&&placeError(fit,text,{lives:emirate,named:emirates,of:e=>emirateOf(e.url),words:EMIRATE_WORDS,name:EMIRATE_NAME,wide:'federal',wideName:'federal',unit:'emirate',conversation});
+    if(pe)errors.push(`sentence ${i+1}: a ${kind} claim `+pe);
+   }
    // Official pages that disagree (28 Oct): another official page that was read, and applies to this person, gives a
    // different amount for the same subject. Stating one of them alone hides the disagreement: cite both and say they differ.
    if(evs.length&&fit.length&&['official_rule','regulatory_status','official_listing'].includes(kind)){
@@ -359,12 +374,12 @@ export function verifyReply(reply,ledger,{region='',nation='',emirate='',emirate
 
 /** The verified part of a rejected reply: the failing sentences removed and a plain note added, or null if too little
  * is left to be useful (fewer than 2 sentences, or nothing sourced). Never edits a sentence, only drops it. */
-export function salvageReply(reply,ledger,region,errors,conversation='',today='',nation='',emirate='',emirates=[]){
+export function salvageReply(reply,ledger,region,errors,conversation='',today='',nation='',emirate='',emirates=[],nations=[]){
  const bad=new Set(errors.map(e=>Number((String(e).match(/^sentence (\d+):/)||[])[1])-1).filter(i=>i>=0));
  if(!bad.size||!Array.isArray(reply?.sentences))return null;
  const keep=reply.sentences.slice(0,ASSISTANT_LIMITS.sentences).filter((_,i)=>!bad.has(i));
  const note={text:'I’ve left out some details I couldn’t confirm from the pages I read.',kind:'general',evidence:[],break:'paragraph'};
- const checked=verifyReply({...reply,sentences:[...keep,note]},ledger,{region,nation,emirate,emirates,conversation,today});
+ const checked=verifyReply({...reply,sentences:[...keep,note]},ledger,{region,nation,nations,emirate,emirates,conversation,today});
  return checked.ok&&keep.length>=2&&checked.sentences.some(s=>s.evs.length)?{...checked,salvaged:true}:null;
 }
 
@@ -503,8 +518,8 @@ export function errorCode(e){
  if(/cites no evidence/.test(m))return 'unsourced-'+((m.match(/contains (\w+)/)||[])[1]||'fact');
  if(/must cite evidence/.test(m))return 'missing-evidence:'+((m.match(/a (\w+) sentence/)||[])[1]||'');
  if((x=m.match(/a (\w+) claim cannot rest on ([\w/]+)/)))return 'source-mismatch:'+x[1]+'<-'+x[2];
- if(/claim for someone in the (UAE|UK) cannot rest/.test(m))return 'wrong-region';if(/claim for someone in .* cannot rest only on pages for/.test(m))return 'wrong-nation';
- if(/cannot rest only on emirate pages for/.test(m))return 'wrong-emirate';if(/another official page .* gives|give different figures/.test(m))return 'official-conflict';
+ if(/claim for someone in the (UAE|UK) cannot rest/.test(m))return 'wrong-region';if(/resting only on nation pages for/.test(m))return 'wrong-nation';if(/jurisdiction is unknown/.test(m))return 'unknown-jurisdiction';
+ if(/resting only on emirate pages for/.test(m))return 'wrong-emirate';if(/another official page .* gives|give different figures/.test(m))return 'official-conflict';
  if(/only state a figure for what the source states it for/.test(m))return 'figure-subject';if(/states a date the cited evidence/.test(m))return 'date-not-in-evidence';
  if(/own site/.test(m))return 'not-own-site';
  if((x=m.match(/: (\w+) ".*" is not in the cited evidence/)))return 'not-in-evidence:'+x[1];
@@ -659,7 +674,7 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
   return {tool:clip(tool,30),status:'unknown-tool'};
  };
 
- const region=personRegion(msgs,profile,memory),nation=personNation(msgs,profile,memory),emirate=personEmirate(msgs,profile,memory),emirates=emiratesNamed(msgs,profile,memory);
+ const region=personRegion(msgs,profile,memory),nation=personNation(msgs,profile,memory),emirate=personEmirate(msgs,profile,memory),emirates=emiratesNamed(msgs,profile,memory),nations=nationsNamed(msgs,profile,memory);
  // The person's own clock (sent by their device), for "tomorrow" and reminder times; the server date if missing.
  const here=cleanNow(localNow)||{date:now().toISOString().slice(0,10)};
  // What the person said in this chat: facts in a drafted message may come from here (their own words) or from the evidence.
@@ -713,12 +728,12 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
    steps.push({action:'ask'});result={kind:'ask',text:q,mem,lang:replyLang(p.language)};break;
   }
   report(rejection?'Rechecking the details against the sources':'Checking every fact against the sources');
-  const checked=verifyReply(p,ledger,{region,nation,emirate,emirates,conversation:said,replyLanguage,today:here.date});
+  const checked=verifyReply(p,ledger,{region,nation,nations,emirate,emirates,conversation:said,replyLanguage,today:here.date});
   if(!checked.ok){steps.push({action:'reply',rejected:checked.errors.length,codes:checked.errors.map(errorCode)});failures.push('reply-rejected');
    // Out of retries (or of steps): keep the sentences that passed and say plainly that some details were left out.
    // A rewrite that fails for exactly the same reasons won't improve with another try: keep what passed now.
    const codes=checked.errors.map(errorCode).sort().join(','),stuck=codes===lastCodes;lastCodes=codes;
-   if(stuck||failures.filter(f=>f==='reply-rejected').length>=3||maxCalls-call<=1){const kept=salvageReply(p,ledger,region,checked.errors,said,here.date,nation,emirate,emirates);if(kept){steps.push({action:'reply',verified:true,salvaged:true});result={kind:'reply',checked:kept,mem,lang:replyLang(p.language)};break}result=null;break}
+   if(stuck||failures.filter(f=>f==='reply-rejected').length>=3||maxCalls-call<=1){const kept=salvageReply(p,ledger,region,checked.errors,said,here.date,nation,emirate,emirates,nations);if(kept){steps.push({action:'reply',verified:true,salvaged:true});result={kind:'reply',checked:kept,mem,lang:replyLang(p.language)};break}result=null;break}
    rejection=checked.errors;continue}
   steps.push({action:'reply',verified:true});result={kind:'reply',checked,mem,lang:replyLang(p.language)};
  }

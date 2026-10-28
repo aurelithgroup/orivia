@@ -6,7 +6,7 @@
    Run: node tests/research-set-uae-uk.test.mjs   (RESULTS=path writes the per-case results as JSON) */
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
-import {runAssistantTurn,personRegion,personNation,personEmirate,emiratesNamed,nationOf,nationOfEvidence,emirateOf,sourceKind,errorCode} from '../workers/orivia-assistant.mjs';
+import {runAssistantTurn,personRegion,personNation,nationsNamed,personEmirate,emiratesNamed,nationOf,nationOfEvidence,emirateOf,sourceKind,errorCode} from '../workers/orivia-assistant.mjs';
 
 // Where the person is, when a message names both countries or a UK nation
 const m=t=>[{role:'user',content:t}];
@@ -14,14 +14,15 @@ assert.equal(personRegion(m('I’m in Sharjah with a UK licence')),'uae');
 assert.equal(personRegion(m('Moving from Dubai to London in January')),'uk');
 assert.equal(personRegion(m('UK or UAE, which is cheaper?')),'','no place to stand on: no region');
 assert.equal(personNation(m('I live in Glasgow now')),'scotland');assert.equal(personNation(m('Edinburgh or Manchester?')),'');
-assert.equal(nationOf('https://www.nhs.uk/x'),'england');assert.equal(nationOf('https://www.nhsinform.scot/x'),'scotland');assert.equal(nationOf('https://www.gov.uk/x'),'','gov.uk speaks for the whole UK');
+assert.equal(nationOf('https://www.nhs.uk/x'),'england');assert.equal(nationOf('https://www.nhsinform.scot/x'),'scotland');assert.equal(nationOf('https://www.gov.uk/x'),'uk','gov.uk speaks for the whole UK');assert.equal(nationOf('https://www.manchester.gov.uk/x'),'local:manchester');assert.equal(nationOf('https://www.police.uk/x'),'unknown','an unrecognised UK host is unknown, not UK-wide');
 assert.equal(sourceKind('https://www.rta.ae/wps/portal/rta/ae/public-transport/Nol-Home'),'government');
-assert.equal(errorCode('sentence 1: a official_rule claim for someone in Scotland cannot rest only on pages for England (x)'),'wrong-nation');
+assert.equal(errorCode("sentence 1: a official_rule claim resting only on nation pages for England must say it is England's rule"),'wrong-nation');assert.equal(errorCode("sentence 1: a official_rule claim can't rest only on pages whose jurisdiction is unknown"),'unknown-jurisdiction');
 assert.equal(personEmirate(m('I live in Sharjah')),'sharjah');assert.equal(personEmirate(m('I’m in Sharjah, which nol card for the Dubai Metro?')),'sharjah','where the person is, not the service named');
 assert.equal(personEmirate(m('Dubai or Sharjah, where is parking cheaper?')),'','two emirates and no location: none');assert.deepEqual(emiratesNamed(m('Dubai or Sharjah, where is parking cheaper?')),['dubai','sharjah']);
-assert.equal(emirateOf('https://u.ae/en/x'),'','federal pages belong to no single emirate');assert.equal(emirateOf('https://spea.shj.ae/x'),'sharjah');
+assert.equal(emirateOf('https://u.ae/en/x'),'federal','listed federal authority');assert.equal(emirateOf('https://www.example-authority.gov.ae/x'),'unknown','an unrecognised UAE host is unknown, not federal');assert.equal(emirateOf('https://spea.shj.ae/x'),'sharjah');
 assert.equal(nationOfEvidence({url:'https://www.gov.uk/x',excerpt:'In England, bands are based on 1991 values.'}),'england');
-assert.equal(nationOfEvidence({url:'https://www.gov.uk/x',excerpt:'Rules differ in England and Scotland.'}),'','a page naming two nations is UK-wide');
+assert.equal(nationOfEvidence({url:'https://www.gov.uk/x',excerpt:'Rules differ in England and Scotland.'}),'uk','a gov.uk page naming two nations is UK-wide');
+assert.equal(personNation(m('I live in Glasgow but I study in Manchester')),'scotland','where the person lives, not where the service is');assert.deepEqual(nationsNamed(m('I live in Glasgow but I study in Manchester')),['scotland','england']);
 
 const page=(title,body)=>`<html><head><title>[Fixture] ${title}</title></head><body><main><h1>${title}</h1>${body}</main></body></html>`;
 const P={
@@ -44,7 +45,11 @@ const P={
  parkDubai:['https://www.rta.ae/wps/portal/rta/ae/drive/parking',page('Paid parking','<p>Public parking is paid by nol card or the mParking text service, from 8am to 10pm.</p>')],
  parkSharjah:['https://www.shj.ae/en/services/public-parking',page('Public parking','<p>Public parking is paid through the Mawqif app or parking machines.</p>')],
  ctaxEngland:['https://www.gov.uk/council-tax-bands',page('Council Tax bands','<p>In England, Council Tax bands are based on property values on 1 April 1991.</p>')],
- ctaxWales:['https://www.gov.wales/council-tax-bands',page('Council Tax bands in Wales','<p>Bands are based on property values on 1 April 2003.</p>')]};
+ ctaxWales:['https://www.gov.wales/council-tax-bands',page('Council Tax bands in Wales','<p>Bands are based on property values on 1 April 2003.</p>')],
+ unknownUae:['https://www.example-authority.gov.ae/en/tenancy',page('Tenancy registration','<p>Tenants must register their tenancy contract within 30 days.</p>')],
+ federalTenancy:['https://u.ae/en/information-and-services/housing/tenancy',page('Tenancy','<p>Each emirate has its own tenancy registration system, such as Ejari in Dubai.</p>')],
+ policeUk:['https://www.police.uk/pu/contact-the-police/report-a-crime-incident/',page('Report a crime','<p>You can report a crime online to your local police force.</p>')],
+ policeScot:['https://www.scotland.police.uk/contact-us/report-a-crime/',page('Report a crime','<p>You can report a crime to Police Scotland online or by calling 101.</p>')]};
 const html=Object.fromEntries(Object.values(P).filter(([,h])=>h).map(([u,h])=>[u,h]));
 
 function world({results=[]}={}){
@@ -165,7 +170,28 @@ const CASES=[
   script:[tools(P.ctaxEngland,P.ctaxWales),
    say(['Council Tax bands are based on property values on 1 April 1991.','official_rule',['E1']]),
    say(['Bands are based on property values on 1 April 2003.','official_rule',['E2']])],
-  check:({out,rejected})=>{assert.ok(rejected.some(r=>/someone in Wales cannot rest only on pages for England/.test(r)),'a gov.uk page that speaks only for England');assert.match(out.reply,/2003/);assert.doesNotMatch(out.reply,/1991/)}},
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/must say it is England's rule.*because the person is in Wales/.test(r)),'a gov.uk page that speaks only for England');assert.match(out.reply,/2003/);assert.doesNotMatch(out.reply,/1991/)}},
+ // An unrecognised UAE host is unknown jurisdiction, never federal.
+ {id:'uae-unknown-jurisdiction-host',area:'jurisdiction',region:'UAE (Sharjah, unlisted authority)',
+  question:'I live in Sharjah. Do I need to register my tenancy contract?',results:[P.unknownUae,P.federalTenancy],
+  script:[tools(P.unknownUae,P.federalTenancy),
+   say(['Tenants must register their tenancy contract within 30 days.','official_rule',['E1']]),
+   say(['Each emirate has its own tenancy registration system, such as Ejari in Dubai.','official_rule',['E2']])],
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/jurisdiction is unknown/.test(r)),'an unlisted authority is not treated as federal');assert.match(out.reply,/Each emirate has its own tenancy registration/);assert.doesNotMatch(out.reply,/within 30 days/)}},
+ // UK nations: where the person lives (Scotland) is not where the service is (England); England's rule must say so.
+ {id:'uk-residence-vs-service-nations',area:'jurisdiction',region:'UK (lives in Scotland, studies in England)',
+  question:'I live in Glasgow but I study in Manchester. How much does a prescription cost?',results:[P.rxEngland,P.rxScotland],
+  script:[tools(P.rxEngland,P.rxScotland),
+   say(['A prescription costs £9.90 for each item.','official_rule',['E1']]),
+   say(['Prescriptions are free for everyone in Scotland.','official_rule',['E2']],['In England, the prescription charge is £9.90 for each item.','official_rule',['E1']])],
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/must say it is England's rule.*because the person is in Scotland/.test(r)),'naming both nations does not switch the check off');assert.match(out.reply,/free for everyone in Scotland/);assert.match(out.reply,/In England, the prescription charge/)}},
+ // An unrecognised UK host (police.uk covers England and Wales) is unknown, not UK-wide.
+ {id:'uk-unknown-jurisdiction-host',area:'jurisdiction',region:'UK (Scotland, unlisted host)',
+  question:'I live in Edinburgh. How do I report a crime?',results:[P.policeUk,P.policeScot],
+  script:[tools(P.policeUk,P.policeScot),
+   say(['You can report a crime online to your local police force.','official_rule',['E1']]),
+   say(['You can report a crime to Police Scotland online or by calling 101.','official_rule',['E2']])],
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/jurisdiction is unknown/.test(r)));assert.match(out.reply,/Police Scotland/)}},
 ];
 
 const results=[];
