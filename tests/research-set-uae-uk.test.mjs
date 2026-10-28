@@ -14,14 +14,14 @@ assert.equal(personRegion(m('I’m in Sharjah with a UK licence')),'uae');
 assert.equal(personRegion(m('Moving from Dubai to London in January')),'uk');
 assert.equal(personRegion(m('UK or UAE, which is cheaper?')),'','no place to stand on: no region');
 assert.equal(personNation(m('I live in Glasgow now')),'scotland');assert.equal(personNation(m('Edinburgh or Manchester?')),'');
-assert.equal(nationOf('https://www.nhs.uk/x'),'england');assert.equal(nationOf('https://www.nhsinform.scot/x'),'scotland');assert.equal(nationOf('https://www.gov.uk/x'),'uk','gov.uk speaks for the whole UK');assert.equal(nationOf('https://www.manchester.gov.uk/x'),'local:manchester');assert.equal(nationOf('https://www.police.uk/x'),'unknown','an unrecognised UK host is unknown, not UK-wide');
+assert.equal(nationOf('https://www.nhs.uk/x'),'england');assert.equal(nationOf('https://www.nhsinform.scot/x'),'scotland');assert.equal(nationOf('https://www.gov.uk/x'),'unknown','gov.uk alone does not make a page UK-wide');assert.equal(nationOf('https://www.gov.uk/student-visa/money'),'uk','UK-wide matters by address');assert.equal(nationOf('https://www.manchester.gov.uk/x'),'local:manchester');assert.equal(nationOf('https://www.police.uk/x'),'unknown','an unrecognised UK host is unknown, not UK-wide');
 assert.equal(sourceKind('https://www.rta.ae/wps/portal/rta/ae/public-transport/Nol-Home'),'government');
-assert.equal(errorCode("sentence 1: a official_rule claim resting only on nation pages for England must say it is England's rule"),'wrong-nation');assert.equal(errorCode("sentence 1: a official_rule claim can't rest only on pages whose jurisdiction is unknown"),'unknown-jurisdiction');
+assert.equal(errorCode("sentence 1: a official_rule claim resting only on nation pages for England must say it is England's rule"),'wrong-nation');assert.equal(errorCode("sentence 1: a official_rule claim rests only on pages that don't establish where they apply (nation unknown)"),'unknown-jurisdiction');
 assert.equal(personEmirate(m('I live in Sharjah')),'sharjah');assert.equal(personEmirate(m('I’m in Sharjah, which nol card for the Dubai Metro?')),'sharjah','where the person is, not the service named');
 assert.equal(personEmirate(m('Dubai or Sharjah, where is parking cheaper?')),'','two emirates and no location: none');assert.deepEqual(emiratesNamed(m('Dubai or Sharjah, where is parking cheaper?')),['dubai','sharjah']);
 assert.equal(emirateOf('https://u.ae/en/x'),'federal','listed federal authority');assert.equal(emirateOf('https://www.example-authority.gov.ae/x'),'unknown','an unrecognised UAE host is unknown, not federal');assert.equal(emirateOf('https://spea.shj.ae/x'),'sharjah');
 assert.equal(nationOfEvidence({url:'https://www.gov.uk/x',excerpt:'In England, bands are based on 1991 values.'}),'england');
-assert.equal(nationOfEvidence({url:'https://www.gov.uk/x',excerpt:'Rules differ in England and Scotland.'}),'uk','a gov.uk page naming two nations is UK-wide');
+assert.equal(nationOfEvidence({url:'https://www.gov.uk/x',excerpt:'Rules differ in England and Scotland.'}),'unknown','naming two nations does not make a page UK-wide');assert.equal(nationOfEvidence({url:'https://www.gov.uk/x',excerpt:'This applies across the UK.'}),'uk','the page says it covers the UK');
 assert.equal(personNation(m('I live in Glasgow but I study in Manchester')),'scotland','where the person lives, not where the service is');assert.deepEqual(nationsNamed(m('I live in Glasgow but I study in Manchester')),['scotland','england']);
 
 const page=(title,body)=>`<html><head><title>[Fixture] ${title}</title></head><body><main><h1>${title}</h1>${body}</main></body></html>`;
@@ -49,6 +49,7 @@ const P={
  unknownUae:['https://www.example-authority.gov.ae/en/tenancy',page('Tenancy registration','<p>Tenants must register their tenancy contract within 30 days.</p>')],
  federalTenancy:['https://u.ae/en/information-and-services/housing/tenancy',page('Tenancy','<p>Each emirate has its own tenancy registration system, such as Ejari in Dubai.</p>')],
  policeUk:['https://www.police.uk/pu/contact-the-police/report-a-crime-incident/',page('Report a crime','<p>You can report a crime online to your local police force.</p>')],
+ housingUk:['https://www.gov.uk/private-renting/tenancy-agreements',page('Tenancy agreements','<p>Your landlord must protect your deposit in a government-approved scheme within 30 days.</p>')],
  policeScot:['https://www.scotland.police.uk/contact-us/report-a-crime/',page('Report a crime','<p>You can report a crime to Police Scotland online or by calling 101.</p>')]};
 const html=Object.fromEntries(Object.values(P).filter(([,h])=>h).map(([u,h])=>[u,h]));
 
@@ -111,9 +112,11 @@ const CASES=[
  {id:'uk-complementary-two-official-levels',area:'complementary sources (not a conflict)',region:'UK',
   question:'I’m a full-time student in Manchester. Do I pay Council Tax?',results:[P.ctaxStudent,P.ctaxCouncil],
   script:[tools(P.ctaxStudent,P.ctaxCouncil),
-   say(['Households where everyone is a full-time student do not have to pay Council Tax.','official_rule',['E1']],['To get the exemption, Manchester asks you to send a student certificate from your university.','official_rule',['E2']])],
-  // Two official pages that add to each other (national rule, council's process) aren't a conflict; both cited.
-  check:({out})=>{assert.equal(out.liveSources.length,2);assert.match(out.reply,/student certificate/)}},
+   say(['Households where everyone is a full-time student do not have to pay Council Tax.','official_rule',['E1']],['To get the exemption, Manchester asks you to send a student certificate from your university.','official_rule',['E2']]),
+   say(['Households where everyone is a full-time student do not have to pay Council Tax.','official_rule',['E1']],['That GOV.UK page doesn’t say which nations it covers, so check with Manchester City Council.','general',[]],['To get the exemption, Manchester asks you to send a student certificate from your university.','official_rule',['E2']])],
+  // Two official pages that add to each other (national rule, council's process) aren't a conflict; both cited. The GOV.UK
+  // page doesn't state its scope, so the reply says so; the council's page counts because the person named Manchester.
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/don't establish where they apply/.test(r)),'a gov.uk page without stated scope is not assumed UK-wide');assert.equal(out.liveSources.length,2);assert.match(out.reply,/doesn’t say which nations it covers/);assert.match(out.reply,/student certificate/)}},
  {id:'uae-followup-fee-after-requirement',area:'follow-up',region:'UAE',
   question:'(follow-up) How much does the Emirates ID cost?',results:[P.eidFee],followUp:true,
   script:[tools(P.eidFee),say(['The Emirates ID fee for residents is AED 100 for each year of validity.','official_rule',['E2']],['You need to apply within 30 days of your residence visa being issued.','official_rule',['E1']])],
@@ -177,7 +180,7 @@ const CASES=[
   script:[tools(P.unknownUae,P.federalTenancy),
    say(['Tenants must register their tenancy contract within 30 days.','official_rule',['E1']]),
    say(['Each emirate has its own tenancy registration system, such as Ejari in Dubai.','official_rule',['E2']])],
-  check:({out,rejected})=>{assert.ok(rejected.some(r=>/jurisdiction is unknown/.test(r)),'an unlisted authority is not treated as federal');assert.match(out.reply,/Each emirate has its own tenancy registration/);assert.doesNotMatch(out.reply,/within 30 days/)}},
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/don't establish where they apply/.test(r)),'an unlisted authority is not treated as federal');assert.match(out.reply,/Each emirate has its own tenancy registration/);assert.doesNotMatch(out.reply,/within 30 days/)}},
  // UK nations: where the person lives (Scotland) is not where the service is (England); England's rule must say so.
  {id:'uk-residence-vs-service-nations',area:'jurisdiction',region:'UK (lives in Scotland, studies in England)',
   question:'I live in Glasgow but I study in Manchester. How much does a prescription cost?',results:[P.rxEngland,P.rxScotland],
@@ -191,7 +194,20 @@ const CASES=[
   script:[tools(P.policeUk,P.policeScot),
    say(['You can report a crime online to your local police force.','official_rule',['E1']]),
    say(['You can report a crime to Police Scotland online or by calling 101.','official_rule',['E2']])],
-  check:({out,rejected})=>{assert.ok(rejected.some(r=>/jurisdiction is unknown/.test(r)));assert.match(out.reply,/Police Scotland/)}},
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/don't establish where they apply/.test(r)));assert.match(out.reply,/Police Scotland/)}},
+ // Unknown scope with no location given stays uncertain: the reply must say so (or the model asks where the person is).
+ {id:'uk-unknown-scope-no-location',area:'jurisdiction',region:'UK (no location given)',
+  question:'How quickly must a landlord protect my deposit?',results:[P.housingUk],
+  script:[tools(P.housingUk),
+   say(['Your landlord must protect your deposit in a government-approved scheme within 30 days.','official_rule',['E1']]),
+   say(['Your landlord must protect your deposit in a government-approved scheme within 30 days.','official_rule',['E1']],['This GOV.UK page doesn’t say whether it applies in every UK nation, so check if you rent in Scotland, Wales or Northern Ireland.','general',[]])],
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/don't establish where they apply/.test(r)),'no location does not make an unknown-scope page certain');assert.match(out.reply,/doesn’t say whether it applies/)}},
+ {id:'uae-unknown-scope-no-location',area:'jurisdiction',region:'UAE (no location given)',
+  question:'Do I need to register my tenancy contract?',results:[P.unknownUae],
+  script:[tools(P.unknownUae),
+   say(['Tenants must register their tenancy contract within 30 days.','official_rule',['E1']]),
+   say(['Tenants must register their tenancy contract within 30 days.','official_rule',['E1']],['This page doesn’t say which emirate it covers, and each emirate has its own system, so it may not apply where you live.','general',[]])],
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/don't establish where they apply/.test(r)));assert.match(out.reply,/may not apply where you live/)}},
 ];
 
 const results=[];

@@ -48,18 +48,26 @@ export function personRegion(msgs,profile,memory){
 }
 const REGION_NAME={uae:'UAE',uk:'UK'};
 /* Whose rules a UK page gives (29 Oct, founder): a nation, the whole UK ('uk'), one council ('local:<name>'), or 'unknown'.
-   An unrecognised host is unknown, never assumed UK-wide. Health, council and some benefit rules differ between nations. */
+   An unrecognised host is unknown, never assumed UK-wide. Health, council and some benefit rules differ between nations.
+   gov.uk alone doesn't make a page UK-wide (many of its guides are for England, or England and Wales): only its pages on
+   matters the UK government runs for the whole UK (immigration, passports, national taxes) count as 'uk' by address;
+   every other gov.uk page takes its scope from its own text (nationOfEvidence) or stays unknown. */
 const NATION_HOST=[[/(^|\.)scot$/i,'scotland'],[/^(www\.)?scotland\.police\.uk$/i,'scotland'],[/(^|\.)wales$/i,'wales'],[/(^|\.)(nidirect\.gov\.uk|hscni\.net|psni\.police\.uk)$/i,'northern-ireland'],
- [/(^|\.)(nhs\.uk|ofsted\.gov\.uk|cqc\.org\.uk)$/i,'england'],[/^(www\.)?(gov\.uk|legislation\.gov\.uk|parliament\.uk|fca\.org\.uk)$/i,'uk']];
-export function nationOf(url){let h='';try{h=new URL(url).hostname.toLowerCase()}catch(_){return ''}
+ [/(^|\.)(nhs\.uk|ofsted\.gov\.uk|cqc\.org\.uk)$/i,'england'],[/^(www\.)?fca\.org\.uk$/i,'uk']];
+const GOVUK_UK_WIDE=/^\/(student-visa|skilled-worker-visa|graduate-visa|visas-immigration|browse\/visas-immigration|evisa|check-uk-visa|uk-visa|biometric-residence-permits|apply-renew-passport|national-insurance|income-tax|tax-codes|self-assessment|vat-registration)(\/|$)/i;
+export function nationOf(url){let u;try{u=new URL(url)}catch(_){return ''}const h=u.hostname.toLowerCase();
  const hit=(NATION_HOST.find(([re])=>re.test(h))||[])[1];if(hit)return hit;
- const council=h.match(/^(?:www\.)?([a-z-]+)\.gov\.uk$/);return council?'local:'+council[1]:regionOf(url)==='uk'?'unknown':''}
+ if(/^(www\.)?gov\.uk$/.test(h))return GOVUK_UK_WIDE.test(u.pathname)?'uk':'unknown';
+ const council=h.match(/^(?:www\.)?([a-z-]+)\.gov\.uk$/);return council&&!/^(legislation|assets)$/.test(council[1])?'local:'+council[1]:regionOf(url)==='uk'?'unknown':''}
 const NATION_WORDS={scotland:/\b(scotland|scottish|edinburgh|glasgow|aberdeen|dundee|inverness|stirling)\b/i,wales:/\b(wales|welsh|cardiff|swansea)\b/i,
  'northern-ireland':/\b(northern ireland|belfast|derry|londonderry)\b/i,england:/\b(england|london|manchester|birmingham|leeds|liverpool|bristol|sheffield|newcastle|nottingham|leicester|oxford|cambridge)\b/i};
 const NATION_NAME={scotland:'Scotland',wales:'Wales','northern-ireland':'Northern Ireland',england:'England'};
-// gov.uk speaks for the whole UK unless the page itself names one nation only ("In England, …"), as many guides do.
+// A page's own words win: "In England, …" makes it England's; "across the UK" makes it UK-wide; anything else keeps the
+// address's answer. A page naming several nations without saying it covers the UK stays as it was (often unknown).
 const NATION_TEXT={england:/\bengland\b/i,scotland:/\bscotland\b/i,wales:/\bwales\b/i,'northern-ireland':/\bnorthern ireland\b/i};
-export function nationOfEvidence(e){const n=nationOf(e?.url);if(n!=='uk')return n;const hit=Object.keys(NATION_TEXT).filter(k=>NATION_TEXT[k].test(String(e?.excerpt||'')));return hit.length===1?hit[0]:'uk'}
+const UK_WIDE_TEXT=/\b(across|throughout|anywhere in|all of) the (UK|United Kingdom)\b|\bUK-wide\b|\bEngland, Scotland, Wales and Northern Ireland\b/i;
+export function nationOfEvidence(e){const n=nationOf(e?.url);if(n!=='uk'&&n!=='unknown')return n;const t=String(e?.excerpt||'');
+ const hit=Object.keys(NATION_TEXT).filter(k=>NATION_TEXT[k].test(t));if(hit.length===1)return hit[0];return UK_WIDE_TEXT.test(t)?'uk':n}
 /* Whose rules a UAE page gives (29 Oct, founder): one emirate, 'federal' (listed federal authorities only), or 'unknown'.
    An unrecognised host is unknown, never assumed federal: a Dubai authority's page is not the rule in Sharjah. */
 const FEDERAL_HOST=/^(www\.)?(u\.ae|government\.ae|uaecabinet\.ae|icp\.gov\.ae|mohre\.gov\.ae|mofa\.gov\.ae|moi\.gov\.ae|mohap\.gov\.ae|moe\.gov\.ae|mof\.gov\.ae|tdra\.gov\.ae|tax\.gov\.ae|centralbank\.ae)$/i;
@@ -97,16 +105,23 @@ const namedIn=map=>(msgs,profile,memory)=>{
 };
 export const personEmirate=livesIn(EMIRATE_WORDS),emiratesNamed=namedIn(EMIRATE_WORDS);
 export const personNation=livesIn(NATION_WORDS),nationsNamed=namedIn(NATION_WORDS);
-/** Whether official pages can back a claim given where the person is and which places the chat names; '' when they can,
- * else the end of the refusal. Only applies once a place is known or named; with none, rules are read at country level. */
-function placeError(fit,text,{lives,named,of,words,name,wide,wideName,unit,conversation}){
- if(!lives&&!named.length)return '';
- const said=String(conversation||'').toLowerCase(),js=fit.map(of);
- if(js.some(j=>j===wide||j===lives||j.startsWith('local:')&&said.includes(j.slice(6).replace(/-/g,' '))))return '';
- const why=lives?'the person is in '+name[lives]:'the conversation names '+named.map(k=>name[k]).join(' and ');
+/** Whether official pages of one country can back a claim, given where the person is and which places the chat names;
+ * '' when they can, else the end of the refusal.
+ * - A page for the whole country, for the person's own place, or for a council the person named: fine.
+ * - A page tied to another place: it must say whose rule it is, once a place is known or named (with none, it's read at
+ *   country level, as the person gave no place to mismatch).
+ * - Pages whose scope is unknown stay uncertain with or without a location (29 Oct, founder): the reply must say so
+ *   (qualified), or the model asks where the person is instead. */
+const QUALIFIER=/\b(doesn['’]t|does not|don['’]t|do not) (say|state|show|make clear) (where|whether|which|if)\b|\b(may|might) (not )?apply\b|\bdepends? on where\b|\bcheck (whether|if) (this|it|they|these) (rules? )?appl(y|ies)\b|\bnot clear (where|whether)\b|قد لا ينطبق|لا توضح|ne précise pas|peut ne pas s['’]appliquer/i;
+function placeError(fit,text,{country,lives,named,of,words,name,wide,wideName,unit,conversation,qualified}){
+ const pages=fit.filter(e=>regionOf(e.url)===country);if(!pages.length)return '';
+ const said=String(conversation||'').toLowerCase(),js=pages.map(of);
+ if(js.some(j=>j===wide||lives&&j===lives||j.startsWith('local:')&&said.includes(j.slice(6).replace(/-/g,' '))))return '';
+ const placed=lives||named.length,why=lives?'the person is in '+name[lives]:placed?'the conversation names '+named.map(k=>name[k]).join(' and '):'';
  const tied=js.find(j=>name[j]);
- if(tied){if(words[tied].test(text))return '';return `resting only on ${unit} pages for ${name[tied]} must say it is ${name[tied]}'s rule ("In ${name[tied]}, …"), because ${why}; for the person's own ${unit} use a ${wideName} page or one for it`}
- return `can't rest only on pages whose jurisdiction is unknown (not a listed ${wideName} or ${unit} authority), because ${why}; use a ${wideName} page or one for the place it applies to, or kind "general" and say whose page it is`;
+ if(tied){if(!placed||words[tied].test(text))return '';return `resting only on ${unit} pages for ${name[tied]} must say it is ${name[tied]}'s rule ("In ${name[tied]}, …"), because ${why}; for the person's own ${unit} use a ${wideName} page or one for it`}
+ if(qualified)return '';
+ return `rests only on pages that don't establish where they apply (${unit} unknown: not a listed ${wideName} or ${unit} authority, and the page doesn't say)${why?', and '+why:''}; add a sentence saying so (for example "This official page doesn't say whether it applies in …; check with …"), use a page that states where it applies, or ask where the person is`;
 }
 // What the chat screen calls each kind (workers/trial-ui/chat.js SOURCE_KIND).
 const CATEGORY={regulator:'official',government:'official',website:'organisation',listing:'directory',community:'community',university:'university',document:'document'};
@@ -297,6 +312,8 @@ export function verifyReply(reply,ledger,{region='',nation='',nations=[],emirate
  const sentences=Array.isArray(reply?.sentences)?reply.sentences.slice(0,ASSISTANT_LIMITS.sentences):[];
  const citedAnywhere=new Set(sentences.flatMap(s=>Array.isArray(s?.evidence)?s.evidence:[]));
  // A disagreement between official pages is explained in words, not only shown by two citations (29 Oct).
+ // An answer from a page of unknown scope says so in words (29 Oct): "this page doesn't say whether it applies in …".
+ const qualified=sentences.some(s=>typeof s?.text==='string'&&QUALIFIER.test(s.text));
  const explained=sentences.some(s=>typeof s?.text==='string'&&/\b(differ|differs|different|disagree|disagrees|conflict|conflicting|inconsistent|don['’]t match|do not match|vary|varies)\b|تختلف|مختلف|متعارض|diff[èe]rent|contradictoire/i.test(s.text));
  if(!sentences.length)errors.push('reply has no sentences');
  const out=[];
@@ -320,8 +337,8 @@ export function verifyReply(reply,ledger,{region='',nation='',nations=[],emirate
    else if(region&&['official_rule','regulatory_status','official_listing'].includes(kind)&&fit.length&&fit.every(e=>regionOf(e.url)&&regionOf(e.url)!==region))
     errors.push(`sentence ${i+1}: a ${kind} claim for someone in the ${REGION_NAME[region]} cannot rest on ${REGION_NAME[regionOf(fit[0].url)]} official pages (use them only as general information, kind "general", and say whose guidance it is)`);
    else if(['official_rule','regulatory_status','official_listing'].includes(kind)&&fit.length){
-    const pe=(!region||region==='uk')&&placeError(fit,text,{lives:nation,named:nations,of:nationOfEvidence,words:NATION_TEXT,name:NATION_NAME,wide:'uk',wideName:'UK-wide',unit:'nation',conversation})
-     ||(!region||region==='uae')&&placeError(fit,text,{lives:emirate,named:emirates,of:e=>emirateOf(e.url),words:EMIRATE_WORDS,name:EMIRATE_NAME,wide:'federal',wideName:'federal',unit:'emirate',conversation});
+    const pe=(!region||region==='uk')&&placeError(fit,text,{country:'uk',lives:nation,named:nations,of:nationOfEvidence,words:NATION_TEXT,name:NATION_NAME,wide:'uk',wideName:'UK-wide',unit:'nation',conversation,qualified})
+     ||(!region||region==='uae')&&placeError(fit,text,{country:'uae',lives:emirate,named:emirates,of:e=>emirateOf(e.url),words:EMIRATE_WORDS,name:EMIRATE_NAME,wide:'federal',wideName:'federal',unit:'emirate',conversation,qualified});
     if(pe)errors.push(`sentence ${i+1}: a ${kind} claim `+pe);
    }
    // Official pages that disagree (28 Oct): another official page that was read, and applies to this person, gives a
@@ -518,7 +535,7 @@ export function errorCode(e){
  if(/cites no evidence/.test(m))return 'unsourced-'+((m.match(/contains (\w+)/)||[])[1]||'fact');
  if(/must cite evidence/.test(m))return 'missing-evidence:'+((m.match(/a (\w+) sentence/)||[])[1]||'');
  if((x=m.match(/a (\w+) claim cannot rest on ([\w/]+)/)))return 'source-mismatch:'+x[1]+'<-'+x[2];
- if(/claim for someone in the (UAE|UK) cannot rest/.test(m))return 'wrong-region';if(/resting only on nation pages for/.test(m))return 'wrong-nation';if(/jurisdiction is unknown/.test(m))return 'unknown-jurisdiction';
+ if(/claim for someone in the (UAE|UK) cannot rest/.test(m))return 'wrong-region';if(/resting only on nation pages for/.test(m))return 'wrong-nation';if(/don't establish where they apply/.test(m))return 'unknown-jurisdiction';
  if(/resting only on emirate pages for/.test(m))return 'wrong-emirate';if(/another official page .* gives|give different figures/.test(m))return 'official-conflict';
  if(/only state a figure for what the source states it for/.test(m))return 'figure-subject';if(/states a date the cited evidence/.test(m))return 'date-not-in-evidence';
  if(/own site/.test(m))return 'not-own-site';
