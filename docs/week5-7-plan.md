@@ -21,6 +21,25 @@ Key dates:
 | Thu 12 Nov | Code freeze, full CI run, pilot candidate for Ina |
 | Fri 13 Nov | The founder reviews a demo that has already been rehearsed (ORI-QA-004) |
 
+## Deployment hold (from 28 October, founder)
+
+**No Orivia Worker is deployed until the hold is lifted.** That includes pilot candidates.
+
+The pilot runs version `abf5b831`, deployed on 25 Oct at 17:37 (+04:00) with the message "Private Midnight Owner candidate cdab3b5". Nobody has confirmed they own it.
+
+- **What we know:**
+  - Ina's last recorded deployment is `00963c9e`, built from source `bb3c60a` (branch `ina/founder-ai-sponsorship-block-3-2026-10-25`).
+  - `cdab3b5` isn't on any pushed branch. No branch mentions `abf5b831` either.
+  - The nearest match is `ina/owner-midnight-dashboard-2026-10-25` (`db8ecc8` "midnight executive owner dashboard", last commit 14:58 on 25 Oct, before the deploy).
+- **Preserve the current pilot.** Don't overwrite it, roll it back or change its settings. Its storage was checked read-only on 28 Oct: `ACCOUNTS_DB` 8cd85061, R2 `orivia-files-pilot`.
+- **To lift the hold:**
+  1. Someone confirms they own `abf5b831`.
+  2. Its source is pushed.
+  3. That source is reconciled with `myorivia-release-plan` (the Ina branches above have 23 commits this branch doesn't have).
+- **Independent development continues on the branch.** Candidate dates in this plan move if the hold lasts past week 5.
+
+**Latency (PERF-001) is paused as well.** Manual testing on the pilot stays paused. When it resumes, three example runs (an ordinary question, fresh research, a follow-up) are reported one by one, with their versions. They're examples, not a reliable benchmark, and no median or p95 is drawn from them.
+
 ## How the plan decides
 
 1. **The demo story sets the priority.** Everything the audience sees works and has been checked on the pilot. The story is drafted by Cleo (see "Demo default"), so development doesn't wait for a script.
@@ -33,7 +52,7 @@ Key dates:
 | Area | Work | Ledger |
 |---|---|---|
 | Pilot isolation (verify, don't rebuild) | Read-only check that the live pilot's `ACCOUNTS_DB` is still `orivia-accounts-pilot-test` (`8cd85061`) and that production is still `orivia-accounts-private`. Then remove the stale "still open" line from `docs/myorivia-release-plan.md`. No new database and no account migration. | |
-| 3 · Performance evidence | Measure real response and audio timings for the three benchmark classes. Fix the nol Gold/Silver mix-up: each claim must match its own quote. | PERF-001 |
+| 3 · Performance evidence | Paused (see Deployment hold). When it resumes: three example runs, reported one by one, not a benchmark. The nol fix was already done on 22 Oct. | PERF-001 |
 | 2 · Speed and streaming | Deliver checked answers earlier, with a fallback when streaming fails. | PERF-004, PERF-006 |
 | 4 · Research intelligence | A fixed set of UAE and UK questions with follow-ups, conflicting sources and failures. Fix whatever fails. | |
 | 30 · Task 4 status | Find the intermittent loading error. Record owner checks and outstanding acceptance accurately. | QA-003 |
