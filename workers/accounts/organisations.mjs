@@ -27,6 +27,19 @@ const text=(v,min,max)=>{if(typeof v!=='string'||v.trim().length<min||v.length>m
 const email=v=>{const s=text(v,3,254).toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))deny(400,'invalid_email');return s};
 async function hash(token){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token))),b=>b.toString(16).padStart(2,'0')).join('')}
 function token(){const bytes=crypto.getRandomValues(new Uint8Array(32));return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('')}
+/* An unexpected failure (28 Oct, Task 4 loading error): it used to come back as 400 "organisation_request_failed", unlogged,
+   so the owner saw "Something went wrong" and nothing could find the request. Now: 500 with a short reference the page shows,
+   and one log line with that reference, the route with identifiers removed, the error type and a coarse cause. Never the
+   error's message text, bodies, names or ids. */
+const CAUSES=[[/no such table/i,'missing-table'],[/no such column|has no column/i,'missing-column'],[/constraint/i,'constraint'],
+ [/D1_|SQLITE_BUSY|SQLITE_LOCKED|timeout|timed out|network|overloaded|reset|unavailable/i,'database-unavailable']];
+export const routeShape=path=>String(path).split('/').map((s,i)=>i<2||/^(api|admin|me|orgs|platform|manage|invitations|public|[a-z]+(-[a-z]+)*)$/.test(s)&&!/\d/.test(s)&&s.length<=24?s:':id').join('/');
+export function unexpectedFailure(e,req,log=console.log){
+ const ref=crypto.randomUUID().replace(/-/g,'').slice(0,10),msg=String(e?.message||''),cause=(CAUSES.find(([re])=>re.test(msg))||[])[1]||'unexpected';
+ let route='';try{route=routeShape(new URL(req.url).pathname)}catch(_){}
+ try{log(JSON.stringify({event:'orivia-organisations-error',ref,method:req.method,route,error:String(e?.name||'Error').slice(0,40),cause}))}catch(_){}
+ return json({error:'organisation_request_failed',ref},500);
+}
 export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.now}={}){
  const url=new URL(req.url),path=url.pathname;if(!organisationRoute(path))return null;
  if(env.ORGANISATIONS_ENABLED!=='1')return json({error:'organisations_unavailable'},503);
@@ -227,7 +240,7 @@ export async function handleOrganisationRequest(req,env,{auth,readJson,now=Date.
   m=path.match(/^\/api\/me\/orgs\/([^/]+)$/);
   if(m){const oid=m[1];if(req.method==='GET'){await member(oid,'space.view');const contactFor=(await settingsOf(oid)).settings.studentContact,today=new Date(clock()).toISOString().slice(0,10);return json({studentContact:contactFor,organisation:publicOrg(await org(oid)),content:(await all("SELECT * FROM organisation_content WHERE org_id=? AND status='published' ORDER BY updated_at DESC LIMIT 100",oid)).map(content).filter(c=>!(c.kind==='update'&&c.details?.showUntil&&c.details.showUntil<today)),progress:await (async()=>{await ensureProgress();const done=(await all('SELECT content_id FROM organisation_progress WHERE org_id=? AND user_id=?',oid,actor)).map(r=>r.content_id);return {available:true,done,private:true}})(),applicationProgress:{available:false,reason:'institution_integration_not_connected'},personalDataShared:false})}if(req.method==='DELETE'){await org(oid);await body([]);const current=await q("SELECT * FROM organisation_memberships WHERE org_id=? AND user_id=? AND status IN ('active','requested')",oid,actor).first();if(!current)deny(404,'membership_not_found');if(current.role==='admin')deny(409,'transfer_admin_first');await db.batch([q("UPDATE organisation_memberships SET status='left',updated_at=? WHERE org_id=? AND user_id=?",clock(),oid,actor),audit(actor,oid,'membership.left',actor)]);return json({left:true,personalDataChanged:false})}}
   deny(404,'not_found');
- }catch(e){if(e instanceof DetailsError)return json({error:e.message},400);return json({error:e instanceof Fault?e.message:e?.message==='body_too_large'?'body_too_large':'organisation_request_failed'},e instanceof Fault?e.status:e?.message==='body_too_large'?413:400)}
+ }catch(e){if(e instanceof DetailsError)return json({error:e.message},400);if(e instanceof Fault)return json({error:e.message},e.status);if(e?.message==='body_too_large')return json({error:'body_too_large'},413);if(e instanceof SyntaxError)return json({error:'organisation_request_failed'},400);return unexpectedFailure(e,req)}
 }
 
 export async function organisationDeletionBlock(db,userId){

@@ -110,7 +110,7 @@ assert.equal((await call(mariam,'/api/account','DELETE',{confirm:'delete my acco
 // Audit failure must roll the content update back; no "changed but unlogged" success.
 sql.exec("CREATE TRIGGER test_audit_failure BEFORE INSERT ON organisation_audit WHEN NEW.action='content.updated' BEGIN SELECT RAISE(ABORT,'fixture audit failure'); END;");
 const before=sql.prepare('SELECT * FROM organisation_content WHERE id=?').get(publicGuide);
-r=await call(mariam,'/api/orgs/'+org+'/content/'+publicGuide,'PATCH',{revision:before.revision,title:'Must not persist'});assert.equal(r.status,400);assert.equal(sql.prepare('SELECT title FROM organisation_content WHERE id=?').get(publicGuide).title,before.title);sql.exec('DROP TRIGGER test_audit_failure');
+r=await call(mariam,'/api/orgs/'+org+'/content/'+publicGuide,'PATCH',{revision:before.revision,title:'Must not persist'});assert.equal(r.status,500,'a database failure is a server failure, not a bad request');assert.match(r.data.ref,/^[a-f0-9]{10}$/,'with a reference');assert.equal(sql.prepare('SELECT title FROM organisation_content WHERE id=?').get(publicGuide).title,before.title);sql.exec('DROP TRIGGER test_audit_failure');
 // Capacity is durable and replay-safe across different people.
 const bilal=await signIn('bilal'),sara=await signIn('sara');r=await call(mariam,'/api/orgs/'+org+'/invitations','POST',{role:'student',maxUses:1});const limited=r.data;
 assert.equal((await call(bilal,'/api/invitations/join','POST',{token:limited.token})).status,201);
@@ -150,7 +150,7 @@ assert.equal((await call(mariam,'/api/me/orgs/'+roleOrg)).status,403);
 assert.equal((await call(editor,'/api/orgs/'+roleOrg+'/requests/'+mariam.id+'/decision','POST',{decision:'approve'})).status,200);
 assert.equal((await call(mariam,'/api/me/orgs/'+roleOrg)).status,200);
 sql.exec("CREATE TRIGGER role_audit_failure BEFORE INSERT ON organisation_audit WHEN NEW.action LIKE 'membership.role_changed_to_%' BEGIN SELECT RAISE(ABORT,'test audit failure'); END");
-assert.equal((await setRole(editor,mariam,'editor','student')).status,400);assert.equal(sql.prepare('SELECT role FROM organisation_memberships WHERE org_id=? AND user_id=?').get(roleOrg,mariam.id).role,'student','audit failure rolls role change back');sql.exec('DROP TRIGGER role_audit_failure');
+assert.equal((await setRole(editor,mariam,'editor','student')).status,500,'a database failure is a server failure');assert.equal(sql.prepare('SELECT role FROM organisation_memberships WHERE org_id=? AND user_id=?').get(roleOrg,mariam.id).role,'student','audit failure rolls role change back');sql.exec('DROP TRIGGER role_audit_failure');
 const beforeStale=stamp;stamp+=900001;assert.equal((await setRole(editor,mariam,'editor','student')).status,403,'old sessions must sign in again');stamp=beforeStale;
 assert.equal(sql.prepare("SELECT COUNT(*) AS n FROM organisation_memberships WHERE org_id=? AND role='admin' AND status='active'").get(roleOrg).n,1);
 assert.equal((await call(mariam,'/api/account/vault')).data.revision,0,'role management never creates a personal vault');
@@ -218,3 +218,13 @@ assert.equal((await call(mariam,'/api/account/vault')).data.revision,0,'role man
  r=await call(aisha,'/api/me/orgs/'+org+'/progress','POST',{contentId:guide,done:false});assert.deepEqual((await call(aisha,'/api/me/orgs/'+org)).data.progress.done,[]);
 }
 console.log('Organisations: real account sessions and SQL, full owner → admin → invite → request → approval → student flow; forged roles, cross-tenant access, stale writes, expiry/revocation, public-code isolation and personal-vault preservation passed. No real email or deployment.');
+
+// Unexpected failures (28 Oct, Task 4 loading error): 500 with a reference, one log line without message text or identifiers.
+{const {unexpectedFailure,routeShape}=await import('../workers/accounts/organisations.mjs');const lines=[];
+ const res=unexpectedFailure(new Error('D1_ERROR: no such table: founder_workflows; user sara@example.test'),new Request('https://p.test/api/admin/orgs/org-7f3a9c/members/u_123?q=Sara',{method:'GET'}),l=>lines.push(l));
+ assert.equal(res.status,500);const body=await res.json();assert.equal(body.error,'organisation_request_failed');assert.match(body.ref,/^[a-f0-9]{10}$/);
+ const ev=JSON.parse(lines[0]);assert.deepEqual(Object.keys(ev).sort(),['cause','error','event','method','ref','route']);assert.equal(ev.ref,body.ref);assert.equal(ev.cause,'missing-table');
+ assert.equal(ev.route,'/api/admin/orgs/:id/members/:id','identifiers removed from the route');assert.doesNotMatch(lines[0],/sara|Sara|u_123|org-7f3a9c|founder_workflows/,'no message text, query or ids in the log');
+ assert.equal(routeShape('/api/me/orgs/northbay-university'),'/api/me/orgs/northbay-university','a plain slug keeps its shape');
+ assert.equal(routeShape('/api/orgs/0f9c2b1e-11aa-4c3d-9e8f-123456789abc/settings'),'/api/orgs/:id/settings');}
+console.log('Unexpected organisation failures: 500 with a reference and a content-free log line.');
