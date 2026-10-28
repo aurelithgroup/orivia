@@ -1,13 +1,13 @@
 {
  "run": "UAE/UK research question set (area 4)",
- "ranAt": "2026-10-28T15:36:09.729Z",
+ "ranAt": "2026-10-28T16:13:54.285Z",
  "sourceRevision": {
-  "commit": "90bc44d513352028b46f129d83f62a4c333b13f3",
+  "commit": "b0b9c647801e2fb94a88263433efd3c9dc71f32e",
   "branch": "myorivia-release-plan",
   "trackedChangesInWorkersOrTests": [],
   "files": {
-   "workers/orivia-assistant.mjs": "82083cccacc91c60962b966ccd54bd16b649e740f6efb362951dc03283d1db07",
-   "tests/research-set-uae-uk.test.mjs": "6709b6bb6426f402246035ea3a08cbc986ea55021a27860fcf4c43dd865bf10f"
+   "workers/orivia-assistant.mjs": "a5e8e6a6428165ee3b2b28127c0d30d9fce4165620d4df51c971ebfd84f71ed2",
+   "tests/research-set-uae-uk.test.mjs": "223490bd4710693ea7a9e94467b6323b17222185a9ff816d6f5b183b116e8bcc"
   }
  },
  "mode": {
@@ -22,11 +22,10 @@
  },
  "whatThisProves": "What the code refuses or keeps for each case, whatever the model proposes. It does not measure how often a real model proposes the wrong reply, or the quality of real search results.",
  "knownLimits": [
-  "Conflicting official pages: only amounts are compared, only for the same capitalised subject, and only across pages that were actually read. A disagreement about a rule, date or eligibility in words is not detected. Two amounts with different scopes (per year vs a two-year card) are treated as a disagreement, so the reply must state both.",
-  "Emirates: only the listed hosts are tied to an emirate (others count as federal), and a conversation naming two emirates sets none, so no emirate check runs then.",
-  "England-only gov.uk pages are recognised only when the page text names England and no other nation.",
-  "A sentence that names the page’s place (\"In Dubai, …\", \"In England, …\") is allowed for someone elsewhere: it says whose rules they are.",
-  "Scripted model: these cases show what the code refuses or keeps, not how often a real model proposes the wrong reply."
+  "Conflicting official pages: only amounts are compared, for the same capitalised subject, across pages that were read. A disagreement about a rule, date or eligibility in words is not detected. The explanation check looks for words such as \"differ\" or \"conflict\" (English, Arabic, French), not whether the explanation is good.",
+  "Emirates: only listed hosts are tied to an emirate; others count as federal. Where the person is comes from residence phrases, the profile city, or a single emirate named; a page from another emirate must then say whose rule it is. A sentence that names the emirate passes even if the rule is irrelevant to the person.",
+  "UK nations: still read from the place named (not separated into residence and service as emirates now are); England-only gov.uk pages are recognised only when the text names England alone.",
+  "Scripted model: these cases show what the code refuses or keeps, not how often a real model proposes the wrong reply. 0 real-provider runs."
  ],
  "foundAndFixed": [
   {
@@ -63,6 +62,16 @@
    "case": "uk-england-only-govuk-for-wales",
    "before": "4a327b2: a gov.uk page that speaks only for England passed for someone in Cardiff",
    "fix": "90bc44d"
+  },
+  {
+   "case": "uae-emirate-service-elsewhere-attributed / uae-emirate-two-named-no-location",
+   "before": "90bc44d: a message naming two emirates set no emirate, so another emirate’s rule passed unattributed",
+   "fix": "b0b9c64"
+  },
+  {
+   "case": "uae-conflict-cited-but-unexplained",
+   "before": "90bc44d: citing both conflicting pages passed without saying they differ",
+   "fix": "b0b9c64"
   }
  ],
  "cases": [
@@ -236,15 +245,43 @@
    ]
   },
   {
-   "id": "uae-emirate-other-emirate-service-allowed",
+   "id": "uae-emirate-service-elsewhere-attributed",
    "area": "jurisdiction",
-   "region": "UAE (Sharjah, Dubai service)",
+   "region": "UAE (lives in Sharjah, Dubai service)",
    "question": "I’m in Sharjah but I’ll use the Dubai Metro. Which nol card should I get?",
    "mode": "scripted model + fixture pages (no provider call)",
    "pass": true,
    "outcome": "reply",
-   "rejectedReplies": 0,
+   "rejectedReplies": 1,
    "sources": [
+    "official"
+   ]
+  },
+  {
+   "id": "uae-emirate-two-named-no-location",
+   "area": "jurisdiction",
+   "region": "UAE (two emirates named)",
+   "question": "Dubai or Sharjah, how is public parking paid?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official",
+    "official"
+   ]
+  },
+  {
+   "id": "uae-conflict-cited-but-unexplained",
+   "area": "conflicting sources",
+   "region": "UAE",
+   "question": "What does an Emirates ID cost?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official",
     "official"
    ]
   },

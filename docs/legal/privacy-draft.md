@@ -88,7 +88,7 @@ They **never** see:
 
 This is checked by the server on every request.
 
-**Progress totals:** universities may see totals, such as how many students marked a guide step done. Totals don't show names. They can't promise anonymity in small groups or when membership changes, so you can keep your own marks private. **[RECONCILE: the progress-privacy design, including any suppression rules, follows the released code.]**
+**Progress totals:** universities **don't** see progress totals at present. Staff see their guides' titles, not how many students marked a step done. Totals are paused until a way of reporting them that can't reveal an individual student is agreed. If they're switched on later, this section will say exactly what staff see, and you'll be able to keep your own marks private. **[RECONCILE against the combined release.]**
 
 ### Shared links
 
@@ -177,7 +177,7 @@ Last updated: **[date of publication]**.
 | Dictation through the browser | `SpeechRecognition` in `workers/trial-ui/chat.js` |
 | Natural voice sends only the reply text | voice copy in `page.html`; `workers/orivia-voice.mjs` |
 | Staff never see chats, files, About me or calendar | `tests/staff-tenant-matrix.test.mjs`; Ina's step 9 review |
-| Progress totals: no anonymity promise; private marks | Ina's step 9 review (22 Oct); `organisation_progress_private` in `workers/accounts/organisations.mjs` (this branch); Ina's branch has its own version (reconcile) |
+| Progress totals paused; no anonymity promise | `organisations.mjs` lines 17-19 on both branches ("no counts until a reporting approach is agreed"); Ina's step 9 review (22 Oct); `organisation_progress_private` in `workers/accounts/organisations.mjs` (this branch); Ina's branch has its own version (reconcile) |
 | Membership rows kept after leaving | Ina's step 9 review (Retention) |
 | Shared links: the copy stays after withdrawal or expiry | `docs/backups.md` (Retention of withdrawn and expired shares) |
 | Feedback kept until reviewed | `docs/backups.md`; `tests/feedback.test.mjs` |
