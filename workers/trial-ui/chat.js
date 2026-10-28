@@ -2202,16 +2202,23 @@ function working(text){
  if(!w){w=document.createElement('div');w.id='working';w.className='bubble assistant';const b=document.createElement('b');b.textContent=uiText('Orivia');const s=document.createElement('span');s.setAttribute('aria-live','polite');s.style.opacity='0.75';s.style.fontStyle='italic';w.append(b,s);$('history').append(w)}
  w.querySelector('span').textContent=(window.OriviaI18n?.progress(text)??String(text)).slice(0,180);if(follow)sc.scrollTop=sc.scrollHeight;
 }
-async function readReply(res,chatId){
+// Strict checked-answer stream reader (Ina 240f2f7): versioned frames in order, the final text equal to the checked text.
+async function readReply(res,chatId,account=globalThis.OriviaAccounts?.epoch||'',timing=null){
+ const current=()=>account===(globalThis.OriviaAccounts?.epoch||'');
  if(!/ndjson/i.test(res.headers.get('content-type')||''))return {r:res,d:await res.json().catch(()=>({}))};
- const reader=res.body.getReader(),dec=new TextDecoder();let buf='',final=null;
- const line=l=>{if(!l.trim())return;let m;try{m=JSON.parse(l)}catch(_){return}
-  if(typeof m.progress==='string'&&store.active===chatId)working(m.progress+'…');
-  if(m.result&&typeof m.result==='object')final={status:Number(m.status)||200,body:m.result}};
- while(true){const {done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;while((i=buf.indexOf('\n'))>=0){line(buf.slice(0,i));buf=buf.slice(i+1)}}
- line(buf);working('');
- if(!final)return {r:{ok:false,status:502},d:{}};
- return {r:{ok:final.status<400,status:final.status},d:final.body};
+ const reader=res.body.getReader(),dec=new TextDecoder('utf-8',{fatal:true});let buf='',final=null,total=0,seq=0,id=null,checked='',versioned=false,finished=false;
+ const line=l=>{if(!l.trim())return;if(l.length>262144)throw Error('stream_size');const m=JSON.parse(l);if(final)throw Error('stream_after_complete');
+  if(m.v!==undefined){versioned=true;if(m.v!==1||m.seq!==seq++||typeof m.requestId!=='string'||!m.requestId||id&&id!==m.requestId)throw Error('stream_frame');id=m.requestId;
+   if((m.seq===0)!==(m.type==='start'))throw Error('stream_start');
+   if(!['start','progress','text','metadata','complete','error'].includes(m.type))throw Error('stream_type');
+   if(m.type==='text'){if(typeof m.text!=='string'||(checked+=m.text).length>16000)throw Error('stream_text');timing?.mark('checkedText')}
+   if(m.type==='error')throw Error('stream_failed');
+   if(m.type==='complete'){if(!m.result||typeof m.result!=='object'||!Number.isInteger(m.status))throw Error('stream_result');if(checked&&checked!==m.result.reply)throw Error('stream_mismatch');final={status:m.status,body:m.result}}
+  }else{if(versioned)throw Error('stream_version');if(m.result&&typeof m.result==='object')final={status:Number(m.status)||200,body:m.result}}
+  if(typeof m.progress==='string'){timing?.mark('progress');if(current()&&store.active===chatId)working(m.progress.slice(0,120)+'…')}
+ };
+ try{while(true){if(!current())throw Error('account_changed');const {done,value}=await reader.read();if(!current())throw Error('account_changed');if(done)break;total+=value.byteLength;if(total>1048576)throw Error('stream_size');buf+=dec.decode(value,{stream:true});let i;while((i=buf.indexOf('\n'))>=0){line(buf.slice(0,i));buf=buf.slice(i+1)}if(buf.length>262144)throw Error('stream_size')}buf+=dec.decode();line(buf);if(!final)throw Error('stream_incomplete');finished=true;return {r:{ok:final.status<400,status:final.status},d:final.body}}
+ finally{if(!finished)await reader.cancel().catch(()=>{});reader.releaseLock();if(current()&&store.active===chatId)working('')}
 }
 // Once per message: the unanswered question goes back in the box and is sent again when the app is in front again.
 let autoResent='';
@@ -2264,7 +2271,7 @@ async function sendChat(e,replay=null){
   // Frozen here, before the request; without the helper it fails closed as unknown.
   const originStamp=window.OriviaReplyOrigin?window.OriviaReplyOrigin.forRequest(sentTurns,{documents:!!(chatDocuments().length&&pilotConsent()),university:!!currentOrgContext()}):{v:2,documents:false,university:false,unknown:true};
   const res=await fetch('/v1/chat',{method:'POST',signal:controller.signal,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/x-ndjson, application/json'},body:JSON.stringify({messages:chatMessages(sentTurns),preferences:{calendarChangeUI:1,now:localNow(),...(currentOrgContext()?{orgContext:{org:currentOrgContext().org,content:currentOrgContext().content}}:{}),...(chatDocuments().length&&pilotConsent()?{documents:documentsForMessage()}:{}),researchContext:currentResearchContext(sentTurns),language:uiLanguage(),style:readSettings().tone,suggestGuides:readSettings().suggest!==false,profile:profileForAI(),guides:guidesForAI(),...(pilotConsent()?{providerConsent:pilotConsent()}:{})}})});
-  const {r,d}=await readReply(res,chatId);
+  const {r,d}=await readReply(res,chatId,accountAtSend);
   if((globalThis.OriviaAccounts?.epoch||'')!==accountAtSend)return;
   if(!r.ok){
    const why=d&&d.error;

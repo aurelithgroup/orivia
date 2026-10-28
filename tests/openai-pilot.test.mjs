@@ -43,3 +43,12 @@ await assert.rejects(()=>failedRecording.run('',{messages}),{code:'pilot-stopped
 const huge=createOpenAIPilot(env,{consented:true,budget,fetcher});
 await assert.rejects(()=>huge.run('',{messages:[{role:'user',content:'x'.repeat(40001)}]}),{code:'input-too-large'});
 console.log('OpenAI pilot gates, no retries, bounded calls, private usage accounting and error handling pass.');
+
+// Cancellation before dispatch is confirmed zero; cancellation after dispatch retains an unknown reservation.
+{const controller=new AbortController();let dispatched=0,recorded;
+ const p=createOpenAIPilot(env,{consented:true,budget:{reserve:async()=>{controller.abort();return 'reserved'},record:async(_,u)=>{recorded=u}},fetcher:async()=>{dispatched++;throw Error('must not dispatch')}});
+ await assert.rejects(()=>p.run('',{messages,signal:controller.signal}),{code:'request-cancelled'});assert.equal(dispatched,0);assert.deepEqual(recorded,{status:'not-dispatched',inputTokens:0,outputTokens:0});}
+{const controller=new AbortController();let recorded,dispatched=0;
+ const p=createOpenAIPilot(env,{consented:true,budget:{reserve:async()=> 'reserved',record:async(_,u)=>{recorded=u}},fetcher:async(_,o)=>{dispatched++;controller.abort();assert.equal(o.signal.aborted,true);throw new DOMException('Cancelled','AbortError')}});
+ await assert.rejects(()=>p.run('',{messages,signal:controller.signal}),{code:'request-cancelled'});assert.equal(dispatched,1);assert.equal(recorded.status,'unknown');assert.equal(recorded.inputTokens,null);}
+console.log('Provider cancellation: confirmed unsent work settles at zero; dispatched cancellation stays uncertain; no fallback or retry inside transport.');

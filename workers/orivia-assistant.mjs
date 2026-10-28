@@ -565,7 +565,9 @@ export function incompleteReply(done,memory,ledger,{metrics,language='en'}={}){
   research:{status:'incomplete',applicability:'needs-review',claims:[],unresolved:[],assistant:true,progress:[],taskContext:{task:{assistant:cleanMemory({...memory,evidence:keep.length?keep:memory?.evidence})}},process:{metrics}}};
 }
 /** Run one assistant turn. ai: the pilot transport (json mode). Returns the chat reply object, or null (caller falls back). */
-export async function runAssistantTurn({messages,profile=null,context=null,localNow=null,orgContext=null,documents=null,document=null,calendarChangeUI=false,replyLanguage='en'},env,{ai,fetcher=fetch,reserve,now=()=>new Date(),maxCalls=12,onProgress=null}={}){
+export async function runAssistantTurn({messages,profile=null,context=null,localNow=null,orgContext=null,documents=null,document=null,calendarChangeUI=false,replyLanguage='en'},env,{ai,fetcher=fetch,reserve,now=()=>new Date(),maxCalls=12,onProgress=null,signal}={}){
+ // Stop (Ina 240f2f7): the person's cancellation reaches every page fetch, search and model call of this turn.
+ const originalFetch=fetcher;fetcher=(url,options={})=>originalFetch(url,{...options,...(signal?{signal:options.signal?AbortSignal.any([signal,options.signal]):signal}:{})});
  // Progress for the chat: written by code from what is actually happening (never the model's private reasoning).
  const report=t=>{try{onProgress&&onProgress(t)}catch(_){}};
  if(!ai?.run)return null;
@@ -644,6 +646,7 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
  const said=msgs.filter(m=>m.role==='user').map(m=>m.content).join('\n');
  let rejection=null,result=null,budgetOut=false,lastCodes='';const done={searches:0,pages:0};
  for(let call=0;call<maxCalls&&!result;call++){
+  signal?.throwIfAborted();
   const left=maxCalls-call,mustReply=left<=2||Date.now()-started>ASSISTANT_LIMITS.wallMs;
   const state={...(docEvs.length?{person_documents:docEvs.map(({d,ev})=>({evidence:ev.id,name:d.name,kind:d.kind||undefined})),person_documents_note:'Photos and files the person sent in this chat, newest first, transcribed by Orivia; they may contain reading mistakes.'}:{}),...(orgEv?{university_context:{evidence:orgEv.id,university:orgContext.orgName,title:orgContext.title,updated:String(orgContext.updatedAt).slice(0,10)}}:{}),reply_language:['en','fr','ar'].includes(replyLanguage)?replyLanguage:'en',today:now().toISOString().slice(0,10),local_now:here,...(profileFacts(profile)?{aboutMe:profileFacts(profile)}:{}),memory:{...memory,evidence:undefined},
    conversation:msgs,
@@ -664,7 +667,7 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
   }
   report(call===0?'Working out what to check':state.instruction?'Writing the answer':(done.pages||done.searches?doneLabel(done)+' · deciding what to check next':'Deciding what to check next'));
   let out;
-  try{out=await timing.measure('modelMs',()=>ai.run(MODEL,{messages:[{role:'system',content:SYSTEM},{role:'user',content:JSON.stringify(state)}],json:true,maxOutputTokens:1800}))}
+  try{out=await timing.measure('modelMs',()=>ai.run(MODEL,{messages:[{role:'system',content:SYSTEM},{role:'user',content:JSON.stringify(state)}],json:true,maxOutputTokens:1800,signal}))}
   catch(e){failures.push('model:'+(e?.code||'error'));if(e?.code==='budget-exhausted')budgetOut=true;break}
   const p=normaliseStep(parseJSON(out?.response??out));
   const calendarProposal=calendarChangeProposal(p.calendarChange);

@@ -41,6 +41,7 @@ export function createOpenAIPilot(env,{consented=false,budget,fetcher=fetch,time
  let calls=0,blocked=false;
  return {async run(_legacyModel,options){
   if(blocked)throw new PilotError('pilot-stopped');
+  if(options?.signal?.aborted)throw new PilotError('request-cancelled');
   if(calls>=LIMITS.calls)throw new PilotError('turn-call-limit');
   const messages=options?.messages;
   if(!Array.isArray(messages)||!messages.length||messages.some(m=>!['system','user','assistant'].includes(m?.role)||typeof m.content!=='string'))throw new PilotError('invalid-messages');
@@ -54,11 +55,13 @@ export function createOpenAIPilot(env,{consented=false,budget,fetcher=fetch,time
   if(!ticket){blocked=true;logCall({call:calls,outcome:'budget-exhausted'});throw new PilotError('budget-exhausted')}
   // 55 s: a written reply (up to 1,800 tokens from the assistant) can take 35-40 s; 20 s timed out live on 18 Oct.
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),Math.max(1,Math.min(55000,timeoutMs)));
+  const cancel=()=>controller.abort();options?.signal?.addEventListener('abort',cancel,{once:true});if(options?.signal?.aborted)cancel();let dispatched=false;
   const started=Date.now();
   let usage={status:'unknown',inputTokens:null,outputTokens:null},log={call:calls,inputBytes};
   try{
    // Workers only accept redirect 'follow' or 'manual' ('error' throws before any request is sent). The API never redirects,
    // so a 3xx is treated as a failure rather than followed.
+   if(options?.signal?.aborted){usage={status:'not-dispatched',inputTokens:0,outputTokens:0};throw new PilotError('request-cancelled')}dispatched=true;
    const response=await fetcher(ENDPOINT,{method:'POST',redirect:'manual',signal:controller.signal,
     headers:{Authorization:'Bearer '+env.OPENAI_API_KEY.trim(),'Content-Type':'application/json'},
     body:JSON.stringify({model:MODEL,input,store:false,max_output_tokens:maxOut,reasoning:{effort:'low'},...(options.json?{text:{format:{type:'json_object'}}}:{})})});
@@ -77,14 +80,14 @@ export function createOpenAIPilot(env,{consented=false,budget,fetcher=fetch,time
    return {response:text};
   }catch(error){
    // Never surface provider bodies, keys, or exception strings containing prompts. Only the exception's class name is logged.
-   const pilot=error instanceof PilotError?error:new PilotError(controller.signal.aborted?'provider-timeout':'provider-unavailable');
+   const pilot=error instanceof PilotError?error:new PilotError(options?.signal?.aborted?'request-cancelled':controller.signal.aborted?'provider-timeout':'provider-unavailable');
    if(!(error instanceof PilotError))log.exception=safe(error?.name)||'unknown';
    log.outcome=pilot.code;
    // One failure stops the provider for the rest of this turn: later steps use the existing rules instead of paying again.
    blocked=true;
    throw pilot;
   }finally{
-   clearTimeout(timer);
+   clearTimeout(timer);options?.signal?.removeEventListener('abort',cancel);log.dispatched=dispatched;
    log.ms=Date.now()-started;log.inputTokens=usage.inputTokens??undefined;log.outputTokens=usage.outputTokens??undefined;
    logCall(log);
    try{await budget.record(ticket,usage)}catch{blocked=true;throw new PilotError('usage-record-failed')}
