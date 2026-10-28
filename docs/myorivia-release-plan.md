@@ -148,7 +148,12 @@ myorivia.app now serves the newest Orivia for everyone. The founder ran the live
 **Still open:**
 
 1. Privacy and Terms links. Ina's drafts stay unpublished until operator details are settled, and the links go into the consent and footer once approved.
-2. The pilot still shares the accounts database with production. The founder's decision was a new, empty test database for the pilot, which isn't done yet. Until then, testing on the pilot touches real accounts.
+2. ~~The pilot still shares the accounts database with production.~~ Done on 22 October: the pilot uses its own test database `orivia-accounts-pilot-test` (`8cd85061`). Checked read-only on 28 October:
+   - pilot `abf5b831` binds `ACCOUNTS_DB` 8cd85061 and R2 `orivia-files-pilot`;
+   - production `b9e32ffc` binds `ACCOUNTS_DB` 3ebd10d5 (`orivia-accounts-private`) and R2 `orivia-files-production`;
+   - only the budget database (`bd521420`) is shared, on purpose, so the money limits apply across both.
 3. The old public address (`orivia-beta…workers.dev`) still runs the previous app for the GitHub Pages website. Pointing it to myorivia.app is the founder's decision and is not done.
 4. Device push stays off until delivery passes a real-device test.
-5. Answer accuracy: a Gold-card price was carried over from the Silver-card quote (nol test). It needs a fix to how claims are matched to their own quote.
+5. ~~Answer accuracy: a Gold-card price was carried over from the Silver-card quote (nol test).~~ Fixed on 22 October:
+   - a figure may only be stated for what its source states it for (`workers/orivia-assistant.mjs`);
+   - regression test `tests/answer-accuracy.test.mjs`, which passes in every pilot candidate since then and was re-run on 28 October.
