@@ -1,12 +1,10 @@
 {
  "run": "UAE/UK research question set (area 4)",
- "ranAt": "2026-10-28T17:03:56.710Z",
+ "ranAt": "2026-10-28T17:06:29.733Z",
  "sourceRevision": {
-  "commit": "119afcbb25b1727c598ed15adb547628a1f719c3",
+  "commit": "c1988a831f8d760715ac440ada290c6f4906ff67",
   "branch": "myorivia-release-plan",
-  "trackedChangesInWorkersOrTests": [
-   "M workers/orivia-assistant.mjs"
-  ],
+  "trackedChangesInWorkersOrTests": [],
   "files": {
    "workers/orivia-assistant.mjs": "a464e35f736e294e7915357c0216e0a4cef6803df1496a1defe3002c52081697",
    "tests/research-set-uae-uk.test.mjs": "cefec31c1864406c54fc62355bb1b9ad231a8ba520445498ec5366000d891462"
@@ -385,5 +383,5 @@
   }
  ],
  "status": "partially complete (area 4): checker gaps closed for the cases below; real-provider quality not measured",
- "ranAtDubai": "2026-10-28T21:03:56.710+04:00"
+ "ranAtDubai": "2026-10-28T21:06:29.733+04:00"
 }
