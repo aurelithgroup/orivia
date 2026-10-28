@@ -32,10 +32,11 @@ The pilot runs version `abf5b831`, deployed on 25 Oct at 17:37 (+04:00) with the
   - `cdab3b5` isn't on any pushed branch. No branch mentions `abf5b831` either.
   - The nearest match is `ina/owner-midnight-dashboard-2026-10-25` (`db8ecc8` "midnight executive owner dashboard", last commit 14:58 on 25 Oct, before the deploy).
 - **Preserve the current pilot.** Don't overwrite it, roll it back or change its settings. Its storage was checked read-only on 28 Oct: `ACCOUNTS_DB` 8cd85061, R2 `orivia-files-pilot`.
+- **Midnight Owner source (`cdab3b5`): unlocated.** It isn't on any pushed branch, and the nearest match above isn't confirmed to be its source.
 - **To lift the hold:**
   1. Someone confirms they own `abf5b831`.
   2. Its source is pushed.
-  3. That source is reconciled with `myorivia-release-plan` (the Ina branches above have 23 commits this branch doesn't have).
+  3. That source is reconciled with `myorivia-release-plan` change by change. The 23 commits on the Ina branches above are reviewed and brought in selectively, never merged wholesale. The pilot is never overwritten to make reconciling easier.
 - **Independent development continues on the branch.** Candidate dates in this plan move if the hold lasts past week 5.
 
 **Latency (PERF-001) is paused as well.** Manual testing on the pilot stays paused. When it resumes, three example runs (an ordinary question, fresh research, a follow-up) are reported one by one, with their versions. They're examples, not a reliable benchmark, and no median or p95 is drawn from them.

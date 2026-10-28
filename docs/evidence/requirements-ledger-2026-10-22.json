@@ -183,8 +183,8 @@
    "status": "in progress",
    "testedSha": "9bb8666",
    "environment": "—",
-   "evidence": "Audit 23 Oct (gap (open)): Keyboard, Arabic and 200% zoom checks run in the browser (docs/evidence/accessibility-browser-2026-10-23.json). Arabic at 200% zoom on a 390px phone still overflows by 27px in one place. To fix.",
-   "dependency": null
+   "evidence": "28 Oct: no overflow measured at 195px (a 390px phone at 200%) on Home, Chat, Library, My Life and Calendar, in Arabic and English; the earlier 27px came from simulating zoom with CSS zoom on a 390px viewport. Narrow-width header and tab rules added; no text reduction. Actual zoom and visual verification still pending.",
+   "dependency": "Real browser zoom and a visual check"
   },
   {
    "id": "ORI-UX-006",
@@ -656,8 +656,8 @@
    "status": "in progress",
    "testedSha": "9bb8666",
    "environment": "—",
-   "evidence": "Timing log (orivia-assistant: steps, model/tool ms) exists; numbers-only tail script ready. 0 live samples: pilot traffic is behind Access and the founder is not asked to test.",
-   "dependency": "Ina or reviewer sends the 3 benchmark classes on the pilot"
+   "evidence": "Timing log (orivia-assistant: steps, outcomes and ms, no content) exists. 0 live samples. Paused by the founder on 28 Oct during the deployment hold; when it resumes, three example runs are reported individually, not as a benchmark.",
+   "dependency": "Deployment hold lifted; manual testing resumed"
   },
   {
    "id": "ORI-PERF-002",

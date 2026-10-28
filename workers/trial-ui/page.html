@@ -381,6 +381,10 @@ a.src strong{font-size:14px;overflow-wrap:anywhere}
 nav.bottom{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end;border-top:1px solid var(--line);background:var(--surface);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
 nav.bottom button{border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:600;padding:4px 2px;min-height:48px;border-radius:12px}
 nav.bottom button svg{width:24px;height:24px}
+/* Large text and 200% zoom (ORI-UX-005): a tab never pushes the page sideways; a label that can't fit is shortened visually (screen readers still read it whole). */
+nav.bottom button{min-width:0}nav.bottom button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* The header at 200% zoom on a phone (about 195 CSS px): tighter gutters, the wordmark becomes just the mark (its button keeps the label "Home"), and items wrap rather than push the page sideways. */
+@media (max-width:300px){.top{padding-inline:10px;gap:6px;flex-wrap:wrap}.top>*{min-width:0}.brand{gap:4px}.brand .wordmark{font-size:0;letter-spacing:0;width:1px;overflow:hidden}}
 nav.bottom button.active{color:var(--ink)}
 nav.bottom button.active svg{color:var(--ink)}
 nav.bottom button.active span::after{content:"";display:block;height:3px;border-radius:2px;background:var(--amber);margin:2px auto 0;width:18px}
