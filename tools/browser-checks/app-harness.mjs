@@ -23,7 +23,7 @@ const day=n=>{const d=new Date();d.setDate(d.getDate()+n);d.setHours(10,0,0,0);r
 const seed=`(function(){try{
  if(localStorage.getItem('harness-seeded'))return;
  localStorage.setItem('orivia-entry-consent','private-entry-v1');sessionStorage.setItem('orivia-ai-private-consent','yes');
- localStorage.setItem('orivia-private-profile-v1',JSON.stringify({city:'Sharjah',who:'Study',place:'Northbay University',use:true}));
+ localStorage.setItem('orivia-private-profile-v1',JSON.stringify({city:'Dubai',who:'Study',place:'Northbay University',use:true}));
  localStorage.setItem('orivia-private-events-v1',JSON.stringify([{id:'e1',title:'Emirates ID biometrics appointment',at:'${day(2)}',alarm:60},{id:'e2',title:'Open a bank account',at:'${day(5)}',alarm:30},{id:'e3',title:'Orientation week starts',at:'${day(9)}',alarm:1440}]));
  const t=Date.now();localStorage.setItem('orivia-private-chats-v1',JSON.stringify({active:'c1',chats:[
   {id:'c1',title:'Emirates ID after arriving',created:t-86400000,updated:t-3600000,turns:[{role:'user',content:'I just arrived in Sharjah on a student visa. When do I need to do my Emirates ID?'},{role:'assistant',content:'After your residence visa is issued, you complete Emirates ID biometrics at an ICP service centre. Your university usually books the medical test and biometrics for you, so check the international office first.\\n\\nNext step: ask the international office which date they booked for your biometrics, and bring your passport and the visa approval.'}]},

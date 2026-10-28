@@ -21,7 +21,7 @@ async function signIn(name){const address=name+"@northbay.example";const sent=aw
 const owner=await signIn('owner'),admin=await signIn('mariam'),student=await signIn('aisha'),other=await signIn('omar');
 sql.prepare('INSERT INTO platform_roles(user_id,role) VALUES (?,?)').run(owner.id,'owner');
 // Two organisations through the real API, then known records.
-let r=await call(owner,'/api/admin/orgs','POST',{name:'Northbay University',slug:'northbay',city:'Sharjah',demo:true});assert.equal(r.status,201);const nb=r.data.organisation.id;
+let r=await call(owner,'/api/admin/orgs','POST',{name:'Northbay University',slug:'northbay',city:'Dubai',demo:true});assert.equal(r.status,201);const nb=r.data.organisation.id;
 r=await call(owner,'/api/admin/orgs','POST',{name:'Riverside College',slug:'riverside',city:'Manchester',demo:true});const rv=r.data.organisation.id;
 const mem=(org,u,role,status)=>sql.prepare('INSERT INTO organisation_memberships(org_id,user_id,role,status,request_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?)').run(org,u,role,status,'req-'+u+org,T,T);
 mem(nb,admin.id,'admin','active');mem(nb,student.id,'student','active');mem(nb,other.id,'student','requested');mem(rv,student.id,'student','active');
@@ -71,7 +71,7 @@ let res=await callRaw(owner,'/api/admin/export/organisations.csv');assert.equal(
 let csv=(await res.text()).replace(/^﻿/,'');const lines=csv.trim().split('\r\n');
 assert.equal(lines[0],'"Name","Web name","City","Demo","Status","Active students","Active staff","Join requests","Published","Drafts","Admin"');
 const evil=lines.find(l=>l.includes('HYPERLINK'));assert.ok(evil.startsWith(`"'=HYPERLINK(""https://evil.example"",`),'formula neutralised and quotes escaped: '+evil);assert.ok(evil.includes(`"'+Dubai"`));
-assert.ok(lines.some(l=>l.startsWith('"Northbay University","northbay","Sharjah","yes","active","1","1","1","2","1","active"')));
+assert.ok(lines.some(l=>l.startsWith('"Northbay University","northbay","Dubai","yes","active","1","1","1","2","1","active"')));
 assert.doesNotMatch(csv,/northbay\.example|aisha|mariam/i,'no names or emails');
 res=await callRaw(owner,'/api/admin/export/organisations.csv?q=river');assert.equal((await res.text()).trim().split('\r\n').length,2,'filter bounds the export');
 const audits=sql.prepare("SELECT actor_id,action,detail FROM platform_audit ORDER BY created_at").all();assert.equal(audits.length,2);

@@ -25,7 +25,7 @@ Pages were fetched on 28 October, between 20:55 and 21:30 Dubai time. The journe
 
 **Arabic:** the two new source names are my translations. **Please check them.**
 
-**For the founder (demo):** this journey is written for Dubai, and the app only offers it to people in Dubai. Sharjah is on the "not Dubai" list in `orivia-guide-offers.mjs`. **The Northbay demo is set in Sharjah, so Aisha wouldn't be offered it.** The options:
+**Demo location (founder, 28 Oct):** the fictional Northbay is now set in **Dubai**, so this guide is offered in the demo. That doesn't approve it: the guide stays **source-checked, awaiting review**, and no review record exists. **Sharjah support is outstanding:** a version for Sharjah or the whole UAE needs content reviewed for Sharjah (health centre and other local details).
 - set the fictional Northbay in Dubai;
 - review a UAE-wide version for Sharjah (the federal steps are the same, but the health centre and other local details differ, and need checking).
 

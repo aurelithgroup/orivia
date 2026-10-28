@@ -25,14 +25,14 @@ const owner=await signIn('owner'),mariam=await signIn('mariam'),editor=await sig
 sql.prepare('INSERT INTO platform_roles(user_id,role) VALUES (?,?)').run(owner.id,'owner');
 assert.equal((await call(null,'/api/admin/orgs')).status,401);
 assert.equal((await call(omar,'/api/admin/orgs','POST',{name:'Fake owner',slug:'fake-owner',city:'Dubai',demo:true})).status,403);
-let r=await call(owner,'/api/admin/orgs','POST',{name:'Northbay University',slug:'northbay',city:'Sharjah',demo:true});assert.equal(r.status,201,JSON.stringify(r));const org=r.data.organisation.id;
+let r=await call(owner,'/api/admin/orgs','POST',{name:'Northbay University',slug:'northbay',city:'Dubai',demo:true});assert.equal(r.status,201,JSON.stringify(r));const org=r.data.organisation.id;
 r=await call(owner,'/api/admin/orgs/'+org+'/admin-invite','POST',{recipientEmail:mariam.email,label:'First admin'});assert.equal(r.status,201,JSON.stringify(r));const adminInvite=r.data;assert.equal(decodeSvg(adminInvite.qrSvg),adminInvite.joinUrl);assert.match(adminInvite.joinUrl,/\/platform#join=/);
 assert.equal((await call(omar,'/api/invitations/join','POST',{token:adminInvite.token})).status,403,'staff invitation cannot be stolen by another verified email');
 r=await call(mariam,'/api/invitations/join','POST',{token:adminInvite.token});assert.equal(r.status,201,JSON.stringify(r));assert.equal(r.data.membership.role,'admin');assert.equal(r.data.membership.status,'active');
 // Campus settings are public, admin-controlled, revision checked, and never infer a destination.
 assert.equal((await call(null,'/api/public/orgs/northbay')).data.arrival,null);
-assert.equal((await call(omar,'/api/orgs/'+org+'/arrival','PATCH',{country:'uae',region:'Sharjah',town:'University City',reason:'study',revision:0})).status,403);
-let campus=await call(mariam,'/api/orgs/'+org+'/arrival','PATCH',{country:'uae',region:'Sharjah',town:'University City',reason:'study',revision:0});assert.equal(campus.status,200,JSON.stringify(campus));assert.equal(campus.data.arrival.revision,1);
+assert.equal((await call(omar,'/api/orgs/'+org+'/arrival','PATCH',{country:'uae',region:'Dubai',town:'Dubai Academic City',reason:'study',revision:0})).status,403);
+let campus=await call(mariam,'/api/orgs/'+org+'/arrival','PATCH',{country:'uae',region:'Dubai',town:'Dubai Academic City',reason:'study',revision:0});assert.equal(campus.status,200,JSON.stringify(campus));assert.equal(campus.data.arrival.revision,1);
 assert.equal((await call(mariam,'/api/orgs/'+org+'/arrival','PATCH',{country:'uk',region:'Dubai',town:'Wrong',reason:'study',revision:1})).status,400);
 assert.equal((await call(mariam,'/api/orgs/'+org+'/arrival','PATCH',{country:'uk',region:'England',town:'Manchester',reason:'study',revision:0})).status,409);
 const publicArrival=await call(null,'/api/public/orgs/northbay');assert.equal(publicArrival.data.arrival.country,'uae');assert.equal(publicArrival.data.arrival.reason,'study');assert.equal(publicArrival.data.grantsMembership,false);assert.ok(!JSON.stringify(publicArrival.data).includes(mariam.email));
@@ -117,7 +117,7 @@ assert.equal((await call(bilal,'/api/invitations/join','POST',{token:limited.tok
 assert.equal((await call(sara,'/api/invitations/join','POST',{token:limited.token})).status,409);
 assert.equal(sql.prepare('SELECT uses FROM organisation_invitations WHERE id=?').get(limited.invitation.id).uses,1);
 // Owner is not inferred from the email domain or from content in the request.
-assert.equal((await call(omar,'/api/admin/orgs','POST',{name:'Northbay',slug:'fake-owner-2',city:'Sharjah',demo:true,platformRole:'owner'})).status,403);
+assert.equal((await call(omar,'/api/admin/orgs','POST',{name:'Northbay',slug:'fake-owner-2',city:'Dubai',demo:true,platformRole:'owner'})).status,403);
 assert.equal((await call(editor,'/api/orgs/'+org+'/members')).status,403);
 assert.equal((await call(mariam,'/api/orgs/'+other+'/invitations/'+limited.invitation.id+'/revoke','POST',{})).status,403);
 // Role management: explicit confirmation, current role, verified target and a remaining admin.

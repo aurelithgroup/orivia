@@ -79,11 +79,18 @@ These must work in this release. They aren't dashboards.
 
 ## Week 6: the student story, then start the university flows (2 – 8 Nov)
 
+**Status (28 Oct): partially complete.** Done locally: Ina's batch 1, source-checked demo journeys, the family overview and deadline reminders. **Outstanding:**
+- UK journeys need guide-catalogue and planning integration (they can't be followed as plans yet);
+- the before-you-move document guide is missing (new content, needs sources and review);
+- the new French and Arabic translations need language review;
+- Sharjah support for the visa guide (the demo is set in Dubai instead);
+- live checks wait for the deployment hold to lift.
+
 **Committed:**
 
 | Area | Work |
 |---|---|
-| 10 · Reviewed Journey content | **Source-checked, not reviewed (28 Oct, `4ba903e`).** The demo routes (`dubai.eid.student`, `edinburgh.evisa`, `edinburgh.counciltax`, `edinburgh.gp`) were checked against live official pages. Federal u.ae sources were added and the police-registration source fixed; the data was regenerated from the app. `docs/journey-review-pack-2026-10-28.md` lists what's supported, what isn't (university-only timings, share code "Free") and what wasn't checked (NHS Inform refused the fetch). **Waiting for Ina's review**, recorded with `tools/review-guide.mjs`; no record has been created. **Open:** the UK journeys aren't in the app's guide catalogue, and Sharjah isn't offered the Dubai visa guide (a demo-story decision). |
+| 10 · Reviewed Journey content | **Source-checked, awaiting review (28 Oct, `4ba903e`). No review record has been created.** The demo routes (`dubai.eid.student`, `edinburgh.evisa`, `edinburgh.counciltax`, `edinburgh.gp`) were checked against live official pages. Federal u.ae sources were added and the police-registration source fixed; the data was regenerated from the app. `docs/journey-review-pack-2026-10-28.md` lists what's supported, what isn't (university-only timings, share code "Free") and what wasn't checked (NHS Inform refused the fetch). **Waiting for Ina's review**, recorded with `tools/review-guide.mjs`; no record has been created. **Demo:** Northbay is now set in Dubai (founder, 28 Oct), so the visa guide is offered; that doesn't approve it. **Outstanding:** Sharjah support, and the UK journeys aren't in the app's guide catalogue. |
 | 11 · Journey and Library continuity | **From Ina's batch 1 (`c42dea0`):** chat to plan continuity (JOURNEY-006), Library views and selected export (LIB-007/009), guide-change review (JOURNEY-008). Her acceptance gates stay open: browser Back/refresh and signed-in pilot checks. |
 | **Family arrival planner** | **Done locally (`6301584`):** Ina's separate family plans (batch 1, JOURNEY-009) plus a family overview in My Life (each person's plans, progress, next step, what needs them, next date). Checked in the local harness. Not checked live (hold). |
 | **Before-you-move document preparation** | **From Ina's batch 1 (JOURNEY-005):** each guide's "What you'll need" becomes ticks saved per plan, and an Ask action prepares a document-recognition question. It doesn't assert any attestation rule. **Not done:** a separate before-you-move guide, which would be new content needing sources and review. |

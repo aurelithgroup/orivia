@@ -8,7 +8,7 @@ const sql=new DatabaseSync(':memory:');sql.exec('PRAGMA foreign_keys=ON;'+['work
 const st=(t,a=[])=>({bind:(...v)=>st(t,v),run:async()=>sql.prepare(t).run(...a),first:async()=>sql.prepare(t).get(...a)||null,all:async()=>({results:sql.prepare(t).all(...a)})});
 // D1-like batch: one transaction; failOn (a regex) makes a matching statement fail mid-batch, to test atomicity.
 const db={failOn:null,prepare:t=>({...st(t),text:t,bind:(...v)=>({...st(t,v),text:t})}),batch:async stmts=>{sql.exec('BEGIN IMMEDIATE');try{const out=[];for(const x of stmts){if(db.failOn&&db.failOn.test(x.text))throw Error('simulated storage failure');out.push(await x.all())}sql.exec('COMMIT');return out}catch(e){sql.exec('ROLLBACK');throw e}}};
-sql.prepare("INSERT INTO organisations(id,slug,name,city,demo,created_at) VALUES ('org-nb','northbay','Northbay University','Sharjah',1,0),('org-rv','riverside','Riverside College','Leeds',1,0)").run();
+sql.prepare("INSERT INTO organisations(id,slug,name,city,demo,created_at) VALUES ('org-nb','northbay','Northbay University','Dubai',1,0),('org-rv','riverside','Riverside College','Leeds',1,0)").run();
 sql.prepare("INSERT INTO connector_sync(org_id,last_success_at) VALUES ('org-nb',NULL)").run();
 // CONNECT-001/006: read-only capabilities; "configured" only with credential AND agreement; fixtures are sandbox.
 assert.deepEqual(CAPABILITIES,['identity','statusTimeline','timetable','ticketLookup']);

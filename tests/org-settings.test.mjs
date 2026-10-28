@@ -17,7 +17,7 @@ async function call(who,path,method='GET',body){const r=await handleAccountReque
 async function signIn(name,domain='northbay.example'){const address=name+'@'+domain;await call(null,'/api/auth/email-otp/send-verification-otp','POST',{email:address,type:'sign-in'});const response=await handleAccountRequest(new Request(origin+'/api/auth/sign-in/email-otp',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','cf-connecting-ip':'198.51.100.'+(++ip%250)},body:JSON.stringify({email:address,otp:outbox.at(-1).otp})}),env,{},{auth});assert.equal(response.status,200);const data=await response.json();return {id:data.user.id,email:address,cookie:response.headers.getSetCookie().map(c=>c.split(';')[0]).join('; ')}}
 const owner=await signIn('owner','orivia.example'),admin=await signIn('mariam'),editor=await signIn('eda'),student=await signIn('aisha'),otherAdmin=await signIn('ravi','riverside.example'),old=await signIn('former');
 sql.prepare('INSERT INTO platform_roles(user_id,role) VALUES (?,?)').run(owner.id,'owner');
-let r=await call(owner,'/api/admin/orgs','POST',{name:'=Northbay University',slug:'northbay',city:'Sharjah',demo:true});const A=r.data.organisation.id;
+let r=await call(owner,'/api/admin/orgs','POST',{name:'=Northbay University',slug:'northbay',city:'Dubai',demo:true});const A=r.data.organisation.id;
 r=await call(owner,'/api/admin/orgs','POST',{name:'Riverside College',slug:'riverside',city:'Manchester',demo:true});const B=r.data.organisation.id;
 const mem=(org,u,role,status='active',at=T)=>sql.prepare('INSERT INTO organisation_memberships(org_id,user_id,role,status,request_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?)').run(org,u.id,role,status,'req-'+u.id+org,at,at);
 mem(A,admin,'admin');mem(A,editor,'editor');mem(A,student,'student');mem(B,otherAdmin,'admin');mem(A,old,'student','removed',T-60*86400000);
@@ -35,11 +35,11 @@ for(const bad of [{records:true},{applicationRecords:{enabled:true}},{progress:{
  const before=others();const res=await patch(admin,bad);assert.equal(res.status,400,JSON.stringify(bad)+' → '+res.status);assert.equal(others(),before)}
 T+=20*60000;assert.equal((await patch(admin,{alerts:{updates:true}})).data.error,'recent_sign_in_required');T-=20*60000;
 // A real change: nothing outside the settings moves (no student's notification choices, memberships, caps or progress).
-let before=others();r=await patch(admin,{alerts:{updates:true,dates:true},studentContact:{label:'Student Hub',email:'hub@northbay.example',phone:'+971 6 555 1234'},owners:{guides:editor.id,members:admin.id},exports:{editorsMayExportCounts:false},retention:{formerMembersDays:90}});
+let before=others();r=await patch(admin,{alerts:{updates:true,dates:true},studentContact:{label:'Student Hub',email:'hub@northbay.example',phone:'+971 4 555 1234'},owners:{guides:editor.id,members:admin.id},exports:{editorsMayExportCounts:false},retention:{formerMembersDays:90}});
 assert.equal(r.status,200,JSON.stringify(r.data));assert.equal(r.data.revision,1);assert.equal(others(),before,'settings never change anything else');
 assert.equal((await patch(admin,{alerts:{updates:false}},0)).status,409,'a stale revision is refused');
 // Students see who to contact; nothing else from the settings.
-r=await call(student,'/api/me/orgs/'+A);assert.deepEqual(r.data.studentContact,{label:'Student Hub',email:'hub@northbay.example',phone:'+971 6 555 1234'});assert.ok(!('owners' in r.data)&&!JSON.stringify(r.data).includes(editor.id));
+r=await call(student,'/api/me/orgs/'+A);assert.deepEqual(r.data.studentContact,{label:'Student Hub',email:'hub@northbay.example',phone:'+971 4 555 1234'});assert.ok(!('owners' in r.data)&&!JSON.stringify(r.data).includes(editor.id));
 // Export: aggregate counts only. Editors need the organisation's permission, and it never opens member identities.
 assert.equal((await call(editor,'/api/orgs/'+A+'/export/counts.csv')).status,403);
 r=await call(admin,'/api/orgs/'+A+'/export/counts.csv');assert.equal(r.status,200);assert.match(r.headers.get('content-type'),/text\/csv/);

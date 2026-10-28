@@ -19,7 +19,7 @@ async function signIn(name){const address=name+"@northbay.example";const sent=aw
 const owner=await signIn('owner'),admin=await signIn('mariam'),student=await signIn('aisha'),other=await signIn('omar'),editorUser=await signIn('daniel');
 sql.prepare('INSERT INTO platform_roles(user_id,role) VALUES (?,?)').run(owner.id,'owner');
 // Two organisations through the real API, then known records.
-let r=await call(owner,'/api/admin/orgs','POST',{name:'Northbay University',slug:'northbay',city:'Sharjah',demo:true});assert.equal(r.status,201);const nb=r.data.organisation.id;
+let r=await call(owner,'/api/admin/orgs','POST',{name:'Northbay University',slug:'northbay',city:'Dubai',demo:true});assert.equal(r.status,201);const nb=r.data.organisation.id;
 r=await call(owner,'/api/admin/orgs','POST',{name:'Riverside College',slug:'riverside',city:'Manchester',demo:true});const rv=r.data.organisation.id;
 const mem=(org,u,role,status)=>sql.prepare('INSERT INTO organisation_memberships(org_id,user_id,role,status,request_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?)').run(org,u,role,status,'req-'+u+org,T,T);
 mem(nb,admin.id,'admin','active');mem(nb,student.id,'student','active');mem(nb,other.id,'student','requested');mem(rv,student.id,'student','active');
