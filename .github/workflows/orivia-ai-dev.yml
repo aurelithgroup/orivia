@@ -162,6 +162,7 @@ jobs:
       - name: "Answer accuracy: figures stay with their subject"
         run: |
           node tests/answer-accuracy.test.mjs
+          node tests/research-set-uae-uk.test.mjs
           node tests/reply-language.test.mjs
           node --experimental-sqlite tests/natural-voice.test.mjs
           node --experimental-sqlite tests/files.test.mjs
