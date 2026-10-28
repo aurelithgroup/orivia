@@ -184,7 +184,7 @@
    "testedSha": "9bb8666",
    "environment": "—",
    "evidence": "28 Oct: no overflow measured at 195px (a 390px phone at 200%) on Home, Chat, Library, My Life and Calendar, in Arabic and English; the earlier 27px came from simulating zoom with CSS zoom on a 390px viewport. Narrow-width header and tab rules added; no text reduction. Actual zoom and visual verification still pending.",
-   "dependency": "Real browser zoom and a visual check"
+   "dependency": "Real browser zoom and a visual check; accessibility review decides the older 10px tab rule (9f9fee1, max-width 360px)"
   },
   {
    "id": "ORI-UX-006",

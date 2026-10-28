@@ -55,11 +55,11 @@ The pilot runs version `abf5b831`, deployed on 25 Oct at 17:37 (+04:00) with the
 | Pilot isolation (verify, don't rebuild) | Read-only check that the live pilot's `ACCOUNTS_DB` is still `orivia-accounts-pilot-test` (`8cd85061`) and that production is still `orivia-accounts-private`. Then remove the stale "still open" line from `docs/myorivia-release-plan.md`. No new database and no account migration. | |
 | 3 · Performance evidence | Paused (see Deployment hold). When it resumes: three example runs, reported one by one, not a benchmark. The nol fix was already done on 22 Oct. | PERF-001 |
 | 2 · Speed and streaming | Deliver checked answers earlier, with a fallback when streaming fails. | PERF-004, PERF-006 |
-| 4 · Research intelligence | A fixed set of UAE and UK questions with follow-ups, conflicting sources and failures. Fix whatever fails. | |
+| 4 · Research intelligence | **Done locally (28 Oct, `4a327b2`):** 11 fixed UAE/UK cases in `tests/research-set-uae-uk.test.mjs`, run with fixtures and a scripted model. Four checker gaps were found and fixed: a neighbouring heading, "outside London", a question naming both countries, and UK nations. 0 real-provider runs (hold). Evidence: `docs/evidence/research-set-2026-10-28.json`. | |
 | 30 · Task 4 status | Find the intermittent loading error. Record owner checks and outstanding acceptance accurately. | QA-003 |
-| 9 · Accessibility (part) | The 27px overflow in Arabic at 200% zoom. | UX-005 |
+| 9 · Accessibility (part) | Pending. No overflow measured at 195px; actual zoom and a visual check are still needed. The accessibility review also decides the older 10px tab rule (`9f9fee1`). | UX-005 |
 | 29 · Costs and recovery | A real monthly cost against AED 250. An R2 backup for files (needs the founder's approval). | BUSINESS-005 |
-| 28 · Privacy and Terms drafts | Complete both drafts against the features as they actually are. Mark each missing operator or contact detail clearly. Ina reviews the wording. | LEGAL-001/002 |
+| 28 · Privacy and Terms drafts | **Drafted (28 Oct):** `docs/legal/privacy-draft.md` and `docs/legal/terms-draft.md`, each statement mapped to its source. Operator gaps are marked `[OPERATOR]`, and facts not yet confirmed are marked `[TO CONFIRM]`. Waiting for Ina's review. | LEGAL-001/002 |
 | Demo story | The draft Northbay story, due Friday 30 Oct. | |
 | Journey content | Start drafting the reviewed UAE/UK guides now, because review takes the longest. | |
 
