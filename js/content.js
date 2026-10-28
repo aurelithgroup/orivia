@@ -282,7 +282,10 @@ DATA.journeys['dubai.eid.student'] = {
   city:'dubai', need:'docs', icon:'docs', pathway:'dubai.eid',
   title:{en:'Your student residence visa and Emirates ID', ar:'تأشيرة الإقامة الدراسية والهوية الإماراتية'},
   doneTitle:{en:'You’re a UAE resident now.', ar:'أصبحت الآن مقيماً في الإمارات.'},
+  // 28 Oct: federal pages first (they apply in every emirate); the universities' pages describe their own process and timings.
   sources:[
+    {name:{en:'UAE government: residence visa for studying in the UAE', ar:'البوابة الرسمية لحكومة الإمارات: تأشيرة الإقامة للدراسة في الدولة'}, url:'https://u.ae/en/information-and-services/visa-and-emirates-id/residence-visas/residence-visa-for-studying-in-the-uae'},
+    {name:{en:'UAE government: general provisions for the residence visa', ar:'البوابة الرسمية لحكومة الإمارات: الأحكام العامة لتأشيرة الإقامة'}, url:'https://u.ae/en/information-and-services/visa-and-emirates-id/Visa-information/general-provisions-for-the-residence-visa'},
     {name:{en:'ICP: Emirates ID status', ar:'الهيئة الاتحادية للهوية والجنسية: حالة الهوية'}, url:ICP_STATUS},
     {name:{en:'University of Birmingham Dubai: student visa', ar:'جامعة برمنغهام دبي: تأشيرة الطالب'}, url:'https://www.birmingham.ac.uk/dubai/study/apply/visas/new'},
     {name:{en:'Murdoch University Dubai: student visa', ar:'جامعة مردوخ دبي: تأشيرة الطالب'}, url:'https://www.murdochuniversitydubai.com/explore/living-dubai/student-visa-options/'},
