@@ -6,7 +6,7 @@
    Run: node tests/research-set-uae-uk.test.mjs   (RESULTS=path writes the per-case results as JSON) */
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
-import {runAssistantTurn,personRegion,personNation,nationOf,sourceKind,errorCode} from '../workers/orivia-assistant.mjs';
+import {runAssistantTurn,personRegion,personNation,personEmirate,nationOf,nationOfEvidence,emirateOf,sourceKind,errorCode} from '../workers/orivia-assistant.mjs';
 
 // Where the person is, when a message names both countries or a UK nation
 const m=t=>[{role:'user',content:t}];
@@ -17,6 +17,10 @@ assert.equal(personNation(m('I live in Glasgow now')),'scotland');assert.equal(p
 assert.equal(nationOf('https://www.nhs.uk/x'),'england');assert.equal(nationOf('https://www.nhsinform.scot/x'),'scotland');assert.equal(nationOf('https://www.gov.uk/x'),'','gov.uk speaks for the whole UK');
 assert.equal(sourceKind('https://www.rta.ae/wps/portal/rta/ae/public-transport/Nol-Home'),'government');
 assert.equal(errorCode('sentence 1: a official_rule claim for someone in Scotland cannot rest only on pages for England (x)'),'wrong-nation');
+assert.equal(personEmirate(m('I live in Sharjah')),'sharjah');assert.equal(personEmirate(m('I’m in Sharjah, which nol card for the Dubai Metro?')),'','two emirates named: none set');
+assert.equal(emirateOf('https://u.ae/en/x'),'','federal pages belong to no single emirate');assert.equal(emirateOf('https://spea.shj.ae/x'),'sharjah');
+assert.equal(nationOfEvidence({url:'https://www.gov.uk/x',excerpt:'In England, bands are based on 1991 values.'}),'england');
+assert.equal(nationOfEvidence({url:'https://www.gov.uk/x',excerpt:'Rules differ in England and Scotland.'}),'','a page naming two nations is UK-wide');
 
 const page=(title,body)=>`<html><head><title>[Fixture] ${title}</title></head><body><main><h1>${title}</h1>${body}</main></body></html>`;
 const P={
@@ -33,7 +37,13 @@ const P={
  ctaxStudent:['https://www.gov.uk/council-tax/discounts-for-full-time-students',page('Council Tax: students','<p>Households where everyone is a full-time student do not have to pay Council Tax.</p>')],
  ctaxCouncil:['https://www.manchester.gov.uk/council-tax-student-exemption',page('Student exemption','<p>To get the student exemption you must send us a student certificate from your university.</p>')],
  evisa:['https://www.gov.uk/evisa',page('Get access to your eVisa','<p>You need to create a UKVI account to access your eVisa.</p><p>Biometric residence permits expired on 31 December 2024.</p>')],
- sharjahVisa:['https://www.sharjah.ac.ae/en/student-visa-fees','']};
+ sharjahVisa:['https://www.sharjah.ac.ae/en/student-visa-fees',''],
+ eidFeeUae:['https://u.ae/en/information-and-services/visa-and-emirates-id/emirates-id-fees',page('Emirates ID fees','<p>The Emirates ID fee is AED 100 for each year of validity.</p>')],
+ eidFeeIcp:['https://icp.gov.ae/en/services/issue-emirates-id',page('Issue an Emirates ID','<p>The Emirates ID fee is AED 270 for a two-year card, including service charges.</p>')],
+ parkDubai:['https://www.rta.ae/wps/portal/rta/ae/drive/parking',page('Paid parking','<p>Public parking is paid by nol card or the mParking text service, from 8am to 10pm.</p>')],
+ parkSharjah:['https://www.shj.ae/en/services/public-parking',page('Public parking','<p>Public parking is paid through the Mawqif app or parking machines.</p>')],
+ ctaxEngland:['https://www.gov.uk/council-tax-bands',page('Council Tax bands','<p>In England, Council Tax bands are based on property values on 1 April 1991.</p>')],
+ ctaxWales:['https://www.gov.wales/council-tax-bands',page('Council Tax bands in Wales','<p>Bands are based on property values on 1 April 2003.</p>')]};
 const html=Object.fromEntries(Object.values(P).filter(([,h])=>h).map(([u,h])=>[u,h]));
 
 function world({results=[]}={}){
@@ -92,11 +102,11 @@ const CASES=[
    say(['You can open an account with just your visa page and passport.','official_rule',['E2']]),
    say(['Banks require a valid Emirates ID to open a personal account.','official_rule',['E1']],['Some people say they opened an account with their visa page and passport, and the bank took the Emirates ID later.','experience',['E2']])],
   check:({out,rejected})=>{assert.ok(rejected.some(r=>/cannot rest on community/.test(r)));const cats=out.liveSources.map(s=>s.category);assert.ok(cats.includes('official')&&cats.includes('community'),'both sides shown, each labelled')}},
- {id:'uk-conflict-two-official-levels',area:'conflicting sources',region:'UK',
+ {id:'uk-complementary-two-official-levels',area:'complementary sources (not a conflict)',region:'UK',
   question:'I’m a full-time student in Manchester. Do I pay Council Tax?',results:[P.ctaxStudent,P.ctaxCouncil],
   script:[tools(P.ctaxStudent,P.ctaxCouncil),
    say(['Households where everyone is a full-time student do not have to pay Council Tax.','official_rule',['E1']],['To get the exemption, Manchester asks you to send a student certificate from your university.','official_rule',['E2']])],
-  // Known limit: the checker can't tell whether a reply left out one side of a disagreement; that stays the model's job.
+  // Two official pages that add to each other (national rule, council's process) aren't a conflict; both cited.
   check:({out})=>{assert.equal(out.liveSources.length,2);assert.match(out.reply,/student certificate/)}},
  {id:'uae-followup-fee-after-requirement',area:'follow-up',region:'UAE',
   question:'(follow-up) How much does the Emirates ID cost?',results:[P.eidFee],followUp:true,
@@ -116,6 +126,28 @@ const CASES=[
    say(['You need to create a UKVI account by 31 January to access your eVisa.','official_rule',['E1']]),
    say(['You need to create a UKVI account to access your eVisa.','official_rule',['E1']],['Biometric residence permits expired on 31 December 2024.','official_rule',['E1']])],
   check:({out,rejected})=>{assert.ok(rejected.some(r=>/states a date the cited evidence doesn't state/.test(r)));assert.doesNotMatch(out.reply,/31 January/)}},
+ {id:'uae-conflict-two-official-fees',area:'conflicting sources',region:'UAE',
+  question:'How much is an Emirates ID?',results:[P.eidFeeUae,P.eidFeeIcp],
+  script:[tools(P.eidFeeUae,P.eidFeeIcp),
+   say(['The Emirates ID fee is AED 100 for each year of validity.','official_rule',['E1']]),
+   say(['The official pages differ on the Emirates ID fee.','general',[]],['One says the Emirates ID fee is AED 100 for each year of validity.','official_rule',['E1']],['Another says the Emirates ID fee is AED 270 for a two-year card, including service charges.','official_rule',['E2']])],
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/another official page \(E2\) gives AED 270/.test(r)),'one figure alone hides the disagreement');assert.match(out.reply,/AED 100/);assert.match(out.reply,/AED 270/);assert.equal(out.liveSources.length,2)}},
+ {id:'uae-emirate-dubai-page-for-sharjah',area:'jurisdiction',region:'UAE (Sharjah)',
+  question:'I live in Sharjah. How do I pay for public parking?',results:[P.parkDubai,P.parkSharjah],
+  script:[tools(P.parkDubai,P.parkSharjah),
+   say(['Public parking is paid by nol card or the mParking text service.','official_rule',['E1']]),
+   say(['Public parking is paid through the Mawqif app or parking machines.','official_rule',['E2']])],
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/emirate pages for Dubai/.test(r)),'a Dubai authority’s rule is not the rule in Sharjah');assert.match(out.reply,/Mawqif/);assert.doesNotMatch(out.reply,/mParking/)}},
+ {id:'uae-emirate-other-emirate-service-allowed',area:'jurisdiction',region:'UAE (Sharjah, Dubai service)',
+  question:'I’m in Sharjah but I’ll use the Dubai Metro. Which nol card should I get?',results:[P.nol],
+  script:[tools(P.nol),say(['The Silver card is AED 25 from any ticket office, including AED 19 e-purse value.','official_rule',['E1']])],
+  check:({out,rejected})=>{assert.equal(rejected.length,0,'Dubai’s own rules for its metro are not refused for a Sharjah resident');assert.match(out.reply,/AED 25/)}},
+ {id:'uk-england-only-govuk-for-wales',area:'jurisdiction',region:'UK (Wales)',
+  question:'I’ve moved to Cardiff. What are Council Tax bands based on?',results:[P.ctaxEngland,P.ctaxWales],
+  script:[tools(P.ctaxEngland,P.ctaxWales),
+   say(['Council Tax bands are based on property values on 1 April 1991.','official_rule',['E1']]),
+   say(['Bands are based on property values on 1 April 2003.','official_rule',['E2']])],
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/someone in Wales cannot rest only on pages for England/.test(r)),'a gov.uk page that speaks only for England');assert.match(out.reply,/2003/);assert.doesNotMatch(out.reply,/1991/)}},
 ];
 
 const results=[];
@@ -135,4 +167,4 @@ if(process.env.RESULTS)writeFileSync(process.env.RESULTS,JSON.stringify(results,
 const failed=results.filter(r=>!r.pass);
 for(const r of results)console.error((r.pass?'ok   ':'FAIL ')+r.id+(r.error?' — '+r.error:''));
 assert.equal(failed.length,0,failed.length+' of '+results.length+' research cases failed');
-console.log(`Research set: ${results.length} UAE/UK cases (requirements, fees, jurisdiction, follow-ups, conflicting sources, unavailable information) pass with fixtures and a scripted model.`);
+console.log(`Research set: ${results.length} UAE/UK cases (requirements, fees, jurisdiction incl. UK nations and emirates, follow-ups, conflicting sources, unavailable information) pass with fixtures and a scripted model.`);

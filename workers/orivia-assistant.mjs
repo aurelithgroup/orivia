@@ -54,12 +54,29 @@ export function nationOf(url){let h='';try{h=new URL(url).hostname.toLowerCase()
 const NATION_WORDS={scotland:/\b(scotland|scottish|edinburgh|glasgow|aberdeen|dundee|inverness|stirling)\b/i,wales:/\b(wales|welsh|cardiff|swansea)\b/i,
  'northern-ireland':/\b(northern ireland|belfast|derry|londonderry)\b/i,england:/\b(england|london|manchester|birmingham|leeds|liverpool|bristol|sheffield|newcastle|nottingham|leicester|oxford|cambridge)\b/i};
 const NATION_NAME={scotland:'Scotland',wales:'Wales','northern-ireland':'Northern Ireland',england:'England'};
-/** Which UK nation the person is dealing with, read like personRegion; '' when none or more than one is named. */
-export function personNation(msgs,profile,memory){
- const look=t=>{const hit=Object.keys(NATION_WORDS).filter(n=>NATION_WORDS[n].test(t));return hit.length===1?hit[0]:''};
- for(const m of [...(msgs||[])].reverse().filter(m=>m.role==='user')){const r=look(String(m.content||''));if(r)return r}
- return look([profile?.city,profile?.movingTo].filter(Boolean).join(' '))||look((memory?.criteria||[]).map(c=>c.value).join(' ')+' '+(memory?.goal||''));
-}
+// gov.uk speaks for the whole UK unless the page itself names one nation only ("In England, …"), as many guides do.
+const NATION_TEXT={england:/\bengland\b/i,scotland:/\bscotland\b/i,wales:/\bwales\b/i,'northern-ireland':/\bnorthern ireland\b/i};
+export function nationOfEvidence(e){const n=nationOf(e?.url);if(n)return n;const hit=Object.keys(NATION_TEXT).filter(k=>NATION_TEXT[k].test(String(e?.excerpt||'')));return hit.length===1?hit[0]:''}
+/* Emirate rules (28 Oct): a Dubai authority's page is not the rule in Sharjah. Federal pages (u.ae, icp.gov.ae, ministries,
+   the Central Bank) belong to no single emirate and count everywhere in the UAE. Only listed hosts are tied to an emirate. */
+const EMIRATE_HOST=[
+ [/(^|\.)(dubai\.ae|rta\.ae|khda\.gov\.ae|dha\.gov\.ae|gdrfad\.gov\.ae|dubaipolice\.gov\.ae|dewa\.gov\.ae|dm\.gov\.ae|dld\.gov\.ae)$/i,'dubai'],
+ [/(^|\.)(shj\.ae|sharjah\.ae|sewa\.gov\.ae|shjpolice\.gov\.ae|srta\.gov\.ae)$/i,'sharjah'],
+ [/(^|\.)(abudhabi\.ae|tamm\.abudhabi|adek\.gov\.ae|doh\.gov\.ae|itc\.gov\.ae|adpolice\.gov\.ae)$/i,'abu-dhabi'],
+ [/(^|\.)ajman\.ae$/i,'ajman'],[/(^|\.)rak\.ae$/i,'ras-al-khaimah'],[/(^|\.)fujairah\.ae$/i,'fujairah'],[/(^|\.)uaq\.ae$/i,'umm-al-quwain']];
+export function emirateOf(url){let h='';try{h=new URL(url).hostname.toLowerCase()}catch(_){return ''}return (EMIRATE_HOST.find(([re])=>re.test(h))||[])[1]||''}
+const EMIRATE_WORDS={dubai:/\bdubai\b/i,sharjah:/\bsharjah\b/i,'abu-dhabi':/\b(abu dhabi|al ain)\b/i,ajman:/\bajman\b/i,'ras-al-khaimah':/\b(ras al khaimah|rak)\b/i,fujairah:/\bfujairah\b/i,'umm-al-quwain':/\b(umm al quwain|uaq)\b/i};
+const EMIRATE_NAME={dubai:'Dubai',sharjah:'Sharjah','abu-dhabi':'Abu Dhabi',ajman:'Ajman','ras-al-khaimah':'Ras Al Khaimah',fujairah:'Fujairah','umm-al-quwain':'Umm Al Quwain'};
+// One place named wins; several, then the one the person is in ("in/to/at <place>"); otherwise none.
+const pickPlace=(t,map,strict)=>{const hit=Object.keys(map).filter(k=>map[k].test(t));if(hit.length<=1)return hit[0]||'';if(strict)return '';
+ const at=hit.filter(k=>atPlace(map[k]).test(t));return at.length===1?at[0]:''};
+const placeFrom=(map,strict=false)=>(msgs,profile,memory)=>{
+ for(const m of [...(msgs||[])].reverse().filter(m=>m.role==='user')){const t=String(m.content||'');if(strict&&Object.keys(map).filter(k=>map[k].test(t)).length>1)return '';const r=pickPlace(t,map,strict);if(r)return r}
+ return pickPlace([profile?.city,profile?.movingTo].filter(Boolean).join(' '),map,strict)||pickPlace((memory?.criteria||[]).map(c=>c.value).join(' ')+' '+(memory?.goal||''),map,strict)};
+/** Which UK nation / which emirate the person is dealing with, read like personRegion; '' when it can't be told.
+ * Emirates are strict: people often live in one and use another's services ("in Sharjah, nol card for the Dubai Metro"),
+ * so a message naming two emirates sets none. */
+export const personNation=placeFrom(NATION_WORDS),personEmirate=placeFrom(EMIRATE_WORDS,true);
 // What the chat screen calls each kind (workers/trial-ui/chat.js SOURCE_KIND).
 const CATEGORY={regulator:'official',government:'official',website:'organisation',listing:'directory',community:'community',university:'university',document:'document'};
 // Which source kinds may support which kind of sentence.
@@ -181,6 +198,20 @@ export function factAboutSubject(f,sentence,evs){
  // When the sentence holding the figure names the subject itself, its own qualifier decides, not a neighbour's.
  return holders.some(i=>{const near=around(i),own=pieces[i].toLowerCase();return named.some(w=>near.includes(w)&&qualified(claim,w)===qualified(own.includes(w)?own:near,w))});
 }
+/** An official page the sentence doesn't cite that gives a different amount for the same named subject, or null.
+ * Only pages that apply to the person (same country, nation and emirate when known) are compared; amounts only. */
+function officialConflict(text,facts,evs,ledger,{region='',nation='',emirate=''}={}){
+ const amounts=facts.filter(f=>f.type==='amount');if(!amounts.length)return null;
+ const named=String(text).split(/\s+/).slice(1).map(w=>w.replace(/[’']s$/u,'').replace(/^[^\p{L}]+|[^\p{L}]+$/gu,'')).filter(w=>/^\p{Lu}\p{Ll}{2,}$/u.test(w)).map(w=>w.toLowerCase());
+ if(!named.length)return null;
+ const said=new Set(amounts.map(f=>digits(f.value)));const cited=new Set(evs.map(e=>e.id));
+ const applies=e=>['government','regulator'].includes(e.kind)&&(!region||!regionOf(e.url)||regionOf(e.url)===region)
+  &&(!nation||!nationOfEvidence(e)||nationOfEvidence(e)===nation)&&(!emirate||!emirateOf(e.url)||emirateOf(e.url)===emirate);
+ for(const e of ledger){if(cited.has(e.id)||!applies(e))continue;
+  for(const piece of String(e.excerpt||'').split(/(?<=[.!?])\s+|\n+/)){const low=piece.toLowerCase();const subject=named.find(w=>low.includes(w));if(!subject)continue;
+   for(const m of piece.matchAll(MONEY)){const d=digits(m[0]);if(d&&!said.has(d))return {id:e.id,value:m[0].trim(),subject:subject[0].toUpperCase()+subject.slice(1)}}}}
+ return null;
+}
 function factInEvidence(f,evs){
  const hay=evs.map(e=>norm(e.excerpt)+' '+norm(e.url)).join(' \n ');
  if(f.type==='phone'){const d=digits(f.value),tail=d.slice(-8),hd=digits(hay);return d.length>=7&&(hd.includes(d)||hd.includes(tail))}
@@ -230,9 +261,10 @@ export function checkedHandoff(reply,ledger,conversation='',replyLanguage='en'){
 }
 
 /** Check a proposed reply against the ledger. Returns {ok, errors[], sentences, orgs, used[]} (cards cleaned, never guessed). */
-export function verifyReply(reply,ledger,{region='',nation='',conversation='',replyLanguage='en',today=''}={}){
+export function verifyReply(reply,ledger,{region='',nation='',emirate='',conversation='',replyLanguage='en',today=''}={}){
  const errors=[],byId=new Map(ledger.map(e=>[e.id,e]));const used=[];const use=e=>{if(!used.includes(e))used.push(e)};
  const sentences=Array.isArray(reply?.sentences)?reply.sentences.slice(0,ASSISTANT_LIMITS.sentences):[];
+ const citedAnywhere=new Set(sentences.flatMap(s=>Array.isArray(s?.evidence)?s.evidence:[]));
  if(!sentences.length)errors.push('reply has no sentences');
  const out=[];
  sentences.forEach((s,i)=>{
@@ -254,8 +286,16 @@ export function verifyReply(reply,ledger,{region='',nation='',conversation='',re
    // A rule or a regulator's status holds only where that government or regulator has authority.
    else if(region&&['official_rule','regulatory_status','official_listing'].includes(kind)&&fit.length&&fit.every(e=>regionOf(e.url)&&regionOf(e.url)!==region))
     errors.push(`sentence ${i+1}: a ${kind} claim for someone in the ${REGION_NAME[region]} cannot rest on ${REGION_NAME[regionOf(fit[0].url)]} official pages (use them only as general information, kind "general", and say whose guidance it is)`);
-   else if(nation&&(!region||region==='uk')&&['official_rule','regulatory_status','official_listing'].includes(kind)&&fit.length&&fit.every(e=>nationOf(e.url)&&nationOf(e.url)!==nation))
-    errors.push(`sentence ${i+1}: a ${kind} claim for someone in ${NATION_NAME[nation]} cannot rest only on pages for ${NATION_NAME[nationOf(fit[0].url)]} (rules differ between UK nations; use a page for ${NATION_NAME[nation]}, or kind "general" and say whose rules they are)`);
+   else if(nation&&(!region||region==='uk')&&['official_rule','regulatory_status','official_listing'].includes(kind)&&fit.length&&fit.every(e=>nationOfEvidence(e)&&nationOfEvidence(e)!==nation)&&!NATION_TEXT[nationOfEvidence(fit[0])].test(text))
+    errors.push(`sentence ${i+1}: a ${kind} claim for someone in ${NATION_NAME[nation]} cannot rest only on pages for ${NATION_NAME[nationOfEvidence(fit[0])]} (rules differ between UK nations; use a page for ${NATION_NAME[nation]}, or kind "general" and say whose rules they are)`);
+   else if(emirate&&(!region||region==='uae')&&['official_rule','regulatory_status','official_listing'].includes(kind)&&fit.length&&fit.every(e=>emirateOf(e.url)&&emirateOf(e.url)!==emirate)&&!EMIRATE_WORDS[emirateOf(fit[0].url)].test(text))
+    errors.push(`sentence ${i+1}: a ${kind} claim for someone in ${EMIRATE_NAME[emirate]} cannot rest only on emirate pages for ${EMIRATE_NAME[emirateOf(fit[0].url)]} (each emirate sets its own rules; use a federal page or one for ${EMIRATE_NAME[emirate]}, or kind "general" and say whose rules they are)`);
+   // Official pages that disagree (28 Oct): another official page that was read, and applies to this person, gives a
+   // different amount for the same subject. Stating one of them alone hides the disagreement: cite both and say they differ.
+   if(evs.length&&fit.length&&['official_rule','regulatory_status','official_listing'].includes(kind)){
+    const other=officialConflict(text,facts,evs,ledger,{region,nation,emirate});
+    if(other&&!citedAnywhere.has(other.id))errors.push(`sentence ${i+1}: another official page (${other.id}) gives ${other.value} for ${other.subject}, not what this sentence states; say that the official pages differ, cite both, and don't present one figure as settled`);
+   }
    if(kind==='organisation_fact'&&evs.length&&!evs.some(e=>['government','regulator'].includes(e.kind)||ownSite(e,s.org||'')||ownSite(e,orgNamesIn(text,reply))))errors.push(`sentence ${i+1}: an organisation fact must come from that organisation's own site (set "org" to its name) or an official page. If you only have a listing or another site, use kind "listing" (it proves only that the name is listed) or remove the sentence`);
   }
   for(const f of facts)if(evs.length&&!factInEvidence(f,evs))errors.push(`sentence ${i+1}: ${f.type} "${f.value}" is not in the cited evidence`);
@@ -299,12 +339,12 @@ export function verifyReply(reply,ledger,{region='',nation='',conversation='',re
 
 /** The verified part of a rejected reply: the failing sentences removed and a plain note added, or null if too little
  * is left to be useful (fewer than 2 sentences, or nothing sourced). Never edits a sentence, only drops it. */
-export function salvageReply(reply,ledger,region,errors,conversation='',today='',nation=''){
+export function salvageReply(reply,ledger,region,errors,conversation='',today='',nation='',emirate=''){
  const bad=new Set(errors.map(e=>Number((String(e).match(/^sentence (\d+):/)||[])[1])-1).filter(i=>i>=0));
  if(!bad.size||!Array.isArray(reply?.sentences))return null;
  const keep=reply.sentences.slice(0,ASSISTANT_LIMITS.sentences).filter((_,i)=>!bad.has(i));
  const note={text:'I’ve left out some details I couldn’t confirm from the pages I read.',kind:'general',evidence:[],break:'paragraph'};
- const checked=verifyReply({...reply,sentences:[...keep,note]},ledger,{region,nation,conversation,today});
+ const checked=verifyReply({...reply,sentences:[...keep,note]},ledger,{region,nation,emirate,conversation,today});
  return checked.ok&&keep.length>=2&&checked.sentences.some(s=>s.evs.length)?{...checked,salvaged:true}:null;
 }
 
@@ -444,6 +484,7 @@ export function errorCode(e){
  if(/must cite evidence/.test(m))return 'missing-evidence:'+((m.match(/a (\w+) sentence/)||[])[1]||'');
  if((x=m.match(/a (\w+) claim cannot rest on ([\w/]+)/)))return 'source-mismatch:'+x[1]+'<-'+x[2];
  if(/claim for someone in the (UAE|UK) cannot rest/.test(m))return 'wrong-region';if(/claim for someone in .* cannot rest only on pages for/.test(m))return 'wrong-nation';
+ if(/cannot rest only on emirate pages for/.test(m))return 'wrong-emirate';if(/another official page .* gives/.test(m))return 'official-conflict';
  if(/only state a figure for what the source states it for/.test(m))return 'figure-subject';if(/states a date the cited evidence/.test(m))return 'date-not-in-evidence';
  if(/own site/.test(m))return 'not-own-site';
  if((x=m.match(/: (\w+) ".*" is not in the cited evidence/)))return 'not-in-evidence:'+x[1];
@@ -596,7 +637,7 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
   return {tool:clip(tool,30),status:'unknown-tool'};
  };
 
- const region=personRegion(msgs,profile,memory),nation=personNation(msgs,profile,memory);
+ const region=personRegion(msgs,profile,memory),nation=personNation(msgs,profile,memory),emirate=personEmirate(msgs,profile,memory);
  // The person's own clock (sent by their device), for "tomorrow" and reminder times; the server date if missing.
  const here=cleanNow(localNow)||{date:now().toISOString().slice(0,10)};
  // What the person said in this chat: facts in a drafted message may come from here (their own words) or from the evidence.
@@ -649,12 +690,12 @@ export async function runAssistantTurn({messages,profile=null,context=null,local
    steps.push({action:'ask'});result={kind:'ask',text:q,mem,lang:replyLang(p.language)};break;
   }
   report(rejection?'Rechecking the details against the sources':'Checking every fact against the sources');
-  const checked=verifyReply(p,ledger,{region,nation,conversation:said,replyLanguage,today:here.date});
+  const checked=verifyReply(p,ledger,{region,nation,emirate,conversation:said,replyLanguage,today:here.date});
   if(!checked.ok){steps.push({action:'reply',rejected:checked.errors.length,codes:checked.errors.map(errorCode)});failures.push('reply-rejected');
    // Out of retries (or of steps): keep the sentences that passed and say plainly that some details were left out.
    // A rewrite that fails for exactly the same reasons won't improve with another try: keep what passed now.
    const codes=checked.errors.map(errorCode).sort().join(','),stuck=codes===lastCodes;lastCodes=codes;
-   if(stuck||failures.filter(f=>f==='reply-rejected').length>=3||maxCalls-call<=1){const kept=salvageReply(p,ledger,region,checked.errors,said,here.date,nation);if(kept){steps.push({action:'reply',verified:true,salvaged:true});result={kind:'reply',checked:kept,mem,lang:replyLang(p.language)};break}result=null;break}
+   if(stuck||failures.filter(f=>f==='reply-rejected').length>=3||maxCalls-call<=1){const kept=salvageReply(p,ledger,region,checked.errors,said,here.date,nation,emirate);if(kept){steps.push({action:'reply',verified:true,salvaged:true});result={kind:'reply',checked:kept,mem,lang:replyLang(p.language)};break}result=null;break}
    rejection=checked.errors;continue}
   steps.push({action:'reply',verified:true});result={kind:'reply',checked,mem,lang:replyLang(p.language)};
  }
