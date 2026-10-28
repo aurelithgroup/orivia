@@ -5,6 +5,13 @@
 > **Public launch blocker.** The `[OPERATOR: …]` gaps block any public launch of this release; Terms are never published with them left open.
 >
 > The liability and governing-law sections need someone qualified to review them before publication.
+>
+> **Branch-specific, pending reconciliation.** This draft describes `myorivia-release-plan` only. Ina's branch `ina/founder-ai-sponsorship-block-3-2026-10-25` already implements things this branch doesn't have yet:
+> - account-scoped data requests with owner replies (`/api/me/data-requests`, `/api/admin/privacy-requests`);
+> - member-bound sponsored placements with disclosure validation (`49bad94`, `2c14591`);
+> - its own version of the progress-sharing controls.
+>
+> Where this draft says something isn't available, it means **on this branch**, not in the product. Before publishing, the draft is reconciled with whichever code is actually released.
 
 ---
 
@@ -98,7 +105,7 @@ Last updated: **[date of publication]**.
 | Opening a page isn't proof | ORI-LEGAL-005 |
 | University guidance labelled as theirs | "University instruction (Northbay, updated …)" in `docs/connected-orivia-plan.md` |
 | No records integration | `applicationProgress.available=false` (Ina's step 9 review); ORI-STUDENT-003 is blocked |
-| Sponsored content labelled | ORI-BUSINESS-003; sponsor disclosure validation on Ina's branch (`2c14591`), **not yet in this branch** |
+| Sponsored content labelled | ORI-BUSINESS-003. Implemented on Ina's branch (`49bad94`, `2c14591`); this branch has none yet. The wording follows the released implementation (reconcile) |
 | Join by invitation, with staff approval | `/join/<org>` flow, `docs/myorivia-release-plan.md` |
 | Limits on replies, searches and emails | `docs/myorivia-release-plan.md` (money limits, search caps, email caps) |
 | Free for now | billing is deferred (ORI-BUSINESS-004) |

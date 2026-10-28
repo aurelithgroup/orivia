@@ -6,6 +6,13 @@
 >
 > `[TO CONFIRM: …]` marks a fact I couldn't verify in the code.
 >
+> **Branch-specific, pending reconciliation.** This draft describes `myorivia-release-plan` only. Ina's branch `ina/founder-ai-sponsorship-block-3-2026-10-25` already implements things this branch doesn't have yet:
+> - account-scoped data requests with owner replies (`/api/me/data-requests`, `/api/admin/privacy-requests`);
+> - member-bound sponsored placements with disclosure validation (`49bad94`, `2c14591`);
+> - its own version of the progress-sharing controls.
+>
+> Where this draft says something isn't available, it means **on this branch**, not in the product. Before publishing, the draft is reconciled with whichever code is actually released.
+>
 > The source for each statement is listed in "Where each statement comes from" at the end.
 
 ---
@@ -81,7 +88,7 @@ They **never** see:
 
 This is checked by the server on every request.
 
-**Progress totals:** universities may see totals, such as how many students marked a guide step done. Totals don't show names. They can't promise anonymity in small groups or when membership changes, so you can keep your own marks private.
+**Progress totals:** universities may see totals, such as how many students marked a guide step done. Totals don't show names. They can't promise anonymity in small groups or when membership changes, so you can keep your own marks private. **[RECONCILE: the progress-privacy design, including any suppression rules, follows the released code.]**
 
 ### Shared links
 
@@ -139,13 +146,13 @@ Device alerts are **off** on myorivia.app for now. If they're switched on later,
 - **Checking it's you:** we confirm it's your account before acting.
 - **Response time:** **[OPERATOR: response time]**.
 
-The data-request route itself is still to be built (ORI-LEGAL-004).
+On this branch, requests go to the contact above. Ina's branch adds an in-app data request with owner replies; once that is reconciled into the release, this section describes it instead (ORI-LEGAL-004).
 
 **Complaints:** **[OPERATOR: the applicable data protection authority, depending on where the operator is established and who the users are]**.
 
 ## Children
 
-**[OPERATOR DECISION: minimum age, and whether a parent can use Orivia for a child.]** Orivia doesn't yet adjust content by age (ORI-HOME-009).
+**[OPERATOR DECISION: minimum age, and whether a parent can use Orivia for a child.]** This branch doesn't adjust content by age (ORI-HOME-009) **[TO CONFIRM against the released code]**.
 
 ## Changes
 
@@ -170,7 +177,7 @@ Last updated: **[date of publication]**.
 | Dictation through the browser | `SpeechRecognition` in `workers/trial-ui/chat.js` |
 | Natural voice sends only the reply text | voice copy in `page.html`; `workers/orivia-voice.mjs` |
 | Staff never see chats, files, About me or calendar | `tests/staff-tenant-matrix.test.mjs`; Ina's step 9 review |
-| Progress totals: no anonymity promise; private marks | Ina's step 9 review (22 Oct) |
+| Progress totals: no anonymity promise; private marks | Ina's step 9 review (22 Oct); `organisation_progress_private` in `workers/accounts/organisations.mjs` (this branch); Ina's branch has its own version (reconcile) |
 | Membership rows kept after leaving | Ina's step 9 review (Retention) |
 | Shared links: the copy stays after withdrawal or expiry | `docs/backups.md` (Retention of withdrawn and expired shares) |
 | Feedback kept until reviewed | `docs/backups.md`; `tests/feedback.test.mjs` |

@@ -1,13 +1,13 @@
 {
  "run": "UAE/UK research question set (area 4)",
- "ranAt": "2026-10-28T15:15:23.177Z",
+ "ranAt": "2026-10-28T15:36:09.729Z",
  "sourceRevision": {
-  "commit": "4a327b2548e404df13b9d54a03e78315879e3c53",
+  "commit": "90bc44d513352028b46f129d83f62a4c333b13f3",
   "branch": "myorivia-release-plan",
   "trackedChangesInWorkersOrTests": [],
   "files": {
-   "workers/orivia-assistant.mjs": "65dcfd7dcf82fc972bf1daebe9272deb8c93dd025cb5126a69d027a4383e4619",
-   "tests/research-set-uae-uk.test.mjs": "be534f9045debb4831bbcac247af368e339c58bd1dbdbd0d9d963c97b13eec22"
+   "workers/orivia-assistant.mjs": "82083cccacc91c60962b966ccd54bd16b649e740f6efb362951dc03283d1db07",
+   "tests/research-set-uae-uk.test.mjs": "6709b6bb6426f402246035ea3a08cbc986ea55021a27860fcf4c43dd865bf10f"
   }
  },
  "mode": {
@@ -22,9 +22,11 @@
  },
  "whatThisProves": "What the code refuses or keeps for each case, whatever the model proposes. It does not measure how often a real model proposes the wrong reply, or the quality of real search results.",
  "knownLimits": [
-  "A reply that cites only one side of a disagreement between official sources still passes (uk-conflict-two-official-levels); surfacing conflicts stays the model’s job.",
-  "Jurisdiction inside the UAE (one emirate’s rule for another) is checked only for schools (SPEA vs others), not in general.",
-  "Nation detection uses page addresses only: gov.uk pages that apply to England alone are treated as UK-wide."
+  "Conflicting official pages: only amounts are compared, only for the same capitalised subject, and only across pages that were actually read. A disagreement about a rule, date or eligibility in words is not detected. Two amounts with different scopes (per year vs a two-year card) are treated as a disagreement, so the reply must state both.",
+  "Emirates: only the listed hosts are tied to an emirate (others count as federal), and a conversation naming two emirates sets none, so no emirate check runs then.",
+  "England-only gov.uk pages are recognised only when the page text names England and no other nation.",
+  "A sentence that names the page’s place (\"In Dubai, …\", \"In England, …\") is allowed for someone elsewhere: it says whose rules they are.",
+  "Scripted model: these cases show what the code refuses or keeps, not how often a real model proposes the wrong reply."
  ],
  "foundAndFixed": [
   {
@@ -46,6 +48,21 @@
    "case": "uk-jurisdiction-prescriptions-scotland",
    "before": "52a3144: an England-only NHS charge was accepted as the rule for someone in Glasgow",
    "fix": "4a327b2"
+  },
+  {
+   "case": "uae-conflict-two-official-fees",
+   "before": "4a327b2: a reply citing only one of two official pages with different Emirates ID fees passed",
+   "fix": "90bc44d"
+  },
+  {
+   "case": "uae-emirate-dubai-page-for-sharjah",
+   "before": "4a327b2: a Dubai (RTA) parking rule passed as the rule for someone in Sharjah",
+   "fix": "90bc44d"
+  },
+  {
+   "case": "uk-england-only-govuk-for-wales",
+   "before": "4a327b2: a gov.uk page that speaks only for England passed for someone in Cardiff",
+   "fix": "90bc44d"
   }
  ],
  "cases": [
@@ -129,8 +146,8 @@
    ]
   },
   {
-   "id": "uk-conflict-two-official-levels",
-   "area": "conflicting sources",
+   "id": "uk-complementary-two-official-levels",
+   "area": "complementary sources (not a conflict)",
    "region": "UK",
    "question": "I’m a full-time student in Manchester. Do I pay Council Tax?",
    "mode": "scripted model + fixture pages (no provider call)",
@@ -190,6 +207,60 @@
    "sources": [
     "official"
    ]
+  },
+  {
+   "id": "uae-conflict-two-official-fees",
+   "area": "conflicting sources",
+   "region": "UAE",
+   "question": "How much is an Emirates ID?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official",
+    "official"
+   ]
+  },
+  {
+   "id": "uae-emirate-dubai-page-for-sharjah",
+   "area": "jurisdiction",
+   "region": "UAE (Sharjah)",
+   "question": "I live in Sharjah. How do I pay for public parking?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official"
+   ]
+  },
+  {
+   "id": "uae-emirate-other-emirate-service-allowed",
+   "area": "jurisdiction",
+   "region": "UAE (Sharjah, Dubai service)",
+   "question": "I’m in Sharjah but I’ll use the Dubai Metro. Which nol card should I get?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 0,
+   "sources": [
+    "official"
+   ]
+  },
+  {
+   "id": "uk-england-only-govuk-for-wales",
+   "area": "jurisdiction",
+   "region": "UK (Wales)",
+   "question": "I’ve moved to Cardiff. What are Council Tax bands based on?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official"
+   ]
   }
- ]
+ ],
+ "status": "partially complete (area 4): checker gaps closed for the cases below; real-provider quality not measured"
 }
