@@ -1,0 +1,7 @@
+/* Human review records are version-controlled with the guide, never produced by the model.
+   Approved reviewers use tools/review-guide.mjs and normal repository review/deploy permissions. */
+import {GUIDE_REVIEWS} from './guide-review-records.mjs';
+const iso=x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x)&&Number.isFinite(Date.parse(x))&&new Date(x).toISOString().slice(0,10)===x;
+export function contentVersion(guide){const {review,...g}=guide;let h=2166136261;for(const c of JSON.stringify(g)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return 'g'+(h>>>0).toString(16)}
+export function validateReview(g,r){if(!r||r.status!=='reviewed'||r.version!==contentVersion(g)||typeof r.reviewer!=='string'||!r.reviewer.trim()||r.reviewer.length>100||!['uae','uk'].includes(r.jurisdiction)||!iso(r.checkedAt)||!iso(r.reviewDue)||r.reviewDue<r.checkedAt||Date.parse(r.reviewDue)-Date.parse(r.checkedAt)>366*864e5)return false;return Array.isArray(r.sources)&&g.sources.length>0&&g.sources.every(s=>r.sources.some(x=>x.url===s.url&&iso(x.checkedAt)&&x.checkedAt<=r.checkedAt))}
+export function guideReview(g,records=GUIDE_REVIEWS){const r=records[g.id];return validateReview(g,r)?{...r}:{status:'legacy',version:contentVersion(g),jurisdiction:g.city==='dubai'?'uae':'Not recorded',reviewer:null,checkedAt:g.checkedAt||null,reviewDue:g.reviewDue||null,sources:g.sources.map(s=>({url:s.url,checkedAt:g.checkedAt||null}))}}

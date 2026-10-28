@@ -188,8 +188,8 @@
     "ar": "المثبتة"
   },
   "Recent": {
-    "fr": "Récentes",
-    "ar": "الأخيرة"
+    "fr": "Récents",
+    "ar": "الأحدث"
   },
   "Rename": {
     "fr": "Renommer",
@@ -1272,16 +1272,16 @@
     "ar": "مكان الإقامة"
   },
   "Moved from": {
-    "fr": "Lieu de départ",
-    "ar": "انتقلت من"
+    "fr": "Vient de",
+    "ar": "انتقل من"
   },
   "Here for": {
     "fr": "Motif du séjour",
     "ar": "سبب الإقامة"
   },
   "Moving to": {
-    "fr": "Destination",
-    "ar": "تنتقل إلى"
+    "fr": "Déménage vers",
+    "ar": "ينتقل إلى"
   },
   "Not added": {
     "fr": "Non renseigné",
@@ -2452,7 +2452,7 @@
     "ar": "إضافة مرفق"
   },
   "Camera": {
-    "fr": "Appareil photo",
+    "fr": "Caméra",
     "ar": "الكاميرا"
   },
   "Photos": {
@@ -3102,5 +3102,257 @@
   "Couldn’t leave. If you’re this organisation’s only admin, hand over to another admin first; otherwise try again.": {
     "fr": "Impossible de quitter. Si vous êtes le seul administrateur, transmettez d’abord ce rôle ; sinon réessayez.",
     "ar": "تعذّرت المغادرة. إن كنت المسؤول الوحيد عن هذه الجهة فسلّم الدور لمسؤول آخر أولاً؛ وإلا فحاول مرة أخرى."
+  },
+  "Device permissions": {
+    "fr": "Autorisations de l’appareil",
+    "ar": "أذونات الجهاز"
+  },
+  "Profile sharing": {
+    "fr": "Partage du profil",
+    "ar": "مشاركة الملف الشخصي"
+  },
+  "Sort": {
+    "fr": "Trier",
+    "ar": "ترتيب"
+  },
+  "Alphabetical": {
+    "fr": "Ordre alphabétique",
+    "ar": "أبجدي"
+  },
+  "Pinned first": {
+    "fr": "Épinglés en premier",
+    "ar": "المثبتة أولاً"
+  },
+  "All countries": {
+    "fr": "Tous les pays",
+    "ar": "كل البلدان"
+  },
+  "Not recorded": {
+    "fr": "Non renseigné",
+    "ar": "غير مسجّل"
+  },
+  "Space": {
+    "fr": "Espace",
+    "ar": "المساحة"
+  },
+  "All spaces": {
+    "fr": "Tous les espaces",
+    "ar": "كل المساحات"
+  },
+  "University bookmarks": {
+    "fr": "Éléments universitaires enregistrés",
+    "ar": "العناصر الجامعية المحفوظة"
+  },
+  "Export selected items": {
+    "fr": "Exporter les éléments choisis",
+    "ar": "تصدير العناصر المحددة"
+  },
+  "From your plan": {
+    "fr": "Depuis votre plan",
+    "ar": "من خطتك"
+  },
+  "Back to plan": {
+    "fr": "Retour au plan",
+    "ar": "العودة إلى الخطة"
+  },
+  "Remove context": {
+    "fr": "Retirer le contexte",
+    "ar": "إزالة السياق"
+  },
+  "Guide version and review": {
+    "fr": "Version et révision du guide",
+    "ar": "إصدار الدليل ومراجعته"
+  },
+  "Reviewer": {
+    "fr": "Réviseur",
+    "ar": "المراجع"
+  },
+  "Source review date": {
+    "fr": "Date de révision des sources",
+    "ar": "تاريخ مراجعة المصادر"
+  },
+  "Guide source review date": {
+    "fr": "Date de révision des sources du guide",
+    "ar": "تاريخ مراجعة مصادر الدليل"
+  },
+  "Next review": {
+    "fr": "Prochaine révision",
+    "ar": "المراجعة التالية"
+  },
+  "Reviewed template": {
+    "fr": "Modèle révisé",
+    "ar": "نموذج تمت مراجعته"
+  },
+  "Review overdue — confirm with the source": {
+    "fr": "Révision en retard : confirmez auprès de la source",
+    "ar": "حان موعد المراجعة — تأكد من المصدر"
+  },
+  "Legacy guide — reviewer approval is not recorded": {
+    "fr": "Ancien guide : aucune approbation du réviseur enregistrée",
+    "ar": "دليل سابق — لم تُسجّل موافقة المراجع"
+  },
+  "A newer guide is available": {
+    "fr": "Une nouvelle version du guide est disponible",
+    "ar": "يتوفر إصدار أحدث من الدليل"
+  },
+  "Accept guide update": {
+    "fr": "Accepter la mise à jour du guide",
+    "ar": "قبول تحديث الدليل"
+  },
+  "Before": {
+    "fr": "Avant",
+    "ar": "قبل"
+  },
+  "After": {
+    "fr": "Après",
+    "ar": "بعد"
+  },
+  "Prepare before you start": {
+    "fr": "Préparez-vous avant de commencer",
+    "ar": "استعد قبل البدء"
+  },
+  "Personal or family plan": {
+    "fr": "Plan personnel ou familial",
+    "ar": "خطة شخصية أو عائلية"
+  },
+  "Plan label": {
+    "fr": "Libellé du plan",
+    "ar": "تسمية الخطة"
+  },
+  "Save label": {
+    "fr": "Enregistrer le libellé",
+    "ar": "حفظ التسمية"
+  },
+  "Make a separate plan": {
+    "fr": "Créer un plan distinct",
+    "ar": "إنشاء خطة منفصلة"
+  },
+  "Help me check what is missing": {
+    "fr": "Aidez-moi à vérifier ce qui manque",
+    "ar": "ساعدني في معرفة ما ينقص"
+  },
+  "Choose what to export": {
+    "fr": "Choisissez les éléments à exporter",
+    "ar": "اختر ما تريد تصديره"
+  },
+  "Not included in this export": {
+    "fr": "Non inclus dans cet export",
+    "ar": "غير مضمن في هذا التصدير"
+  },
+  "Download this preview": {
+    "fr": "Télécharger cet aperçu",
+    "ar": "تنزيل هذه المعاينة"
+  },
+  "Explore more life topics": {
+    "fr": "Explorer d’autres sujets du quotidien",
+    "ar": "استكشف المزيد من مواضيع الحياة"
+  },
+  "Research this": {
+    "fr": "Rechercher ce sujet",
+    "ar": "ابحث في هذا الموضوع"
+  },
+  "Choose country": {
+    "fr": "Choisir un pays",
+    "ar": "اختر البلد"
+  },
+  "Country for": {
+    "fr": "Pays pour",
+    "ar": "بلد الموضوع"
+  },
+  "Checking browser permission status…": {
+    "fr": "Vérification des autorisations du navigateur…",
+    "ar": "جارٍ التحقق من أذونات المتصفح…"
+  },
+  "Allowed": {
+    "fr": "Autorisé",
+    "ar": "مسموح"
+  },
+  "Blocked": {
+    "fr": "Bloqué",
+    "ar": "محظور"
+  },
+  "Ask when needed": {
+    "fr": "Demander au moment voulu",
+    "ar": "السؤال عند الحاجة"
+  },
+  "Unknown — this browser cannot report it": {
+    "fr": "Inconnu : ce navigateur ne peut pas l’indiquer",
+    "ar": "غير معروف — لا يستطيع هذا المتصفح إظهار الحالة"
+  },
+  "Refresh status": {
+    "fr": "Actualiser l’état",
+    "ar": "تحديث الحالة"
+  },
+  "Microphone": {
+    "fr": "Microphone",
+    "ar": "الميكروفون"
+  },
+  "Location": {
+    "fr": "Localisation",
+    "ar": "الموقع"
+  },
+  "Stop using About me": {
+    "fr": "Ne plus utiliser mon profil",
+    "ar": "إيقاف استخدام معلوماتي"
+  },
+  "No saved profile fields will be included.": {
+    "fr": "Aucun champ enregistré du profil ne sera inclus.",
+    "ar": "لن يتم تضمين أي حقول محفوظة من الملف الشخصي."
+  },
+  "Lives in": {
+    "fr": "Habite à",
+    "ar": "يقيم في"
+  },
+  "Reason for moving": {
+    "fr": "Motif du déménagement",
+    "ar": "سبب الانتقال"
+  },
+  "Institution or workplace": {
+    "fr": "Établissement ou employeur",
+    "ar": "المؤسسة أو جهة العمل"
+  },
+  "Your saved steps and reminders have not changed. Review the differences before accepting.": {
+    "fr": "Vos étapes et rappels enregistrés n’ont pas changé. Vérifiez les différences avant d’accepter.",
+    "ar": "لم تتغير خطواتك وتذكيراتك المحفوظة. راجع الاختلافات قبل القبول."
+  },
+  "Removed steps remain in your recorded history. Accepting never edits your calendar.": {
+    "fr": "Les étapes retirées restent dans votre historique. Accepter ne modifie jamais votre calendrier.",
+    "ar": "تبقى الخطوات المحذوفة في سجلك. القبول لا يغيّر تقويمك."
+  },
+  "This guide does not list preparation documents. That does not mean no documents are needed.": {
+    "fr": "Ce guide ne liste aucun document à préparer. Cela ne signifie pas qu’aucun document n’est nécessaire.",
+    "ar": "لا يسرد هذا الدليل مستندات للتحضير. هذا لا يعني عدم الحاجة إلى مستندات."
+  },
+  "Showing your saved guide. Orivia could not check for a newer version just now.": {
+    "fr": "Voici votre guide enregistré. Orivia n’a pas pu vérifier si une version plus récente existe.",
+    "ar": "نعرض دليلك المحفوظ. لم تتمكن أوريفيا من التحقق من وجود إصدار أحدث الآن."
+  },
+  "Research starting points for the UAE and UK, not verified instructions. Choose a topic to prepare a question; you decide when to send.": {
+    "fr": "Points de départ pour des recherches aux Émirats et au Royaume-Uni, sans consignes vérifiées. Choisissez un sujet pour préparer une question ; vous décidez de l’envoyer.",
+    "ar": "نقاط بداية للبحث في الإمارات والمملكة المتحدة، وليست تعليمات مؤكدة. اختر موضوعاً لإعداد سؤال؛ وأنت تقرر متى ترسله."
+  },
+  "Downloads selected personal Library metadata and plan progress only. No messages, file contents, university material or private source bodies are included. Nothing is uploaded or shared.": {
+    "fr": "Télécharge uniquement les métadonnées choisies de votre bibliothèque personnelle et l’avancement des plans. Aucun message, contenu de fichier, document universitaire ou texte de source privée n’est inclus. Rien n’est envoyé ni partagé.",
+    "ar": "ينزّل فقط البيانات الوصفية المحددة من مكتبتك الشخصية وتقدم الخطط. لا يتضمن الرسائل أو محتويات الملفات أو مواد الجامعة أو نصوص المصادر الخاصة. لا يتم رفع أو مشاركة شيء."
+  },
+  "Check document recognition, translation or attestation with the receiving organisation for your exact situation before paying or booking. A checklist tick is your own note, not confirmation that a document is accepted.": {
+    "fr": "Avant de payer ou de réserver, vérifiez auprès de l’organisme destinataire les règles de reconnaissance, traduction ou légalisation applicables à votre situation. Une case cochée est votre propre note, pas une confirmation d’acceptation du document.",
+    "ar": "قبل الدفع أو الحجز، تحقق من الاعتراف بالمستندات أو ترجمتها أو تصديقها لدى الجهة المستقبلة وفق حالتك. علامة الاختيار ملاحظة شخصية منك، وليست تأكيداً لقبول المستند."
+  },
+  "Use a short label such as Person 1. No passport number, date of birth or full name is needed. This stays in your own account; it does not share another person’s account or imply guardian access.": {
+    "fr": "Utilisez un libellé court, comme Personne 1. Aucun numéro de passeport, date de naissance ni nom complet n’est nécessaire. Ce plan reste dans votre compte et ne donne aucun accès au compte d’une autre personne.",
+    "ar": "استخدم تسمية قصيرة مثل الشخص 1. لا حاجة لرقم جواز أو تاريخ ميلاد أو اسم كامل. يبقى هذا في حسابك، ولا يشارك حساب شخص آخر أو يمنح صلاحيات ولي أمر."
+  },
+  "This check does not request access. Use your browser’s site settings to change permissions. Microphone, location and camera are requested only when you choose their feature. Browser permission alone does not enable Orivia notification subscriptions.": {
+    "fr": "Cette vérification ne demande aucun accès. Modifiez les autorisations dans les réglages du site de votre navigateur. Le microphone, la localisation et la caméra ne sont demandés que lorsque vous choisissez leur fonction. L’autorisation du navigateur ne suffit pas à activer les alertes Orivia.",
+    "ar": "هذا الفحص لا يطلب الوصول. استخدم إعدادات الموقع في المتصفح لتغيير الأذونات. لا يُطلب الميكروفون أو الموقع أو الكاميرا إلا عند اختيار الميزة. إذن المتصفح وحده لا يفعّل اشتراك إشعارات أوريفيا."
+  },
+  "When Use About me in chats is on, these saved fields can go with your messages to the reply provider. Your message history is still sent when this is off. Turning it off does not erase earlier messages or provider requests.": {
+    "fr": "Lorsque l’utilisation du profil dans les conversations est activée, ces champs peuvent accompagner vos messages vers le fournisseur d’IA. L’historique des messages est toujours envoyé si cette option est désactivée. La désactiver n’efface pas les messages ou requêtes antérieurs.",
+    "ar": "عند تفعيل استخدام معلوماتي في المحادثات، قد تُرسل هذه الحقول مع رسائلك إلى مزود الردود. يستمر إرسال سجل الرسائل عند إيقاف هذا الخيار. إيقافه لا يمحو الرسائل أو الطلبات السابقة."
+  },
+  "Your profile name, family plan labels and preparation notes are not included by this setting. A place or name you type in a message is part of that message. Search, Listen and document reading have their own data flows; this is not a promise to remove details from messages.": {
+    "fr": "Ce réglage n’inclut ni votre nom de profil, ni les libellés familiaux, ni les notes de préparation. Un lieu ou un nom saisi dans un message fait partie de ce message. La recherche, l’écoute et la lecture de documents ont leurs propres échanges de données ; ce réglage ne retire pas les détails de vos messages.",
+    "ar": "لا يضمّن هذا الإعداد اسم ملفك الشخصي أو تسميات الخطط العائلية أو ملاحظات التحضير. المكان أو الاسم الذي تكتبه في رسالة يُعد جزءاً منها. للبحث والاستماع وقراءة المستندات تدفقات بيانات منفصلة؛ وهذا ليس وعداً بحذف التفاصيل من الرسائل."
   }
 }

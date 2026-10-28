@@ -62,7 +62,7 @@
    setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(e){say(why(e),true)}
  }
  function row(f){
-  const li=el('div','file-row'),icon=el('span','file-icon',f.type==='application/pdf'?'PDF':f.type==='image/png'?'PNG':'JPG');icon.setAttribute('aria-hidden','true');
+  const li=el('div','file-row');li.dataset.fileId=String(f.id);li.dataset.updated=String(f.createdAt||0);const icon=el('span','file-icon',f.type==='application/pdf'?'PDF':f.type==='image/png'?'PNG':'JPG');icon.setAttribute('aria-hidden','true');
   const info=el('div','file-info'),name=el('strong','',f.name),meta=el('small','tiny',size(f.size)+' · '+new Date(f.createdAt).toLocaleDateString());info.append(name,meta);
   const actions=el('div','file-actions');
   const b=(label,fn,cls='ask')=>{const x=el('button',cls,t(label));x.type='button';x.onclick=fn;return x};

@@ -1,3 +1,4 @@
+import {guideReview} from './orivia-guide-reviews.mjs';
 /* Journey cards: when something the person decides makes a checked guide genuinely useful,
  * Orivia offers it under her reply (Follow guide / Save for later / Not now).
  * One pattern for every journey: add a guide to GUIDES with what counts as a decision,
@@ -128,7 +129,7 @@ export function guideContent(id){
  if(!ID.test(String(id||'')))return null;
  const d=journey(id);if(!d)return null;
  const j=d.journey, list=x=>(Array.isArray(x)?x:[]).filter(v=>typeof v==='string'&&v.trim()).slice(0,12);
- return {id:j.id,title:j.title,city:j.city,checkedAt:d.verifiedOn,reviewDue:d.reviewDue,fresh:d.fresh,
+ const guide={id:j.id,title:j.title,city:j.city,checkedAt:d.verifiedOn,reviewDue:d.reviewDue,fresh:d.fresh,
   summary:GUIDES[j.id]?.summary||'',
   sources:(j.sources||[]).filter(s=>/^https:\/\//.test(s.url)).map(s=>({name:s.name,url:s.url})),
   steps:j.steps.map(s=>({id:s.id,title:s.title,info:list(s.info),doThis:list(s.doThis),
@@ -139,6 +140,7 @@ export function guideContent(id){
    confirm:txt((j.checkups||[]).find(c=>c.step===s.id&&c.confirm)?.confirm)})),
   problems:(j.problems||[]).map(problemHelp).filter(p=>p.question&&(p.answer||p.steps.length)),
   fullGuideUrl:'https://aurelithgroup.github.io/orivia/?j='+encodeURIComponent(j.id)};
+ return {...guide,review:guideReview(guide)};
 }
 
 /* The library for Explore Journeys: only guides that exist, grouped by what they help with */

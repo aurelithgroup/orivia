@@ -10,7 +10,7 @@ const h = new Function('localStorage', 'sessionStorage', '$', 'renderChatsStub',
   'const window={};const key="orivia-ai-private-turns";let turns=[];const resources=()=>{},el=()=>({}),button=()=>({}),stopSpeaking=()=>{},stopDictation=()=>{},draw=()=>{},closeChats=()=>{},tab=()=>{};' +
   block.replace(/function renderChats\(\)\{[\s\S]*?\n\}\n/, 'function renderChats(){}\n') +
   ';return {get store(){return store},set turns(v){turns=v},get turns(){return turns},loadChats,save,activeChat,autoTitle,chatMessages:null,persist,newChat:()=>{store.active=null;turns=[];persist()}}')(
-  store(local), store(session), () => ({ textContent: '', focus() {} }));
+  store(local), store(session), () => ({ textContent: '', focus() {}, replaceChildren() {} }));
 
 /* Migration: the old tab-only conversation becomes a saved chat */
 session['orivia-ai-private-turns'] = JSON.stringify([{ role: 'user', content: 'How do I get to Heriot-Watt from JLT?' }, { role: 'assistant', content: 'What matters most?' }]);
@@ -58,7 +58,7 @@ function make(opts = {}) {
     getItem: x => (local[x] ?? null),
     setItem(x, v) { this.setCalls++; if (this.full) { const e = new Error('QuotaExceededError'); e.name = 'QuotaExceededError'; throw e; } if (!this.silent) local[x] = String(v); },
     removeItem: x => { delete local[x]; } };
-  const $ = id => (els[id] ||= { textContent: '', hidden: true, focus() {} });
+  const $ = id => (els[id] ||= { textContent: '', hidden: true, focus() {}, replaceChildren() {} });
   const api = new Function('localStorage', 'sessionStorage', '$',
     'const window={};const key="orivia-ai-private-turns";let turns=[];const resources=()=>{},el=()=>({}),button=()=>({}),stopSpeaking=()=>{},stopDictation=()=>{},draw=()=>{},closeChats=()=>{},tab=()=>{};' +
     block.replace(/function renderChats\(\)\{[\s\S]*?\n\}\n/, 'function renderChats(){}\n') +

@@ -11,6 +11,7 @@ function show(){
  loadChats();const c=activeChat();turns=c?c.turns.slice():[];
 
  draw();renderChats();tab('home');window.OriviaNotifications?.changed();
+ restorePlanLocation();
  restoreUpdateDraft();
 }
 /* ===== Chat history: saved on this device (localStorage), no account, no sync =====
@@ -21,12 +22,13 @@ const chatsKey='orivia-private-chats-v1',chatsBackupKey='orivia-private-chats-v1
 // the person is told plainly, and they choose what to delete. Only the latest 12 messages go to the AI.
 let store={chats:[],active:null,library:{hidden:[]}};
 const validTurn=x=>x&&['user','assistant'].includes(x.role)&&typeof x.content==='string'&&(x.content.trim()||(x.role==='user'&&x.meta&&x.meta.attachment&&typeof x.meta.attachment.name==='string'));
+const JIDSafe=id=>typeof id==='string'&&/^[a-z]+(\.[a-z]+){1,3}$/.test(id);
 const newId=()=>'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 function autoTitle(ts){const u=(ts.find(t=>t.role==='user')||{}).content||'New chat';const t=u.replace(/\s+/g,' ').trim();return t.length>48?t.slice(0,46).replace(/\s\S*$/,'')+'…':t}
 function normChat(c){
  if(!c||typeof c!=='object'||typeof c.id!=='string')return null;
  const ts=Array.isArray(c.turns)?c.turns.filter(validTurn).map(t=>({role:t.role,content:String(t.content).slice(0,t.role==='assistant'?4000:2000),...(t.meta&&typeof t.meta==='object'?{meta:t.meta}:{})})):[];
- return {...(window.OriviaVersions?.normalise(c.versions)?{versions:window.OriviaVersions.normalise(c.versions)}:{}),id:c.id.slice(0,24),title:String(c.title||autoTitle(ts)).slice(0,80),titled:!!c.titled,created:Number(c.created)||Date.now(),updated:Number(c.updated)||Date.now(),pinned:!!c.pinned,archived:!!c.archived,turns:ts,...(c.orgContext&&typeof c.orgContext==='object'&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.org))&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.content))?{orgContext:{org:String(c.orgContext.org),content:String(c.orgContext.content),title:String(c.orgContext.title||'').slice(0,150),orgName:String(c.orgContext.orgName||'').slice(0,80)}}:{}),...(()=>{const list=(Array.isArray(c.documents)?c.documents:c.document?[c.document]:[]).filter(d=>d&&typeof d==='object'&&typeof d.text==='string'&&d.text.trim()).map(d=>({...(typeof d.id==='string'?{id:d.id.slice(0,40)}:{}),name:String(d.name||'Document').slice(0,120),kind:String(d.kind||'').slice(0,80),text:d.text.slice(0,12000),addedAt:Number(d.addedAt)||Date.now(),...(d.partial?{partial:true}:{})}));return list.length?{documents:list}:{}})()};
+ return {...(window.OriviaVersions?.normalise(c.versions)?{versions:window.OriviaVersions.normalise(c.versions)}:{}),id:c.id.slice(0,24),...(c.planContext&&JIDSafe(c.planContext.id)?{planContext:{id:c.planContext.id,step:String(c.planContext.step||'').slice(0,30)}}:{}),title:String(c.title||autoTitle(ts)).slice(0,80),titled:!!c.titled,created:Number(c.created)||Date.now(),updated:Number(c.updated)||Date.now(),pinned:!!c.pinned,archived:!!c.archived,turns:ts,...(c.orgContext&&typeof c.orgContext==='object'&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.org))&&/^[A-Za-z0-9-]{1,64}$/.test(String(c.orgContext.content))?{orgContext:{org:String(c.orgContext.org),content:String(c.orgContext.content),title:String(c.orgContext.title||'').slice(0,150),orgName:String(c.orgContext.orgName||'').slice(0,80)}}:{}),...(()=>{const list=(Array.isArray(c.documents)?c.documents:c.document?[c.document]:[]).filter(d=>d&&typeof d==='object'&&typeof d.text==='string'&&d.text.trim()).map(d=>({...(typeof d.id==='string'?{id:d.id.slice(0,40)}:{}),name:String(d.name||'Document').slice(0,120),kind:String(d.kind||'').slice(0,80),text:d.text.slice(0,12000),addedAt:Number(d.addedAt)||Date.now(),...(d.partial?{partial:true}:{})}));return list.length?{documents:list}:{}})()};
 }
 let storeLocked=false; // saved chats exist but couldn't be read or backed up: never overwrite them
 function storageWarn(msg){
@@ -48,6 +50,8 @@ function savedHas(c){
 }
 function legacyId(ts){let h=0;for(const ch of JSON.stringify(ts.map(t=>[t.role,t.content])))h=(h*31+ch.charCodeAt(0))|0;return 'clegacy'+(h>>>0).toString(36)}
 function loadChats(){
+ try{planSaveError=''}catch{}
+ const exportPanel=$('lib-export-panel');if(exportPanel){exportPanel.hidden=true;exportPanel.replaceChildren()}
  storeLocked=false;store={chats:[],active:null,library:{hidden:[]}};
  let raw=null;try{raw=(globalThis.OriviaAccountStorage?.storage||localStorage).getItem(chatsKey)}catch(_){}
  if(raw){
@@ -89,7 +93,7 @@ function newChat(ctx=null){closeHandoff();stopSpeaking();stopDictation(false);pe
 let libFilter='all',filesServer=false;
 // Where Files is switched off, the Library is guides and shortlists only (no Files tab, no file actions).
 function showLibraryFiles(){const tab=$('lib-tab-files'),group=$('files-title')?.closest('section');if(tab)tab.hidden=!filesServer;if(group)group.hidden=!filesServer;if(!filesServer&&libFilter==='files')libFilter='all'}
-function libItem(node,kind,text){node.dataset.libKind=kind;node.dataset.libText=String(text||'').toLowerCase();return node}
+function libItem(node,kind,text){node.dataset.libKind=kind;node.dataset.libText=(String(text||'')+' '+(node.querySelector?.('h3,strong')?.textContent||'')).toLowerCase();return node}
 // Discoveries come from library-discoveries.js (pure, tested); removal state lives once in store.library, not in chats.
 const discoveryHelpers={safeSources:x=>safeSources(x),safeDestinations:(x,y)=>safeDestinations(x,y),safeOrgs:(x,y)=>safeOrgs(x,y),placeIdentity:d=>placeIdentity(d)};
 let discoveryShown=0;
@@ -114,7 +118,7 @@ function renderOrgBookmarks(g){
  const saved=window.OriviaDiscoveries.normLibrary(store.library).saved,check=++orgBookmarkCheck;if(!saved.length)return;
  g.querySelector?.(':scope > p.tiny')?.remove();
  const from=x=>x.orgName?uiText('From')+' '+x.orgName+' · ':'';
- const cards=saved.slice().reverse().map(x=>{const card=el('article','lib-short org-bookmark');card.dataset.org=x.org;card.dataset.content=x.content;const title=el('strong','',x.title||uiText('Saved item'));title.dir='auto';
+ const cards=saved.slice().reverse().map(x=>{const card=el('article','lib-short org-bookmark');card.dataset.savedAt=String(x.savedAt);card.dataset.org=x.org;card.dataset.content=x.content;const title=el('strong','',x.title||uiText('Saved item'));title.dir='auto';
   const state=el('p','tiny',from(x)+uiText('Checking access…'));state.dir='auto';const row=el('div','attach-row');
   const rm=attachButton('Remove from Library',()=>{if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent=uiText('Tap again to remove');return}setOrgSaved(x,false)});row.append(rm);
   card.append(title,state,row);g.prepend(libItem(card,'guides',x.title+' '+x.orgName));return {x,card,state,row}});
@@ -140,13 +144,13 @@ function renderLibraryView(){
  if(cont){c.replaceChildren(el('h2','',uiText('Continue where you left off')),journeyCard({id:cont[0],title:cont[1].title,steps:cont[1].steps},'mine'));c.hidden=false}else{c.hidden=true;c.replaceChildren()}
  // Shortlists: from the chats they were made in (opening the chat shows them with their sources).
  const s=$('lib-shortlists');s.replaceChildren();const lists=libraryShortlists();
- for(const {chat,names} of lists){const card=el('article','lib-short');card.append(el('strong','',chat.title||uiText('Chat')),el('p','tiny',names.join(' · ')+' · '+new Date(chat.updated||chat.created||Date.now()).toLocaleDateString()));
+ for(const {chat,names} of lists){const card=el('article','lib-short');card.dataset.chatId=chat.id;card.dataset.exportId='shortlist:'+chat.id;card.append(el('strong','',chat.title||uiText('Chat')),el('p','tiny',names.join(' · ')+' · '+new Date(chat.updated||chat.created||Date.now()).toLocaleDateString()));
   const row=el('div','attach-row');row.append(attachButton('Open chat',()=>openChat(chat.id)),attachButton('Compare in Chat',()=>{openChat(chat.id);$('msg').value=uiText('Please compare my shortlist:')+' '+names.join(', ');grow();$('msg').focus()}));card.append(row);
   s.append(libItem(card,'shortlists',(chat.title||'')+' '+names.join(' ')))}
  if(!lists.length)s.append(el('p','tiny',uiText('No shortlists yet. When Orivia shows you options in chat, add the ones you like to a shortlist.')));
  renderOrgBookmarks(g);
  const pg=$('lib-places');pg.replaceChildren();const disc=libraryDiscoveries(),found=disc.shown,pageOf=window.OriviaDiscoveries.page(found,discoveryShown);
- for(const x of pageOf.items){const card=el('article','lib-short');const title=el('strong','',(x.favourite?'♥ ':'')+x.name);title.dir='auto';if(x.shortlisted)title.append(' ',el('span','chip lib-flag',uiText('Shortlisted')));
+ for(const x of pageOf.items){const card=el('article','lib-short');card.dataset.chatId=x.chatId;card.dataset.exportId='place:'+x.key;const title=el('strong','',(x.favourite?'♥ ':'')+x.name);title.dir='auto';if(x.shortlisted)title.append(' ',el('span','chip lib-flag',uiText('Shortlisted')));
   card.append(title,el('p','tiny',[x.detail,uiText(x.kind==='place'?'Place':'Service'),uiText('from')+' '+(x.chatTitle||uiText('Chat'))].filter(Boolean).join(' · ')));
   const row=el('div','attach-row');const site=el('a','btn quiet small',uiText('Source')+' · '+x.src.host);site.href=x.src.url;site.target='_blank';site.rel='noopener noreferrer';
   row.append(attachButton('Open chat',()=>openChat(x.chatId)),site);
@@ -172,13 +176,14 @@ function applyLibraryFilter(){
  }
  $('lib-continue').hidden=!!q||!['all','guides'].includes(libFilter)||!$('lib-continue').children.length;
  $('lib-empty').hidden=!q||shown>0;
+ applyLibraryExtras();
 }
 function mountLibrary(){if(mountLibrary.done)return;mountLibrary.done=true;
 for(const b of document.querySelectorAll('.lib-tabs [role=tab]'))b.addEventListener('click',()=>{libFilter=b.dataset.lib;for(const x of document.querySelectorAll('.lib-tabs [role=tab]')){const on=x===b;x.setAttribute('aria-selected',String(on));x.tabIndex=on?0:-1}applyLibraryFilter()});
 document.querySelector('.lib-tabs')?.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;const t=[...document.querySelectorAll('.lib-tabs [role=tab]')],i=t.indexOf(document.activeElement);if(i<0)return;e.preventDefault();
  const rtl=document.documentElement.dir==='rtl',step=(e.key==='ArrowRight')!==rtl?1:-1,n=e.key==='Home'?0:e.key==='End'?t.length-1:(i+step+t.length)%t.length;t[n].focus();t[n].click()});
 $('lib-search')?.addEventListener('input',applyLibraryFilter);
-$('lib-clear')?.addEventListener('click',()=>{$('lib-search').value='';applyLibraryFilter();$('lib-search').focus()});
+$('lib-clear')?.addEventListener('click',()=>{$('lib-search').value='';for(const id of ['lib-country','lib-space'])if($(id))$(id).value='';applyLibraryFilter();$('lib-search').focus()});
 }
 /* Files to Chat (step 7) with Ina's approved composer (22 Oct): + opens Camera, Photos, Files and Your files. Choosing
    only shows a removable preview above the message; nothing is sent. On Send, the file-reading notice appears (fuller the
@@ -268,6 +273,7 @@ var pendingOrgContext=null; // var: chat restore may run before this line
 function currentOrgContext(){const c=activeChat();return c?c.orgContext||null:pendingOrgContext}
 function clearOrgContext(note){const c=activeChat();if(c&&c.orgContext){delete c.orgContext;persist()}pendingOrgContext=null;renderOrgContext();if(note)$('status').textContent=note}
 function renderOrgContext(){
+ try{renderPlanContext()}catch(_){}
  try{renderDocContext()}catch(_){}
  const box=$('org-context');if(!box)return;const o=currentOrgContext();if(!o){box.hidden=true;box.replaceChildren();return}
  const label=el('span','org-context-text','Using '+(o.orgName||'your university')+'’s “'+(o.title||'guide')+'”');
@@ -923,7 +929,7 @@ function renderHome(){
  }
  if(!data.upcoming.length)dashboardEmpty(coming,'A little breathing room. No upcoming reminders.','Add a reminder',()=>{tab('calendar');openAdd()});
  const going=Object.entries(readJourneys()).filter(([id,v])=>JID.test(id)&&v&&typeof v.title==='string'&&(v.status==='active'||v.status==='paused')).sort((a,b)=>String(b[1].updated||'').localeCompare(String(a[1].updated||'')));
- for(const [id,v] of going.slice(0,3)){const b=dashboardCard(v.title,'',()=>openGuide(id,{from:'home'}));
+ for(const [id,v] of going.slice(0,3)){const b=dashboardCard(v.title+(v.label?' · '+v.label:''),'',()=>openGuide(id,{from:'home'}));
   const copy=b.querySelector('.dashboard-copy');copy.prepend(el('span','dashboard-kicker',uiText(v.status==='paused'?'Paused':'In progress')));
   const total=Math.max(0,Number(v.steps)||0),done=Math.min(total,doneCount(v));
   copy.append(el('small','',uiText('Steps completed')+': '+done+' / '+total));if(total){const p=el('div','dashboard-progress');p.append(bar(done,total,uiText('Steps completed')));copy.append(p)}
@@ -962,6 +968,7 @@ $('life-places-open').onclick=()=>{const box=$('saved-places-section');box.hidde
 if(window.OriviaNav)window.OriviaNav.onSettings=()=>tab('settings');
 try{if(new URLSearchParams(location.search).get('view')==='settings')queueMicrotask(()=>{tab('settings');history.replaceState(null,'',location.pathname)})}catch(_){}
 function tab(which){
+ if(which!=='guide'&&typeof location!=='undefined'&&String(location.hash||'').startsWith('#plan=')){try{history.pushState({oriviaView:which},'',location.pathname+location.search)}catch{}}
  const views={home:'home',chat:'chat',library:'library',calendar:'calendar-panel',journeys:'journeys',mylife:'mylife',guide:'guide-view',settings:'settings-view'};
  if(!views[which])return;
  if(which==='chat')try{renderOrgContext()}catch(_){}
@@ -974,8 +981,8 @@ function tab(which){
  $('view-title').textContent=uiText(TITLES[which]);
  if(which==='home')renderHome();
  if(which==='calendar')renderEvents();
- if(which==='settings'){renderSettings();renderInstall()}
- if(which==='journeys')renderJourneys();
+ if(which==='settings'){renderSettings();renderInstall();renderPermissionCentre();renderProfileDisclosure()}
+ if(which==='journeys'){renderJourneys();renderCoverage()}
  if(which==='mylife'){renderUpcoming();loadProfile();renderJourneys();renderSavedPlaces();renderLifeSummary();window.OriviaAccounts?.copy()}
  if(which==='chat'){const sc=$('chat-scroll');sc.scrollTop=sc.scrollHeight}
 }
@@ -1172,7 +1179,7 @@ $('about-edit').onclick=()=>{aboutEditing=true;aboutSkipped=false;loadProfile();
 $('about-done').onclick=()=>{aboutEditing=false;aboutSkipped=true;loadProfile();$('about-edit').focus()}; // Done closes it even if some questions are skipped
 $('place-form').addEventListener('submit',e=>{e.preventDefault();saveProfile({place:$('p-place').value.trim()})});
 $('p-place').addEventListener('change',e=>saveProfile({place:e.target.value.trim()}));
-function profileForAI(){const p=readProfile();if(!p||p.use===false)return undefined;const out={};for(const k of ['city','movingTo','movedFrom','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
+function profileForAI(){const p=readProfile();if(window.OriviaBatch)return window.OriviaBatch.profile(p);if(!p||p.use===false)return undefined;const out={};for(const k of ['city','movingTo','movedFrom','who','place'])if(typeof p[k]==='string'&&p[k].trim())out[k]=p[k].trim().slice(0,60);return Object.keys(out).length?out:undefined}
 $('forget').onclick=()=>{const b=$('forget');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent=uiText('Tap again to delete');setTimeout(()=>{b.dataset.sure='';b.textContent=uiText('Clear saved data')},4000);return}try{cancelAttach()}catch(_){}resetVoiceSession();try{(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(profileKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(eventKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(journeysKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(chatsKey);(globalThis.OriviaAccountStorage?.storage||localStorage).removeItem(chatsBackupKey)}catch(_){}storeLocked=false;storageWarn('');store={chats:[],active:null};turns=[];clearChatCards();draw();renderChats();events=[];loadProfile();renderUpcoming();renderJourneys();b.dataset.sure='';b.textContent=uiText('Cleared')};
 /* End session: back to the welcome screen. Clears this conversation and the human check; keeps journeys, calendar and My Life. */
 $('end-session').onclick=async()=>{
@@ -1587,18 +1594,19 @@ function readJourneys(){
   }
   return d}catch(_){return {}}
 }
-function writeJourneys(d){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(journeysKey,JSON.stringify(d))}catch(_){}}
-function setJourney(id,patch){if(!JID.test(id))return;const d=readJourneys();d[id]={stepStatus:{},step:0,...(d[id]||{}),...patch,updated:new Date().toISOString()};writeJourneys(d);renderJourneys()}
+let planSaveError='';
+function writeJourneys(d){try{(globalThis.OriviaAccountStorage?.storage||localStorage).setItem(journeysKey,JSON.stringify(d));planSaveError='';$('plan-save-error')?.remove();return true}catch(_){planSaveError='Couldn’t save this plan change. Your earlier saved progress is unchanged. Free some storage space and try again.';const box=$('guide-body');if(box&&!$('guide-view')?.hidden){let n=$('plan-save-error');if(!n){n=el('p','hint',uiText(planSaveError));n.id='plan-save-error';n.setAttribute('role','alert');box.append(n)}}return false}}
+function setJourney(id,patch){if(!JID.test(id))return;const d=readJourneys();d[id]={stepStatus:{},step:0,...(d[id]||{}),...patch,updated:new Date().toISOString()};const ok=writeJourneys(d);if(ok)renderJourneys();return ok}
 function removeJourney(id){const d=readJourneys();delete d[id];writeJourneys(d);renderJourneys()}
 function offered(){try{const d=JSON.parse(sessionStorage.getItem(offeredKey)||'[]');return Array.isArray(d)?d.filter(x=>typeof x==='string'&&JID.test(x)):[]}catch(_){return []}}
 function markOffered(id){const o=offered();if(!o.includes(id)){o.push(id);try{sessionStorage.setItem(offeredKey,JSON.stringify(o.slice(-30)))}catch(_){}}}
-const doneCount=v=>Object.values(v?.stepStatus||{}).filter(x=>PLAN.finished(x)).length; // done or not applicable
+const doneCount=v=>Object.entries(v?.stepStatus||{}).filter(([id,x])=>(!v?.titles||Object.hasOwn(v.titles,id))&&PLAN.finished(x)).length; // done or not applicable
 const shownState=v=>v.status==='active'&&Object.values(v.stepStatus||{}).some(x=>x==='waiting_org'||x==='waiting_you'||x==='blocked')?'waiting':v.status;
 /* Sent with each chat message so Orivia reads the same record: journey ids, journey states and step states only */
 function guidesForAI(){
  const d=readJourneys(),ids=Object.keys(d).filter(k=>JID.test(k)).sort((a,b)=>String(d[b].updated).localeCompare(String(d[a].updated)));
- const of=s=>ids.filter(k=>d[k].status===s);
- const progress={};for(const k of ids)if((d[k].status==='active'||d[k].status==='paused')&&Object.keys(d[k].stepStatus).length)progress[k]=d[k].stepStatus;
+ const of=s=>ids.filter(k=>!d[k].templateId&&d[k].status===s);
+ const progress={};for(const k of ids)if(!d[k].templateId&&(d[k].status==='active'||d[k].status==='paused')&&Object.keys(d[k].stepStatus).length)progress[k]=d[k].stepStatus;
  return {following:of('active'),paused:of('paused'),saved:of('saved'),done:of('done'),offered:offered(),progress};
 }
 const reviewed=iso=>{const t=Date.parse(iso);return Number.isFinite(t)?new Date(t).toLocaleDateString(uiLanguage(),{day:'numeric',month:'short',year:'numeric'}):''};
@@ -1622,7 +1630,7 @@ function saveJourney(o){setJourney(o.id,{status:'saved',step:0,stepStatus:{},tit
    extra.kind: 'offer' | 'refresher' | 'problem' | 'placement' (save where Chat worked out you are) */
 function journeyCard(o,ctx,extra={}){
  const mine=readJourneys()[o.id], status=mine?.status||null;
- const card=el('article','jcard'+(ctx==='suggest'?' suggest':''));card.setAttribute('aria-label',o.title);
+ const card=el('article','jcard'+(ctx==='suggest'?' suggest':''));card.dataset.planId=o.id;card.dataset.exportId='plan:'+o.id;card.setAttribute('aria-label',o.title);
  const top=el('div','jtop');
  if(ctx==='mine'&&status)top.append(pill(shownState(mine)));
  else if(ctx!=='mine')top.append(el('p','kicker',(extra.kind==='placement'?'Save your progress?':extra.problem?'From your guide':status?STATE_LABEL[shownState(mine)]:'Step-by-step guide')+' · Reviewed '+reviewed(o.checkedAt)+(o.fresh===false?' · due for review':'')));
@@ -1630,7 +1638,7 @@ function journeyCard(o,ctx,extra={}){
   const more=button('⋯','more',()=>{menu.hidden=!menu.hidden;more.setAttribute('aria-expanded',String(!menu.hidden))});
   more.setAttribute('aria-label','Manage '+o.title);more.setAttribute('aria-expanded','false');top.append(more);
  }
- card.append(top,el('h3','',o.title));
+ card.append(top,el('h3','',o.title+(mine?.label?' · '+mine.label:'')));
  if(extra.kind==='placement')card.append(el('p','notice',extra.summary));
  else if(extra.problem){card.append(el('p','label',extra.problem.question));if(extra.problem.answer)card.append(el('p','',extra.problem.answer))}
  else if(ctx==='mine')card.append(el('p','notice',progressLine(mine)));
@@ -1711,7 +1719,7 @@ function renderJourneys(){
  const life=$('life-journeys');
  if(life){
   life.replaceChildren();const now=items.filter(([,v])=>v.status==='active'||v.status==='paused').slice(0,3);
-  for(const [id,v] of now){const st=shownState(v);const b=button('','now-item',()=>openGuide(id,{from:'mylife'}));b.append(icon('M6 18a2.5 2.5 0 1 0 0-.1M18 6a2.5 2.5 0 1 0 0-.1M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5'));const sp=el('span');sp.append(el('strong','',v.title),el('small','',(st==='paused'?'Paused · ':st==='waiting'?'Waiting · ':'')+progressLine(v)));b.append(sp,document.createTextNode('›'));life.append(b)}
+  for(const [id,v] of now){const st=shownState(v);const b=button('','now-item',()=>openGuide(id,{from:'mylife'}));b.append(icon('M6 18a2.5 2.5 0 1 0 0-.1M18 6a2.5 2.5 0 1 0 0-.1M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5'));const sp=el('span');sp.append(el('strong','',v.title+(v.label?' · '+v.label:'')),el('small','',(st==='paused'?'Paused · ':st==='waiting'?'Waiting · ':'')+progressLine(v)));b.append(sp,document.createTextNode('›'));life.append(b)}
   if(!now.length)life.append(button('Browse guides in Journeys','ask',()=>tab('journeys')));
  }
  if(!$('journeys').hidden)renderLibrary();
@@ -1748,8 +1756,8 @@ async function renderLibrary(){
 
 /* Inside a journey: one step at a time, in clear sections */
 const guideCache={};
-async function loadGuide(id){
- if(guideCache[id])return guideCache[id];
+async function loadGuide(id,{refresh=false}={}){
+ if(guideCache[id]&&!refresh)return guideCache[id];
  const r=await fetch('/v1/guides/'+encodeURIComponent(id),{credentials:'same-origin',cache:'no-store'});
  const d=await r.json().catch(()=>null);if(!r.ok||!d?.guide?.steps?.length)throw Error('guide');
  return guideCache[id]=d.guide;
@@ -1759,21 +1767,29 @@ function list(items,ordered,cls){if(!items||!items.length)return null;const l=el
 async function openGuide(id,opts={}){
  if(!JID.test(id))return;
  tab('guide');const body=$('guide-body');body.replaceChildren(el('p','notice',uiText('Opening your guide…')));
- let g;try{g=await loadGuide(id)}catch(_){body.replaceChildren(el('p','notice',uiText('I couldn’t open this guide just now. Please try again.')),button('← Journeys','ask',()=>tab('journeys')));return}
+ const guideOwner=globalThis.OriviaAccounts?.epoch||'';const savedEntry=readJourneys()[id];
+ let g,latestUnavailable=false;try{g=await loadGuide(savedEntry?.templateId||id,{refresh:true});if((globalThis.OriviaAccounts?.epoch||'')!==guideOwner||$('guide-view').hidden)return}catch(_){if((globalThis.OriviaAccounts?.epoch||'')!==guideOwner||$('guide-view').hidden)return;if(savedEntry?.templateSnapshot){g=savedEntry.templateSnapshot;latestUnavailable=true}else{body.replaceChildren(el('p','notice',uiText('I couldn’t open this guide just now. Please try again.')),button('← Journeys','ask',()=>tab('journeys')));return}}
+ const newest=g,B=window.OriviaBatch;
+ if(B&&savedEntry?.templateSnapshot&&B.version(savedEntry.templateSnapshot)!==B.version(newest))g=savedEntry.templateSnapshot;
+ if(B&&savedEntry&&!savedEntry.templateSnapshot)setJourney(id,{templateSnapshot:B.snapshot(newest),templateVersion:B.version(newest)});
  const titles=Object.fromEntries(g.steps.map(s=>[s.id,s.title]));
- let i=Math.min(Math.max(0,Number(readJourneys()[id]?.step)||0),g.steps.length-1);
- const store=patch=>{if(readJourneys()[id])setJourney(id,{steps:g.steps.length,titles,...patch})};
- const go=n=>{i=n;store({step:i,stepTitle:g.steps[i].title});draw()}; // moving never changes a step's status
+ let i=opts.stepId&&g.steps.some(s=>s.id===opts.stepId)?g.steps.findIndex(s=>s.id===opts.stepId):Math.min(Math.max(0,Number(readJourneys()[id]?.step)||0),g.steps.length-1);
+ const store=patch=>{if((globalThis.OriviaAccounts?.epoch||'')===guideOwner&&readJourneys()[id])setJourney(id,{steps:g.steps.length,titles,...patch})};
+ const go=n=>{i=n;store({step:i,stepTitle:g.steps[i].title});planLocation(id,g.steps[i].id);draw()}; // moving never changes a step's status
  const draw=()=>{
+  if((globalThis.OriviaAccounts?.epoch||'')!==guideOwner)return;
   const s=g.steps[i],mine=readJourneys()[id],status=mine?.status||null,ss=mine?.stepStatus||{},cur=ss[s.id]||'not_started',n=doneCount(mine);
   const showAs=k=>mine?PLAN.shown(mine,g.steps,k):'not_started',when=t=>new Date(t).toLocaleDateString(uiLanguage(),{day:'numeric',month:'short'});
   // One change at a time, recorded with its history so it can be undone (ORI-JOURNEY-004).
   const record=(to,note)=>{const e=PLAN.change(readJourneys()[id],s.id,to,Date.now(),note);store({stepStatus:e.stepStatus,history:e.history,notes:e.notes,stepTitle:s.title,step:i});opts.keepScroll=true;draw()};
   body.replaceChildren();
   const head=el('div','jhead');head.append(button('← Journeys','ask',()=>tab('journeys')),button('Chat','chip-btn',()=>tab('chat')));body.append(head);
-  const meta=el('div','row');if(status)meta.append(pill(shownState(mine)));meta.append(el('span','kicker','Checked guide · Reviewed '+reviewed(g.checkedAt)+(g.fresh?'':' · due for review: confirm with the official source')));body.append(meta);
-  body.append(el('h2','',g.title));
-  if(!mine){const f=el('div','row');f.append(button('Follow this guide','btn small',()=>{setJourney(id,{status:'active',step:i,stepTitle:s.title,stepStatus:{},title:g.title,steps:g.steps.length,titles});draw()}),button('Save for later','btn quiet small',()=>{setJourney(id,{status:'saved',step:0,stepStatus:{},title:g.title,steps:g.steps.length,titles});draw()}));body.append(f,el('p','tiny',uiText('You’re previewing. Follow it to keep track of each step; progress is saved on this device.')))}
+  const meta=el('div','row');if(status)meta.append(pill(shownState(mine)));meta.append(el('span','kicker',uiText('Guide source review date')+' · '+reviewed(g.checkedAt)+(g.fresh?'':' · due for review: confirm with the official source')));body.append(meta);
+  body.append(el('h2','',g.title+(mine?.label?' · '+mine.label:'')));
+  if(latestUnavailable)body.append(el('p','hint',uiText('Showing your saved guide. Orivia could not check for a newer version just now.')));
+  renderPlanExtras(body,id,g,newest,()=>openGuide(id,{keepScroll:true}));
+  if(!mine){const f=el('div','row');f.append(button('Follow this guide','btn small',()=>{setJourney(id,{status:'active',step:i,stepTitle:s.title,stepStatus:{},title:g.title,steps:g.steps.length,titles,...(B?{templateSnapshot:B.snapshot(g),templateVersion:B.version(g)}:{})});draw()}),button('Save for later','btn quiet small',()=>{setJourney(id,{status:'saved',step:0,stepStatus:{},title:g.title,steps:g.steps.length,titles,...(B?{templateSnapshot:B.snapshot(g),templateVersion:B.version(g)}:{})});draw()}));body.append(f,el('p','tiny',uiText('You’re previewing. Follow it to keep track of each step; progress is saved on this device.')))}
+  if(status==='saved')body.append(button('Start following','btn small',()=>{store({status:'active'});draw()}));
   if(status==='paused'){const p=el('div','banner');p.append(el('span','',uiText('This journey is paused. Your progress is kept.')),button('Resume','btn small',()=>{setJourney(id,{status:'active'});draw()}));body.append(p)}
   body.append(el('p','tiny','Step '+(i+1)+' of '+g.steps.length+(mine?' · '+n+' done':'')),bar(mine?n:i+1,g.steps.length,mine?undefined:'Step '+(i+1)+' of '+g.steps.length));
   // What comes next and what blocks it (ORI-JOURNEY-003). Steps are in order: each follows the ones before it.
@@ -1800,7 +1816,7 @@ async function openGuide(id,opts={}){
    block('tip','Tip',list(s.tips)),
    s.staffQuestion?block('phrase','Show staff',el('p','say','“'+s.staffQuestion+'”')):null
   ].filter(Boolean));
-  const ask=button('Ask Orivia about this step','ask',()=>{});ask.dataset.ask='Help me with this step of “'+g.title+'”: '+s.title;card.append(ask);
+  const ask=button('Ask Orivia about this step','ask',()=>{});ask.onclick=()=>askPlan(id,s.id,g.title,s.title);card.append(ask);
   body.append(card);
   /* Where are you with this step? Recording a status never moves you on */
   if(mine&&status!=='paused'){
@@ -1814,7 +1830,7 @@ async function openGuide(id,opts={}){
    // Where the state came from, and Undo for the last change.
    const lc=PLAN.lastChange(mine,s.id);if(lc)box.append(el('p','tiny plan-source',uiText('You marked this')+' '+uiText(STEP_LABEL[lc.to])+' · '+when(lc.at)));
    const last=PLAN.normEntry(mine).history.at(-1),canUndo=last&&PLAN.undo(mine);if(canUndo){const tl=g.steps.find(x=>x.id===last.step)?.title||'';box.append(button(uiText('Undo')+': '+tl+' → '+uiText(STEP_LABEL[last.from]),'btn text small',()=>{const u=PLAN.undo(readJourneys()[id]);if(!u)return;store({stepStatus:u.entry.stepStatus,history:u.entry.history,notes:u.entry.notes});opts.keepScroll=true;draw()}))}
-   if(cur==='unsure'){box.append(el('p','hint','That’s okay. It won’t count as done.'+(s.confirm?' How to check: '+s.confirm:'')));const a=button('Ask Orivia to help me check','ask',()=>{});a.dataset.ask='I’m not sure about this step of “'+g.title+'”: '+s.title;box.append(a)}
+   if(cur==='unsure'){box.append(el('p','hint','That’s okay. It won’t count as done.'+(s.confirm?' How to check: '+s.confirm:'')));const a=button('Ask Orivia to help me check','ask',()=>{});a.onclick=()=>askPlan(id,s.id,g.title,s.title,true);box.append(a)}
    if(cur==='waiting_org')box.append(el('p','hint',s.waitingFor?'Waiting for: '+s.waitingFor:'Marked as waiting for them. You can come back to it any time.'));
    if(cur==='waiting_you')box.append(el('p','hint',uiText('Something here needs you. Ask Orivia if you’re not sure what.')));
    if(cur==='not_applicable')box.append(el('p','hint',uiText('Skipped as not applicable to you. Later steps no longer wait for it.')));
@@ -1836,6 +1852,7 @@ async function openGuide(id,opts={}){
   if(!opts.problem&&!opts.keepScroll)body.parentElement.scrollTop=0;
   opts.keepScroll=false;
  };
+ if(readJourneys()[id])planLocation(id,g.steps[i].id);
  draw();
 }
 $('j-search').addEventListener('input',()=>renderLibrary());
@@ -2330,3 +2347,31 @@ async function sendChat(e,replay=null){
  finally{document.removeEventListener('visibilitychange',away);if(activeChatRequest===controller)activeChatRequest=null;busy=false;sendMode(false);for(const b of document.querySelectorAll('#history [data-busy-lock]')){b.disabled=false;delete b.dataset.busyLock}$('send').disabled=Date.now()<coolUntil;working('')}
 }
 $('form').onsubmit=e=>sendChat(e);
+
+/* Batch 1 workspace controls. All writes use the existing account-scoped stores. */
+function renderProfileDisclosure(){const box=$('profile-disclosure');if(!box)return;const p=profileForAI();box.replaceChildren(el('p','tiny',uiText('When Use About me in chats is on, these saved fields can go with your messages to the reply provider. Your message history is still sent when this is off. Turning it off does not erase earlier messages or provider requests.')));const names={city:'Lives in',movingTo:'Moving to',movedFrom:'Moved from',who:'Reason for moving',place:'Institution or workplace'};for(const [k,v] of Object.entries(p||{}))box.append(el('p','tiny',uiText(names[k])+': '+v));if(!p)box.append(el('p','tiny',uiText('No saved profile fields will be included.')));box.append(button(aboutMeOn()?'Stop using About me':'Use About me in chats','btn quiet small',()=>{setAboutMe(!aboutMeOn());renderSettings();renderProfileDisclosure()}),el('p','tiny',uiText('Your profile name, family plan labels and preparation notes are not included by this setting. A place or name you type in a message is part of that message. Search, Listen and document reading have their own data flows; this is not a promise to remove details from messages.')))}
+let permissionRead=0;
+async function renderPermissionCentre(){const box=$('permission-centre'),B=window.OriviaBatch;if(!box||!B)return;const run=++permissionRead;box.replaceChildren(el('p','tiny',uiText('Checking browser permission status…')));const states=await B.permissions(navigator,globalThis.Notification);if(run!==permissionRead)return;box.replaceChildren();for(const x of states){const line=el('p','tiny',uiText(x.label)+': '+uiText({granted:'Allowed',denied:'Blocked',prompt:'Ask when needed',unknown:'Unknown — this browser cannot report it'}[x.state]));box.append(line)}box.append(el('p','tiny',uiText('This check does not request access. Use your browser’s site settings to change permissions. Microphone, location and camera are requested only when you choose their feature. Browser permission alone does not enable Orivia notification subscriptions.')),button('Refresh status','ask',renderPermissionCentre))}
+function askPlan(id,step,title,stepTitle,unsure=false){newChat(null);const c=normChat({id:newId(),title:'New chat',created:Date.now(),turns:[],planContext:{id,step}});store.chats.unshift(c);store.active=c.id;persist();renderPlanContext();ask((unsure?'I’m not sure about':'Help me with')+' this step of “'+title+'”: '+stepTitle,false)}
+function renderPlanContext(){const box=$('plan-context');if(!box)return;const ctx=activeChat()?.planContext,mine=ctx&&readJourneys()[ctx.id];if(!mine){box.hidden=true;box.replaceChildren();return}box.replaceChildren(el('span','org-context-text',uiText('From your plan')+': '+mine.title+(mine.label?' · '+mine.label:'')),button('Back to plan','ask',()=>openGuide(ctx.id,{stepId:ctx.step})),button('Remove context','ask',()=>{const c=activeChat();if(c){delete c.planContext;persist()}renderPlanContext()}));box.hidden=false}
+function planLocation(id,step){try{const hash='#plan='+encodeURIComponent(id)+'&step='+encodeURIComponent(step);if(location.hash!==hash)history.pushState({oriviaPlan:true},'',location.pathname+location.search+hash)}catch{}}
+function restorePlanLocation(){try{const q=new URLSearchParams(location.hash.slice(1)),id=q.get('plan');if(JIDSafe(id)&&readJourneys()[id])openGuide(id,{stepId:q.get('step')});else if(!$('workspace').hidden&&!$('guide-view').hidden)tab('home')}catch{}}
+function renderPlanExtras(body,id,g,newest,redraw){const B=window.OriviaBatch,mine=readJourneys()[id],owner=globalThis.OriviaAccounts?.epoch||'';if(!B)return;const current=()=> (globalThis.OriviaAccounts?.epoch||'')===owner;const makeButton=(label,cls,fn)=>button(label,cls,()=>{if(current())return fn()});
+ if(planSaveError){const notice=el('p','hint',uiText(planSaveError));notice.setAttribute('role','alert');body.append(notice)}
+ const review=B.review(g),meta=el('details','plan-review');meta.append(el('summary','',uiText('Guide version and review')),el('p','tiny',review.version+' · '+review.jurisdiction),el('p','tiny',uiText('Reviewer')+': '+review.reviewer),el('p','tiny',uiText('Source review date')+': '+review.checkedAt+' · '+uiText('Next review')+': '+review.reviewDue),el('p','tiny',uiText(review.status==='reviewed'?'Reviewed template':review.status==='stale'?'Review overdue — confirm with the source':'Legacy guide — reviewer approval is not recorded')));body.append(meta);
+ if(!mine)return;
+ const changes=B.diff(g,newest);if(changes.length){const box=el('section','card');box.append(el('h3','',uiText('A newer guide is available')),el('p','tiny',uiText('Your saved steps and reminders have not changed. Review the differences before accepting.')));for(const x of changes){const row=el('details');row.append(el('summary','',x.field==='step'?(x.after?.title||x.before?.title):x.field),el('p','tiny',uiText('Before')+': '+JSON.stringify(x.before)),el('p','tiny',uiText('After')+': '+JSON.stringify(x.after)));box.append(row)}box.append(makeButton('Accept guide update','btn small',()=>{const current=readJourneys()[id];if(!current)return;if(setJourney(id,{...B.accept(current,newest,new Date().toISOString()),steps:newest.steps.length,title:newest.title})!==false)redraw()}),el('p','tiny',uiText('Removed steps remain in your recorded history. Accepting never edits your calendar.')));body.append(box)}
+ const prep=el('details','plan-prepare');prep.append(el('summary','',uiText('Prepare before you start')));const needs=B.preparation(g,mine);for(const x of needs){const label=el('label','set-row'),input=document.createElement('input');input.type='checkbox';input.checked=x.ready;input.onchange=()=>{if(!current())return;const saved=readJourneys()[id];if(!saved)return;if(setJourney(id,{prepared:B.checklist(saved,x.id,input.checked).prepared})===false)input.checked=saved.prepared?.[x.id]===true};label.append(input,el('span','',x.label));prep.append(label)}if(!needs.length)prep.append(el('p','tiny',uiText('This guide does not list preparation documents. That does not mean no documents are needed.')));prep.append(el('p','tiny',uiText('Check document recognition, translation or attestation with the receiving organisation for your exact situation before paying or booking. A checklist tick is your own note, not confirmation that a document is accepted.')),makeButton('Help me check what is missing','ask',()=>askPlan(id,g.steps[0].id,g.title,'Check the preparation documents, whether recognition or attestation applies to my situation, and what is still uncertain.')));body.append(prep);
+ const family=el('details','plan-family');family.append(el('summary','',uiText('Personal or family plan')),el('p','tiny',uiText('Use a short label such as Person 1. No passport number, date of birth or full name is needed. This stays in your own account; it does not share another person’s account or imply guardian access.')));const lab=document.createElement('input');lab.maxLength=60;lab.value=mine.label||'';lab.setAttribute('aria-label',uiText('Plan label'));family.append(lab,makeButton('Save label','btn quiet small',()=>{if(setJourney(id,{label:lab.value.trim().slice(0,60)})!==false)redraw()}),makeButton('Make a separate plan','btn quiet small',()=>{const d=readJourneys(),chars=()=>Array.from(crypto.getRandomValues(new Uint8Array(10)),n=>String.fromCharCode(97+n%26)).join('');let key;do{key='family.'+chars()}while(d[key]);if(setJourney(key,B.duplicate(readJourneys()[id],mine.templateId||id,lab.value||'Another person',new Date().toISOString()))!==false)openGuide(key)}));body.append(family)
+}
+function libraryRows(){const B=window.OriviaBatch;return [...document.querySelectorAll('#library [data-lib-kind]')].map((node,i)=>{const kind=node.dataset.libKind,title=node.querySelector('h3,strong')?.textContent||node.dataset.libText||'Item';let country='unknown',updated=Number(node.dataset.updated)||Date.parse(node.dataset.updated)||0,pinned=false,source=null,plan=null;const index=node.dataset.planId;const saved=index&&readJourneys()[index];if(saved){country=/^(dubai|sharjah|abudhabi)/.test(saved.templateId||index)?'uae':/^(uk|london|edinburgh)/.test(saved.templateId||index)?'uk':'unknown';updated=Date.parse(saved.updated)||0;plan={id:index,label:saved.label||'',status:saved.status,stepStatus:{...saved.stepStatus},prepared:{...(saved.prepared||{})},templateVersion:saved.templateVersion||null,sources:saved.templateSnapshot?.sources||[]};source=saved.templateSnapshot?.sources?.[0]?.url||null}
+ const university=node.classList.contains('org-bookmark');if(university)updated=Number(node.dataset.savedAt)||0;
+ const chat=store.chats.find(c=>c.id===node.dataset.chatId);if(chat){updated=chat.updated||chat.created;pinned=chat.pinned}
+ const candidate=node.querySelector('a[href^="https:"]');if(!source&&candidate)source=candidate.href;
+ return {id:node.dataset.exportId||('row-'+i),node,kind,title,search:node.dataset.libText,country,space:university?'university':'personal',updated,pinned,source,plan,exportable:kind!=='files'&&!university}})}
+function applyLibraryExtras(){const B=window.OriviaBatch;if(!B||!$('lib-sort'))return;const rows=libraryRows(),q=$('lib-search').value,country=$('lib-country').value,space=$('lib-space').value;const visible=B.view(rows,{query:q,country,space,sort:$('lib-sort').value}),allowed=new Set(visible);let count=0;for(const x of rows){const on=allowed.has(x)&&(libFilter==='all'||libFilter===x.kind)&&(x.kind!=='files'||filesServer);x.node.hidden=!on;if(on)count++}for(const group of ['lib-guides','lib-places','lib-shortlists','files-list']){const parent=$(group);if(!parent)continue;for(const x of visible)if(x.node.parentElement===parent)parent.append(x.node)}$('lib-empty').hidden=!(q||country||space)||count>0;$('lib-continue').hidden=!!(q||country||space)||!['all','guides'].includes(libFilter)||!$('lib-continue').children.length}
+function exportLibrary(){const B=window.OriviaBatch,panel=$('lib-export-panel'),owner=globalThis.OriviaAccounts?.epoch||'';if(!B||!panel)return;const records=libraryRows().filter(x=>!x.node.hidden),ids=new Set();panel.hidden=false;panel.replaceChildren(el('h3','',uiText('Choose what to export')),el('p','tiny',uiText('Downloads selected personal Library metadata and plan progress only. No messages, file contents, university material or private source bodies are included. Nothing is uploaded or shared.')));const preview=el('pre','tiny');preview.style.whiteSpace='pre-wrap';const refresh=()=>preview.textContent=JSON.stringify(B.exportSelection(records,[...ids],new Date().toISOString()),null,2);for(const x of records){const label=el('label','set-row'),check=document.createElement('input');check.type='checkbox';check.disabled=!x.exportable;check.onchange=()=>{check.checked?ids.add(x.id):ids.delete(x.id);refresh()};label.append(check,el('span','',x.title+(!x.exportable?' · '+uiText('Not included in this export'):'')));panel.append(label)}refresh();const download=button('Download this preview','btn small',()=>{if((globalThis.OriviaAccounts?.epoch||'')!==owner){panel.hidden=true;panel.replaceChildren();return}const blob=new Blob([preview.textContent],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='orivia-library-selection.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)});panel.append(preview,download,button('Close','ask',()=>{panel.hidden=true;panel.replaceChildren()}))}
+function renderCoverage(){const B=window.OriviaBatch,box=$('coverage-catalogue');if(!B||!box)return;box.replaceChildren();const details=el('details');details.append(el('summary','',uiText('Explore more life topics')),el('p','tiny',uiText('Research starting points for the UAE and UK, not verified instructions. Choose a topic to prepare a question; you decide when to send.')));for(const family of B.coverage){const group=el('details');group.append(el('summary','',family.title));for(const title of family.topics){const row=el('div','row'),country=document.createElement('select');country.setAttribute('aria-label',uiText('Country for')+' '+title);for(const [value,label] of [['','Choose country'],['uae','UAE'],['uk','UK']])country.append(new Option(uiText(label),value));row.append(el('span','tiny',title),country,button('Research this','ask',()=>{if(!country.value){country.focus();return}const request=B.coverageRequest(family.id,family.topics.indexOf(title),country.value);if(!request)return;const d=readJourneys(),q=d._coverage||{requests:[]},topic=request.topic;d._coverage={requests:[...(q.requests||[]).filter(x=>x.topic!==topic),{topic,at:new Date().toISOString()}]};writeJourneys(d);ask(request.question,false)}));group.append(row)}details.append(group)}box.append(details)}
+for(const id of ['lib-sort','lib-country','lib-space'])$(id)?.addEventListener('change',applyLibraryFilter);
+if($('lib-export'))$('lib-export').onclick=exportLibrary;
+window.addEventListener?.('popstate',restorePlanLocation);

@@ -1,0 +1,210 @@
+[
+  {
+    "id": "before-moving",
+    "title": "Before moving",
+    "topics": [
+      "Choose destination and arrival checklist",
+      "Budget and cost planning",
+      "Research suitable housing",
+      "Travel and arrival preparation",
+      "Document recognition and attestation research",
+      "Family relocation dependencies",
+      "Accessible travel planning",
+      "Moving pets through official procedures"
+    ],
+    "countries": [
+      "uae",
+      "uk"
+    ],
+    "route": "official"
+  },
+  {
+    "id": "immigration-and-identity",
+    "title": "Immigration and identity",
+    "topics": [
+      "Understand university-managed visa stages",
+      "Check missing application documents",
+      "Residence medical appointment preparation",
+      "Biometrics appointment preparation",
+      "Track authoritative status and next owner",
+      "Identity card delivery uncertainty",
+      "Dependent applications",
+      "Expiry and overstay risk escalation",
+      "Replace lost identity document",
+      "Renew or change a permit"
+    ],
+    "countries": [
+      "uae",
+      "uk"
+    ],
+    "route": "official"
+  },
+  {
+    "id": "education-and-families",
+    "title": "Education and families",
+    "topics": [
+      "School curriculum and year search",
+      "Compare evidence-backed schools",
+      "School admissions contacts and reviewed emails",
+      "Transfer records and certificate checks",
+      "Enrolment requirements",
+      "Temporary education interruption",
+      "College or training institution search",
+      "New-child settling and language support",
+      "Student wellbeing and belonging",
+      "Parent support services"
+    ],
+    "countries": [
+      "uae",
+      "uk"
+    ],
+    "route": "official"
+  },
+  {
+    "id": "university-daily-life",
+    "title": "University daily life",
+    "topics": [
+      "Orientation and enrolment",
+      "Find printers and printing steps",
+      "Borrow a laptop or equipment",
+      "Campus timetable and rooms",
+      "Student support ticket routing",
+      "Accommodation office and deposits",
+      "Library access and study spaces",
+      "Disability support and accessibility",
+      "Student visa record questions",
+      "Tuition payment and scholarship source checks"
+    ],
+    "countries": [
+      "uae",
+      "uk"
+    ],
+    "route": "official"
+  },
+  {
+    "id": "housing",
+    "title": "Housing",
+    "topics": [
+      "Find and compare lawful listings",
+      "Viewing and deposit scam checks",
+      "Understand a selected tenancy document",
+      "Prepare landlord questions",
+      "Move-in inventory",
+      "Utilities setup",
+      "Report repairs",
+      "Move out and deposit return",
+      "Student halls versus private housing",
+      "Urgent loss of accommodation"
+    ],
+    "countries": [
+      "uae",
+      "uk"
+    ],
+    "route": "official"
+  },
+  {
+    "id": "transport",
+    "title": "Transport",
+    "topics": [
+      "Campus commute planning",
+      "Driving directions handoff",
+      "Public transport card comparison",
+      "Accessible transport",
+      "Missed train or last bus alternatives",
+      "Learn local transport apps",
+      "Lost while walking",
+      "Airport to accommodation",
+      "Licence recognition research",
+      "Parking and transport charge questions"
+    ],
+    "countries": [
+      "uae",
+      "uk"
+    ],
+    "route": "official"
+  },
+  {
+    "id": "money-and-essentials",
+    "title": "Money and essentials",
+    "topics": [
+      "Banking without completed local identity",
+      "Compare bank requirements",
+      "Sim and connectivity",
+      "Utilities and bill reminders",
+      "Affordable groceries",
+      "Budget-friendly food and student spaces",
+      "Understand an unexpected fee",
+      "Protect against financial scams",
+      "Work pay and basic budgeting",
+      "Replacement card or lost wallet"
+    ],
+    "countries": [
+      "uae",
+      "uk"
+    ],
+    "route": "official"
+  },
+  {
+    "id": "health-and-wellbeing",
+    "title": "Health and wellbeing",
+    "topics": [
+      "Find authorised healthcare services",
+      "Insurance and appointment requirements",
+      "Understand an uploaded appointment letter",
+      "Medical-screening explanation",
+      "Find pharmacy and opening information",
+      "Mental wellbeing support routing",
+      "Urgent help using verified local contacts",
+      "Accessibility needs",
+      "Settling anxiety and social connection",
+      "Follow-up appointment reminder"
+    ],
+    "countries": [
+      "uae",
+      "uk"
+    ],
+    "route": "official"
+  },
+  {
+    "id": "work-and-adult-administration",
+    "title": "Work and adult administration",
+    "topics": [
+      "Institutional employer onboarding",
+      "Recognition of qualifications",
+      "Tax/residency administration source checks",
+      "Employment-document questions",
+      "Professional licensing source checks",
+      "Benefits and public-service eligibility research",
+      "Family/care responsibilities",
+      "Consumer complaint routing",
+      "Legal-advice service finding",
+      "Language support services"
+    ],
+    "countries": [
+      "uae",
+      "uk"
+    ],
+    "route": "official"
+  },
+  {
+    "id": "ordinary-life-and-recovery",
+    "title": "Ordinary life and recovery",
+    "topics": [
+      "Where people spend time locally",
+      "Community recommendations with labels",
+      "Meet people and find activities",
+      "Lost item recovery",
+      "Understand an important email",
+      "Write a reviewed complaint or request",
+      "Organise appointments",
+      "Recover from a missed deadline",
+      "Correct an earlier plan",
+      "Leave a university or move to another country"
+    ],
+    "countries": [
+      "uae",
+      "uk"
+    ],
+    "route": "mixed"
+  }
+]
