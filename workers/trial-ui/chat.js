@@ -950,6 +950,24 @@ function renderLifeSummary(){
  const places=new Set();for(const chat of store.chats)for(const t of chat.turns){if(!Array.isArray(t.meta?.savedPlaces))continue;for(const d of safeDestinations(t.meta.destinations,safeSources(t.meta.sources)))if(t.meta.savedPlaces.includes(placeIdentity(d)))places.add(placeIdentity(d))}
  $('life-place-count').textContent=String(places.size)+' · '+uiText('Saved on this device');
  const journeys=Object.entries(readJourneys()).filter(([id,v])=>JID.test(id)&&v&&typeof v.title==='string'),inProgress=journeys.filter(([,v])=>v.status==='active'||v.status==='paused').length;$('life-journey-count').textContent=journeys.length?String(journeys.length)+' '+uiText('saved')+(inProgress?' · '+inProgress+' '+uiText('in progress'):''):uiText('Browse step-by-step guides');
+ renderFamilyOverview(journeys);
+}
+// Family plans side by side (week 6): one group per label from Ina's separate family plans, each plan with its progress,
+// its next step and what needs the person. Hidden until a separate plan exists.
+function renderFamilyOverview(journeys){
+ const box=$('life-family'),list=$('life-family-list'),P=window.OriviaPlan;if(!box||!list||!P?.family)return;
+ const view=P.family(journeys,new Date().toLocaleDateString('en-CA'));box.hidden=!view.show;list.replaceChildren();if(!view.show)return;
+ for(const person of view.people){
+  const group=el('div','family-person');group.append(el('h3','',person.own?uiText('You'):person.label));
+  for(const p of person.plans){
+   const b=dashboardCard(p.title,'',()=>openGuide(p.key,{from:'life'})),copy=b.querySelector('.dashboard-copy');
+   copy.append(el('small','',uiText('Steps completed')+': '+p.done+' / '+p.total));if(p.total){const bar_=el('div','dashboard-progress');bar_.append(bar(p.done,p.total,uiText('Steps completed')));copy.append(bar_)}
+   copy.append(el('small','',p.next?uiText('Next')+': '+p.next.title+' · '+uiText(P.LABEL[p.next.state]||''):uiText('All steps done')));
+   if(p.needsMe)copy.append(el('small','family-attention',uiText('Needs you')+': '+p.needsMe));
+   if(p.waitingOrg)copy.append(el('small','',uiText('Waiting for them')+': '+p.waitingOrg));
+   if(p.deadline)copy.append(el('small',p.deadline.when==='overdue'||p.deadline.when==='soon'?'family-attention':'',uiText('Next date')+': '+new Date(p.deadline.date+'T12:00:00').toLocaleDateString(uiLanguage(),{day:'numeric',month:'short'})+' · '+p.deadline.title+(p.deadline.certainty==='confirmed'?'':' ('+uiText('not sure yet')+')')));
+   group.append(b)}
+  list.append(group)}
 }
 function submitHomeQuestion(e){
  e.preventDefault();const input=$('home-question'),text=input.value.trim(),note=$('home-question-status');note.hidden=true;
@@ -1834,6 +1852,19 @@ async function openGuide(id,opts={}){
    if(cur==='waiting_org')box.append(el('p','hint',s.waitingFor?'Waiting for: '+s.waitingFor:'Marked as waiting for them. You can come back to it any time.'));
    if(cur==='waiting_you')box.append(el('p','hint',uiText('Something here needs you. Ask Orivia if you’re not sure what.')));
    if(cur==='not_applicable')box.append(el('p','hint',uiText('Skipped as not applicable to you. Later steps no longer wait for it.')));
+   // Deadline (week 6): the person's own date for this step, confirmed or not sure yet, and a reminder only if they ask.
+   {const today=new Date().toLocaleDateString('en-CA'),dl=PLAN.normEntry(mine).deadlines?.[s.id],dbox=el('div','plan-deadline');dbox.append(el('h4','',uiText('Deadline')));
+    const saveDeadlines=e=>{store({deadlines:e.deadlines});opts.keepScroll=true;draw()};
+    if(dl){const v=PLAN.deadlines(mine,[s],today)[0];dbox.append(el('p','fact',uiText(dl.certainty==='confirmed'?'Due':'About')+' '+when(dl.date+'T12:00:00')+' · '+uiText(dl.certainty==='confirmed'?'confirmed by you':'not sure yet')+(v?.when==='overdue'?' · '+uiText('the date has passed'):v?.when==='soon'?' · '+uiText('within a week'):'')));
+     if(dl.note)dbox.append(el('p','tiny',uiText('Where you saw it')+': '+dl.note));
+     if(dl.reminderId&&events.some(ev=>ev.id===dl.reminderId))dbox.append(el('p','tiny',uiText('Reminder in your calendar')));
+     else{const r=PLAN.reminderFor(dl,s.title,today);if(r)dbox.append(button('Add a reminder','btn quiet small',()=>{const saved=saveChatReminder(r);if(!saved){dbox.append(el('p','hint',uiText('Couldn’t add the reminder. Check the date, or add it in the calendar.')));return}saveDeadlines(PLAN.withReminder(readJourneys()[id],s.id,saved.id))}))}}
+    const dIn=document.createElement('input');dIn.type='date';dIn.value=dl?.date||'';dIn.setAttribute('aria-label',uiText('Deadline date'));
+    const sure=document.createElement('select');sure.setAttribute('aria-label',uiText('How sure are you of this date?'));for(const [v,t] of [['unsure','I’m not sure of the date yet'],['confirmed','I’ve confirmed this date']]){const o=document.createElement('option');o.value=v;o.textContent=uiText(t);if((dl?.certainty||'unsure')===v)o.selected=true;sure.append(o)}
+    const nIn=document.createElement('input');nIn.type='text';nIn.maxLength=120;nIn.value=dl?.note||'';nIn.placeholder=uiText('Where you saw it (optional)');nIn.setAttribute('aria-label',uiText('Where you saw it'));
+    dbox.append(dIn,sure,nIn,button(dl?'Save date':'Add a date','btn small',()=>{const e=PLAN.setDeadline(readJourneys()[id],s.id,{date:dIn.value,certainty:sure.value,note:nIn.value},Date.now());if(!e){dIn.focus?.();return}saveDeadlines(e)}));
+    if(dl)dbox.append(button('Remove date','btn text small',()=>saveDeadlines(PLAN.clearDeadline(readJourneys()[id],s.id))));
+    dbox.append(el('p','tiny',uiText('This is your own date, not an official one. If you’re not sure, check it with the office.')));box.append(dbox)}
    if(cur==='done')box.append(el('p','hint',uiText('Done is your own record, not an official approval or result.')+(i<g.steps.length-1?' '+uiText('Go to the next step when you’re ready.'):'')));
    body.append(box);
   }

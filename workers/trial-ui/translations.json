@@ -3354,5 +3354,105 @@
   "Your profile name, family plan labels and preparation notes are not included by this setting. A place or name you type in a message is part of that message. Search, Listen and document reading have their own data flows; this is not a promise to remove details from messages.": {
     "fr": "Ce réglage n’inclut ni votre nom de profil, ni les libellés familiaux, ni les notes de préparation. Un lieu ou un nom saisi dans un message fait partie de ce message. La recherche, l’écoute et la lecture de documents ont leurs propres échanges de données ; ce réglage ne retire pas les détails de vos messages.",
     "ar": "لا يضمّن هذا الإعداد اسم ملفك الشخصي أو تسميات الخطط العائلية أو ملاحظات التحضير. المكان أو الاسم الذي تكتبه في رسالة يُعد جزءاً منها. للبحث والاستماع وقراءة المستندات تدفقات بيانات منفصلة؛ وهذا ليس وعداً بحذف التفاصيل من الرسائل."
+  },
+  "Family plans": {
+    "fr": "Plans de la famille",
+    "ar": "خطط العائلة"
+  },
+  "Needs you": {
+    "fr": "À faire par vous",
+    "ar": "بانتظارك"
+  },
+  "Waiting for them": {
+    "fr": "En attente de leur réponse",
+    "ar": "بانتظارهم"
+  },
+  "All steps done": {
+    "fr": "Toutes les étapes sont terminées",
+    "ar": "اكتملت كل الخطوات"
+  },
+  "Each person’s plans, side by side. Labels are your own short words, kept in your account.": {
+    "fr": "Les plans de chaque personne, côte à côte. Les libellés sont vos propres mots, conservés dans votre compte.",
+    "ar": "خطط كل شخص جنباً إلى جنب. التسميات كلماتك القصيرة، وتُحفظ في حسابك."
+  },
+  "Deadline": {
+    "fr": "Date limite",
+    "ar": "الموعد النهائي"
+  },
+  "Due": {
+    "fr": "À faire avant le",
+    "ar": "مستحق في"
+  },
+  "About": {
+    "fr": "Vers le",
+    "ar": "حوالي"
+  },
+  "confirmed by you": {
+    "fr": "confirmée par vous",
+    "ar": "أكّدته بنفسك"
+  },
+  "not sure yet": {
+    "fr": "pas encore sûr",
+    "ar": "غير متأكد بعد"
+  },
+  "the date has passed": {
+    "fr": "la date est passée",
+    "ar": "انقضى الموعد"
+  },
+  "within a week": {
+    "fr": "dans moins d’une semaine",
+    "ar": "خلال أسبوع"
+  },
+  "Where you saw it": {
+    "fr": "Où vous l’avez vue",
+    "ar": "أين رأيته"
+  },
+  "Where you saw it (optional)": {
+    "fr": "Où vous l’avez vue (facultatif)",
+    "ar": "أين رأيته (اختياري)"
+  },
+  "Reminder in your calendar": {
+    "fr": "Rappel dans votre agenda",
+    "ar": "التذكير في تقويمك"
+  },
+  "Couldn’t add the reminder. Check the date, or add it in the calendar.": {
+    "fr": "Impossible d’ajouter le rappel. Vérifiez la date ou ajoutez-le dans l’agenda.",
+    "ar": "تعذّرت إضافة التذكير. تحقّق من التاريخ أو أضفه في التقويم."
+  },
+  "Deadline date": {
+    "fr": "Date limite",
+    "ar": "تاريخ الموعد النهائي"
+  },
+  "How sure are you of this date?": {
+    "fr": "Êtes-vous sûr de cette date ?",
+    "ar": "ما مدى تأكدك من هذا التاريخ؟"
+  },
+  "I’m not sure of the date yet": {
+    "fr": "Je ne suis pas encore sûr de la date",
+    "ar": "لست متأكداً من التاريخ بعد"
+  },
+  "I’ve confirmed this date": {
+    "fr": "J’ai confirmé cette date",
+    "ar": "أكّدت هذا التاريخ"
+  },
+  "Save date": {
+    "fr": "Enregistrer la date",
+    "ar": "حفظ التاريخ"
+  },
+  "Add a date": {
+    "fr": "Ajouter une date",
+    "ar": "إضافة تاريخ"
+  },
+  "Remove date": {
+    "fr": "Supprimer la date",
+    "ar": "حذف التاريخ"
+  },
+  "This is your own date, not an official one. If you’re not sure, check it with the office.": {
+    "fr": "C’est votre propre date, pas une date officielle. En cas de doute, vérifiez auprès du service.",
+    "ar": "هذا تاريخك أنت، وليس تاريخاً رسمياً. إن لم تكن متأكداً، فتحقّق منه لدى المكتب."
+  },
+  "Next date": {
+    "fr": "Prochaine date",
+    "ar": "التاريخ القادم"
   }
 }
