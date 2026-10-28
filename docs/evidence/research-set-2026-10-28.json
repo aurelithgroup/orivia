@@ -1,13 +1,13 @@
 {
  "run": "UAE/UK research question set (area 4)",
- "ranAt": "2026-10-28T16:13:54.285Z",
+ "ranAt": "2026-10-28T16:31:56.757Z",
  "sourceRevision": {
-  "commit": "b0b9c647801e2fb94a88263433efd3c9dc71f32e",
+  "commit": "8b1a9a3ab9d7af7b159859404d658d5b1d527f43",
   "branch": "myorivia-release-plan",
   "trackedChangesInWorkersOrTests": [],
   "files": {
-   "workers/orivia-assistant.mjs": "a5e8e6a6428165ee3b2b28127c0d30d9fce4165620d4df51c971ebfd84f71ed2",
-   "tests/research-set-uae-uk.test.mjs": "223490bd4710693ea7a9e94467b6323b17222185a9ff816d6f5b183b116e8bcc"
+   "workers/orivia-assistant.mjs": "8969216f65095935c925b136eb8efabda5db9b9ecb528fdad360b7ec4d9d0b39",
+   "tests/research-set-uae-uk.test.mjs": "ce940b3a62b2d5b78c97e8c74034107f407971e11360dcebd1cb012e0f8a434d"
   }
  },
  "mode": {
@@ -23,8 +23,9 @@
  "whatThisProves": "What the code refuses or keeps for each case, whatever the model proposes. It does not measure how often a real model proposes the wrong reply, or the quality of real search results.",
  "knownLimits": [
   "Conflicting official pages: only amounts are compared, for the same capitalised subject, across pages that were read. A disagreement about a rule, date or eligibility in words is not detected. The explanation check looks for words such as \"differ\" or \"conflict\" (English, Arabic, French), not whether the explanation is good.",
-  "Emirates: only listed hosts are tied to an emirate; others count as federal. Where the person is comes from residence phrases, the profile city, or a single emirate named; a page from another emirate must then say whose rule it is. A sentence that names the emirate passes even if the rule is irrelevant to the person.",
-  "UK nations: still read from the place named (not separated into residence and service as emirates now are); England-only gov.uk pages are recognised only when the text names England alone.",
+  "Jurisdiction comes from listed hosts only. Unlisted hosts are \"unknown\" (never federal or UK-wide), and once a place is known or named an unknown page cannot stand alone as an official rule. With no place known or named, rules are read at country level and an unknown page is not refused.",
+  "Where the person is comes from residence phrases, the profile city, or a single place named, for both emirates and UK nations. A sentence that names the page’s place passes even if that rule is irrelevant to the person.",
+  "A council page counts when the person named that council’s place; council boundaries are not checked.",
   "Scripted model: these cases show what the code refuses or keeps, not how often a real model proposes the wrong reply. 0 real-provider runs."
  ],
  "foundAndFixed": [
@@ -72,6 +73,16 @@
    "case": "uae-conflict-cited-but-unexplained",
    "before": "90bc44d: citing both conflicting pages passed without saying they differ",
    "fix": "b0b9c64"
+  },
+  {
+   "case": "uae-unknown-jurisdiction-host / uk-unknown-jurisdiction-host",
+   "before": "b0b9c64: unrecognised hosts were treated as federal or UK-wide",
+   "fix": "8b1a9a3"
+  },
+  {
+   "case": "uk-residence-vs-service-nations",
+   "before": "b0b9c64: a message naming two UK nations set no nation, so the check was off",
+   "fix": "8b1a9a3"
   }
  ],
  "cases": [
@@ -290,6 +301,46 @@
    "area": "jurisdiction",
    "region": "UK (Wales)",
    "question": "I’ve moved to Cardiff. What are Council Tax bands based on?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official"
+   ]
+  },
+  {
+   "id": "uae-unknown-jurisdiction-host",
+   "area": "jurisdiction",
+   "region": "UAE (Sharjah, unlisted authority)",
+   "question": "I live in Sharjah. Do I need to register my tenancy contract?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official"
+   ]
+  },
+  {
+   "id": "uk-residence-vs-service-nations",
+   "area": "jurisdiction",
+   "region": "UK (lives in Scotland, studies in England)",
+   "question": "I live in Glasgow but I study in Manchester. How much does a prescription cost?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official",
+    "official"
+   ]
+  },
+  {
+   "id": "uk-unknown-jurisdiction-host",
+   "area": "jurisdiction",
+   "region": "UK (Scotland, unlisted host)",
+   "question": "I live in Edinburgh. How do I report a crime?",
    "mode": "scripted model + fixture pages (no provider call)",
    "pass": true,
    "outcome": "reply",

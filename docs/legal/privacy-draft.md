@@ -132,7 +132,7 @@ Device alerts are **off** on myorivia.app for now. If they're switched on later,
 
 - **Hosting:** Orivia runs on Cloudflare.
 - **Accounts database:** kept in the EU jurisdiction.
-- **Uploaded files:** **[TO CONFIRM: R2 bucket location]**.
+- **Uploaded files:** stored in Cloudflare R2 with a Western Europe location hint (`WEUR`, from `wrangler r2 bucket info`, 29 Oct). A location hint isn't a legal guarantee of where data stays **[TO CONFIRM: whether an EU jurisdiction setting is needed]**.
 - **Providers:** OpenAI and Brave Search process requests under their own terms **[TO CONFIRM: processing locations and transfer basis]**.
 
 ## How long we keep it
