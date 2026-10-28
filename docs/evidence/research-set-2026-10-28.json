@@ -1,0 +1,195 @@
+{
+ "run": "UAE/UK research question set (area 4)",
+ "ranAt": "2026-10-28T15:15:23.177Z",
+ "sourceRevision": {
+  "commit": "4a327b2548e404df13b9d54a03e78315879e3c53",
+  "branch": "myorivia-release-plan",
+  "trackedChangesInWorkersOrTests": [],
+  "files": {
+   "workers/orivia-assistant.mjs": "65dcfd7dcf82fc972bf1daebe9272deb8c93dd025cb5126a69d027a4383e4619",
+   "tests/research-set-uae-uk.test.mjs": "be534f9045debb4831bbcac247af368e339c58bd1dbdbd0d9d963c97b13eec22"
+  }
+ },
+ "mode": {
+  "model": "scripted (fixed JSON steps in the test)",
+  "pages": "fixtures written for the test; every title starts with [Fixture]; figures are not current official values",
+  "search": "fixture results; no Brave call",
+  "provider": "none"
+ },
+ "realProviderResults": {
+  "runs": 0,
+  "reason": "Not run: the deployment hold and paused manual testing (28 Oct). A real run would spend from the shared money and search limits (/day, 0/month; 10/100 public searches), which stay unchanged. When allowed, run each question once and report each run on its own, not as a benchmark."
+ },
+ "whatThisProves": "What the code refuses or keeps for each case, whatever the model proposes. It does not measure how often a real model proposes the wrong reply, or the quality of real search results.",
+ "knownLimits": [
+  "A reply that cites only one side of a disagreement between official sources still passes (uk-conflict-two-official-levels); surfacing conflicts stays the model’s job.",
+  "Jurisdiction inside the UAE (one emirate’s rule for another) is checked only for schools (SPEA vs others), not in general.",
+  "Nation detection uses page addresses only: gov.uk pages that apply to England alone are treated as UK-wide."
+ ],
+ "foundAndFixed": [
+  {
+   "case": "uae-fee-nol-silver-gold",
+   "before": "52a3144: the Gold card was accepted at AED 25 when the next line after the Silver price was the \"nol Gold Card\" heading; rta.ae was not an official source",
+   "fix": "4a327b2"
+  },
+  {
+   "case": "uk-fee-maintenance-outside-london",
+   "before": "52a3144: £1,483 (the London figure) was accepted for \"outside London\"",
+   "fix": "4a327b2"
+  },
+  {
+   "case": "uae-jurisdiction-uk-page-for-uae",
+   "before": "52a3144: \"I’m in Sharjah with a UK licence\" gave no region, so a gov.uk rule was accepted for someone in the UAE",
+   "fix": "4a327b2"
+  },
+  {
+   "case": "uk-jurisdiction-prescriptions-scotland",
+   "before": "52a3144: an England-only NHS charge was accepted as the rule for someone in Glasgow",
+   "fix": "4a327b2"
+  }
+ ],
+ "cases": [
+  {
+   "id": "uae-requirement-emirates-id",
+   "area": "official requirement",
+   "region": "UAE",
+   "question": "I just got my residence visa in Dubai, do I need an Emirates ID?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 0,
+   "sources": [
+    "official"
+   ]
+  },
+  {
+   "id": "uk-fee-maintenance-outside-london",
+   "area": "fees",
+   "region": "UK",
+   "question": "I’m going to study in Manchester. How much money do I need to show for my student visa?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official"
+   ]
+  },
+  {
+   "id": "uae-fee-nol-silver-gold",
+   "area": "fees",
+   "region": "UAE",
+   "question": "Which nol card should I get in Dubai and how much is it?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official"
+   ]
+  },
+  {
+   "id": "uk-jurisdiction-prescriptions-scotland",
+   "area": "jurisdiction",
+   "region": "UK (Scotland)",
+   "question": "I live in Glasgow now. How much does a prescription cost?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official"
+   ]
+  },
+  {
+   "id": "uae-jurisdiction-uk-page-for-uae",
+   "area": "jurisdiction",
+   "region": "UAE",
+   "question": "I’m in Sharjah with a UK licence. Can I keep driving on it?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official"
+   ]
+  },
+  {
+   "id": "uae-conflict-official-vs-community",
+   "area": "conflicting sources",
+   "region": "UAE",
+   "question": "Can I open a bank account in Dubai before my Emirates ID arrives?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official",
+    "community"
+   ]
+  },
+  {
+   "id": "uk-conflict-two-official-levels",
+   "area": "conflicting sources",
+   "region": "UK",
+   "question": "I’m a full-time student in Manchester. Do I pay Council Tax?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 0,
+   "sources": [
+    "official",
+    "official"
+   ]
+  },
+  {
+   "id": "uae-followup-fee-after-requirement",
+   "area": "follow-up",
+   "region": "UAE",
+   "question": "(follow-up) How much does the Emirates ID cost?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 0,
+   "sources": [
+    "official",
+    "official"
+   ]
+  },
+  {
+   "id": "uae-unavailable-page-missing",
+   "area": "unavailable information",
+   "region": "UAE",
+   "question": "What is the student visa fee at the University of Sharjah?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "incomplete",
+   "rejectedReplies": 1,
+   "sources": []
+  },
+  {
+   "id": "uk-unavailable-no-results",
+   "area": "unavailable information",
+   "region": "UK",
+   "question": "What is the deadline for the Leeds student rail discount?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 0,
+   "sources": []
+  },
+  {
+   "id": "uk-date-not-in-source",
+   "area": "official requirement",
+   "region": "UK",
+   "question": "I’m starting at a UK university. Do I still get a BRP?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official"
+   ]
+  }
+ ]
+}
