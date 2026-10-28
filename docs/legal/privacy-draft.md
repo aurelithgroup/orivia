@@ -132,7 +132,7 @@ Device alerts are **off** on myorivia.app for now. If they're switched on later,
 
 - **Hosting:** Orivia runs on Cloudflare.
 - **Accounts database:** kept in the EU jurisdiction.
-- **Uploaded files:** stored in Cloudflare R2 with a Western Europe location hint (`WEUR`, from `wrangler r2 bucket info`, 29 Oct). A location hint isn't a legal guarantee of where data stays **[TO CONFIRM: whether an EU jurisdiction setting is needed]**.
+- **Uploaded files:** stored in Cloudflare R2. The bucket has a Western Europe location hint (`WEUR`), which Cloudflare describes as best effort, not a guarantee. A guaranteed storage location (an EU jurisdiction bucket) can only be set when a bucket is created **[FOUNDER DECISION: whether to create one before launch]**. Until then, don't state a guaranteed location.
 - **Providers:** OpenAI and Brave Search process requests under their own terms **[TO CONFIRM: processing locations and transfer basis]**.
 
 ## How long we keep it
@@ -146,7 +146,7 @@ Device alerts are **off** on myorivia.app for now. If they're switched on later,
 | Ratings and reports | Until reviewed. Deleted with your account |
 | University membership records | Kept after you leave, so that the university's own records add up. Deleted with your account |
 | Sign-in codes | Five minutes |
-| Recent database backups | Deleted records can be restored for up to **[TO CONFIRM: 7 or 30 days, depending on the Cloudflare plan]** |
+| Recent database backups | Deleted records can be restored for up to **30 days** **[TO CONFIRM: Workers Paid is inferred from the restore window, not from billing]** |
 
 ## Your choices and rights
 

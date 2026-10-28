@@ -1,13 +1,13 @@
 {
  "run": "UAE/UK research question set (area 4)",
- "ranAt": "2026-10-28T16:31:56.757Z",
+ "ranAt": "2026-10-28T16:49:13.899Z",
  "sourceRevision": {
-  "commit": "8b1a9a3ab9d7af7b159859404d658d5b1d527f43",
+  "commit": "f5cb14b1d9f5fad7bd956fc591398852a4d79ee9",
   "branch": "myorivia-release-plan",
   "trackedChangesInWorkersOrTests": [],
   "files": {
-   "workers/orivia-assistant.mjs": "8969216f65095935c925b136eb8efabda5db9b9ecb528fdad360b7ec4d9d0b39",
-   "tests/research-set-uae-uk.test.mjs": "ce940b3a62b2d5b78c97e8c74034107f407971e11360dcebd1cb012e0f8a434d"
+   "workers/orivia-assistant.mjs": "2092a832cea6d061b8d56f1f05819ffd4811ffb100182fc3c28332d7ed2bd625",
+   "tests/research-set-uae-uk.test.mjs": "cefec31c1864406c54fc62355bb1b9ad231a8ba520445498ec5366000d891462"
   }
  },
  "mode": {
@@ -22,10 +22,11 @@
  },
  "whatThisProves": "What the code refuses or keeps for each case, whatever the model proposes. It does not measure how often a real model proposes the wrong reply, or the quality of real search results.",
  "knownLimits": [
-  "Conflicting official pages: only amounts are compared, for the same capitalised subject, across pages that were read. A disagreement about a rule, date or eligibility in words is not detected. The explanation check looks for words such as \"differ\" or \"conflict\" (English, Arabic, French), not whether the explanation is good.",
-  "Jurisdiction comes from listed hosts only. Unlisted hosts are \"unknown\" (never federal or UK-wide), and once a place is known or named an unknown page cannot stand alone as an official rule. With no place known or named, rules are read at country level and an unknown page is not refused.",
-  "Where the person is comes from residence phrases, the profile city, or a single place named, for both emirates and UK nations. A sentence that names the page’s place passes even if that rule is irrelevant to the person.",
-  "A council page counts when the person named that council’s place; council boundaries are not checked.",
+  "Conflicting official pages: only amounts are compared, for the same capitalised subject, across pages that were read. Disagreements in words (rules, dates, eligibility) are not detected. The explanation check looks for words such as \"differ\" or \"conflict\" (English, Arabic, French), not for a good explanation.",
+  "Scope comes from listed hosts, a short list of UK-wide gov.uk paths (immigration, passports, national taxes) and the page’s own words (\"In England\", \"across the UK\"). Anything else is unknown. The UK-wide path list is incomplete, so some genuinely UK-wide pages will be treated as unknown and need a qualified answer.",
+  "Unknown scope must be qualified in the reply, with or without a location. The qualifier check is pattern-based (\"doesn’t say whether it applies\", \"may not apply\", in English, Arabic and French): it confirms a qualification is present, not that it is accurate.",
+  "A page tied to another place is accepted at country level when the person gave no place; once a place is known or named, it must say whose rule it is. A sentence that names the page’s place passes even if that rule is irrelevant to the person.",
+  "Where the person is comes from residence phrases, the profile city, or a single place named. A council page counts when the person named that council’s place; council boundaries are not checked.",
   "Scripted model: these cases show what the code refuses or keeps, not how often a real model proposes the wrong reply. 0 real-provider runs."
  ],
  "foundAndFixed": [
@@ -83,6 +84,11 @@
    "case": "uk-residence-vs-service-nations",
    "before": "b0b9c64: a message naming two UK nations set no nation, so the check was off",
    "fix": "8b1a9a3"
+  },
+  {
+   "case": "uk-unknown-scope-no-location / uae-unknown-scope-no-location / uk-complementary-two-official-levels",
+   "before": "8b1a9a3: any gov.uk page counted as UK-wide, and unknown scope was accepted when no location was given",
+   "fix": "f5cb14b"
   }
  ],
  "cases": [
@@ -173,7 +179,7 @@
    "mode": "scripted model + fixture pages (no provider call)",
    "pass": true,
    "outcome": "reply",
-   "rejectedReplies": 0,
+   "rejectedReplies": 1,
    "sources": [
     "official",
     "official"
@@ -341,6 +347,32 @@
    "area": "jurisdiction",
    "region": "UK (Scotland, unlisted host)",
    "question": "I live in Edinburgh. How do I report a crime?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official"
+   ]
+  },
+  {
+   "id": "uk-unknown-scope-no-location",
+   "area": "jurisdiction",
+   "region": "UK (no location given)",
+   "question": "How quickly must a landlord protect my deposit?",
+   "mode": "scripted model + fixture pages (no provider call)",
+   "pass": true,
+   "outcome": "reply",
+   "rejectedReplies": 1,
+   "sources": [
+    "official"
+   ]
+  },
+  {
+   "id": "uae-unknown-scope-no-location",
+   "area": "jurisdiction",
+   "region": "UAE (no location given)",
+   "question": "Do I need to register my tenancy contract?",
    "mode": "scripted model + fixture pages (no provider call)",
    "pass": true,
    "outcome": "reply",
