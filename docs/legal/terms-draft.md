@@ -12,6 +12,8 @@
 > - its own version of the progress-sharing controls.
 >
 > Where this draft says something isn't available, it means **on this branch**, not in the product. Before publishing, the draft is reconciled with whichever code is actually released.
+>
+> **Reconciliation checklist:** `docs/legal/reconciliation-combined-release.md` (14 features). The `[INCLUDE IF RELEASED]` paragraphs follow it.
 
 ---
 
@@ -76,6 +78,14 @@ We may suspend access that breaks these rules, and we'll tell you why where we c
 
 - **Development:** Orivia is still being developed. Features can change, and the service may be unavailable at times.
 - **Notice:** we'll give notice of significant changes where we can.
+
+## Features that depend on the combined release
+
+These paragraphs are kept, cut or rewritten to match what is actually released (`docs/legal/reconciliation-combined-release.md`).
+
+- **[INCLUDE IF RELEASED: sponsored placements]** Sponsored items are always labelled as sponsored. They're never presented as official information, never used as evidence in answers, and never affect which answers you get.
+- **[INCLUDE IF RELEASED: plan allowances]** Some features may have monthly allowances (Free, Plus, Premium). The basics stay free. Keeping your files never depends on your plan.
+- **[INCLUDE IF RELEASED: university support]** Support requests are answered by your university's team, or by Orivia support if you allow forwarding. Responses are best-effort and not an official service of any authority.
 
 ## Payment
 

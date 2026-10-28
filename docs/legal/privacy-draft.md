@@ -13,6 +13,8 @@
 >
 > Where this draft says something isn't available, it means **on this branch**, not in the product. Before publishing, the draft is reconciled with whichever code is actually released.
 >
+> **Reconciliation checklist:** `docs/legal/reconciliation-combined-release.md` (14 features). The `[INCLUDE IF RELEASED]` paragraphs follow it.
+>
 > The source for each statement is listed in "Where each statement comes from" at the end.
 
 ---
@@ -101,6 +103,17 @@ This is checked by the server on every request.
 - **Reports:** "Report a problem" is linked to your account. The reply text is included only if you switch that on.
 - **Retention:** both are kept until reviewed and are deleted with your account.
 
+### Features that depend on the combined release
+
+These paragraphs are kept, cut or rewritten to match what is actually released. See `docs/legal/reconciliation-combined-release.md`.
+
+- **[INCLUDE IF RELEASED: data requests]** You can ask for a copy, a correction or deletion from Settings. We store the type of request, your message, its status and our reply. Only the Orivia owner reads it, and it's deleted with your account.
+- **[INCLUDE IF RELEASED: university support]** When you send a request to your university's support team, its staff see your request and replies. They don't see your personal chats or files. Separately, you can allow your university to forward the request text to Orivia support. You can withdraw that at any time, even after leaving the university.
+- **[INCLUDE IF RELEASED: partner applications]** If you set up a university on Orivia, we keep your email address and the details you submit, so that we can review the application. **[TO DECIDE: retention]**
+- **[INCLUDE IF RELEASED: sponsored placements]** Sponsored items are labelled as sponsored. Sponsors don't receive who saw them. **[TO CONFIRM: whether views or clicks are counted]**
+- **[INCLUDE IF RELEASED: response diagnostics]** If you turn on response timings in Settings, they're kept only on this device (at most 100 samples or 7 days) and contain no messages or account details. **[TO CONFIRM: where an export goes]**
+- **[INCLUDE IF RELEASED: university guide drafting]** University staff can ask Orivia to draft a guide from public pages or documents they supply. When they agree to it, those are sent to OpenAI. This never uses students' data.
+
 ### Device alerts
 
 Device alerts are **off** on myorivia.app for now. If they're switched on later, they'll be a separate, optional choice. Lock-screen text is always generic.
@@ -111,6 +124,7 @@ Device alerts are **off** on myorivia.app for now. If they're switched on later,
 - **Sign-in:** a sign-in cookie keeps you signed in.
 - **Spending limits:** daily and monthly spending and search limits are counted per day, not per message content.
 - **Logs:** technical logs record steps, outcomes and timings, not what you wrote.
+- **Error references:** when something fails on our side, you may see a short reference. Our log for it holds that reference, the type of page or action (without your details) and the kind of error, never what you wrote.
 - **No advertising or tracking cookies:** none, and no third-party analytics.
 - **Owner analytics:** the owner sees counts taken from the live database. No separate analytics copy is kept.
 
