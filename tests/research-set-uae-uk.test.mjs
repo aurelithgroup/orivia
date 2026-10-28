@@ -6,7 +6,7 @@
    Run: node tests/research-set-uae-uk.test.mjs   (RESULTS=path writes the per-case results as JSON) */
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
-import {runAssistantTurn,personRegion,personNation,personEmirate,nationOf,nationOfEvidence,emirateOf,sourceKind,errorCode} from '../workers/orivia-assistant.mjs';
+import {runAssistantTurn,personRegion,personNation,personEmirate,emiratesNamed,nationOf,nationOfEvidence,emirateOf,sourceKind,errorCode} from '../workers/orivia-assistant.mjs';
 
 // Where the person is, when a message names both countries or a UK nation
 const m=t=>[{role:'user',content:t}];
@@ -17,7 +17,8 @@ assert.equal(personNation(m('I live in Glasgow now')),'scotland');assert.equal(p
 assert.equal(nationOf('https://www.nhs.uk/x'),'england');assert.equal(nationOf('https://www.nhsinform.scot/x'),'scotland');assert.equal(nationOf('https://www.gov.uk/x'),'','gov.uk speaks for the whole UK');
 assert.equal(sourceKind('https://www.rta.ae/wps/portal/rta/ae/public-transport/Nol-Home'),'government');
 assert.equal(errorCode('sentence 1: a official_rule claim for someone in Scotland cannot rest only on pages for England (x)'),'wrong-nation');
-assert.equal(personEmirate(m('I live in Sharjah')),'sharjah');assert.equal(personEmirate(m('I’m in Sharjah, which nol card for the Dubai Metro?')),'','two emirates named: none set');
+assert.equal(personEmirate(m('I live in Sharjah')),'sharjah');assert.equal(personEmirate(m('I’m in Sharjah, which nol card for the Dubai Metro?')),'sharjah','where the person is, not the service named');
+assert.equal(personEmirate(m('Dubai or Sharjah, where is parking cheaper?')),'','two emirates and no location: none');assert.deepEqual(emiratesNamed(m('Dubai or Sharjah, where is parking cheaper?')),['dubai','sharjah']);
 assert.equal(emirateOf('https://u.ae/en/x'),'','federal pages belong to no single emirate');assert.equal(emirateOf('https://spea.shj.ae/x'),'sharjah');
 assert.equal(nationOfEvidence({url:'https://www.gov.uk/x',excerpt:'In England, bands are based on 1991 values.'}),'england');
 assert.equal(nationOfEvidence({url:'https://www.gov.uk/x',excerpt:'Rules differ in England and Scotland.'}),'','a page naming two nations is UK-wide');
@@ -138,10 +139,27 @@ const CASES=[
    say(['Public parking is paid by nol card or the mParking text service.','official_rule',['E1']]),
    say(['Public parking is paid through the Mawqif app or parking machines.','official_rule',['E2']])],
   check:({out,rejected})=>{assert.ok(rejected.some(r=>/emirate pages for Dubai/.test(r)),'a Dubai authority’s rule is not the rule in Sharjah');assert.match(out.reply,/Mawqif/);assert.doesNotMatch(out.reply,/mParking/)}},
- {id:'uae-emirate-other-emirate-service-allowed',area:'jurisdiction',region:'UAE (Sharjah, Dubai service)',
+ // Where the person is (Sharjah) is not whose rule it is (Dubai's RTA): Dubai's rule is given, but it must say it's Dubai's.
+ {id:'uae-emirate-service-elsewhere-attributed',area:'jurisdiction',region:'UAE (lives in Sharjah, Dubai service)',
   question:'I’m in Sharjah but I’ll use the Dubai Metro. Which nol card should I get?',results:[P.nol],
-  script:[tools(P.nol),say(['The Silver card is AED 25 from any ticket office, including AED 19 e-purse value.','official_rule',['E1']])],
-  check:({out,rejected})=>{assert.equal(rejected.length,0,'Dubai’s own rules for its metro are not refused for a Sharjah resident');assert.match(out.reply,/AED 25/)}},
+  script:[tools(P.nol),
+   say(['The Silver card is AED 25 from any ticket office, including AED 19 e-purse value.','official_rule',['E1']]),
+   say(['In Dubai, the Silver card is AED 25 from any ticket office, including AED 19 e-purse value.','official_rule',['E1']])],
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/must say it is Dubai's rule.*because the person is in Sharjah/.test(r)),'an unattributed Dubai rule is refused for a Sharjah resident');assert.match(out.reply,/In Dubai, the Silver card is AED 25/)}},
+ // Two emirates named and no location: naming both mustn't switch the check off.
+ {id:'uae-emirate-two-named-no-location',area:'jurisdiction',region:'UAE (two emirates named)',
+  question:'Dubai or Sharjah, how is public parking paid?',results:[P.parkDubai,P.parkSharjah],
+  script:[tools(P.parkDubai,P.parkSharjah),
+   say(['Public parking is paid by nol card or the mParking text service.','official_rule',['E1']]),
+   say(['In Dubai, public parking is paid by nol card or the mParking text service.','official_rule',['E1']],['In Sharjah, public parking is paid through the Mawqif app or parking machines.','official_rule',['E2']])],
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/the conversation names Dubai and Sharjah/.test(r)),'two emirates named still requires saying whose rule');assert.match(out.reply,/In Dubai, public parking/);assert.match(out.reply,/In Sharjah, public parking/)}},
+ // Conflicting official pages: two citations aren't enough; a sentence must say they differ.
+ {id:'uae-conflict-cited-but-unexplained',area:'conflicting sources',region:'UAE',
+  question:'What does an Emirates ID cost?',results:[P.eidFeeUae,P.eidFeeIcp],
+  script:[tools(P.eidFeeUae,P.eidFeeIcp),
+   say(['The Emirates ID fee is AED 100 for each year of validity.','official_rule',['E1']],['The Emirates ID fee is AED 270 for a two-year card, including service charges.','official_rule',['E2']]),
+   say(['The two official pages give different Emirates ID fees, so check the current fee with ICP before you pay.','general',[]],['One says the Emirates ID fee is AED 100 for each year of validity.','official_rule',['E1']],['ICP’s page says the Emirates ID fee is AED 270 for a two-year card, including service charges.','official_rule',['E2']])],
+  check:({out,rejected})=>{assert.ok(rejected.some(r=>/give different figures for Emirates; add a sentence that says they differ/.test(r)),'both cited but not explained is refused');assert.match(out.reply,/give different Emirates ID fees/)}},
  {id:'uk-england-only-govuk-for-wales',area:'jurisdiction',region:'UK (Wales)',
   question:'I’ve moved to Cardiff. What are Council Tax bands based on?',results:[P.ctaxEngland,P.ctaxWales],
   script:[tools(P.ctaxEngland,P.ctaxWales),
