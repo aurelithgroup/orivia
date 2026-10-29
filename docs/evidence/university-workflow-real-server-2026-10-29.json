@@ -1,0 +1,293 @@
+{
+ "block": "University workflows on the real local server (week 7)",
+ "reviewCheckpoint": "032e63986a170081cdaafbf897c84b60b8c08387 (founder, 29 Oct). This work comes after it.",
+ "kind": "REAL SERVER, not fixtures. Compare docs/evidence/university-screens-local-2026-10-29.json, which is a fixture-harness check.",
+ "server": "tools/browser-checks/accounts-local-server.mjs runs the worker's own handleAccountRequest, Better Auth and the real schema (schema.sql, organisations.sql) on in-memory SQLite behind the D1 interface. Every /api/ answer comes from the worker code; nothing is a fixture.",
+ "differencesFromCloudflare": [
+  "SQLite through the same D1 shim the tests use, not D1 itself",
+  "The local server plays the TLS edge: the browser talks http to 127.0.0.1 and the worker sees https://localhost (Origin and Referer mapped the same way)",
+  "Sign-in codes go to a local outbox; no email is sent. A local-only /__dev/as helper signs the browser in as a fictional person",
+  "/orivia-nav.js is served from workers/trial-ui/nav.js (the trial worker serves an embedded copy)",
+  "No Workers AI, Browser Rendering, R2 or OpenAI; nothing reaches Cloudflare or any other service"
+ ],
+ "people": "Fictional only: owner, admin, student and outsider @northbay.example. Northbay University is fictional and set in Dubai.",
+ "walkthrough": {
+  "when": "2026-10-29, about 08:10 to 08:15 UTC",
+  "how": "By hand in the browser pane, through the screens: owner invites the partner admin; admin submits details; owner approves; admin checks welcome defaults, drafts and publishes a guide, creates a student invitation; student pastes the link and asks to join; student is refused before approval; admin approves; student sees the guide and sends a support request",
+  "note": "The run ended when my local table helper crashed the server (a bug in the helper, not the worker). It was fixed, and the workflow was written as a replayable script so a restart can't lose it."
+ },
+ "replay": {
+  "ranAt": "2026-10-29T14:23:49.345Z",
+  "tool": "node tools/browser-checks/university-workflow-local.mjs (the same requests the screens send)",
+  "passed": true,
+  "steps": [
+   {
+    "step": "Owner creates a named partner setup invitation",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/onboarding",
+    "status": 201
+   },
+   {
+    "step": "Another account cannot open that invitation",
+    "as": "outsider",
+    "method": "POST",
+    "route": "/api/partner/inspect",
+    "status": 404
+   },
+   {
+    "step": "Invited admin opens it",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/partner/inspect",
+    "status": 200
+   },
+   {
+    "step": "Admin submits public details for review",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/partner/submit",
+    "status": 200
+   },
+   {
+    "step": "Admin cannot approve their own application",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/admin/onboarding/:org/decision",
+    "status": 403
+   },
+   {
+    "step": "Owner approves",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/onboarding/:org/decision",
+    "status": 200
+   },
+   {
+    "step": "Welcome defaults carried over from the application",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/arrival",
+    "status": 200
+   },
+   {
+    "step": "Admin drafts a members-only guide",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:org/content",
+    "status": 201
+   },
+   {
+    "step": "Admin publishes it",
+    "as": "admin",
+    "method": "PATCH",
+    "route": "/api/orgs/:org/content/:org",
+    "status": 200
+   },
+   {
+    "step": "Admin creates a 7-day student invitation for 5 places",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:org/invitations",
+    "status": 201
+   },
+   {
+    "step": "Student opens the invitation",
+    "as": "student",
+    "method": "POST",
+    "route": "/api/invitations/inspect",
+    "status": 200
+   },
+   {
+    "step": "Student asks to join",
+    "as": "student",
+    "method": "POST",
+    "route": "/api/invitations/join",
+    "status": 201
+   },
+   {
+    "step": "Before approval: no student space",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/me/orgs/:org",
+    "status": 403
+   },
+   {
+    "step": "Before approval: no staff content list",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/orgs/:org/content",
+    "status": 403
+   },
+   {
+    "step": "Admin approves the request",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:org/requests/:id/decision",
+    "status": 200
+   },
+   {
+    "step": "After approval: the student space shows the published guide",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/me/orgs/:org",
+    "status": 200
+   },
+   {
+    "step": "Student sends a support request (not forwardable)",
+    "as": "student",
+    "method": "POST",
+    "route": "/api/orgs/:org/support",
+    "status": 201
+   },
+   {
+    "step": "Admin sees the request",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/support",
+    "status": 200
+   },
+   {
+    "step": "Admin cannot forward it to Orivia without consent",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:org/support/:org/escalate",
+    "status": 409
+   },
+   {
+    "step": "Admin replies and marks it resolved",
+    "as": "admin",
+    "method": "PATCH",
+    "route": "/api/orgs/:org/support/:org",
+    "status": 200
+   },
+   {
+    "step": "Student sees the reply",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/orgs/:org/support",
+    "status": 200
+   },
+   {
+    "step": "Application records stay locked for admins",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/records",
+    "status": 403
+   },
+   {
+    "step": "A student cannot see the member list",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/orgs/:org/members",
+    "status": 403
+   },
+   {
+    "step": "An outsider cannot see the organisation",
+    "as": "outsider",
+    "method": "GET",
+    "route": "/api/orgs/:org/summary",
+    "status": 403
+   },
+   {
+    "step": "Progress totals stay paused below the reporting minimum",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/progress",
+    "status": 200
+   },
+   {
+    "step": "Activity history records the changes",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/audit",
+    "status": 200
+   }
+  ],
+  "facts": {
+   "organisation": [
+    {
+     "name": "Northbay University",
+     "slug": "northbay-university",
+     "status": "active"
+    }
+   ],
+   "memberships": [
+    {
+     "role": "admin",
+     "status": "active"
+    },
+    {
+     "role": "student",
+     "status": "active"
+    }
+   ],
+   "arrival": {
+    "country": "uae",
+    "region": "Dubai",
+    "town": "Dubai Academic City",
+    "reason": "study"
+   },
+   "studentSees": {
+    "guides": [
+     "Collect your student ID card"
+    ],
+    "personalDataShared": false,
+    "applicationProgress": {
+     "available": false,
+     "reason": "institution_integration_not_connected"
+    }
+   },
+   "ticket": [
+    {
+     "title": "Visa medical appointment",
+     "status": "resolved",
+     "reply": "Collect it from the Student Hub, Building A, with your passport.",
+     "allowEscalation": 0
+    }
+   ],
+   "progress": {
+    "shown": false,
+    "reason": "reporting_paused"
+   },
+   "auditActions": [
+    "membership.active",
+    "membership.requested",
+    "invitation.created",
+    "content.updated",
+    "content.drafted"
+   ]
+  }
+ },
+ "ciTest": "tests/university-workflow-real-server.test.mjs starts the server on a spare port and requires all 26 steps to pass",
+ "screenshots": {
+  "takenAt": "2026-10-29T14:24:12Z to 2026-10-29T14:25:22Z (file times)",
+  "count": 14,
+  "set": "owner overview and partner review; student space; 11 staff tabs, all at 390x844, after the replay",
+  "result": "No horizontal overflow and no error banners on any screen",
+  "where": "Shared privately with the reviewer, not committed"
+ },
+ "fixedFromThisCheck": [
+  "Activity history showed raw action names (\"invitation created\", \"content drafted\") and called a staff approval \"Joined\". Every action the server writes now has a plain label",
+  "The owner's partner review listed raw keys (contactEmail: …, country: uae). It now shows field names and plain values",
+  "Support status options showed raw values (in_progress) in the university and Orivia inboxes. They now read Open / In progress / Resolved",
+  "(Earlier the same day, from the fixture check) workbench area, field and status names"
+ ],
+ "findingsNotChanged": [
+  "Partner setup form: welcome country and reason are free-text boxes for fixed choices, unlike the staff screen, which uses dropdowns",
+  "Partner setup form: after submitting, the form clears but stays on screen with its submit button; it should show the submitted details read-only while pending",
+  "Accounts made with a sign-in code have no name, so member lists show the email twice",
+  "Members list says \"Member\" while the role dropdown says \"Student\"",
+  "The staff Support tab opens with the student's own send form; the staff inbox and reply controls sit below it",
+  "A staff reply to a support request isn't recorded in the organisation's activity history",
+  "Student data-request types show in lower case (access, correction, deletion, other)"
+ ],
+ "notCovered": [
+  "The app's own join entry (/?organisation=…#join=…) in the trial worker; the student used the /platform paste-a-link route",
+  "Students marking guides done (the Overview text mentions it; the /platform student space has no control for it)",
+  "AI guide drafting (needs OpenAI, which isn't connected locally)",
+  "Real D1, real email delivery, the Cloudflare edge",
+  "Right-to-left Arabic and screen readers"
+ ],
+ "status": "Visual review and language review remain pending. No guide review records were created. Nothing was deployed."
+}

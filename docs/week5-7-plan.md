@@ -128,6 +128,16 @@ These must work in this release. They aren't dashboards.
 
 Conflicts in four files were resolved: the assistant, `chat.js`, `page.html` (this branch's UX-005 rules kept) and the trial worker (rebuilt). Two config files gain `enable_request_signal`, which takes effect only on a deploy after the hold. 132/132 local CI pass. **Not yet checked:** the university screens in the harness, visual review, and any live check. **Not taken:** the founder workflows, sponsorship placements and Journey governance (later Ina commits). Sharjah coverage stays outstanding.
 
+**University checks (29 Oct, after the review checkpoint `032e639`):**
+- **Fixture harness:** all 11 staff tabs and 15 owner areas render at phone and desktop width.
+- **Real local server:** the worker's own accounts and organisations code, on in-memory SQLite, with no Cloudflare and no email. A 26-step workflow passes and is now a CI test: partner setup and approval, publishing, invitation, join and approval, support with forwarding refused, records locked, outsiders refused, progress paused.
+- **Fixed:** plain labels for the workbench, activity history, partner review and support statuses.
+- **Recorded, not changed:** seven findings (free-text choices on the partner form, a form left open after submitting, nameless accounts, Member/Student wording, the staff Support layout, an unaudited support reply, lower-case request types).
+- **Not covered:** the app-shell join link, students marking guides done, AI drafting, real D1 or email, Arabic layout.
+- **Where:** screenshots went to Ina privately. Evidence is in `docs/evidence/university-screens-local-2026-10-29.json` (fixtures) and `docs/evidence/university-workflow-real-server-2026-10-29.json` (real server).
+
+**Guide source checks (29 Oct):** every Edinburgh journey now has a partial, dated source-check record (review pack sections 8 and 10). 20 Dubai journeys still have none. No review records exist.
+
 **Mon 9 – Tue 10 Nov: last features**
 
 | Area | Work |

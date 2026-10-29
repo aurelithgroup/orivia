@@ -1,0 +1,75 @@
+// Replays the Northbay university workflow against the real accounts server (accounts-local-server.mjs), with the same
+// requests the staff, owner and student screens send. Fictional people only (@northbay.example). Each step records the real
+// HTTP status; the run stops at the first unexpected one. The server's state is left in place for screenshots.
+// Usage: node tools/browser-checks/university-workflow-local.mjs [baseUrl] [out.json]
+import fs from 'node:fs';
+const base=process.argv[2]||'http://localhost:8794',outFile=process.argv[3];
+const steps=[];let failed=null;
+async function as(name){const r=await fetch(base+'/__dev/as?name='+name);if(r.status!==200)throw Error('sign in '+name+': '+r.status);
+ const who=await r.json();return {name,id:who.id,cookie:r.headers.getSetCookie().map(c=>c.split(';')[0]).join('; ')}}
+async function call(who,step,path,method='GET',body,expect=200){
+ if(failed)return null;
+ const r=await fetch(base+path,{method,headers:{Cookie:who.cookie,'X-Orivia-Account':who.id,Origin:base,...(body!==undefined?{'Content-Type':'application/json'}:{})},...(body!==undefined?{body:JSON.stringify(body)}:{})});
+ const text=await r.text();let data;try{data=JSON.parse(text)}catch{data=text}
+ const ok=Array.isArray(expect)?expect.includes(r.status):r.status===expect;
+ steps.push({step,as:who.name,method,route:path.replace(/[0-9a-f]{8}-[0-9a-f-]{27}/g,':org').replace(/\/[A-Za-z0-9_-]{20,}(?=\/|$)/g,'/:id'),status:r.status,expected:expect,ok});
+ if(!ok){failed={step,status:r.status,data:typeof data==='string'?data.slice(0,200):data}}
+ return data;
+}
+const table=async t=>(await fetch(base+'/__dev/sql?t='+t)).json();
+
+const owner=await as('owner'),admin=await as('admin'),student=await as('student'),outsider=await as('outsider');
+
+// 1. Partner setup: owner invites a named admin, the admin submits public details, only the owner approves.
+const inv=await call(owner,'Owner creates a named partner setup invitation','/api/admin/onboarding','POST',{recipientEmail:'admin@northbay.example',confirm:true},201);
+await call(outsider,'Another account cannot open that invitation','/api/partner/inspect','POST',{token:inv?.token},404);
+const app=(await call(admin,'Invited admin opens it','/api/partner/inspect','POST',{token:inv?.token}))?.application;
+const details={name:'Northbay University',city:'Dubai',website:'https://northbay.example',contactEmail:'hub@northbay.example',country:'uae',region:'Dubai',town:'Dubai Academic City',reason:'study'};
+await call(admin,'Admin submits public details for review','/api/partner/submit','POST',{token:inv?.token,revision:app?.revision,data:details,confirm:true});
+await call(admin,'Admin cannot approve their own application','/api/admin/onboarding/'+inv?.id+'/decision','POST',{decision:'approve',revision:(app?.revision??0)+1,confirm:true},403);
+const approved=await call(owner,'Owner approves','/api/admin/onboarding/'+inv?.id+'/decision','POST',{decision:'approve',revision:(app?.revision??0)+1,confirm:true});
+const org=approved?.organisationId,pre='/api/orgs/'+org;
+
+// 2. Staff set up the student space.
+const arrival=await call(admin,'Welcome defaults carried over from the application',pre+'/arrival');
+const guide=(await call(admin,'Admin drafts a members-only guide',pre+'/content','POST',{kind:'guide',title:'Collect your student ID card',body:'Bring your passport and offer letter to the Student Hub in Building A during orientation week.',visibility:'members',details:{}},201))?.content;
+await call(admin,'Admin publishes it',pre+'/content/'+guide?.id,'PATCH',{revision:guide?.revision,status:'published'});
+const join=await call(admin,'Admin creates a 7-day student invitation for 5 places',pre+'/invitations','POST',{role:'student',label:'Autumn intake',expiresInSeconds:7*86400,maxUses:5},201);
+const token=join?.token;
+
+// 3. A student asks to join; nothing is visible until staff approve.
+await call(student,'Student opens the invitation','/api/invitations/inspect','POST',{token});
+await call(student,'Student asks to join','/api/invitations/join','POST',{token},[200,201]);
+await call(student,'Before approval: no student space',pre.replace('/api/orgs','/api/me/orgs'),'GET',undefined,403);
+await call(student,'Before approval: no staff content list',pre+'/content','GET',undefined,403);
+await call(admin,'Admin approves the request',pre+'/requests/'+student.id+'/decision','POST',{decision:'approve'});
+const space=await call(student,'After approval: the student space shows the published guide',pre.replace('/api/orgs','/api/me/orgs'));
+
+// 4. Support: the student writes to staff without consenting to forwarding; the admin replies.
+const ticket=await call(student,'Student sends a support request (not forwardable)',pre+'/support','POST',{title:'Visa medical appointment',body:'I can’t find the letter for my visa medical appointment. Where do I collect it?',confirm:true,allowEscalation:false},201);
+const list=await call(admin,'Admin sees the request',pre+'/support');
+const t=(list?.tickets||[]).find(x=>x.id===ticket?.id);
+await call(admin,'Admin cannot forward it to Orivia without consent',pre+'/support/'+ticket?.id+'/escalate','POST',{confirm:true},409);
+await call(admin,'Admin replies and marks it resolved',pre+'/support/'+ticket?.id,'PATCH',{revision:t?.revision,reply:'Collect it from the Student Hub, Building A, with your passport.',status:'resolved'});
+const mine=await call(student,'Student sees the reply',pre+'/support');
+
+// 5. Limits that must hold on the real server.
+await call(admin,'Application records stay locked for admins',pre+'/records','GET',undefined,403);
+await call(student,'A student cannot see the member list',pre+'/members','GET',undefined,403);
+await call(outsider,'An outsider cannot see the organisation',pre+'/summary','GET',undefined,[403,404]);
+const progress=await call(admin,'Progress totals stay paused below the reporting minimum',pre+'/progress');
+const audit=await call(admin,'Activity history records the changes',pre+'/audit');
+
+const facts={
+ organisation:(await table('organisations')).map(o=>({name:o.name,slug:o.slug,status:o.status})),
+ memberships:(await table('organisation_memberships')).map(m=>({role:m.role,status:m.status})),
+ arrival:arrival?.arrival&&{country:arrival.arrival.country,region:arrival.arrival.region,town:arrival.arrival.town,reason:arrival.arrival.reason},
+ studentSees:{guides:(space?.content||[]).map(c=>c.title),personalDataShared:space?.personalDataShared,applicationProgress:space?.applicationProgress},
+ ticket:(mine?.tickets||[]).map(x=>({title:x.title,status:x.status,reply:x.reply,allowEscalation:x.allowEscalation})),
+ progress:progress?.progress&&{shown:progress.progress.shown,reason:progress.progress.reason},
+ auditActions:(audit?.entries||[]).map(e=>e.action),
+};
+const result={ranAt:new Date().toISOString(),server:'accounts-local-server.mjs: real handleAccountRequest + Better Auth on in-memory SQLite; no fixtures',passed:!failed&&steps.every(s=>s.ok),steps,failed,facts};
+if(outFile)fs.writeFileSync(outFile,JSON.stringify(result,null,1)+'\n');
+console.log(JSON.stringify({passed:result.passed,steps:steps.length,failed},null,1));
+if(!result.passed)process.exitCode=1;

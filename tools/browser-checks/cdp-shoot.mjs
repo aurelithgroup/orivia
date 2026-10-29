@@ -1,10 +1,12 @@
 // Phone-size screenshots of the local harness through Chrome's DevTools protocol (no extra packages).
-// Usage: node cdp-shoot.mjs <outDir> <jobs.json>   jobs: [{name, path, js?, wait?}]
+// Usage: node cdp-shoot.mjs <outDir> <jobs.json> [baseUrl]   jobs: [{name, path, js?, wait?, as?}]
+// baseUrl defaults to the fixture harness (http://localhost:8793). With accounts-local-server.mjs, a job's "as" signs the
+// browser in as that fictional person first, through the server's local /__dev/as helper.
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-const [outDir,jobsFile]=process.argv.slice(2);const jobs=JSON.parse(fs.readFileSync(jobsFile,'utf8'));fs.mkdirSync(outDir,{recursive:true});
+const [outDir,jobsFile,base='http://localhost:8793']=process.argv.slice(2);const jobs=JSON.parse(fs.readFileSync(jobsFile,'utf8'));fs.mkdirSync(outDir,{recursive:true});
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'cdp-'));
 const chrome=spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',['--headless=new','--disable-gpu','--hide-scrollbars','--no-first-run','--no-default-browser-check','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9333','--user-data-dir='+profile,'about:blank'],{stdio:'ignore'});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -17,8 +19,9 @@ await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScal
 for(const job of jobs){
  // Fresh state for each screen: clear the origin's storage, then load.
  await send('Emulation.setDeviceMetricsOverride',{width:job.width||390,height:job.height||844,deviceScaleFactor:job.width>600?1:2,mobile:!(job.width>600)});
- if(!job.keep)await send('Storage.clearDataForOrigin',{origin:'http://localhost:8793',storageTypes:'all'});
- await send('Page.navigate',{url:'http://localhost:8793/'+(job.path||'')});await sleep(job.wait||2500);
+ if(!job.keep)await send('Storage.clearDataForOrigin',{origin:base,storageTypes:'all'});
+ if(job.as){await send('Page.navigate',{url:base+'/__dev/as?name='+job.as});await sleep(800)}
+ await send('Page.navigate',{url:base+'/'+(job.path||'')});await sleep(job.wait||2500);
  // Optional real key presses before the job's JS: [{key:'Tab',times:3,trail:true},{text:'hello'},{key:'Enter'}]; focus trail recorded.
  if(job.keys){const codes={Tab:9,Enter:13,Escape:27,ArrowDown:40,ArrowUp:38,' ':32};const trail=[];
   for(const k of job.keys){if(k.text){await send('Input.insertText',{text:k.text});continue}

@@ -221,6 +221,7 @@ jobs:
           node tests/docs-before-guide.test.mjs
           node tests/ina-review-week6.test.mjs
           node tests/source-checks-oct29.test.mjs
+          node --experimental-sqlite tests/university-workflow-real-server.test.mjs
       - name: "myorivia.app production entry gates"
         run: node --experimental-sqlite tests/myorivia-release.test.mjs
       - name: "Organisation membership and invitation server boundaries"
