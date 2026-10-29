@@ -1,0 +1,548 @@
+{
+ "kind": "local verification, not live acceptance; implemented and locally verified, awaiting independent review",
+ "date": "2026-10-29",
+ "implementationCheckpoint": "57d8b580f7e0771bbf7bbb34f754e2afe3c7abf6 (changes on top, committed with this file)",
+ "reviewBaseline": "6e660b1655a5a7714266dfa8b7c4a1c0ba65e42d",
+ "deployment": "none: deployment hold in place; pilot, production and payments untouched; no payment is taken and nothing is sent to sponsors",
+ "reusedFromIna": "The campaign half of workers/accounts/founder-commercial.mjs on ina/founder-ai-sponsorship-block-3-2026-10-25 (49bad94, 9e2f47d, 2c14591), now workers/accounts/sponsorships.mjs, almost unchanged. Not taken: founder AI workflows (area 12, backlog) and Ina’s management UI; the owner panel and student cards here are new and use her API.",
+ "what": "Owner-only sponsored campaigns per organisation: draft, review, approval with a review note, re-review after any edit, withdrawal (locked). Students and staff of that organisation see approved campaigns between their dates, as a Sponsored section after everything the university published, with who paid, the disclosure and a link marked rel=sponsored. Demo organisations label the sponsor fictional. Never part of guides, answers or the assistant’s organisation context; never a ranking input.",
+ "rerun": [
+  "node --experimental-sqlite tests/sponsorships-real-server.test.mjs",
+  "node --experimental-sqlite tools/browser-checks/sponsorships-browser.mjs <outDir>",
+  "both in CI and tools/run-ci-local.mjs"
+ ],
+ "replay": {
+  "ranAt": "2026-10-29T17:39:39.999Z",
+  "passed": true,
+  "steps": [
+   {
+    "step": "Owner invites Northbay University",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/onboarding",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "Northbay University admin opens the invitation",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/partner/inspect",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Northbay University admin submits its details",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/partner/submit",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Owner approves Northbay University",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/onboarding/:id/decision",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Owner invites Eastgate College",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/onboarding",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "Eastgate College admin opens the invitation",
+    "as": "eastgate",
+    "method": "POST",
+    "route": "/api/partner/inspect",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Eastgate College admin submits its details",
+    "as": "eastgate",
+    "method": "POST",
+    "route": "/api/partner/submit",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Owner approves Eastgate College",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/onboarding/:id/decision",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Admin creates a student invitation",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:id/invitations",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "Student asks to join",
+    "as": "student",
+    "method": "POST",
+    "route": "/api/invitations/join",
+    "status": 201,
+    "expected": [
+     200,
+     201
+    ],
+    "ok": true
+   },
+   {
+    "step": "Admin approves the student",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:id/requests/Y1R5HoyS4nb4hYj32GohcBHEYw3mAtH1/decision",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "A university admin cannot list campaigns",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/admin/sponsorships",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "A university admin cannot create one",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/admin/sponsorships",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "A label and disclosure that don’t say sponsored or paid are refused",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/sponsorships",
+    "status": 400,
+    "expected": 400,
+    "ok": true
+   },
+   {
+    "step": "Calling the sponsor official is refused",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/sponsorships",
+    "status": 400,
+    "expected": 400,
+    "ok": true
+   },
+   {
+    "step": "A link that isn’t https is refused",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/sponsorships",
+    "status": 400,
+    "expected": 400,
+    "ok": true
+   },
+   {
+    "step": "Owner creates a draft campaign",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/sponsorships",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "A draft is not shown to students",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/me/orgs/:id/sponsorships",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "A draft cannot be approved directly",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 409,
+    "expected": 409,
+    "ok": true
+   },
+   {
+    "step": "Owner sends it for review",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Approval needs a review note",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 400,
+    "expected": 400,
+    "ok": true
+   },
+   {
+    "step": "Approval must match what was reviewed",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 409,
+    "expected": 409,
+    "ok": true
+   },
+   {
+    "step": "Owner approves the reviewed campaign",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "The student sees the approved placement",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/me/orgs/:id/sponsorships",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "The university’s own content has no placement in it",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/me/orgs/:id",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Another organisation’s admin cannot read Northbay’s placements",
+    "as": "eastgate",
+    "method": "GET",
+    "route": "/api/me/orgs/:id/sponsorships",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "Someone outside cannot read them",
+    "as": "outsider",
+    "method": "GET",
+    "route": "/api/me/orgs/:id/sponsorships",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "Owner drafts a campaign for Eastgate",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/sponsorships",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "Eastgate campaign to review",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Eastgate campaign approved",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "A campaign can’t be moved to another organisation",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 409,
+    "expected": 409,
+    "ok": true
+   },
+   {
+    "step": "Northbay’s student still sees only Northbay’s placement",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/me/orgs/:id/sponsorships",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Owner drafts a campaign starting next week",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/sponsorships",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "Future campaign to review",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Future campaign approved",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Not shown before its start date",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/me/orgs/:id/sponsorships",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "An approved campaign can’t be edited in place",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 409,
+    "expected": 409,
+    "ok": true
+   },
+   {
+    "step": "Editing sends it back to review",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "While back in review, students see nothing",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/me/orgs/:id/sponsorships",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Owner re-approves the edited campaign",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Owner withdraws it",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "A withdrawn campaign is locked",
+    "as": "owner",
+    "method": "PATCH",
+    "route": "/api/admin/sponsorships/:id",
+    "status": 409,
+    "expected": 409,
+    "ok": true
+   },
+   {
+    "step": "After withdrawal, students see nothing",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/me/orgs/:id/sponsorships",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Owner’s campaign list",
+    "as": "owner",
+    "method": "GET",
+    "route": "/api/admin/sponsorships",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   }
+  ],
+  "facts": {
+   "draftSeen": 0,
+   "liveSeen": [
+    {
+     "id": "1f697c4d-982c-438a-86f7-02030f40eaba",
+     "label": "Sponsored: 10% off course books for new students",
+     "partnerName": "Harbour Books",
+     "destination": "https://harbourbooks.example/students",
+     "disclosure": "Paid placement by Harbour Books. Not an official Northbay University service.",
+     "kind": "sponsored_placement"
+    }
+   ],
+   "studentFields": [
+    "destination",
+    "disclosure",
+    "id",
+    "kind",
+    "label",
+    "partnerName"
+   ],
+   "contentHasPlacement": false,
+   "afterOther": [
+    "Harbour Books"
+   ],
+   "beforeStart": [
+    "Sponsored: 10% off course books for new students"
+   ],
+   "duringReview": 0,
+   "afterWithdraw": 0,
+   "campaigns": [
+    {
+     "label": "Sponsored: 15% off course books for new students",
+     "status": "withdrawn"
+    },
+    {
+     "label": "Sponsored: winter coat sale",
+     "status": "approved"
+    },
+    {
+     "label": "Sponsored: bike hire for Eastgate students",
+     "status": "approved"
+    }
+   ],
+   "paidRankingEnabled": false,
+   "deliveryEnabled": false,
+   "audit": [
+    "sponsor.campaign.draft",
+    "sponsor.campaign.in_review",
+    "sponsor.campaign.approved",
+    "sponsor.campaign.draft",
+    "sponsor.campaign.in_review",
+    "sponsor.campaign.approved",
+    "sponsor.campaign.draft",
+    "sponsor.campaign.in_review",
+    "sponsor.campaign.approved",
+    "sponsor.campaign.in_review",
+    "sponsor.campaign.approved",
+    "sponsor.campaign.withdrawn"
+   ]
+  }
+ },
+ "browser": {
+  "ranAt": "2026-10-29T17:40:09.929Z",
+  "passed": true,
+  "checks": [
+   {
+    "check": "Replay of campaign rules, visibility and boundaries (44 steps)",
+    "ok": true,
+    "detail": ""
+   },
+   {
+    "check": "The owner has a Sponsored placements panel",
+    "ok": true
+   },
+   {
+    "check": "Owner preview shows the student card before anything is saved",
+    "ok": true,
+    "detail": "Sponsored\nSponsored: free coffee in freshers’ week\n\nPaid for by Northbay Coffee Co. Paid placement by Northbay Coffee Co. Not an official university service.\n\nVisit Northbay Coffee Co ↗"
+   },
+   {
+    "check": "The new campaign is a draft",
+    "ok": true
+   },
+   {
+    "check": "Approved in the page and showing to students now",
+    "ok": true,
+    "detail": "Sponsored: free coffee in freshers’ week\n\nNorthbay University · Approved · showing to students now · 2026-10-29 to 2026-11-28\n\nReview note: Checked the label, disclosure, link and dates.\n\nStudent preview:\n\nSponsored\nSponsored: free coffee in freshers’ week\n\nPaid for by Northbay Coffee Co. Paid placement by Northbay Coffee Co. Not an official university service.\n\nVisit Northbay Coffee Co ↗\nStop showing this placement to students.\nWithdraw"
+   },
+   {
+    "check": "The student sees a Sponsored section",
+    "ok": true,
+    "detail": "ORIVIA\nNorthbay University ▾\nS\nGood evening\n\nA little more settled, every day.\n\n✦\nAsk Orivia\n→\nYour spaces\nNorthbay University\nGuides, dates and contacts\n›\nJoin or manage your spaces →\nComing up\nView calendar →\n\nA little breathing room. No upcoming reminders.\n\nAdd a reminder\nYour guides\nAll your gui"
+   },
+   {
+    "check": "It is labelled, says who paid and that it is not part of guides or answers",
+    "ok": true
+   },
+   {
+    "check": "It comes after everything the university published",
+    "ok": true
+   },
+   {
+    "check": "The link is marked sponsored",
+    "ok": true,
+    "detail": [
+     {
+      "label": "Visit Northbay Coffee Co ↗",
+      "href": "https://coffee.example/freshers",
+      "rel": "sponsored noopener noreferrer"
+     }
+    ]
+   },
+   {
+    "check": "Only live, approved placements (the withdrawn and not-yet-started ones are absent)",
+    "ok": true
+   },
+   {
+    "check": "Demo: the sponsor is labelled fictional",
+    "ok": true
+   }
+  ],
+  "note": "The demo check uses the local server’s /__dev/demo helper. The /platform student view uses the same card code but was not opened in this run."
+ },
+ "notCovered": [
+  "Live acceptance: scope and authenticated access still to be confirmed",
+  "Real sponsors, agreements or payments: none exist; every sponsor here is fictional",
+  "The /platform student view in a browser (the app view was checked)",
+  "Arabic and right-to-left layout, screen readers",
+  "Visual and language review (the card repeats “paid” when the disclosure already says it)"
+ ]
+}

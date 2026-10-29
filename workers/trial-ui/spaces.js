@@ -130,6 +130,14 @@
     out.push(group);
    }
    if(!content.length)out.push(node('p','notice','Your organisation hasn’t published anything here yet.'));
+   // Sponsored placements (area 16): only approved campaigns inside their dates, after everything the university published,
+   // labelled Sponsored with who paid. They are never part of guides, answers or Ask Orivia. A failed read shows nothing.
+   try{const sp=await get('/api/me/orgs/'+encodeURIComponent(m.organisationId)+'/sponsorships',id);if(!current(id,g))return;
+    if(sp.placements?.length){const group=node('section','organisation-group org-sponsored');group.id='sponsored-placements';group.append(node('h3','','Sponsored'),node('p','tiny','Paid placements. They are not part of '+org+'’s guides or Orivia’s answers, and never change them.',true));
+     for(const p of sp.placements){const item=node('article','card org-item org-sponsor');item.append(node('small','org-from','Sponsored',true),node('strong','',p.label,true),node('p','tiny','Paid for by '+p.partnerName+'. '+p.disclosure,true));
+      if(d.organisation?.demo)item.append(node('p','tiny','Demo organisation: this sponsor and offer are fictional.',true));
+      const a=link('Visit '+p.partnerName+' ↗',p.destination,true);a.rel='sponsored noopener noreferrer';const actions=node('div','org-actions');actions.append(a);item.append(actions);group.append(item)}
+     out.push(group)}}catch(_){}
    // Done marks are private to the student (staff totals are paused; Ina 1374ec9).
    if(prog)out.push(node('p','tiny','Your Done marks are private: only you can see them.'));
    out.push(node('p','tiny','Application progress from your university’s own systems is not connected yet.'));

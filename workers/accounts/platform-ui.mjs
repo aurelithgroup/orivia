@@ -204,7 +204,7 @@ function detailSummary(c,items){const d=c.details||{},parts=[];if(d.category)par
    listError?h('p',{class:'small muted'},'Organisations couldn’t be loaded. Reload to try again.'):list.length?h('div',{class:'list'},rows):ownerQuery?empty('No matches','No organisation’s name, web name or city contains “'+ownerQuery+'”.'):empty('No organisations yet','Create one to give its staff a dashboard and its members a space inside their Orivia.'));
   dir.id='owner-directory';
   return [panel(h('div',{class:'row'},h('h2',{class:'grow'},'Orivia management'),chip('Owner','c-ok')),h('p',{class:'small muted'},'Platform totals, budgets, organisations and Chat feedback. Member lists, chats, files and student progress aren’t visible here.')),
-   overview,budgets,await restored.workbench(),dir,panel(h('h3',null,'Add an organisation'),form),fb,
+   overview,budgets,await restored.workbench(),await restored.sponsorships(),dir,panel(h('h3',null,'Add an organisation'),form),fb,
    panel(h('div',{class:'row'},h('h3',{class:'grow'},'Not connected yet'),chip('Coming later','c-demo')),h('p',{class:'small muted'},'Operational records are in the workbench. Institution SSO, live application records and payment collection need separate integrations.'))].filter(Boolean);
  }
 
@@ -389,7 +389,7 @@ function detailSummary(c,items){const d=c.details||{},parts=[];if(d.category)par
   leave.onclick=()=>{const yes=h('button',{class:'btn danger',type:'button'},'Leave '+org.name);yes.onclick=act(yes,async()=>{await api('/api/me/orgs/'+encodeURIComponent(oid),'DELETE',{});await refreshMe();space='home';flash={kind:'good',text:'You left '+org.name+'. Your chats and personal plans are unchanged.'};await render()});
    leave.replaceWith(h('div',{class:'stack'},h('p',null,'If you leave:'),h('ul',{class:'small',style:'margin:0;padding-left:18px'},h('li',null,org.name+'’s guides, dates, contacts and updates disappear from your Orivia, and its staff no longer see you as a member.'),h('li',null,'Your chats and anything you saved to your own calendar stay yours.'),h('li',null,'Anything you downloaded or screenshotted stays on your device but won’t update, so it may go out of date.')),h('div',{class:'row'},yes,h('button',{class:'btn quiet',type:'button',onclick:()=>render()},'Stay'))))};
   return [panel(h('div',{class:'row'},h('h2',{class:'grow'},'Your '+org.name+' space'),org.demo?chip('Demo organisation','c-demo'):null),h('p',{class:'small muted'},'Information from '+org.name+'. Your chats, calendar and About me aren’t shared with them.')),
-   await restored.supportPanel(oid),await restored.processes(oid,false,true),section('Service updates',by('update'),'No updates right now.'),section('Guides',by('guide'),org.name+' hasn’t published guides yet.'),section('Key dates',by('date'),'No dates yet.'),section('Contacts',by('contact'),'No contacts yet.'),
+   await restored.supportPanel(oid),await restored.processes(oid,false,true),section('Service updates',by('update'),'No updates right now.'),section('Guides',by('guide'),org.name+' hasn’t published guides yet.'),section('Key dates',by('date'),'No dates yet.'),section('Contacts',by('contact'),'No contacts yet.'),await restored.placements(oid,org),
    panel(h('div',{class:'row'},h('h3',{class:'grow'},'Application progress'),chip('Not connected yet','c-demo')),h('p',{class:'small muted'},'Updates from '+org.name+'’s own systems will appear here once a reviewed integration exists. Your own steps stay private unless you choose to share them.')),
    panel(leave)];
  }
