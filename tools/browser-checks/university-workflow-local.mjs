@@ -51,6 +51,7 @@ const list=await call(admin,'Admin sees the request',pre+'/support');
 const t=(list?.tickets||[]).find(x=>x.id===ticket?.id);
 await call(admin,'Admin cannot forward it to Orivia without consent',pre+'/support/'+ticket?.id+'/escalate','POST',{confirm:true},409);
 await call(admin,'Admin replies and marks it resolved',pre+'/support/'+ticket?.id,'PATCH',{revision:t?.revision,reply:'Collect it from the Student Hub, Building A, with your passport.',status:'resolved'});
+await call(admin,'A stale reply is refused, and records nothing',pre+'/support/'+ticket?.id,'PATCH',{revision:t?.revision,reply:'Late duplicate',status:'open'},409);
 const mine=await call(student,'Student sees the reply',pre+'/support');
 
 // 5. Limits that must hold on the real server.

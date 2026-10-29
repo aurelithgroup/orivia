@@ -132,7 +132,7 @@ Conflicts in four files were resolved: the assistant, `chat.js`, `page.html` (th
 - **Fixture harness:** all 11 staff tabs and 15 owner areas render at phone and desktop width.
 - **Real local server:** the worker's own accounts and organisations code, on in-memory SQLite, with no Cloudflare and no email. A 26-step workflow passes and is now a CI test: partner setup and approval, publishing, invitation, join and approval, support with forwarding refused, records locked, outsiders refused, progress paused.
 - **Fixed:** plain labels for the workbench, activity history, partner review and support statuses.
-- **Recorded, not changed:** seven findings (free-text choices on the partner form, a form left open after submitting, nameless accounts, Member/Student wording, the staff Support layout, an unaudited support reply, lower-case request types).
+- **Seven further findings, fixed the same day at the founder's request:** dropdowns on the partner form, with a read-only pending view; each email shown once; "Student" wording; an admin support inbox; staff replies recorded in the activity history; plain data-request names. The 27-step test covers them.
 - **Not covered:** the app-shell join link, students marking guides done, AI drafting, real D1 or email, Arabic layout.
 - **Where:** screenshots went to Ina privately. Evidence is in `docs/evidence/university-screens-local-2026-10-29.json` (fixtures) and `docs/evidence/university-workflow-real-server-2026-10-29.json` (real server).
 

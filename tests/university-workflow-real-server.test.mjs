@@ -18,13 +18,15 @@ try{
  const run=spawnSync(process.execPath,['tools/browser-checks/university-workflow-local.mjs',base,out],{encoding:'utf8'});
  const result=JSON.parse(fs.readFileSync(out,'utf8'));
  assert.equal(result.passed,true,'workflow: '+JSON.stringify(result.failed)+run.stderr);
- assert.equal(result.steps.length,26);
+ assert.equal(result.steps.length,27);
  assert.deepEqual(result.facts.memberships,[{role:'admin',status:'active'},{role:'student',status:'active'}]);
  assert.deepEqual(result.facts.studentSees.guides,['Collect your student ID card']);
  assert.equal(result.facts.studentSees.personalDataShared,false);
  assert.equal(result.facts.ticket[0].status,'resolved');
  assert.equal(result.facts.ticket[0].allowEscalation,0,'not forwardable without the student’s consent');
  assert.deepEqual(result.facts.progress,{shown:false,reason:'reporting_paused'});
+ // The staff reply is in the activity history once (the refused stale reply added nothing).
+ assert.equal(result.facts.auditActions.filter(a=>a.startsWith('support.')).join(),'support.resolved');
 }finally{server.kill()}
 
 // Plain labels on the screens (values and stored keys unchanged).
@@ -35,4 +37,23 @@ assert.match(restored,/contactEmail:'Contact email'/,'partner review shows field
 assert.match(restored,/\['in_progress','In progress'\]/,'support status names');
 assert.match(restored,/sponsor:'Sponsorships · disclosed'/,'workbench area names');
 assert.match(restored,/fundedSeats:'Funded places'/,'workbench field names');
-console.log('University workflow on the real local server: 26 steps passed (partner setup, publishing, join and approval, support, limits); plain labels pinned.');
+// The seven findings of 29 Oct, fixed (display and audit only; stored values unchanged).
+// 1. Partner form: country, region and reason are choices, with the server's own values.
+const has=(src,text,why)=>assert.ok(src.includes(text),why+': '+text),lacks=(src,text,why)=>assert.ok(!src.includes(text),why+': '+text);
+for(const k of ['country','region','reason'])has(restored,"fields."+k+"=h('select'",'partner '+k+' is a choice');
+has(restored,"'join or bring my family':'Join or bring my family','something else':'Something else'",'reason values are the server\'s');
+const ops=fs.readFileSync('workers/accounts/operations.mjs','utf8');for(const r of ['Umm Al Quwain','Northern Ireland'])assert.ok(ops.includes("'"+r+"'")&&restored.includes("'"+r+"'"),'region list matches the server: '+r);
+lacks(restored,'Welcome country (uae or uk)','no free-text country');
+// 2. Pending: the submitted details, read-only, until "Change these details".
+has(restored,"a.status==='pending'&&!editing",'pending view');has(restored,"'Change these details'",'pending view');
+// 3. A missing name doesn't show the email twice.
+has(platform,'const emailLine=(x,rest)=>x.name&&x.name!==x.email','email shown once');
+// 4. Students are "Student", as in the role control.
+lacks(platform,"'Member'",'no "Member" role label');
+// 5. Admins get an inbox, not the members' send form.
+has(restored,"admin?panel(h('h3',null,'Student support requests')",'admin inbox');has(restored,"if(!admin)box.append(h('form'",'send form for members only');
+// 6. Replies are audited and labelled.
+has(platform,"'support.resolved':'Resolved a support request'",'reply label');
+// 7. Data request types and statuses have plain names.
+has(restored,"REQUEST_KIND={access:'A copy of my data'",'request types');lacks(restored,"['access','correction','deletion','other'].map(v=>h('option',{value:v},v))",'no raw request types');
+console.log('University workflow on the real local server: 27 steps passed (partner setup, publishing, join and approval, support, limits); plain labels and the seven 29 Oct findings pinned.');

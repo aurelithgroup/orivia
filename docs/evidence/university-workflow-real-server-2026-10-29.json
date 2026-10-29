@@ -273,15 +273,7 @@
   "Support status options showed raw values (in_progress) in the university and Orivia inboxes. They now read Open / In progress / Resolved",
   "(Earlier the same day, from the fixture check) workbench area, field and status names"
  ],
- "findingsNotChanged": [
-  "Partner setup form: welcome country and reason are free-text boxes for fixed choices, unlike the staff screen, which uses dropdowns",
-  "Partner setup form: after submitting, the form clears but stays on screen with its submit button; it should show the submitted details read-only while pending",
-  "Accounts made with a sign-in code have no name, so member lists show the email twice",
-  "Members list says \"Member\" while the role dropdown says \"Student\"",
-  "The staff Support tab opens with the student's own send form; the staff inbox and reply controls sit below it",
-  "A staff reply to a support request isn't recorded in the organisation's activity history",
-  "Student data-request types show in lower case (access, correction, deletion, other)"
- ],
+ "findingsNotChanged": [],
  "notCovered": [
   "The app's own join entry (/?organisation=…#join=…) in the trial worker; the student used the /platform paste-a-link route",
   "Students marking guides done (the Overview text mentions it; the /platform student space has no control for it)",
@@ -289,5 +281,33 @@
   "Real D1, real email delivery, the Cloudflare edge",
   "Right-to-left Arabic and screen readers"
  ],
- "status": "Visual review and language review remain pending. No guide review records were created. Nothing was deployed."
+ "status": "Visual review and language review remain pending. No guide review records were created. Nothing was deployed.",
+ "findingsFixedLater": {
+  "when": "2026-10-29, after the founder asked for the seven findings to be fixed",
+  "fixed": [
+   "Partner form: country, emirate/nation and reason are now dropdowns with the server's own values; the region list follows the country",
+   "Partner form: once submitted, it shows the details read-only, with \"Change these details\" (the server still accepts a correction while pending)",
+   "Member lists show the email once when an account has no separate name",
+   "Students are called \"Student\" in member lists and on the student's own home, matching the role control",
+   "The admin Support tab is an inbox (\"Student support requests\") without the members' send form; editors keep the member view",
+   "A staff reply writes a support.<status> activity entry in the same batch as the change; a stale reply is refused with 409 and records nothing",
+   "Data request types and statuses have plain names for students and in the owner's inbox"
+  ],
+  "alsoCorrected": "My earlier partner-review label map used the wrong reason keys (family, other); it now uses the server's values (join or bring my family, something else)",
+  "checkedOnRealServer": "Browser on the real local server: partner form choices, region list, pending view and Change these details, as a second fictional partner (Eastgate College, Edinburgh); staff Support, Members and Activity, student home and owner review screenshots (5, shared privately)",
+  "replay": {
+   "ranAt": "2026-10-29T14:38:36.125Z",
+   "passed": true,
+   "steps": 27,
+   "auditActions": [
+    "support.resolved",
+    "membership.active",
+    "membership.requested",
+    "invitation.created",
+    "content.updated",
+    "content.drafted"
+   ]
+  },
+  "test": "tests/university-workflow-real-server.test.mjs: 27 steps, and the activity history holds support.resolved exactly once"
+ }
 }
