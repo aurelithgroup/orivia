@@ -1651,7 +1651,7 @@ function journeyCard(o,ctx,extra={}){
  const card=el('article','jcard'+(ctx==='suggest'?' suggest':''));card.dataset.planId=o.id;card.dataset.exportId='plan:'+o.id;card.setAttribute('aria-label',o.title);
  const top=el('div','jtop');
  if(ctx==='mine'&&status)top.append(pill(shownState(mine)));
- else if(ctx!=='mine')top.append(el('p','kicker',(extra.kind==='placement'?'Save your progress?':extra.problem?'From your guide':status?STATE_LABEL[shownState(mine)]:'Step-by-step guide')+' · Reviewed '+reviewed(o.checkedAt)+(o.fresh===false?' · due for review':'')));
+ else if(ctx!=='mine')top.append(el('p','kicker',(extra.kind==='placement'?'Save your progress?':extra.problem?'From your guide':status?STATE_LABEL[shownState(mine)]:'Step-by-step guide')+' · '+sourceCheckText(o)));
  if(ctx==='mine'){
   const more=button('⋯','more',()=>{menu.hidden=!menu.hidden;more.setAttribute('aria-expanded',String(!menu.hidden))});
   more.setAttribute('aria-label','Manage '+o.title);more.setAttribute('aria-expanded','false');top.append(more);
@@ -1771,7 +1771,7 @@ async function renderLibrary(){
  const shown=all.filter(g=>(libraryCat==='all'||!libraryCat||g.category===libraryCat)&&(!q||(g.title+' '+g.summary).toLowerCase().includes(q))).sort((a,b)=>(homeFirst(b)-homeFirst(a))||(b.suggested-a.suggested));
  const head=el('div','sechead');head.append(el('h4','',q?'Results for “'+q+'”':libraryCat==='all'?'All guides':(groups.find(x=>x[0]===libraryCat)||[,''])[1]),button('Close','ask',()=>{libraryCat=null;$('j-search').value='';renderLibrary()}));list.append(head);
  if(!shown.length)list.append(el('p','notice',uiText('No guides match that yet. Try another word, or ask Orivia.')));
- for(const g of shown){const c=journeyCard(g,'library');const st=readJourneys()[g.id];c.querySelector('.kicker').textContent=(st?STATE_LABEL[shownState(st)]+' · ':'')+uiText(g.scope?.label||'Dubai only')+' · '+uiText('Sources checked')+' '+reviewed(g.checkedAt)+' · '+g.categoryName;list.append(c)}
+ for(const g of shown){const c=journeyCard(g,'library');const st=readJourneys()[g.id];c.querySelector('.kicker').textContent=(st?STATE_LABEL[shownState(st)]+' · ':'')+uiText(g.scope?.label||'Dubai only')+' · '+sourceCheckText(g)+' · '+g.categoryName;list.append(c)}
 }
 
 /* Inside a journey: one step at a time, in clear sections */
@@ -1804,7 +1804,7 @@ async function openGuide(id,opts={}){
   const record=(to,note)=>{const e=PLAN.change(readJourneys()[id],s.id,to,Date.now(),note);store({stepStatus:e.stepStatus,history:e.history,notes:e.notes,stepTitle:s.title,step:i});opts.keepScroll=true;draw()};
   body.replaceChildren();
   const head=el('div','jhead');head.append(button('← Journeys','ask',()=>tab('journeys')),button('Chat','chip-btn',()=>tab('chat')));body.append(head);
-  const meta=el('div','row');if(status)meta.append(pill(shownState(mine)));meta.append(el('span','kicker',(g.scope?uiText(g.scope.label)+' · ':'')+uiText('Guide source review date')+' · '+reviewed(g.checkedAt)+(g.fresh?'':' · due for review: confirm with the official source')));body.append(meta);
+  const meta=el('div','row');if(status)meta.append(pill(shownState(mine)));meta.append(el('span','kicker',(g.scope?uiText(g.scope.label)+' · ':'')+sourceCheckText(g)+(g.fresh?'':' · due for review: confirm with the official source')));body.append(meta);
   body.append(el('h2','',g.title+(mine?.label?' · '+mine.label:'')));
   if(latestUnavailable)body.append(el('p','hint',uiText('Showing your saved guide. Orivia could not check for a newer version just now.')));
   renderPlanExtras(body,id,g,newest,()=>openGuide(id,{keepScroll:true}));
@@ -1881,7 +1881,7 @@ async function openGuide(id,opts={}){
    if(opts.problem===p.id){det.open=true;setTimeout(()=>det.scrollIntoView({block:'center'}),0)}body.append(det)}}
   body.append(el('h3','',uiText('Official sources')));
   const src=el('ul','sources');for(const x of g.sources){const li=el('li');const a=el('a','',x.name+' ↗');a.href=x.url;a.target='_blank';a.rel='noopener noreferrer';li.append(a);src.append(li)}
-  body.append(src,el('p','tiny','Guide reviewed '+reviewed(g.checkedAt)+'. That’s a review of the whole guide, not a live check of every detail.'));
+  body.append(src,el('p','tiny',g.review?.status==='reviewed'&&g.review.reviewer?uiText('Reviewed by')+' '+g.review.reviewer+' · '+reviewed(g.review.checkedAt)+'. '+uiText('A review covers this version of the guide, not a live check of every detail.'):uiText('Awaiting review: no one has reviewed this guide yet. Check fees, documents and deadlines with the official source.')));
   if(!opts.problem&&!opts.keepScroll)body.parentElement.scrollTop=0;
   opts.keepScroll=false;
  };
@@ -2397,6 +2397,8 @@ function renderPlanExtras(body,id,g,newest,redraw){const B=window.OriviaBatch,mi
  const prep=el('details','plan-prepare');prep.append(el('summary','',uiText('Prepare before you start')));const needs=B.preparation(g,mine);for(const x of needs){const label=el('label','set-row'),input=document.createElement('input');input.type='checkbox';input.checked=x.ready;input.onchange=()=>{if(!current())return;const saved=readJourneys()[id];if(!saved)return;if(setJourney(id,{prepared:B.checklist(saved,x.id,input.checked).prepared})===false)input.checked=saved.prepared?.[x.id]===true};label.append(input,el('span','',x.label));prep.append(label)}if(!needs.length)prep.append(el('p','tiny',uiText('This guide does not list preparation documents. That does not mean no documents are needed.')));prep.append(el('p','tiny',uiText('Check document recognition, translation or attestation with the receiving organisation for your exact situation before paying or booking. A checklist tick is your own note, not confirmation that a document is accepted.')),makeButton('Help me check what is missing','ask',()=>askPlan(id,g.steps[0].id,g.title,'Check the preparation documents, whether recognition or attestation applies to my situation, and what is still uncertain.')));body.append(prep);
  const family=el('details','plan-family');family.append(el('summary','',uiText('Personal or family plan')),el('p','tiny',uiText('Use a short label such as Person 1. No passport number, date of birth or full name is needed. This stays in your own account; it does not share another person’s account or imply guardian access.')));const lab=document.createElement('input');lab.maxLength=60;lab.value=mine.label||'';lab.setAttribute('aria-label',uiText('Plan label'));family.append(lab,makeButton('Save label','btn quiet small',()=>{if(setJourney(id,{label:lab.value.trim().slice(0,60)})!==false)redraw()}),makeButton('Make a separate plan','btn quiet small',()=>{const d=readJourneys(),chars=()=>Array.from(crypto.getRandomValues(new Uint8Array(10)),n=>String.fromCharCode(97+n%26)).join('');let key;do{key='family.'+chars()}while(d[key]);if(setJourney(key,B.duplicate(readJourneys()[id],mine.templateId||id,lab.value||'Another person',new Date().toISOString()))!==false)openGuide(key)}));body.append(family)
 }
+// Only a recorded check of this guide gives a date (founder, 29 Oct): a journey's own date can be a shared authoring date.
+function sourceCheckText(g){const c=g.sourceCheck;return c?uiText(c.coverage==='full'?'Sources checked':'Sources partly checked')+' '+reviewed(c.date):uiText('Source check not recorded')}
 function libraryRows(){const B=window.OriviaBatch;return [...document.querySelectorAll('#library [data-lib-kind]')].map((node,i)=>{const kind=node.dataset.libKind,title=node.querySelector('h3,strong')?.textContent||node.dataset.libText||'Item';let country='unknown',updated=Number(node.dataset.updated)||Date.parse(node.dataset.updated)||0,pinned=false,source=null,plan=null;const index=node.dataset.planId;const saved=index&&readJourneys()[index];if(saved){country=/^(dubai|sharjah|abudhabi)/.test(saved.templateId||index)?'uae':/^(uk|london|edinburgh)/.test(saved.templateId||index)?'uk':'unknown';updated=Date.parse(saved.updated)||0;plan={id:index,label:saved.label||'',status:saved.status,stepStatus:{...saved.stepStatus},prepared:{...(saved.prepared||{})},templateVersion:saved.templateVersion||null,sources:saved.templateSnapshot?.sources||[]};source=saved.templateSnapshot?.sources?.[0]?.url||null}
  const university=node.classList.contains('org-bookmark');if(university)updated=Number(node.dataset.savedAt)||0;
  const chat=store.chats.find(c=>c.id===node.dataset.chatId);if(chat){updated=chat.updated||chat.created;pinned=chat.pinned}

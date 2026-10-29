@@ -2,7 +2,7 @@
 
 **Status: awaiting language review.** I wrote these translations; nobody has checked them yet. They're used in the trial app's interface (`workers/trial-ui/translations.json`).
 
-Generated from `translations.json`: every key added after batch 1 (`c42dea0`), **31 strings**. Please correct them in place, or note changes here.
+Generated from `translations.json`: every key added after batch 1 (`c42dea0`), **36 strings**. Please correct them in place, or note changes here.
 
 | English | French | Arabic |
 |---|---|---|
@@ -37,6 +37,11 @@ Generated from `translations.json`: every key added after batch 1 (`c42dea0`), *
 | Edinburgh only | Édimbourg uniquement | إدنبرة فقط |
 | Sources checked | Sources vérifiées le | تم التحقق من المصادر في |
 | Moving from the UK to the UAE | Départ du Royaume-Uni vers les Émirats | الانتقال من المملكة المتحدة إلى الإمارات |
+| Sources partly checked | Sources vérifiées en partie le | تم التحقق جزئياً من المصادر في |
+| Source check not recorded | Vérification des sources non enregistrée | لم يُسجَّل التحقق من المصادر |
+| Reviewed by | Vérifié par | راجعه |
+| A review covers this version of the guide, not a live check of every detail. | Une vérification porte sur cette version du guide, pas sur chaque détail en direct. | تشمل المراجعة هذه النسخة من الدليل، لا تحققاً مباشراً من كل تفصيل. |
+| Awaiting review: no one has reviewed this guide yet. Check fees, documents and deadlines with the official source. | En attente de vérification : personne n’a encore vérifié ce guide. Vérifiez les frais, documents et délais auprès de la source officielle. | بانتظار المراجعة: لم يراجع أحد هذا الدليل بعد. تحقّق من الرسوم والمستندات والمواعيد لدى المصدر الرسمي. |
 
 ## Arabic in guide content (also needs review)
 

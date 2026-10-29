@@ -3478,5 +3478,25 @@
   "Moving from the UK to the UAE": {
     "fr": "Départ du Royaume-Uni vers les Émirats",
     "ar": "الانتقال من المملكة المتحدة إلى الإمارات"
+  },
+  "Sources partly checked": {
+    "fr": "Sources vérifiées en partie le",
+    "ar": "تم التحقق جزئياً من المصادر في"
+  },
+  "Source check not recorded": {
+    "fr": "Vérification des sources non enregistrée",
+    "ar": "لم يُسجَّل التحقق من المصادر"
+  },
+  "Reviewed by": {
+    "fr": "Vérifié par",
+    "ar": "راجعه"
+  },
+  "A review covers this version of the guide, not a live check of every detail.": {
+    "fr": "Une vérification porte sur cette version du guide, pas sur chaque détail en direct.",
+    "ar": "تشمل المراجعة هذه النسخة من الدليل، لا تحققاً مباشراً من كل تفصيل."
+  },
+  "Awaiting review: no one has reviewed this guide yet. Check fees, documents and deadlines with the official source.": {
+    "fr": "En attente de vérification : personne n’a encore vérifié ce guide. Vérifiez les frais, documents et délais auprès de la source officielle.",
+    "ar": "بانتظار المراجعة: لم يراجع أحد هذا الدليل بعد. تحقّق من الرسوم والمستندات والمواعيد لدى المصدر الرسمي."
   }
 }

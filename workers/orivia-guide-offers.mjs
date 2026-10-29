@@ -1,4 +1,5 @@
 import {guideReview} from './orivia-guide-reviews.mjs';
+import {sourceCheck} from './guide-source-checks.mjs';
 /* Journey cards: when something the person decides makes a checked guide genuinely useful,
  * Orivia offers it under her reply (Follow guide / Save for later / Not now).
  * One pattern for every journey: add a guide to GUIDES with what counts as a decision,
@@ -160,7 +161,7 @@ export function guideOffer(messages,{trip,profile,prefs}={}){
  const d=journey(pick.id);if(!d)return {offer:null,context};
  const j=d.journey, g=GUIDES[pick.id];
  const p=pick.problemId?j.problems.find(x=>x.id===pick.problemId):null;
- const offer={id:j.id,kind:pick.kind,title:j.title,summary:g.summary,steps:j.steps.length,checkedAt:d.verifiedOn,fresh:d.fresh,
+ const offer={id:j.id,kind:pick.kind,title:j.title,summary:g.summary,sourceCheck:sourceCheck(j.id),steps:j.steps.length,checkedAt:d.verifiedOn,fresh:d.fresh,
   status:state.following.includes(j.id)?'active':state.paused.includes(j.id)?'paused':state.saved.includes(j.id)?'saved':state.done.includes(j.id)?'done':null,
   ...(p?{problem:(({id,question,answer})=>({id,question,answer}))(problemHelp(p))}:{})};
  const what={offer:'offering it, with Follow guide, Save for later and Not now',refresher:'bringing the guide back for them',problem:'showing the checked answer for “'+(p?.question||'')+'” from that guide'}[pick.kind];
@@ -174,7 +175,7 @@ export function guideContent(id){
  if(!ID.test(String(id||'')))return null;
  const d=journey(id);if(!d)return null;
  const j=d.journey, list=x=>(Array.isArray(x)?x:[]).filter(v=>typeof v==='string'&&v.trim()).slice(0,12);
- const guide={id:j.id,title:j.title,city:j.city,scope:guideScope(j.id),checkedAt:d.verifiedOn,reviewDue:d.reviewDue,fresh:d.fresh,
+ const guide={id:j.id,title:j.title,city:j.city,scope:guideScope(j.id),sourceCheck:sourceCheck(j.id),checkedAt:d.verifiedOn,reviewDue:d.reviewDue,fresh:d.fresh,
   summary:GUIDES[j.id]?.summary||'',
   sources:(j.sources||[]).filter(s=>/^https:\/\//.test(s.url)).map(s=>({name:s.name,url:s.url})),
   steps:j.steps.map(s=>({id:s.id,title:s.title,info:list(s.info),doThis:list(s.doThis),
@@ -208,7 +209,7 @@ export function guideCatalogue(city='dubai'){
  return r.data.journeys.filter(x=>guideScope(x.id)).map(x=>{
   const d=journey(x.id);if(!d)return null;
   const j=d.journey, [category,categoryName]=CATEGORY(j);
-  return {id:j.id,title:j.title,city:j.city,scope:guideScope(j.id),category,categoryName,steps:j.steps.length,checkedAt:d.verifiedOn,fresh:d.fresh,
+  return {id:j.id,title:j.title,city:j.city,scope:guideScope(j.id),sourceCheck:sourceCheck(j.id),category,categoryName,steps:j.steps.length,checkedAt:d.verifiedOn,fresh:d.fresh,
    summary:GUIDES[j.id]?.summary||'Covers: '+j.steps.slice(0,3).map(s=>s.title).join(' · ')+(j.steps.length>3?' …':''),
    suggested:!!GUIDES[j.id]};
  }).filter(Boolean);

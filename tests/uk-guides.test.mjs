@@ -35,7 +35,12 @@ assert.equal(offer('how do I get a nol card, I will take the metro','Dubai').off
 
 // The app: library cards say where a guide applies and when its sources were checked, never "Reviewed"
 const chat=fs.readFileSync('workers/trial-ui/chat.js','utf8');
-assert.doesNotMatch(chat,/'Dubai · Reviewed '/);assert.match(chat,/uiText\('Sources checked'\)/);assert.match(chat,/function homeFirst\(g\)/);
+assert.doesNotMatch(chat,/'Dubai · Reviewed '|' · Reviewed '|'Guide reviewed '/,'no "Reviewed" label without a review record');
+assert.match(chat,/function sourceCheckText\(g\)/);assert.match(chat,/'Source check not recorded'/,'no recorded check: no date shown');
+// A date only from a recorded check of that guide (founder, 29 Oct)
+{const {SOURCE_CHECKS}=await import('../workers/guide-source-checks.mjs');const lib=guideCatalogue('all');
+ for(const g of lib)assert.equal(JSON.stringify(g.sourceCheck),JSON.stringify(SOURCE_CHECKS[g.id]||null),g.id);
+ assert.equal(guideCatalogue('all').find(g=>g.id==='dubai.nol').sourceCheck,null,'an unchecked guide has no check date');}assert.match(chat,/function homeFirst\(g\)/);
 const trial=fs.readFileSync('workers/orivia-ai-private-trial.mjs','utf8');assert.match(trial,/guides:guideCatalogue\('all'\)/);
 const tr=JSON.parse(fs.readFileSync('workers/trial-ui/translations.json','utf8'));for(const k of ['Applies across the UK','Scotland only','Edinburgh only','Dubai only','Sources checked'])assert.ok(tr[k]?.fr&&tr[k]?.ar,k);
 console.log('UK guides: 12 in the catalogue with UK / Scotland / Edinburgh scope, plannable, offered only where they apply; Dubai unchanged.');
