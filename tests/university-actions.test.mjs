@@ -35,7 +35,7 @@ const content=[
  {id:'g1',kind:'guide',title:'Arrival guide',body:'Your first week.',details:{sourceUrl:'https://northbay.example/arrival'},revision:1},
  {id:'g2',kind:'guide',title:'Library guide',body:'Borrowing books.',details:null,revision:1},
  {id:'d1',kind:'date',title:'Visa medical deadline',body:'Book before this date.',details:{date:next,time:'17:00',timeZone:'Asia/Dubai'},revision:4},
- {id:'c1',kind:'contact',title:'Student services',body:'Ask us anything.',details:{phone:'+971 4 123 4567',email:'help@northbay.example'},revision:1},
+ {id:'c1',kind:'contact',title:'Student services',body:'Ask us anything.',details:{phone:'+971 4 000 0000',email:'help@northbay.example'},revision:1},
  {id:'u1',kind:'update',title:'Medicals open',body:'Bookings are open.',details:{relatedId:'g1',actionLabel:'Book a slot',actionUrl:'https://northbay.example/book'},revision:1},
  {id:'u2',kind:'update',title:'Other update',body:'No links here.',details:{relatedId:'not-in-this-space'},revision:1}];
 const ctx={queueMicrotask,setTimeout,location:{pathname:'/app'},history:{pushState(){}},Intl,
@@ -47,7 +47,7 @@ await ctx.window.OriviaSpaces.refresh();await roots.get('home-spaces-list').chil
 const body=roots.get('organisation-body'),all=words(body);
 assert.match(all,/From Northbay University/,'university-provided information is labelled');assert.match(all,/← My Orivia/,'a way back to personal Orivia');
 const hrefs=walk(body).filter(n=>n.href).map(n=>n.textContent+'='+n.href);
-assert.ok(hrefs.includes('Source page ↗=https://northbay.example/arrival'));assert.ok(hrefs.includes('Call=tel:+97141234567'));assert.ok(hrefs.includes('Email=mailto:help@northbay.example'));
+assert.ok(hrefs.includes('Source page ↗=https://northbay.example/arrival'));assert.ok(hrefs.includes('Call=tel:+97140000000'));assert.ok(hrefs.includes('Email=mailto:help@northbay.example'));
 assert.ok(!hrefs.some(h=>h.startsWith('Website')),'no website button when staff gave none');assert.ok(hrefs.includes('Book a slot ↗=https://northbay.example/book'));
 assert.ok(find(body,'Open guide: Arrival guide'),'an update links to its guide');assert.ok(!walk(body).some(n=>/not-in-this-space/.test(n.textContent)),'a missing related guide shows nothing');
 assert.equal(walk(body).filter(n=>n.target==='_blank').every(n=>n.rel==='noopener noreferrer'),true);

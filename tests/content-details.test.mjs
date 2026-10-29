@@ -17,7 +17,7 @@ await fails('date',{date:'2026-11-03',time:'09:30',timeZone:'Mars/Olympus'},'tim
 assert.ok(validTimeZone('UTC')&&validTimeZone('America/Argentina/Buenos_Aires')&&!validTimeZone('Asia/Dubai; drop')&&!validDate('2026-13-01'));
 
 // Contacts: only what staff supplied, each checked; at least one way to reach them.
-assert.deepEqual(await normaliseDetails('contact',{phone:'+971 4 123 4567',email:'student.services@northbay.example',website:'https://northbay.example/help'}),{phone:'+971 4 123 4567',email:'student.services@northbay.example',website:'https://northbay.example/help'});
+assert.deepEqual(await normaliseDetails('contact',{phone:'+971 4 000 0000',email:'student.services@northbay.example',website:'https://northbay.example/help'}),{phone:'+971 4 000 0000',email:'student.services@northbay.example',website:'https://northbay.example/help'});
 assert.deepEqual(await normaliseDetails('contact',{email:'help@northbay.example'}),{email:'help@northbay.example'});
 await fails('contact',{},'contact');await fails('contact',{phone:'call us'},'phone');await fails('contact',{email:'not an email'},'email');
 await fails('contact',{website:'http://northbay.example'},'website');await fails('contact',{website:'javascript:alert(1)'},'website');await fails('contact',{website:'https://user:pw@northbay.example'},'website');
@@ -34,6 +34,6 @@ assert.deepEqual(await normaliseDetails('update',{actionLabel:'Book your appoint
 await fails('update',{actionLabel:'<b>Book</b>',actionUrl:'https://northbay.example/book'},'actionLabel');
 
 // Fields of one kind can't be smuggled into another; stored text that isn't an object reads as nothing.
-await fails('guide',{phone:'+971 4 123 4567'},'field');await fails('contact',[],'details');
+await fails('guide',{phone:'+971 4 000 0000'},'field');await fails('contact',[],'details');
 assert.equal(parseDetails('not json'),null);assert.equal(parseDetails('[1]'),null);assert.deepEqual(parseDetails('{"date":"2026-11-03"}'),{date:'2026-11-03'});
 console.log('Content details: dates and time zones, contacts, sources and update actions validated; nothing invented; kinds kept apart.');

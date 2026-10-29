@@ -31,7 +31,7 @@ globalThis.orgApi=(oid,tail)=>{if(oid!=='org-nb')return null;
   analytics:{available:false,reason:'views_not_tracked'},applicationRecordsAvailable:false};
  if(tail==='content')return {content:[...content,{id:'c5',kind:'date',title:'Orientation week',body:'Welcome events',details:{date:iso(-4)},visibility:'members',status:'published',revision:1,updatedAt:T-5*day}]};
  if(tail==='progress')return {progress:{shown:false,reason:'reporting_paused',items:[]}};
- if(tail==='settings')return {revision:2,canEdit:role==='admin',staff:[{id:'u1',name:'Mariam Admin',role:'admin'},{id:'u2',name:'Eda Editor',role:'editor'}],settings:{alerts:{updates:true,dates:false},studentContact:{label:'Student Hub',email:'hub@northbay.example',phone:'+971 4 555 1234'},owners:{guides:'u2',members:'u1',invitations:null},exports:{editorsMayExportCounts:false},retention:{formerMembersDays:90}}};
+ if(tail==='settings')return {revision:2,canEdit:role==='admin',staff:[{id:'u1',name:'Mariam Admin',role:'admin'},{id:'u2',name:'Eda Editor',role:'editor'}],settings:{alerts:{updates:true,dates:false},studentContact:{label:'Student Hub',email:'hub@northbay.example',phone:'+971 4 000 0000'},owners:{guides:'u2',members:'u1',invitations:null},exports:{editorsMayExportCounts:false},retention:{formerMembersDays:90}}};
  if(tail==='audit')return {entries:[{action:'settings.updated',at:T-3600000,actor:'Mariam Admin',areas:['alerts','studentContact']},{action:'export.counts',at:T-7200000,actor:'Mariam Admin'},{action:'membership.left',at:T-day,actor:'A student'}]};
  if(tail.startsWith('members'))return {members:[{userId:'u9',name:'Sara Example',email:'sara@example.test',role:'student',status:'requested'}],more:false};
  return null};

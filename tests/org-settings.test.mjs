@@ -35,11 +35,11 @@ for(const bad of [{records:true},{applicationRecords:{enabled:true}},{progress:{
  const before=others();const res=await patch(admin,bad);assert.equal(res.status,400,JSON.stringify(bad)+' → '+res.status);assert.equal(others(),before)}
 T+=20*60000;assert.equal((await patch(admin,{alerts:{updates:true}})).data.error,'recent_sign_in_required');T-=20*60000;
 // A real change: nothing outside the settings moves (no student's notification choices, memberships, caps or progress).
-let before=others();r=await patch(admin,{alerts:{updates:true,dates:true},studentContact:{label:'Student Hub',email:'hub@northbay.example',phone:'+971 4 555 1234'},owners:{guides:editor.id,members:admin.id},exports:{editorsMayExportCounts:false},retention:{formerMembersDays:90}});
+let before=others();r=await patch(admin,{alerts:{updates:true,dates:true},studentContact:{label:'Student Hub',email:'hub@northbay.example',phone:'+971 4 000 0000'},owners:{guides:editor.id,members:admin.id},exports:{editorsMayExportCounts:false},retention:{formerMembersDays:90}});
 assert.equal(r.status,200,JSON.stringify(r.data));assert.equal(r.data.revision,1);assert.equal(others(),before,'settings never change anything else');
 assert.equal((await patch(admin,{alerts:{updates:false}},0)).status,409,'a stale revision is refused');
 // Students see who to contact; nothing else from the settings.
-r=await call(student,'/api/me/orgs/'+A);assert.deepEqual(r.data.studentContact,{label:'Student Hub',email:'hub@northbay.example',phone:'+971 4 555 1234'});assert.ok(!('owners' in r.data)&&!JSON.stringify(r.data).includes(editor.id));
+r=await call(student,'/api/me/orgs/'+A);assert.deepEqual(r.data.studentContact,{label:'Student Hub',email:'hub@northbay.example',phone:'+971 4 000 0000'});assert.ok(!('owners' in r.data)&&!JSON.stringify(r.data).includes(editor.id));
 // Export: aggregate counts only. Editors need the organisation's permission, and it never opens member identities.
 assert.equal((await call(editor,'/api/orgs/'+A+'/export/counts.csv')).status,403);
 r=await call(admin,'/api/orgs/'+A+'/export/counts.csv');assert.equal(r.status,200);assert.match(r.headers.get('content-type'),/text\/csv/);
