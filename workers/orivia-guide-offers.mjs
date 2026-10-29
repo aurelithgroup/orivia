@@ -201,7 +201,10 @@ const UK_SCOPE={'edinburgh.evisa':'uk','edinburgh.work':'uk','edinburgh.sim':'uk
 const SCOPE_LABEL={dubai:'Dubai only',uk:'Applies across the UK',scotland:'Scotland only',edinburgh:'Edinburgh only','uk-to-uae':'Moving from the UK to the UAE'};
 // Guides whose scope isn't their city: documents prepared in the UK for use anywhere in the UAE (federal attestation).
 const SPECIAL_SCOPE={'dubai.docs.before':'uk-to-uae'};
-export function guideScope(id){const s=SPECIAL_SCOPE[id]||(/^dubai\./.test(String(id))?'dubai':UK_SCOPE[id]||null);return s?{level:s,country:s==='dubai'||s==='uk-to-uae'?'uae':'uk',label:SCOPE_LABEL[s]}:null}
+// Broad rules vs local examples (founder, 29 Oct): the GP guide's rules are Scotland-wide but some instructions are
+// NHS Lothian's (Edinburgh); bank protection is UK-wide but eligibility depends on the bank and the applicant.
+const SCOPE_DETAIL={'edinburgh.gp':'Scotland · some details are for Edinburgh (NHS Lothian)','edinburgh.bank':'Across the UK · eligibility depends on the bank and on you'};
+export function guideScope(id){const s=SPECIAL_SCOPE[id]||(/^dubai\./.test(String(id))?'dubai':UK_SCOPE[id]||null);return s?{level:s,country:s==='dubai'||s==='uk-to-uae'?'uae':'uk',label:SCOPE_DETAIL[id]||SCOPE_LABEL[s]}:null}
 export function guideCatalogue(city='dubai'){
  if(city==='all')return [...guideCatalogue('dubai'),...guideCatalogue('edinburgh')];
  const r=callJourneyApi('/api/v1/journeys?city='+encodeURIComponent(city));

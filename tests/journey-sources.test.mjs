@@ -21,3 +21,6 @@ assert.equal(drive.searchParams.get('travelmode'),'driving');
 assert.equal(journeyResources([{role:'user',content:'I am going to university next month'}]).actions.length,0);
 assert.equal(journeyResources([{role:'assistant',content:'University of Wollongong Dubai'}]).actions.length,0);
 console.log('Verified journey resource / link construction checks passed');
+
+// The served journey data has no encoding damage (29 Oct: an export split Arabic characters; fixed and guarded here)
+{const raw=(await import('node:fs')).readFileSync('server/src/journeys-data.js','utf8');assert.equal((raw.match(/\uFFFD/g)||[]).length,0,'no replacement characters in journeys-data.js');}

@@ -40,6 +40,8 @@ const ESRC = {
   pharmFirst:S('Scottish Government: NHS Pharmacy First Scotland', 'الحكومة الاسكتلندية: خدمة Pharmacy First', 'https://www.gov.scot/publications/nhs-pharmacy-first-scotland-information-patients/'),
   dentist:   S('NHS Lothian: How to register with a dentist', 'NHS Lothian: كيفية التسجيل لدى طبيب أسنان', 'https://services.nhslothian.scot/dentists/how-to-register-with-a-dentist/'),
   breathing: S('Breathing Space', 'Breathing Space', 'https://www.breathingspace.scot/need-help-now/'),
+  // 29 Oct: NHS Inform refuses automated checks; this Scottish Government reply (1 Apr 2026) states the dental rules.
+  dentalCharges: S('Scottish Government: NHS dental charges (FOI response, 1 April 2026)', 'الحكومة الاسكتلندية: رسوم علاج الأسنان في NHS (رد على طلب معلومات، 1 أبريل 2026)', 'https://www.gov.scot/publications/foi-202600502394/'),
   ihs:       S('GOV.UK: Immigration health surcharge', 'GOV.UK: رسوم الصحة للهجرة', 'https://www.gov.uk/healthcare-immigration-application/how-much-pay'),
   uoeBank:   S('University of Edinburgh: Open a UK bank account', 'جامعة إدنبرة: فتح حساب بنكي بريطاني', 'https://www.ed.ac.uk/new-students/get-started/finance/open-a-uk-bank-account'),
   uoeBankLetter:S('University of Edinburgh: Bank letter', 'جامعة إدنبرة: خطاب البنك', 'https://registryservices.ed.ac.uk/order-documents/bank-letter'),
@@ -334,7 +336,7 @@ DATA.journeys['edinburgh.gp'] = base({
   need:'health', icon:'health',
   title:{en:'Register with a doctor (GP)', ar:'التسجيل لدى طبيب عام (GP)'},
   doneTitle:{en:'You know where to go when you’re unwell.', ar:'أصبحت تعرف إلى أين تذهب عندما تمرض.'},
-  sources:[ESRC.gpReg, ESRC.gpLothian, ESRC.uoeGp, ESRC.overseas, ESRC.ihs, ESRC.nhs24, ESRC.miu, ESRC.rx, ESRC.pharmFirst, ESRC.dentist, ESRC.breathing],
+  sources:[ESRC.gpReg, ESRC.gpLothian, ESRC.uoeGp, ESRC.overseas, ESRC.ihs, ESRC.nhs24, ESRC.miu, ESRC.rx, ESRC.pharmFirst, ESRC.dentist, ESRC.dentalCharges, ESRC.breathing],
   stuck:{cards:[
     {title:{en:'NHS 24', ar:'NHS 24'}, phone:'111', body:{en:'Free, day and night, when you need care and your GP is closed. Press 9 then 1 for other languages.', ar:'مجاني ليلاً ونهاراً عندما تحتاج إلى رعاية وتكون عيادتك مغلقة. اضغط 9 ثم 1 للغات الأخرى.'}},
     {title:{en:'Breathing Space', ar:'Breathing Space'}, phone:'0800 83 85 87', body:{en:'Free, confidential support if you’re feeling low. Evenings and weekends. Samaritans are on 116 123, any time.', ar:'دعم مجاني وسري إذا كنت تشعر بالإحباط، في المساء وعطلات نهاية الأسبوع. وجمعية Samaritans متاحة على الرقم 116 123 في أي وقت.'}},
@@ -381,7 +383,8 @@ DATA.journeys['edinburgh.gp'] = base({
     {id:'more', level:'source', label:{en:'Dentist & more', ar:'الأسنان وغيرها'}, title:{en:'Dentists and mental health', ar:'الأسنان والصحة النفسية'}, help:['dentist','low','else'],
      blocks:[
       {t:'list', v:[
-        {en:'Dentists: contact a practice directly. It doesn’t have to be near your home. NHS Lothian lists practices taking NHS patients each month. NHS dental treatment isn’t free: a course of treatment costs up to £384.', ar:'أطباء الأسنان: تواصل مع العيادة مباشرة، ولا يلزم أن تكون قريبة من سكنك. تنشر NHS Lothian شهرياً قائمة بالعيادات التي تقبل مرضى NHS. علاج الأسنان في NHS ليس مجانياً: يصل مجموع الرسوم للعلاج الواحد إلى 384 جنيهاً.'},
+        {en:'Dentists: contact a practice directly. It doesn’t have to be near your home. In Edinburgh, NHS Lothian lists practices taking NHS patients each month.', ar:'أطباء الأسنان: تواصل مع العيادة مباشرة، ولا يلزم أن تكون قريبة من سكنك. في إدنبرة، تنشر NHS Lothian شهرياً قائمة بالعيادات التي تقبل مرضى NHS.'},
+        {en:'In Scotland, NHS dental check-ups are free. NHS treatment is free if you’re under 26 (and in some other cases); otherwise you pay 80% of the cost, up to £384 for a course of treatment.', ar:'في اسكتلندا، فحوص الأسنان في NHS مجانية. وعلاج NHS مجاني إذا كان عمرك أقل من 26 عاماً (وفي حالات أخرى)، وإلا فتدفع 80% من التكلفة بحد أقصى 384 جنيهاً للعلاج الواحد.'},
         {en:'Feeling low or overwhelmed? Your GP can help, and Breathing Space (0800 83 85 87) is free to call in the evenings and at weekends.', ar:'تشعر بالإحباط أو الضغط؟ يمكن لطبيبك العام مساعدتك، ويمكنك الاتصال مجاناً بـ Breathing Space على الرقم 0800 83 85 87 في المساء وعطلات نهاية الأسبوع.'},
       ]},
      ]},

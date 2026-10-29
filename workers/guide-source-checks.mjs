@@ -9,6 +9,11 @@ export const SOURCE_CHECKS={
  'edinburgh.evisa':{date:'2026-10-28',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 2'},
  'edinburgh.counciltax':{date:'2026-10-28',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 3'},
  'dubai.docs.before':{date:'2026-10-29',coverage:'full',record:'docs/journey-review-pack-2026-10-28.md, section 5'},
+ 'edinburgh.gp':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 8'},
+ 'edinburgh.rent':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 8'},
+ 'edinburgh.work':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 8'},
+ 'edinburgh.bank':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 8'},
+ 'edinburgh.u22':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 8'},
 };
 const DATE=/^\d{4}-\d{2}-\d{2}$/;
 export function sourceCheck(id){const c=SOURCE_CHECKS[id];return c&&DATE.test(c.date)&&['full','partial'].includes(c.coverage)?{...c}:null}

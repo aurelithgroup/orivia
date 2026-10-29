@@ -2,7 +2,7 @@
 
 **Status: awaiting language review.** I wrote these translations; nobody has checked them yet. They're used in the trial app's interface (`workers/trial-ui/translations.json`).
 
-Generated from `translations.json`: every key added after batch 1 (`c42dea0`), **36 strings**. Please correct them in place, or note changes here.
+Generated from `translations.json`: every key added after batch 1 (`c42dea0`), **38 strings**. Please correct them in place, or note changes here.
 
 | English | French | Arabic |
 |---|---|---|
@@ -42,6 +42,8 @@ Generated from `translations.json`: every key added after batch 1 (`c42dea0`), *
 | Reviewed by | Vérifié par | راجعه |
 | A review covers this version of the guide, not a live check of every detail. | Une vérification porte sur cette version du guide, pas sur chaque détail en direct. | تشمل المراجعة هذه النسخة من الدليل، لا تحققاً مباشراً من كل تفصيل. |
 | Awaiting review: no one has reviewed this guide yet. Check fees, documents and deadlines with the official source. | En attente de vérification : personne n’a encore vérifié ce guide. Vérifiez les frais, documents et délais auprès de la source officielle. | بانتظار المراجعة: لم يراجع أحد هذا الدليل بعد. تحقّق من الرسوم والمستندات والمواعيد لدى المصدر الرسمي. |
+| Scotland · some details are for Edinburgh (NHS Lothian) | Écosse · certains détails concernent Édimbourg (NHS Lothian) | اسكتلندا · بعض التفاصيل خاصة بإدنبرة (NHS Lothian) |
+| Across the UK · eligibility depends on the bank and on you | Tout le Royaume-Uni · l’éligibilité dépend de la banque et de vous | كل أنحاء المملكة المتحدة · الأهلية تعتمد على البنك وعليك |
 
 ## Arabic in guide content (also needs review)
 
@@ -49,4 +51,4 @@ These are in the journey files, not in `translations.json`:
 
 - `js/content-docs.js`: the whole **before-you-move document guide** (titles, steps, items, problems, source names). It's a first draft.
 - `js/content.js`: two new source names on the student visa journey (u.ae pages).
-- `js/content-edinburgh.js`: the GOV.UK police-registration source name, and the updated police answer (4 August 2022).
+- `js/content-edinburgh.js`: the GOV.UK police-registration source name, the updated police answer (4 August 2022), the two corrected dental lines in the GP guide, and the gov.scot dental-charges source name.

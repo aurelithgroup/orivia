@@ -92,7 +92,8 @@ These must work in this release. They aren't dashboards.
 
 **Outstanding:**
 - Sharjah support for the visa guide (the demo is set in Dubai);
-- source checks for the UK journeys not in the pack;
+- source checks: GP, rent, work, bank and under-22 travel are partly checked (29 Oct; dental line corrected). SIM, airport, bus, community and school aren't checked yet and show "Source check not recorded";
+- visual review of the new screens is pending (the harness screenshots timed out; text and interaction checks passed);
 - live checks, which wait for the deployment hold to lift.
 
 **Committed:**

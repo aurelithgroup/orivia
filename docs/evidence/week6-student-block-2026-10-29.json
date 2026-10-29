@@ -46,5 +46,7 @@
    "docs/journey-review-pack-2026-10-28.md",
    "docs/translations-for-review-2026-10-29.md"
   ]
- }
+ },
+ "visualReview": "pending: harness screenshots timed out, so the checks above establish content and interactions only, not how the screens look",
+ "laterCorrection": "29 Oct: server/src/journeys-data.js in this commit had 3 Arabic strings damaged by the local export tool; fixed in the next data commit (see docs/journey-review-pack-2026-10-28.md, section 8)"
 }
