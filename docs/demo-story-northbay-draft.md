@@ -2,7 +2,7 @@
 
 This is a draft for the founder to approve or edit. It runs about 10 minutes. Every person in it is fictional, and their accounts exist only in the pilot's test accounts database. Nothing is based on a real student.
 
-Each scene says whether it **works today** or depends on work in `docs/week5-7-plan.md`. Rehearsals need the deployment hold lifted. Until then, scenes are checked in the local harness only.
+Each scene says what has been **verified locally** and what is **still to build** (`docs/week5-7-plan.md`). Rehearsals and live acceptance need the deployment hold lifted. Until then, nothing here counts as accepted.
 
 ## People (all fictional)
 
@@ -18,20 +18,24 @@ Each scene says whether it **works today** or depends on work in `docs/week5-7-p
 
 ## Scenes
 
-| # | Scene | What the audience sees | Status |
-|---|---|---|---|
-| 1 | The front door | myorivia.app with the phone preview of the app | Works today |
-| 2 | Aisha joins | QR → `/join/northbay` → guided Northbay welcome → locked campus fields, consent, waiting screen | Joining works today. The guided welcome is planned for week 6–7 (area 22) |
-| 3 | Omar approves | The staff dashboard, a request, Approve. Aisha's app now shows the Northbay space next to My Orivia | Works today |
-| 4 | A real question | Aisha asks "How do I get my Emirates ID as a new student in Dubai?" She gets a researched answer with opened, quoted official sources, then a follow-up | Works today. Research checks are partially complete (area 4) |
-| 5 | Accuracy | "Which nol card should I get, Silver or Gold?" Each price is attached to the right card | Works today (fixed 22 Oct) |
-| 6 | Aisha's plan | The student visa guide (**source-checked, awaiting review**) becomes her plan: step states, "what comes next", Undo. Her preparation ticks ("what you'll need") and a confirmed deadline with a reminder | Plan steps, preparation ticks (Ina's batch 1) and deadline reminders work locally. There's no separate before-you-move document guide yet |
-| 7 | Mariam's family | One overview with a plan for each child | Separate plans (Ina's batch 1) and the family overview work locally. No school-start or school-return guide yet |
-| 8 | Priya drafts a guide | She pastes a Northbay web page, gets an editable, sourced draft and a student preview, then publishes | The drafting tool exists. Editable, sourced output is planned for week 7 (area 21) |
-| 9 | A date changes | Priya moves the visa medical date. Aisha sees both times and "Update my calendar" | Works today (UNI-006) |
-| 10 | Getting help | Aisha asks the Student Hub for help. Omar assigns it to the International Office | Tickets work today. Assignment is planned for week 7 (area 24) |
-| 11 | Privacy | Omar tries to see Aisha's personal chats and can't. Direct requests are refused too | Works today (tenant matrix tests) |
-| 12 | The owner view | `/manage`: access check, this month's cost against AED 250, an error reference looked up | Owner access works today. Costs and error references are planned for week 5 and the essential operations |
+**Two kinds of evidence, kept apart (updated 29 Oct, checkpoint `6e660b1`).**
+- **Verified locally:** checked on this machine, in tests, the fixture harness or the real local server (the worker's own code on SQLite: `docs/evidence/university-workflow-real-server-2026-10-29.json`).
+- **Live acceptance:** checked on the pilot after the deployment hold, with the founder's manual testing. **No scene has live acceptance yet.**
+
+| # | Scene | What the audience sees | Verified locally | Still to build |
+|---|---|---|---|---|
+| 1 | The front door | myorivia.app with the phone preview of the app | Built; not rechecked this week | — |
+| 2 | Aisha joins | QR → `/join/northbay` → guided Northbay welcome → locked campus fields, consent, waiting screen | Real local server: invitation → join request → "Waiting for approval", with what staff will and won't see. **Not covered:** the QR entry and the app's own join link | Guided welcome (area 22) |
+| 3 | Omar approves | The staff dashboard, a request, Approve. Aisha's app now shows the Northbay space next to My Orivia | Real local server: approve; the student space appears in `/platform`; nothing is visible before approval. **Not covered:** the space inside the app shell | — |
+| 4 | A real question | Aisha asks "How do I get my Emirates ID as a new student in Dubai?" She gets a researched answer with opened, quoted official sources, then a follow-up | Not checkable locally (needs search and OpenAI). Research checks partly complete (area 4) | — |
+| 5 | Accuracy | "Which nol card should I get, Silver or Gold?" Each price is attached to the right card | Fixed on 22 Oct; not rechecked this week | — |
+| 6 | Aisha's plan | The student visa guide becomes her plan: step states, "what comes next", Undo. Preparation ticks and a confirmed deadline with a reminder. **New:** the UK-to-UAE "before you move" documents guide fits Aisha's Manchester route | Tests: plan steps, deadlines and reminders, the documents guide and its offer rules. Both guides are **source-checked, awaiting review** (no review record) | — |
+| 7 | Mariam's family | One overview with a plan for each child | Tests: family overview | No school-start or school-return guide |
+| 8 | Priya drafts a guide | She pastes a Northbay web page, gets an editable, sourced draft and a student preview, then publishes | Real local server: a manual guide is drafted and published to members. **Not covered:** AI drafting (needs OpenAI) | Editable, sourced AI output with a preview (area 21) |
+| 9 | A date changes | Priya moves the visa medical date. Aisha sees both times and "Update my calendar" | Fixture harness (UNI-006) | — |
+| 10 | Getting help | Aisha asks the Student Hub for help. Omar assigns it to the International Office | Real local server: a student's request reaches the admin inbox; a reply and "Resolved" reach the student; it can't be forwarded without the student's consent; the reply is in the activity history | Assignment (area 24) |
+| 11 | Privacy | Omar tries to see Aisha's personal chats and can't. Direct requests are refused too | Real local server: students can't see member lists; outsiders are refused; application records stay locked; staff screens offer no chats. Tenant matrix tests | — |
+| 12 | The owner view | `/manage`: access check, this month's cost against AED 250, an error reference looked up | Real local server: owner access, partner setup and approval, the budgets panel (no real spend locally). Tests: error references on unexpected failures. **Not covered:** real costs | — |
 
 ## Backups for the live demo
 
