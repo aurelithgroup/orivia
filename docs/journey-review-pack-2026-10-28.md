@@ -55,14 +55,47 @@ Pages were fetched on 28 October, between 20:55 and 21:30 Dubai time. The journe
 | "Prescriptions are free in Scotland" and the other NHS Inform claims | NHS Inform returned **403** to an automated fetch | **Not checked today.** Please check by hand |
 | NHS dental treatment "up to £384" | Not fetched | **Not checked today** |
 
-## 5. Limits of this pack
+## 5. New (29 Oct): `dubai.docs.before`, "Get your documents ready before you move (UK to UAE)"
 
-- **The UK journeys aren't in the app's guide catalogue yet.** Only the 21 Dubai journeys can be followed as plans in the trial app. So:
-  - `tools/review-guide.mjs` can't record a review for an `edinburgh.*` journey;
-  - plan steps, family plans and preparation ticks don't apply to the UK journeys.
+**Status: source-checked, awaiting review.** No review record exists. File: `js/content-docs.js` (English and a first-draft Arabic). Pages were fetched on 29 Oct between 01:45 and 03:30 UTC (05:45–07:30 Dubai).
 
-  Bringing them in is a separate change.
-- **What this pack checked:** only the claims listed above, against the pages named. It's not a full review of every step, link or translation.
+It keeps batch 1's rule: **no universal attestation rule is asserted.** Legalisation, attestation and recognition steps are titled "if you're asked to", and step 1 is to ask the university (and any employer) what they need.
+
+| Claim in the guide | Official source checked | Result |
+|---|---|---|
+| Ask the person who wants the document whether it must be legalised | GOV.UK, *Get a document legalised*: ask the person requesting it whether it needs legalising, and which apostille | **Supported** |
+| Some documents must be certified by a UK notary or solicitor first; documents from a court, public registry, government department or registered doctor don't | Same page | **Supported** |
+| Paper apostille (post) or e-Apostille (PDFs signed by a UK notary or solicitor) | Same page | **Supported** |
+| £45 per document (standard), plus postage; no refund if it can't be legalised | Same page | **Supported** |
+| Usually up to 25 working days (standard), plus postage | Same page | **Supported** |
+| The UAE MoFA attests documents issued outside the UAE through "Attestation through UAE Missions Abroad", only at selected missions; check the mission where you live; otherwise in person | MoFA, *Attestation of Official Documents and Certificates* | **Supported.** The UAE Embassy London attestation pages returned **404**, so the guide doesn't name a London-specific process |
+| Degree recognition is a separate MoHESR service; its report is for employment, further studies, visas and government services | u.ae, *Student admission and qualification recognition* (updated 22 Oct 2026) | **Supported.** The page doesn't say it's needed for admission, so the guide says to apply only if asked |
+| University or parent sponsors the student visa; study-duration certificate; passport copy and medical insurance; medical test 18+; Emirates ID | u.ae student residence and general provisions pages (see section 1) | **Supported** |
+| No MoFA or recognition fee or time shown | Not on the pages checked | **Left out on purpose** |
+
+**For your judgement:**
+- the wording "if you're asked to" for attestation;
+- whether to name the London mission once its page is back;
+- the Arabic.
+
+## 6. New (29 Oct): UK journeys in the catalogue, with where each applies
+
+All 12 Edinburgh journeys are now in the app's catalogue. They can be followed as plans, with preparation ticks, family plans and deadlines. They're offered only where they apply. **Each is "awaiting review".** Only the eVisa, Council Tax and GP claims were source-checked (sections 2–4).
+
+| Scope shown | Journeys | Why (from their sources) |
+|---|---|---|
+| Applies across the UK | `evisa`, `work`, `sim`, `bank` | GOV.UK / UKCISA / Ofcom: UK-wide matters. `bank` also cites university advice |
+| Scotland only | `gp`, `rent`, `u22` | NHS Scotland and NHS Lothian, Scottish tenancy law, Scotland's under-22 travel |
+| Edinburgh only | `airport`, `bus`, `counciltax`, `community`, `school` | City of Edinburgh Council, Lothian Buses, Edinburgh Trams, Edinburgh Airport |
+| Moving from the UK to the UAE | `dubai.docs.before` | GOV.UK legalisation, then UAE federal attestation and recognition |
+
+**Please confirm the scopes**, especially `bank` (UK-wide?) and `gp` (Scotland-wide, with Lothian examples). Code: `guideScope` in `workers/orivia-guide-offers.mjs`. Tests: `tests/uk-guides.test.mjs` and `tests/docs-before-guide.test.mjs`.
+
+## 7. Limits of this pack
+
+- **What this pack checked:** only the claims listed above, against the pages named. It's not a full review of every step, link or translation. The other UK journeys (bank, rent, work, sim, u22, airport, bus, community, school) weren't source-checked in this pack.
+- **Interface translations:** the 31 new French and Arabic strings are listed separately in `docs/translations-for-review-2026-10-29.md`.
+- **Sharjah:** still outstanding. The demo is set in Dubai.
 - **No provider or search spend:** pages were fetched directly. Nothing was deployed.
 
 ## How to record your review (when you're satisfied)
@@ -70,5 +103,7 @@ Pages were fetched on 28 October, between 20:55 and 21:30 Dubai time. The journe
 ```bash
 node tools/review-guide.mjs dubai.eid.student "<public reviewer label>" uae <checked YYYY-MM-DD> <review due YYYY-MM-DD>
 ```
+
+The same works for the new guide (`dubai.docs.before`, jurisdiction `uae`) and for the UK guides (for example `edinburgh.evisa`, jurisdiction `uk`). A review record covers one exact content version.
 
 This writes a record to `workers/guide-review-records.mjs` for normal repository review. Any later content change invalidates it.

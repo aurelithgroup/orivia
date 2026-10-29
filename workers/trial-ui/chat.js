@@ -1753,6 +1753,8 @@ const CAT_ICON={transport:'M7 17h10M6 4h12a2 2 0 0 1 2 2v8a3 3 0 0 1-3 3H7a3 3 0
  everyday:'M4 11l8-7 8 7v9H4zM10 20v-5h4v5',health:'M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z',
  work:'M4 8h16v11H4zM9 8V5h6v3',family:'M8 8a2.5 2.5 0 1 0 0-.1M16 9a2 2 0 1 0 0-.1M4 20c0-3 2-5 4-5s4 2 4 5M13 20c0-2.5 1.3-4 3-4s3 1.5 3 4'};
 function icon(path){const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 24 24');s.setAttribute('aria-hidden','true');s.setAttribute('fill','none');s.setAttribute('stroke','currentColor');s.setAttribute('stroke-width','1.8');s.setAttribute('stroke-linecap','round');s.setAttribute('stroke-linejoin','round');const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d',path);s.append(p);return s}
+// The person's own country first (week 6): their profile's country, or where they're moving to.
+function homeFirst(g){const p=migrateProfile(readProfile()||{}),home=p.here==='away'?p.dest:p.here;return home&&g.scope?.country===home?1:0}
 async function renderLibrary(){
  const cats=$('j-cats'),list=$('j-library');
  let all;try{all=await loadLibrary()}catch(_){list.replaceChildren(el('p','notice',uiText('Couldn’t load the guide library just now. Please try again.')));return}
@@ -1766,10 +1768,10 @@ async function renderLibrary(){
  }
  list.replaceChildren();
  if(!libraryCat&&!q){list.append(button('Browse all '+all.length+' guides','btn quiet wide',()=>{libraryCat='all';renderLibrary()}));return}
- const shown=all.filter(g=>(libraryCat==='all'||!libraryCat||g.category===libraryCat)&&(!q||(g.title+' '+g.summary).toLowerCase().includes(q))).sort((a,b)=>(b.suggested-a.suggested));
+ const shown=all.filter(g=>(libraryCat==='all'||!libraryCat||g.category===libraryCat)&&(!q||(g.title+' '+g.summary).toLowerCase().includes(q))).sort((a,b)=>(homeFirst(b)-homeFirst(a))||(b.suggested-a.suggested));
  const head=el('div','sechead');head.append(el('h4','',q?'Results for “'+q+'”':libraryCat==='all'?'All guides':(groups.find(x=>x[0]===libraryCat)||[,''])[1]),button('Close','ask',()=>{libraryCat=null;$('j-search').value='';renderLibrary()}));list.append(head);
  if(!shown.length)list.append(el('p','notice',uiText('No guides match that yet. Try another word, or ask Orivia.')));
- for(const g of shown){const c=journeyCard(g,'library');const st=readJourneys()[g.id];c.querySelector('.kicker').textContent=(st?STATE_LABEL[shownState(st)]+' · ':'')+'Dubai · Reviewed '+reviewed(g.checkedAt)+' · '+g.categoryName;list.append(c)}
+ for(const g of shown){const c=journeyCard(g,'library');const st=readJourneys()[g.id];c.querySelector('.kicker').textContent=(st?STATE_LABEL[shownState(st)]+' · ':'')+uiText(g.scope?.label||'Dubai only')+' · '+uiText('Sources checked')+' '+reviewed(g.checkedAt)+' · '+g.categoryName;list.append(c)}
 }
 
 /* Inside a journey: one step at a time, in clear sections */
@@ -1802,7 +1804,7 @@ async function openGuide(id,opts={}){
   const record=(to,note)=>{const e=PLAN.change(readJourneys()[id],s.id,to,Date.now(),note);store({stepStatus:e.stepStatus,history:e.history,notes:e.notes,stepTitle:s.title,step:i});opts.keepScroll=true;draw()};
   body.replaceChildren();
   const head=el('div','jhead');head.append(button('← Journeys','ask',()=>tab('journeys')),button('Chat','chip-btn',()=>tab('chat')));body.append(head);
-  const meta=el('div','row');if(status)meta.append(pill(shownState(mine)));meta.append(el('span','kicker',uiText('Guide source review date')+' · '+reviewed(g.checkedAt)+(g.fresh?'':' · due for review: confirm with the official source')));body.append(meta);
+  const meta=el('div','row');if(status)meta.append(pill(shownState(mine)));meta.append(el('span','kicker',(g.scope?uiText(g.scope.label)+' · ':'')+uiText('Guide source review date')+' · '+reviewed(g.checkedAt)+(g.fresh?'':' · due for review: confirm with the official source')));body.append(meta);
   body.append(el('h2','',g.title+(mine?.label?' · '+mine.label:'')));
   if(latestUnavailable)body.append(el('p','hint',uiText('Showing your saved guide. Orivia could not check for a newer version just now.')));
   renderPlanExtras(body,id,g,newest,()=>openGuide(id,{keepScroll:true}));

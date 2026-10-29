@@ -12,7 +12,7 @@ const offer = (msgs, guides, profile) => guideOffer(msgs, { trip: planTrip(msgs,
 const kind = (msgs, guides, profile) => { const o = offer(msgs, guides, profile).offer; return o ? o.kind + ':' + o.id : null; };
 
 /* 1. One reusable card for any checked journey */
-assert.deepEqual(Object.keys(GUIDES).sort(), ['dubai.eid.student', 'dubai.nol', 'dubai.sim']);
+assert.deepEqual(Object.keys(GUIDES).sort(), ['dubai.docs.before', 'dubai.eid.student', 'dubai.nol', 'dubai.sim', 'edinburgh.counciltax', 'edinburgh.evisa', 'edinburgh.gp']); // UK guides added 29 Oct (tests/uk-guides.test.mjs)
 assert.equal(kind([u("I'll take the metro")]), 'offer:dubai.nol');
 assert.equal(kind([u('My university is sponsoring my visa')]), 'offer:dubai.eid.student');
 assert.equal(kind([u('I need to get a SIM card')]), 'offer:dubai.sim');
@@ -89,8 +89,9 @@ assert.equal(r.status, 200); assert.equal((await r.json()).guide.id, 'dubai.nol'
 r = await worker.fetch(new Request(HOST + '/v1/guides/dubai.nope'), env, ctx); assert.equal(r.status, 404);
 r = await worker.fetch(new Request(HOST + '/v1/guides'), env, ctx);
 const lib = (await r.json()).guides;
-assert.ok(lib.length >= 15 && lib.every(x => x.city === 'dubai' && x.category && x.checkedAt), 'library lists only real Dubai guides');
-assert.ok(!lib.some(x => x.id.startsWith('edinburgh')));
+// Since 29 Oct the library lists Dubai and UK guides, each with where it applies (tests/uk-guides.test.mjs).
+assert.ok(lib.length >= 15 && lib.every(x => ['dubai','edinburgh'].includes(x.city) && x.category && x.checkedAt && x.scope?.label), 'library lists real, scoped guides');
+assert.equal(lib.filter(x => x.city === 'dubai').length, 22);assert.equal(lib.filter(x => x.scope.country === 'uk').length, 12);
 r = await worker.fetch(new Request(HOST + '/v1/guides/dubai.nol'), env, {}); assert.equal(r.status, 401, 'guides stay behind founder-only access');
 
 /* Step statuses: Waiting only where the guide has something to wait for; reading ahead never marks anything */

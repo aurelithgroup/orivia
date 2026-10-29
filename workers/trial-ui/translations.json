@@ -3454,5 +3454,29 @@
   "Next date": {
     "fr": "Prochaine date",
     "ar": "التاريخ القادم"
+  },
+  "Dubai only": {
+    "fr": "Dubaï uniquement",
+    "ar": "دبي فقط"
+  },
+  "Applies across the UK": {
+    "fr": "S’applique dans tout le Royaume-Uni",
+    "ar": "ينطبق في كل أنحاء المملكة المتحدة"
+  },
+  "Scotland only": {
+    "fr": "Écosse uniquement",
+    "ar": "اسكتلندا فقط"
+  },
+  "Edinburgh only": {
+    "fr": "Édimbourg uniquement",
+    "ar": "إدنبرة فقط"
+  },
+  "Sources checked": {
+    "fr": "Sources vérifiées le",
+    "ar": "تم التحقق من المصادر في"
+  },
+  "Moving from the UK to the UAE": {
+    "fr": "Départ du Royaume-Uni vers les Émirats",
+    "ar": "الانتقال من المملكة المتحدة إلى الإمارات"
   }
 }

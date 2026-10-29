@@ -48,8 +48,53 @@ export const GUIDES={
   refresher:/\bsim (?:card )?(?:guide|steps)\b/i,
   problems:[],
   applies:()=>({ok:true})
+ },
+ /* Before you move (week 6, 29 Oct): documents from the UK for use in the UAE. Offered when the person is getting
+    documents ready, legalised or attested, and the conversation or profile shows a UK-to-UAE move. */
+ 'dubai.docs.before':{
+  summary:'Which documents to get ready, and how UK documents are legalised and attested for the UAE when you’re asked to.',
+  decision:/\b(?:i'?ll|i will|i need to|i have to|i'?m (?:gonna|going to)|gonna|i want to|how do i|help me)\b.{0,40}\b(?:attest\w*|apostille|legali[sz]\w*|get my (?:documents|certificates|degree|papers) ready|prepare my (?:documents|papers))\b/i,
+  refresher:/\b(?:documents? (?:guide|checklist)|before you move guide)\b/i,
+  problems:[['recognition',/\b(?:recogni[sz]\w*|equivalen\w*) (?:of )?my degree\b|\bdegree (?:recognition|equivalency)\b/i]],
+  applies:({profile,thread})=>{const t=[profile?.city,profile?.movedFrom,profile?.movingTo,thread].filter(Boolean).join(' | ');return UK_PLACE.test(t)&&/\b(uae|emirates|dubai|abu dhabi|sharjah|ajman)\b/i.test(t)?{ok:true}:{ok:false}}
+ },
+ /* UK guides (week 6, 29 Oct): offered only where they apply (guideScope). */
+ 'edinburgh.evisa':{
+  summary:'Your eVisa, your UKVI account and share codes for landlords and employers.',
+  decision:/\b(?:i'?ll|i will|i need to|i have to|i'?m (?:gonna|going to)|gonna|i want to|how do i|help me) (?:set up|create|make|get|access|view|open)\b.{0,30}\b(?:e-?visa|ukvi account|share code)\b/i,
+  refresher:/\b(?:e-?visa|share code)s?\b.{0,30}\b(?:again|remind\w*|refresh\w*)\b|\b(?:e-?visa|share code) guide\b/i,
+  problems:[['cantlogin',/\bcan'?t (?:get into|log ?in to|sign in to|access) my (?:ukvi )?(?:account|e-?visa)\b/i],['wrongdetails',/\bmy e-?visa (?:details )?(?:is|are) wrong\b|\bwrong (?:details|name|photo) on my e-?visa\b/i],['police',/\b(?:register|registration) with the police\b/i]],
+  applies:ctx=>inScope('uk',ctx,'eVisa')
+ },
+ 'edinburgh.gp':{
+  summary:'Registering with a GP in Scotland, what’s free, and where to go when the practice is closed.',
+  decision:/\b(?:i'?ll|i will|i need to|i have to|i'?m (?:gonna|going to)|gonna|i want to|how do i|help me) (?:register|sign up|get registered)\b.{0,30}\b(?:gp|doctor|surgery|practice)\b/i,
+  refresher:/\b(?:gp|doctor) guide\b|\bhow do i register with a gp again\b/i,
+  problems:[['refused',/\b(?:gp|practice|surgery)\b.{0,30}\b(?:won'?t|will not|refus\w*)\b.{0,20}\bregister\b/i],['nodocs',/\bno proof of address\b|\bdon'?t have (?:a )?proof of address\b/i]],
+  applies:ctx=>inScope('scotland',ctx,'GP')
+ },
+ 'edinburgh.counciltax':{
+  summary:'Council tax as a student in Edinburgh, the student discount, and the TV licence.',
+  decision:/\b(?:i'?ll|i will|i need to|i have to|i'?m (?:gonna|going to)|gonna|i want to|how do i|help me) (?:apply for|get|claim|sort out|register for)\b.{0,40}\b(?:council tax|student (?:council tax )?(?:discount|exemption))\b/i,
+  refresher:/\bcouncil tax guide\b/i,
+  problems:[['bill',/\b(?:got|received) a council tax bill\b/i]],
+  applies:ctx=>inScope('edinburgh',ctx,'council tax')
  }
 };
+/* A UK guide is offered only when the person's profile or recent messages place them where it applies. Somewhere else
+   in the UK: no card, and a note so the reply uses that nation's or council's official pages instead. */
+const UK_PLACE=/\b(uk|u\.k\.|united kingdom|britain|england|scotland|wales|northern ireland|london|edinburgh|glasgow|aberdeen|dundee|inverness|stirling|manchester|birmingham|leeds|liverpool|bristol|sheffield|newcastle|nottingham|leicester|oxford|cambridge|cardiff|swansea|belfast)\b/i;
+const SCOT_PLACE=/\b(scotland|scottish|edinburgh|glasgow|aberdeen|dundee|inverness|stirling|st andrews)\b/i;
+const OTHER_UK=/\b(england|wales|northern ireland|london|manchester|birmingham|leeds|liverpool|bristol|sheffield|newcastle|nottingham|leicester|oxford|cambridge|cardiff|swansea|belfast)\b/i;
+const EDINBURGH=/\bedinburgh\b/i;
+function inScope(level,{profile,thread},what){
+ const home=String(profile?.city||profile?.movingTo||''),where=home+' | '+String(thread||'');
+ if(level==='uk')return UK_PLACE.test(where)?{ok:true}:{ok:false};
+ const place=level==='scotland'?SCOT_PLACE:EDINBURGH,name=level==='scotland'?'Scotland':'Edinburgh';
+ const elsewhere=OTHER_UK.test(home)||(!place.test(home)&&OTHER_UK.test(where))||(level==='edinburgh'&&SCOT_PLACE.test(home)&&!EDINBURGH.test(home));
+ if(place.test(where)&&!elsewhere)return {ok:true};
+ return {ok:false,note:elsewhere?'JOURNEYS: Orivia’s checked '+what+' guide covers '+name+' only, and the person seems to be somewhere else in the UK. Don’t offer it; answer from official pages for where they are.':''};
+}
 
 const ID=/^[a-z]+(?:\.[a-z]+){1,3}$/;
 const WHERE_WAS_I=/\b(where was i|where am i up to|what do i do next|what'?s my next step|my journeys?|my guides?|continue my (?:guide|journey))\b/i;
@@ -129,7 +174,7 @@ export function guideContent(id){
  if(!ID.test(String(id||'')))return null;
  const d=journey(id);if(!d)return null;
  const j=d.journey, list=x=>(Array.isArray(x)?x:[]).filter(v=>typeof v==='string'&&v.trim()).slice(0,12);
- const guide={id:j.id,title:j.title,city:j.city,checkedAt:d.verifiedOn,reviewDue:d.reviewDue,fresh:d.fresh,
+ const guide={id:j.id,title:j.title,city:j.city,scope:guideScope(j.id),checkedAt:d.verifiedOn,reviewDue:d.reviewDue,fresh:d.fresh,
   summary:GUIDES[j.id]?.summary||'',
   sources:(j.sources||[]).filter(s=>/^https:\/\//.test(s.url)).map(s=>({name:s.name,url:s.url})),
   steps:j.steps.map(s=>({id:s.id,title:s.title,info:list(s.info),doThis:list(s.doThis),
@@ -145,13 +190,25 @@ export function guideContent(id){
 
 /* The library for Explore Journeys: only guides that exist, grouped by what they help with */
 const CATEGORY=j=>j.need==='docs'?['residency','Residency']:/student/.test(j.id)?['university','University']:j.need==='move'?['transport','Transport']:j.need==='health'?['health','Health']:j.need==='work'?['work','Work']:j.need==='edu'?['family','Family']:['everyday','Everyday life'];
+/* Where each guide applies (week 6, 29 Oct), from its sources: UK-wide matters (immigration, right to work, banking,
+   mobile) apply across the UK; NHS Scotland, Scottish tenancy law and Scotland's under-22 travel apply in Scotland;
+   council, Lothian transport and local services apply in Edinburgh only. Dubai guides are Dubai only (Sharjah and the
+   other emirates are outstanding). Unknown ids have no scope and are never offered. */
+const UK_SCOPE={'edinburgh.evisa':'uk','edinburgh.work':'uk','edinburgh.sim':'uk','edinburgh.bank':'uk',
+ 'edinburgh.gp':'scotland','edinburgh.rent':'scotland','edinburgh.u22':'scotland',
+ 'edinburgh.airport':'edinburgh','edinburgh.bus':'edinburgh','edinburgh.counciltax':'edinburgh','edinburgh.community':'edinburgh','edinburgh.school':'edinburgh'};
+const SCOPE_LABEL={dubai:'Dubai only',uk:'Applies across the UK',scotland:'Scotland only',edinburgh:'Edinburgh only','uk-to-uae':'Moving from the UK to the UAE'};
+// Guides whose scope isn't their city: documents prepared in the UK for use anywhere in the UAE (federal attestation).
+const SPECIAL_SCOPE={'dubai.docs.before':'uk-to-uae'};
+export function guideScope(id){const s=SPECIAL_SCOPE[id]||(/^dubai\./.test(String(id))?'dubai':UK_SCOPE[id]||null);return s?{level:s,country:s==='dubai'||s==='uk-to-uae'?'uae':'uk',label:SCOPE_LABEL[s]}:null}
 export function guideCatalogue(city='dubai'){
+ if(city==='all')return [...guideCatalogue('dubai'),...guideCatalogue('edinburgh')];
  const r=callJourneyApi('/api/v1/journeys?city='+encodeURIComponent(city));
  if(r.status!==200)return [];
- return r.data.journeys.map(x=>{
+ return r.data.journeys.filter(x=>guideScope(x.id)).map(x=>{
   const d=journey(x.id);if(!d)return null;
   const j=d.journey, [category,categoryName]=CATEGORY(j);
-  return {id:j.id,title:j.title,city:j.city,category,categoryName,steps:j.steps.length,checkedAt:d.verifiedOn,fresh:d.fresh,
+  return {id:j.id,title:j.title,city:j.city,scope:guideScope(j.id),category,categoryName,steps:j.steps.length,checkedAt:d.verifiedOn,fresh:d.fresh,
    summary:GUIDES[j.id]?.summary||'Covers: '+j.steps.slice(0,3).map(s=>s.title).join(' · ')+(j.steps.length>3?' …':''),
    suggested:!!GUIDES[j.id]};
  }).filter(Boolean);
