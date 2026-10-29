@@ -150,11 +150,16 @@ Conflicts in four files were resolved: the assistant, `chat.js`, `page.html` (th
   - Admins assign a request to a team and to one of the organisation's admins.
   - The inbox filters by status, team and assignee, on the server; stale assignments are refused (409).
   - Assignments appear in the activity history. Students don't see who is handling their request.
-  - **Decision for the founder:** only admins can be assigned, because they already see every request. Letting editors handle assigned requests would widen access.
-  - **Not built:** linked process steps.
+  - **Admins only (founder, 29 Oct):** only admins can be assigned, because they already see every request. Editors handling assigned requests is a future feature (backlog below) that needs its own permission design first.
+  - **Linked process steps (29 Oct, after `5185eae`):**
+    - Admins link a request to a step of one of their own organisation's process templates, and filter by process.
+    - Another organisation's template reads as not found (404). Other organisations' admins are refused (403).
+    - Students see a linked step only from a published template: its title and instructions. Drafts stay staff-only.
+    - Links and removals are in the activity history. Stale links are refused (409).
+    - 58-step workflow and a browser check: `docs/evidence/support-linked-steps-local-2026-10-29.json`.
 - **Checked on the real local server**, which now also serves the real app page, so the app-shell join link is covered:
   - headless Chrome, 30 welcome checks;
-  - 38 workflow steps, including assignment, filters and refusals;
+  - the workflow (now 58 steps), including assignment, filters, linked steps and refusals;
   - the admin inbox in the browser.
 - **Evidence:** `docs/evidence/welcome-and-support-local-2026-10-29.json`.
 - **Not covered:** live, Arabic layout, visual and language review.
@@ -164,7 +169,7 @@ Conflicts in four files were resolved: the assistant, `chat.js`, `page.html` (th
   - `tests/university-workflow-real-server.test.mjs` (staff, owner and student flows over HTTP);
   - `tools/browser-checks/welcome-real-browser.mjs` (the student welcome in headless Chrome).
 - **Both** start their own local server with fictional people, and run in `tools/run-ci-local.mjs`.
-- **After the hold:** the live run is short, can be done by Ina with the fictional accounts, and confirms only what the local server can't: real D1, real email sign-in, the deployed page.
+- **Live acceptance is not scoped yet.** After the hold it has to cover at least what the local server can't (real D1, real email sign-in, the deployed page). Its full scope, who runs it, and how they get authenticated access to the pilot are still to be confirmed with the founder.
 
 **Mon 9 – Tue 10 Nov: last features**
 
@@ -173,7 +178,7 @@ Conflicts in four files were resolved: the assistant, `chat.js`, `page.html` (th
 | 22 + 13 · Northbay welcome and onboarding | Welcome done locally (29 Oct, see above). Left: connect to the demo accounts after the hold. |
 | 21 + 20 · AI guides and instruction packages | The URL/file drafting tool produces editable, sourced instructions with a student preview. One reusable package per demo route. |
 | 23 · Campus help | A campus directory (printing, services, locations, opening hours, contacts). The student essentials collection and the first-week commute guide go in only where they reuse the directory and the place card directly. Otherwise they move to the backlog. |
-| 24 · Support workflows | Team assignment and filtering done locally (29 Oct, see above). Left: linked process steps. |
+| 24 · Support workflows | Team assignment, filtering and linked process steps done locally (29 Oct, see above). |
 | 16 · Sponsorships | The labelled placement students see, with a preview. Approval controls already exist. |
 
 **Wed 11 – Thu 12 Nov: integration, fixes, rehearsals.** No new features. The demo is rehearsed end to end at least twice on the candidate, with the fictional accounts.
@@ -201,6 +206,7 @@ The founder only has to supply operator details. Nothing else blocks development
 | Area | Why it waits |
 |---|---|
 | 12 · Founder AI drafting | For internal use only. |
+| 24 · Editors handling assigned support requests | Would let staff beyond admins read students' messages. Needs a separate permission design first (who can be assigned, what they see, what the student is told). Doesn't block current work: assignment stays admin-only. |
 | 14 · Owner administration (full views) | The access controls themselves stay in this release (see above). |
 | 15 · Founder analytics | Needs real usage first. Show the basic charts. |
 | 17 · Communications | Saving notices works. Scheduling and delivery controls come later. |

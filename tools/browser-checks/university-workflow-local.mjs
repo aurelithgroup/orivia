@@ -67,6 +67,30 @@ const resolved=await call(admin,'Filter: resolved',pre+'/support?status=resolved
 await call(admin,'An unknown filter is refused',pre+'/support?status=closed',undefined,undefined,400);
 const studentList=await call(student,'The student’s own list has no staff assignment details',pre+'/support');
 
+// 4c. Linked process steps (area 24): a request points at a step of one of the same organisation's process templates.
+const visaProcess=await call(admin,'Admin publishes a process template',pre+'/processes','POST',{title:'Student visa',status:'published',steps:[{id:'medical',title:'Book your visa medical',instructions:'Book at a government health centre after your entry permit is issued. Bring your passport and entry permit.',dependsOn:[]},{id:'emirates-id',title:'Give your Emirates ID fingerprints',instructions:'',dependsOn:['medical']}]},201);
+const draftProcess=await call(admin,'Admin keeps a second template as a draft',pre+'/processes','POST',{title:'Moving into Northbay Residence',status:'draft',steps:[{id:'deposit',title:'Pay the room deposit',instructions:'Internal draft wording.',dependsOn:[]}]},201);
+// A second fictional organisation with its own template, for the boundary.
+const inv2=await call(owner,'Owner invites a second partner (Eastgate College)','/api/admin/onboarding','POST',{recipientEmail:'eastgate@northbay.example',confirm:true},201);
+const eastgate=await as('eastgate');const app2=(await call(eastgate,'Eastgate admin opens it','/api/partner/inspect','POST',{token:inv2?.token}))?.application;
+await call(eastgate,'Eastgate admin submits its details','/api/partner/submit','POST',{token:inv2?.token,revision:app2?.revision,data:{name:'Eastgate College',city:'Edinburgh',website:'https://eastgate.example',contactEmail:'hub@eastgate.example',country:'uk',region:'Scotland',town:'Edinburgh',reason:'study'},confirm:true});
+const org2=(await call(owner,'Owner approves Eastgate','/api/admin/onboarding/'+inv2?.id+'/decision','POST',{decision:'approve',revision:(app2?.revision??0)+1,confirm:true}))?.organisationId;
+const otherProcess=await call(eastgate,'Eastgate publishes its own template','/api/orgs/'+org2+'/processes','POST',{title:'Register with a GP',status:'published',steps:[{id:'register',title:'Register with a GP',instructions:'',dependsOn:[]}]},201);
+const visaTicket=ticket?.id,linkPath=tid=>pre+'/support/'+tid+'/link';
+await call(admin,'Another organisation’s template reads as not found',linkPath(visaTicket),'POST',{revision:0,processId:otherProcess?.id,stepId:'register'},404);
+await call(eastgate,'Another organisation’s admin cannot link this request',linkPath(visaTicket),'POST',{revision:0,processId:otherProcess?.id,stepId:'register'},403);
+await call(admin,'A step that isn’t in the template is refused',linkPath(visaTicket),'POST',{revision:0,processId:visaProcess?.id,stepId:'no-such-step'},400);
+await call(admin,'Admin links the visa request to “Book your visa medical”',linkPath(visaTicket),'POST',{revision:0,processId:visaProcess?.id,stepId:'medical'});
+await call(admin,'A stale link is refused, and records nothing',linkPath(visaTicket),'POST',{revision:0,processId:visaProcess?.id,stepId:'emirates-id'},409);
+await call(student,'A student cannot link requests',linkPath(second?.id),'POST',{revision:0,processId:visaProcess?.id,stepId:'medical'},403);
+await call(admin,'Admin links the deposit request to a draft step',linkPath(second?.id),'POST',{revision:0,processId:draftProcess?.id,stepId:'deposit'});
+const linkedToVisa=await call(admin,'Filter: linked to Student visa',pre+'/support?process='+visaProcess?.id);
+await call(admin,'Filtering by another organisation’s template is refused',pre+'/support?process='+otherProcess?.id,undefined,undefined,400);
+const studentLinks=await call(student,'The student sees only the published step, with its instructions',pre+'/support');
+await call(admin,'Admin removes the draft link',linkPath(second?.id),'POST',{revision:1,processId:null,stepId:null});
+const unlinked=await call(admin,'Filter: no linked step',pre+'/support?process=none');
+const eastgateList=await call(eastgate,'Eastgate’s inbox has none of Northbay’s requests','/api/orgs/'+org2+'/support');
+
 // 5. Limits that must hold on the real server.
 await call(admin,'Application records stay locked for admins',pre+'/records','GET',undefined,403);
 await call(student,'A student cannot see the member list',pre+'/members','GET',undefined,403);
@@ -85,6 +109,8 @@ const facts={
  filters:{assignedToMe:(assignedToMe?.tickets||[]).map(x=>x.title),noTeam:(noTeam?.tickets||[]).map(x=>x.title),accommodationOpen:(accommodation?.tickets||[]).map(x=>x.title),resolved:(resolved?.tickets||[]).map(x=>x.title)},
  assignment:(assignedToMe?.tickets||[]).map(x=>({team:x.team,assignedToAdmin:x.assigneeId===admin.id,revision:x.assignmentRevision})),
  teams:(assignedToMe?.teams||[]).map(t=>t.label),
+ links:{linkedToVisa:(linkedToVisa?.tickets||[]).map(x=>x.title+' → '+x.linkedStep?.stepTitle),noLinkAfterRemoval:(unlinked?.tickets||[]).map(x=>x.title),
+  student:(studentLinks?.tickets||[]).map(x=>({title:x.title,linkedStep:x.linkedStep})),staffProcesses:(linkedToVisa?.processes||[]).map(x=>x.title+' ('+x.status+')'),eastgateSees:(eastgateList?.tickets||[]).length},
  studentSeesAssignment:(studentList?.tickets||[]).some(x=>'team' in x||'assigneeId' in x||'assigneeName' in x)||'assignees' in (studentList||{}),
 };
 const result={ranAt:new Date().toISOString(),server:'accounts-local-server.mjs: real handleAccountRequest + Better Auth on in-memory SQLite; no fixtures',passed:!failed&&steps.every(s=>s.ok),steps,failed,facts};

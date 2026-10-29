@@ -1,0 +1,263 @@
+{
+ "kind": "local verification, not live acceptance",
+ "date": "2026-10-29",
+ "implementationCheckpoint": "5185eae529ef4459ae3c1a5b587732fae3b682fc (changes on top, committed with this file)",
+ "reviewBaseline": "6e660b1655a5a7714266dfa8b7c4a1c0ba65e42d",
+ "deployment": "none: deployment hold in place; pilot, production and payments untouched",
+ "server": "tools/browser-checks/accounts-local-server.mjs: real accounts, organisations and app worker code; in-memory SQLite; no email, no AI, no Cloudflare",
+ "rerun": [
+  "node --experimental-sqlite tests/university-workflow-real-server.test.mjs (in CI)"
+ ],
+ "replay": {
+  "ranAt": "2026-10-29T16:38:48.893Z",
+  "passed": true,
+  "totalSteps": 58,
+  "linkedStepSteps": [
+   {
+    "step": "Owner approves Eastgate",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/onboarding/:org/decision",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Eastgate publishes its own template",
+    "as": "eastgate",
+    "method": "POST",
+    "route": "/api/orgs/:org/processes",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "Another organisation’s template reads as not found",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:org/support/:org/link",
+    "status": 404,
+    "expected": 404,
+    "ok": true
+   },
+   {
+    "step": "Another organisation’s admin cannot link this request",
+    "as": "eastgate",
+    "method": "POST",
+    "route": "/api/orgs/:org/support/:org/link",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "A step that isn’t in the template is refused",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:org/support/:org/link",
+    "status": 400,
+    "expected": 400,
+    "ok": true
+   },
+   {
+    "step": "Admin links the visa request to “Book your visa medical”",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:org/support/:org/link",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "A stale link is refused, and records nothing",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:org/support/:org/link",
+    "status": 409,
+    "expected": 409,
+    "ok": true
+   },
+   {
+    "step": "A student cannot link requests",
+    "as": "student",
+    "method": "POST",
+    "route": "/api/orgs/:org/support/:org/link",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "Admin links the deposit request to a draft step",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:org/support/:org/link",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Filter: linked to Student visa",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/support?process=:org",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Filtering by another organisation’s template is refused",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/support?process=:org",
+    "status": 400,
+    "expected": 400,
+    "ok": true
+   },
+   {
+    "step": "The student sees only the published step, with its instructions",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/orgs/:org/support",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Admin removes the draft link",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:org/support/:org/link",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Filter: no linked step",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/support?process=none",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Eastgate’s inbox has none of Northbay’s requests",
+    "as": "eastgate",
+    "method": "GET",
+    "route": "/api/orgs/:org/support",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Application records stay locked for admins",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/records",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "A student cannot see the member list",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/orgs/:org/members",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "An outsider cannot see the organisation",
+    "as": "outsider",
+    "method": "GET",
+    "route": "/api/orgs/:org/summary",
+    "status": 403,
+    "expected": [
+     403,
+     404
+    ],
+    "ok": true
+   },
+   {
+    "step": "Progress totals stay paused below the reporting minimum",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/progress",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Activity history records the changes",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/audit",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   }
+  ],
+  "links": {
+   "linkedToVisa": [
+    "Visa medical appointment → Book your visa medical"
+   ],
+   "noLinkAfterRemoval": [
+    "Accommodation deposit"
+   ],
+   "student": [
+    {
+     "title": "Accommodation deposit",
+     "linkedStep": null
+    },
+    {
+     "title": "Visa medical appointment",
+     "linkedStep": {
+      "processTitle": "Student visa",
+      "stepTitle": "Book your visa medical",
+      "instructions": "Book at a government health centre after your entry permit is issued. Bring your passport and entry permit."
+     }
+    }
+   ],
+   "staffProcesses": [
+    "Student visa (published)",
+    "Moving into Northbay Residence (draft)"
+   ],
+   "eastgateSees": 0
+  },
+  "supportAudit": [
+   "support.unlinked",
+   "support.linked",
+   "support.linked",
+   "support.assigned",
+   "support.resolved"
+  ]
+ },
+ "browser": {
+  "ranAt": "2026-10-29T16:39:09Z to 16:39:42Z",
+  "how": "tools/browser-checks/cdp-shoot.mjs on the same server after the replay",
+  "results": [
+   "admin inbox: four filters (Status, Team, Assigned to, Process); \"Linked step: Student visa · Book your visa medical\"; the step list offers only Northbay templates, drafts marked",
+   "linked step saved in the page: \"Linked step: Student visa · Give your Emirates ID fingerprints\", with \"Linked step saved.\"",
+   "Process = No linked step: \"No requests match these filters.\" once both requests were linked",
+   "student view: \"Related step: …\" with the published step’s instructions; no draft template, draft wording or staff \"Linked step\" text",
+   "activity history: \"Linked a support request to a process step\" and \"Removed a support request’s process step\""
+  ]
+ },
+ "boundary": [
+  "Linking checks the template belongs to the request’s organisation; another organisation’s template answers 404, the same as one that doesn’t exist",
+  "Another organisation’s admin gets 403 on this organisation’s requests",
+  "Filtering by another organisation’s template is refused (400)",
+  "Only admins link; students get 403"
+ ],
+ "privacy": [
+  "Students see a linked step only if its template is published, and only its title and instructions",
+  "Nothing about the student is copied into templates; templates show no linked requests",
+  "Assignment and links stay staff-only on the staff side of the list"
+ ],
+ "notCovered": [
+  "Live acceptance: scope and authenticated access still to be confirmed",
+  "Editors handling assigned requests (backlog: needs its own permission design)",
+  "Arabic and right-to-left layout, screen readers",
+  "Visual and language review"
+ ]
+}

@@ -1,7 +1,7 @@
 /* The Northbay university workflow against the real accounts server (no fixtures): partner setup and approval, staff
    publishing and invitations, a student's join request and approval, support with forwarding refused, and the limits that
-   must hold (records locked, member list hidden, outsiders refused, progress totals paused), and support team assignment and
-   filtering (area 24). Also pins the plain labels found missing on the real screens on 29 Oct.
+   must hold (records locked, member list hidden, outsiders refused, progress totals paused), support team assignment and
+   filtering, and requests linked to process steps inside the organisation boundary (area 24). Also pins the plain labels found missing on the real screens on 29 Oct.
    Run: node --experimental-sqlite tests/university-workflow-real-server.test.mjs */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -18,8 +18,8 @@ try{
  const run=spawnSync(process.execPath,['tools/browser-checks/university-workflow-local.mjs',base,out],{encoding:'utf8'});
  const result=JSON.parse(fs.readFileSync(out,'utf8'));
  assert.equal(result.passed,true,'workflow: '+JSON.stringify(result.failed)+run.stderr);
- assert.equal(result.steps.length,38);
- assert.deepEqual(result.facts.memberships,[{role:'admin',status:'active'},{role:'student',status:'active'}]);
+ assert.equal(result.steps.length,58);
+ assert.deepEqual(result.facts.memberships,[{role:'admin',status:'active'},{role:'student',status:'active'},{role:'admin',status:'active'}],'Northbay admin and student, Eastgate admin');
  assert.deepEqual(result.facts.studentSees.guides,['Collect your student ID card']);
  assert.equal(result.facts.studentSees.personalDataShared,false);
   const visa=result.facts.ticket.find(x=>x.title==='Visa medical appointment');assert.equal(visa.status,'resolved');
@@ -29,8 +29,15 @@ try{
  assert.deepEqual(result.facts.assignment,[{team:'accommodation',assignedToAdmin:true,revision:1}],'the stale and refused assignments changed nothing');
  assert.equal(result.facts.teams.length,7);assert.equal(result.facts.studentSeesAssignment,false,'students don’t see staff assignment');
  assert.deepEqual(result.facts.progress,{shown:false,reason:'reporting_paused'});
- // The staff reply and the assignment are each in the activity history once (the refused stale writes added nothing).
- assert.equal(result.facts.auditActions.filter(a=>a.startsWith('support.')).sort().join(),'support.assigned,support.resolved');
+ // Linked process steps: this organisation's templates only; students see published steps only, with instructions.
+ assert.deepEqual(result.facts.links.linkedToVisa,['Visa medical appointment → Book your visa medical']);
+ assert.deepEqual(result.facts.links.noLinkAfterRemoval,['Accommodation deposit']);
+ assert.deepEqual(result.facts.links.student.find(x=>x.title==='Accommodation deposit').linkedStep,null,'a draft step is never shown to the student');
+ assert.equal(result.facts.links.student.find(x=>x.title==='Visa medical appointment').linkedStep.stepTitle,'Book your visa medical');
+ assert.deepEqual(result.facts.links.staffProcesses.sort(),['Moving into Northbay Residence (draft)','Student visa (published)'],'no other organisation’s templates offered');
+ assert.equal(result.facts.links.eastgateSees,0);
+ // Each accepted write is in the activity history once (the refused and stale writes added nothing).
+ assert.equal(result.facts.auditActions.filter(a=>a.startsWith('support.')).sort().join(),'support.assigned,support.linked,support.linked,support.resolved,support.unlinked');
 }finally{server.kill()}
 
 // Plain labels on the screens (values and stored keys unchanged).
@@ -61,5 +68,5 @@ has(platform,"'support.resolved':'Resolved a support request'",'reply label');
 // 7. Data request types and statuses have plain names.
 has(restored,"REQUEST_KIND={access:'A copy of my data'",'request types');lacks(restored,"['access','correction','deletion','other'].map(v=>h('option',{value:v},v))",'no raw request types');
 // Area 24 on the screens: filters and assignment controls for admins, labelled in the activity history.
-has(restored,"pick('assignee','Assigned to',[['','Anyone'],['me','Me'],['none','Nobody yet']",'assignee filter');has(restored,"button('Save assignment'",'assignment control');has(platform,"'support.assigned':'Assigned a support request'",'assignment label');
-console.log('University workflow on the real local server: 38 steps passed (partner setup, publishing, join and approval, support, team assignment and filtering, limits); plain labels and the seven 29 Oct findings pinned.');
+has(restored,"pick('assignee','Assigned to',[['','Anyone'],['me','Me'],['none','Nobody yet']",'assignee filter');has(restored,"button('Save assignment'",'assignment control');has(platform,"'support.assigned':'Assigned a support request'",'assignment label');has(platform,"'support.linked':'Linked a support request to a process step'",'link label');has(restored,"button('Save linked step'",'link control');has(restored,"pick('process','Process'",'process filter');
+console.log('University workflow on the real local server: 58 steps passed (partner setup, publishing, join and approval, support, team assignment and filtering, linked process steps and the organisation boundary, limits); plain labels and the seven 29 Oct findings pinned.');
