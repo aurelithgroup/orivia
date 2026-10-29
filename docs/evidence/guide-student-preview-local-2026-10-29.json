@@ -1,0 +1,36 @@
+{
+ "kind": "local verification, not live acceptance",
+ "date": "2026-10-29",
+ "implementationCheckpoint": "1dc58c0474b35d2a867f6e028fe6c3d010e5218e (changes on top, committed with this file)",
+ "reviewBaseline": "6e660b1655a5a7714266dfa8b7c4a1c0ba65e42d",
+ "deployment": "none: deployment hold in place",
+ "what": "Area 21, student preview in the staff content editor: the unsaved form shown as a student’s card in the app’s university space, with what still needs checking. It saves and sends nothing and never blocks publishing.",
+ "server": {
+  "script": "tools/browser-checks/accounts-local-server.mjs after the 58-step replay",
+  "replayRanAt": "2026-10-29T16:48:34.590Z",
+  "replayPassed": true
+ },
+ "browser": [
+  {
+   "ranAt": "2026-10-29T16:48:35Z to 2026-10-29T16:48:50Z",
+   "job": "published guide, Edit, Preview as a student",
+   "result": "From Northbay University · Collect your student ID card · its text · Mark as done, Ask Orivia about this, Save; notes: Members only; No source page"
+  },
+  {
+   "ranAt": "2026-10-29T16:48:35Z to 2026-10-29T16:48:50Z",
+   "job": "new contact with a phone number",
+   "result": "Call (this local Northbay was created through partner onboarding, so it is not marked demo; a demo organisation shows “Demo number (not callable)” instead); notes: Not published yet; Members only"
+  },
+  {
+   "ranAt": "2026-10-29T16:48:50Z to 2026-10-29T16:48:58Z",
+   "job": "new guide typed in the drafting tool’s format (a stand-in: AI drafting needs OpenAI, which the local server doesn’t have)",
+   "result": "before editing: notes include “Still has the AI draft notice…” and “No source page”; after rewriting the text and adding a source page: both notes gone and a Source page ↗ button shown; afterwards the content list still holds only the published guide, so nothing was saved"
+  }
+ ],
+ "notCovered": [
+  "AI drafting itself (needs OpenAI and a budget database; not available on the local server)",
+  "The app’s own card styling: the preview uses the dashboard’s styles with the app’s wording and buttons",
+  "Live acceptance: scope and authenticated access still to be confirmed",
+  "Visual and language review"
+ ]
+}

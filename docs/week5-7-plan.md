@@ -176,7 +176,7 @@ Conflicts in four files were resolved: the assistant, `chat.js`, `page.html` (th
 | Area | Work |
 |---|---|
 | 22 + 13 · Northbay welcome and onboarding | Welcome done locally (29 Oct, see above). Left: connect to the demo accounts after the hold. |
-| 21 + 20 · AI guides and instruction packages | The URL/file drafting tool produces editable, sourced instructions with a student preview. One reusable package per demo route. |
+| 21 + 20 · AI guides and instruction packages | **Student preview done locally (29 Oct, after `1dc58c0`):** "Preview as a student" in the content editor shows the unsaved item as a student's card, flags an unedited AI draft or a missing source page, and saves nothing (`docs/evidence/guide-student-preview-local-2026-10-29.json`). The URL/file drafting tool and packages came with Ina's block one. **Left:** checking AI drafting itself, which needs OpenAI (not on the local server, so only after the hold, within the live-acceptance scope still to be agreed); one reusable package per demo route. |
 | 23 · Campus help | A campus directory (printing, services, locations, opening hours, contacts). The student essentials collection and the first-week commute guide go in only where they reuse the directory and the place card directly. Otherwise they move to the backlog. |
 | 24 · Support workflows | Team assignment, filtering and linked process steps done locally (29 Oct, see above). |
 | 16 · Sponsorships | The labelled placement students see, with a preview. Approval controls already exist. |

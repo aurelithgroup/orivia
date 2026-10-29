@@ -69,4 +69,8 @@ has(platform,"'support.resolved':'Resolved a support request'",'reply label');
 has(restored,"REQUEST_KIND={access:'A copy of my data'",'request types');lacks(restored,"['access','correction','deletion','other'].map(v=>h('option',{value:v},v))",'no raw request types');
 // Area 24 on the screens: filters and assignment controls for admins, labelled in the activity history.
 has(restored,"pick('assignee','Assigned to',[['','Anyone'],['me','Me'],['none','Nobody yet']",'assignee filter');has(restored,"button('Save assignment'",'assignment control');has(platform,"'support.assigned':'Assigned a support request'",'assignment label');has(platform,"'support.linked':'Linked a support request to a process step'",'link label');has(restored,"button('Save linked step'",'link control');has(restored,"pick('process','Process'",'process filter');
+// Area 21: the student preview in the content editor, from unsaved values; it saves nothing and flags an unedited AI draft.
+has(platform,"'Preview as a student'",'preview button');has(platform,"/AI-organised draft — staff review required/.test(text.value)",'AI notice flagged');
+has(fs.readFileSync('workers/accounts/guide-drafts.mjs','utf8'),'AI-organised draft — staff review required','the flag matches the drafting tool’s notice');
+const previewCode=platform.slice(platform.indexOf('const preview=()=>'),platform.indexOf("const previewButton="));lacks(previewCode,'api(','the preview sends nothing');
 console.log('University workflow on the real local server: 58 steps passed (partner setup, publishing, join and approval, support, team assignment and filtering, linked process steps and the organisation boundary, limits); plain labels and the seven 29 Oct findings pinned.');
