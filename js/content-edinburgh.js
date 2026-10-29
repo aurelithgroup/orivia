@@ -97,7 +97,7 @@ DATA.journeys['edinburgh.airport'] = base({
       {t:'cards', v:[
         {color:'#7A2E8C', rec:true, name:{en:'Airlink 100 bus', ar:'حافلة Airlink 100'}, desc:{en:'Runs 24 hours a day to Waverley Bridge in the centre, in about 30 minutes. £6.00 single, £8.50 open return.', ar:'تعمل على مدار 24 ساعة إلى Waverley Bridge في وسط المدينة، في نحو 30 دقيقة. 6.00 جنيهات للذهاب، و8.50 جنيهات للذهاب والعودة المفتوحة.'}},
         {color:'#B32424', name:{en:'Tram', ar:'الترام'}, desc:{en:'£7.90 single from the airport. You must have a ticket, or tap your card, before you get on.', ar:'7.90 جنيهات للرحلة من المطار. يجب أن تكون معك تذكرة، أو أن تمرر بطاقتك، قبل الصعود.'}},
-        {color:'#1C2733', name:{en:'Taxi', ar:'سيارة أجرة'}, desc:{en:'Easiest with heavy bags. The official rank is outside the terminal.', ar:'الأسهل إن كانت حقائبك ثقيلة. الموقف الرسمي خارج مبنى المطار.'}},
+        {color:'#1C2733', name:{en:'Taxi', ar:'سيارة أجرة'}, desc:{en:'Easiest with heavy bags. The official rank is a short walk from arrivals.', ar:'الأسهل إن كانت حقائبك ثقيلة. الموقف الرسمي على بُعد خطوات من صالة الوصول.'}},
       ]},
       {t:'phrase'},
      ]},
@@ -124,7 +124,7 @@ DATA.journeys['edinburgh.airport'] = base({
      blocks:[
       {t:'list', v:[
         {en:'Taxi rank: cross the plaza past the big Edinburgh sign and follow the taxi signs. The airport’s official taxi company is Capital Cars.', ar:'موقف سيارات الأجرة: اعبر الساحة مروراً بلافتة Edinburgh الكبيرة واتبع لافتات التاكسي. شركة التاكسي الرسمية في المطار هي Capital Cars.'},
-        {en:'Booked a ride in an app? Pick-up is on the ground floor of the multi-storey car park, which charges drivers, or in a free zone in the Long Stay car park, about a 10-minute walk.', ar:'حجزت رحلة عبر تطبيق؟ نقطة الالتقاء في الطابق الأرضي من موقف السيارات متعدد الطوابق، وفيه رسوم على السائق، أو في منطقة مجانية في موقف Long Stay، على بُعد 10 دقائق مشياً تقريباً.'},
+        {en:'Booked a ride in an app? Pick-up is in the charged zone on the ground floor of the multi-storey car park, or in the free zone in the Long Stay car park, about a 10-minute walk.', ar:'حجزت رحلة عبر تطبيق؟ نقطة الالتقاء في المنطقة المدفوعة بالطابق الأرضي من موقف السيارات متعدد الطوابق، أو في المنطقة المجانية في موقف Long Stay، على بُعد 10 دقائق مشياً تقريباً.'},
       ]},
      ]},
     {id:'next', label:{en:'What’s next', ar:'ما التالي'}, title:{en:'Once you’re in the city', ar:'بعد وصولك إلى المدينة'},
@@ -654,7 +654,7 @@ DATA.journeys['edinburgh.sim'] = base({
      ]},
   ],
   problems:[
-    {id:'credit', q:{en:'I failed the credit check', ar:'لم أجتز التحقق الائتماني'}, a:{en:'That’s common for newcomers with no UK credit history. Use pay as you go or a SIM-only plan for now: most don’t need a credit check.', ar:'هذا شائع للقادمين الجدد دون سجل ائتماني في بريطانيا. استخدم الدفع حسب الاستخدام أو باقة الشريحة فقط الآن، فمعظمها لا يتطلب تحققاً ائتمانياً.'}},
+    {id:'credit', q:{en:'I failed the credit check', ar:'لم أجتز التحقق الائتماني'}, a:{en:'That’s common for newcomers with no UK credit history. Use pay as you go for now: it doesn’t need a credit check. Monthly SIM-only plans usually do.', ar:'هذا شائع للقادمين الجدد دون سجل ائتماني في بريطانيا. استخدم الدفع حسب الاستخدام الآن، فهو لا يتطلب تحققاً ائتمانياً. أما باقات الشريحة الشهرية فتتطلبه عادةً.'}},
     {id:'locked', q:{en:'My phone won’t accept the SIM', ar:'هاتفي لا يقبل الشريحة'}, a:{en:'Your phone may be locked to your old network. Contact your old provider to unlock it, or ask the phone shop for help. An eSIM won’t work on a locked phone either.', ar:'قد يكون هاتفك مقفلاً على شبكتك القديمة. تواصل مع مزوّدك السابق لفتحه، أو اطلب المساعدة من متجر الهواتف. ولن تعمل الشريحة الإلكترونية على هاتف مقفل أيضاً.'}},
     STAFF,
     ELSE('Ask in a phone shop, or contact the network through its app or website.', 'اسأل في متجر هواتف، أو تواصل مع الشبكة عبر تطبيقها أو موقعها.'),
@@ -707,7 +707,7 @@ DATA.journeys['edinburgh.school'] = base({
   stages:[
     {id:'find', level:'source', label:{en:'Find', ar:'اعثر'}, title:{en:'Find your catchment school', ar:'اعثر على مدرسة منطقتك'}, help:['full','else'],
      blocks:[
-      {t:'p', v:{en:'Every Edinburgh address has a catchment school: the local state school for your area. State schools are free.', ar:'لكل عنوان في إدنبرة «مدرسة منطقة»: المدرسة الحكومية المحلية لمنطقتك. والمدارس الحكومية مجانية.'}},
+      {t:'p', v:{en:'Every Edinburgh address has catchment schools: the local state schools for your area, usually a primary and a secondary, with Roman Catholic schools too. State schools are free.', ar:'لكل عنوان في إدنبرة «مدارس منطقة»: المدارس الحكومية المحلية لمنطقتك، وهي عادةً مدرسة ابتدائية وأخرى ثانوية، إضافة إلى مدارس كاثوليكية. والمدارس الحكومية مجانية.'}},
       {t:'steps', v:[
         {en:'Put your address into the council’s catchment school finder.', ar:'أدخل عنوانك في أداة البحث عن مدرسة المنطقة على موقع المجلس.'},
         {en:'Use the council’s Year Group Checker to see which year your child will join.', ar:'استخدم أداة التحقق من الصف الدراسي على موقع المجلس لمعرفة الصف الذي سينضم إليه طفلك.'},
@@ -726,7 +726,7 @@ DATA.journeys['edinburgh.school'] = base({
   ],
   problems:[
     {id:'full', q:{en:'The school is full', ar:'المدرسة ممتلئة'}, a:{en:'Your child goes on the school’s waiting list, in the order applications arrived. You can also ask for a place at another school with a placing request.', ar:'يُدرج طفلك في قائمة انتظار المدرسة حسب ترتيب وصول الطلبات. ويمكنك أيضاً طلب مقعد في مدرسة أخرى عبر «طلب نقل» (placing request).'}},
-    {id:'other', q:{en:'I want a school outside my catchment', ar:'أريد مدرسة خارج منطقتي'}, a:{en:'Make a placing request to the council. Places go to catchment children first, so it depends on space.', ar:'قدّم «طلب نقل» إلى المجلس. تُعطى الأولوية لأطفال المنطقة، فالأمر يعتمد على توفر المقاعد.'}},
+    {id:'other', q:{en:'I want a school outside my catchment', ar:'أريد مدرسة خارج منطقتي'}, a:{en:'Make a placing request to that school. For a child starting P1 or S1, the council’s admissions team handles it. Places go to catchment children first, so it depends on space.', ar:'قدّم «طلب نقل» إلى تلك المدرسة. أما الطفل الذي يبدأ الصف الأول الابتدائي (P1) أو الأول الثانوي (S1)، فيتولى فريق القبول في المجلس طلبه. تُعطى الأولوية لأطفال المنطقة، فالأمر يعتمد على توفر المقاعد.'}},
     STAFF,
     ELSE('Contact the school office, or the City of Edinburgh Council’s school places team through its website.', 'تواصل مع مكتب المدرسة، أو مع فريق المقاعد المدرسية في مجلس مدينة إدنبرة عبر موقعه.'),
   ],

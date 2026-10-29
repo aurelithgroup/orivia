@@ -150,7 +150,7 @@ Pages were fetched on 29 Oct, about 07:05–07:20 UTC. Each guide below now has 
 
 ### Not checked yet
 
-`edinburgh.sim`, `edinburgh.airport`, `edinburgh.bus`, `edinburgh.community` and `edinburgh.school` have no source-check record, and show "Source check not recorded".
+`edinburgh.sim`, `edinburgh.airport`, `edinburgh.bus`, `edinburgh.community` and `edinburgh.school` have no source-check record, and show "Source check not recorded". *(Checked later the same day: see section 10.)*
 
 ### Data incident found and fixed (29 Oct)
 
@@ -185,6 +185,85 @@ Regression cases for her exact examples are in `tests/ina-review-week6.test.mjs`
 | Move direction, negated or corrected (Ina's recheck) | "I am not moving from London to Dubai" no longer triggers the guide, even with a UK-to-UAE profile. A correction to, or any statement of, the UAE-to-UK direction means no offer. So does "no longer moving" |
 
 Still the case: **no guide review records exist.** The remaining source checks and visual review are pending.
+
+## 10. New (29 Oct): source checks of airport, bus, SIM, community and school
+
+Pages were fetched on 29 Oct, between about 07:59 and 08:04 UTC. Each of the five guides now has a **partial** source-check record (`workers/guide-source-checks.mjs`) and shows "Sources partly checked 29 Oct 2026". **All remain awaiting review.**
+
+Some sites refuse automated access: Ofcom (403, then a bot challenge in a browser), Volunteer Edinburgh (418) and the Lothian Buses help centre (403). I did not try to get past those checks. For those claims, the result rests on **search results that quote the organisation's own pages** and is marked "via search". Please confirm those by hand.
+
+### `edinburgh.airport` (Edinburgh only)
+
+| Claim | Source checked | Result |
+|---|---|---|
+| Airlink 100 runs 24 hours to Waverley Bridge, in about 30 minutes | Lothian Buses, *Airport buses* ("24/7 Express Service"); Edinburgh Airport, *City bus links* ("average journey time of 30 minutes", final stop Waverley Bridge) | **Supported** |
+| £6.00 single, £8.50 open return | Lothian Buses, *Airport buses*; the 22 Feb 2026 fares notice says Airlink fares are unchanged | **Supported** |
+| Leaves from Stop A, next to the plaza | Edinburgh Airport, *City bus links* | **Supported** |
+| Up to every 10 minutes by day, every 20 at night | Lothian Buses (every 20, 01:15–04:00); the airport page says 15–20 | **Supported** |
+| Cash needs the exact fare; contactless and the app are accepted | Lothian Buses, *Airport buses* | **Supported** (American Express isn't accepted, which the guide doesn't mention) |
+| Tram: £7.90 single from the airport; stop right outside the terminal by the plaza and the Edinburgh sign | Edinburgh Trams, *Ticket options*; Edinburgh Airport, *Trams* | **Supported** |
+| £10 for boarding without a ticket or tap-on; forget to tap off and you may pay the airport fare | Edinburgh Trams, *FAQs* | **Supported** |
+| Tram customer relations 0131 338 5780 | Edinburgh Trams, *Get in touch* ("Customer Relations & Lost Property") | **Supported** |
+| Taxi: official company Capital Cars; cross the plaza past the Edinburgh sign and follow the signs | Edinburgh Airport, *Taxis* | **Supported** |
+| "The official rank is outside the terminal" | Same page: in the East Terminus, "a short walk from arrivals" | **Corrected**: "a short walk from arrivals" |
+| App-booked rides: multi-storey ground floor "which charges drivers", or a free Long Stay zone about 10 minutes' walk away | Same page: a charged zone on the ground floor and a free zone in Long Stay, about a ten-minute walk; it doesn't say who pays | **Corrected**: "the charged zone on the ground floor…" |
+| "Tell the driver where you're going"; "shops in the terminal can break a note" | Not on the pages checked | **Not checked** |
+
+### `edinburgh.bus` (Edinburgh only)
+
+| Claim | Source checked | Result |
+|---|---|---|
+| £2.40 single; contactless caps of £5.70 a day and £26.50 Monday to Sunday | Lothian Buses, *Fares from 22 Feb 2026* and *Contactless* | **Supported** |
+| Tap once on boarding, not when you get off | Lothian Buses, *Contactless* ("no need to tap off") | **Supported** |
+| Charges for the last 28 days at lothian.cloudfare.co.uk | Same | **Supported** |
+| Ridacard £26.50 a week or £80 for 4 weeks | Fares notice (adult prices; student prices are £23 and £68) | **Supported** for adults. The guide doesn't mention the cheaper student Ridacard; that's worth adding after review |
+| Night buses midnight to 4:30am; night single £3.50 | Lothian Buses, *Visitor guide*; fares notice | **Supported** |
+| Signal to the driver; press the stop button; exact cash only; Bus & Tram app for tickets and live times | Lothian Buses, *Visitor guide* | **Supported** |
+| "Get on at the front" | Not stated on the visitor guide | **Not checked** |
+| Tram: tap on and off, £10 on-board fare, airport fare if you don't tap off | Edinburgh Trams, *FAQs* | **Supported** (concession and Ridacard holders needn't tap off) |
+| Bus lost property only through the online form | Lothian Buses help centre (403 to automated access) | **Supported via search**: Lothian's help article says it can't take lost-property enquiries by phone. Please confirm by hand |
+| Tram lost property 0131 338 5780 | Edinburgh Trams, *Get in touch* | **Supported** |
+| Free bus travel at 21 or under, living in Scotland | Checked in section 8 (`edinburgh.u22`) | **Supported** |
+
+### `edinburgh.sim` (UK-wide)
+
+| Claim | Source checked | Result |
+|---|---|---|
+| Pay as you go: no contract and no credit check | Ofcom, *Choosing the right mobile package* (blocked) and Ofcom's 2024 mobile monitoring report | **Supported via search** |
+| SIM-only: 1-month rolling, or 12 or 24 months | Ofcom, *Choosing the right mobile package* | **Supported via search** |
+| Failed credit check: "Use pay as you go or a SIM-only plan for now: most don't need a credit check" | Ofcom's 2022 pricing annex: 30-day pay-monthly SIM-only contracts require a credit check | **Wrong for SIM-only. Corrected**: "Use pay as you go for now: it doesn't need a credit check. Monthly SIM-only plans usually do." (English and Arabic) |
+| Yearly price rises must be shown in pounds and pence | Ofcom: rules for new contracts from 17 Jan 2025 | **Supported via search** |
+| A phone may be locked to its old network | Ofcom: UK providers may not sell locked phones since Dec 2021. Phones bought abroad, or older UK phones, can still be locked | **Supported**. The advice fits newcomers' phones |
+| Contracts usually last 12, 18 or 24 months, often with a credit check, a UK address and a UK bank account | Not on a page I could read | **Not checked** |
+
+### `edinburgh.community` (Edinburgh only)
+
+| Claim | Source checked | Result |
+|---|---|---|
+| Online sign-up gives a temporary number for 6 months that lets you borrow up to 3 books | City of Edinburgh Council, *Join the library* | **Supported** |
+| A full card needs ID (passport or university card) and proof of an Edinburgh address | Same: ID includes passport and "university or college ID"; proof of an EH-postcode address | **Supported** |
+| Libraries are free to join, with free Wi-Fi | Council join page and library internet terms, via search | **Supported via search** |
+| "Warm, quiet places… a good way to meet people" | A description, not a fact from a source | **Not checked** |
+| Volunteer Edinburgh lists opportunities to search online, has drop-in advisers, and gives extra help when English isn't your first language | Volunteer Edinburgh (418 to automated access) | **Supported via search**: drop-ins need no appointment; there's a contact route for people with little English |
+| On a visa, some unpaid roles count as work; check with the university | Not checked against UKVI guidance | **Not checked** |
+
+### `edinburgh.school` (Edinburgh only)
+
+| Claim | Source checked | Result |
+|---|---|---|
+| "Every Edinburgh address has a catchment school: the local state school" | City of Edinburgh Council, *Find your catchment school*: every household has a catchment area; most addresses have four catchment schools (non-denominational and Roman Catholic, primary and secondary) | **Corrected**: "catchment schools … usually a primary and a secondary, with Roman Catholic schools too" |
+| Use the council's catchment finder | Same (interactive map; search by house number and street, not postcode alone) | **Supported** |
+| Year Group Checker | Council, *Apply for a school place* | **Supported** |
+| Contact the school first, ideally before you move; send the Request for School Place form to the school; the head teacher replies by letter | Same | **Supported** |
+| Full school: waiting list in the order applications arrived | Same ("by the date we received your request") | **Supported** |
+| Outside catchment: "Make a placing request to the council" | Council, *School placing requests*: for most year groups you apply to the school; P1 and S1 admissions go to the Schools Transactions team; catchment children come first | **Wrong route. Corrected**: "Make a placing request to that school. For a child starting P1 or S1, the council's admissions team handles it…" |
+| "State schools are free" | Not stated on the council pages checked | **Not checked** |
+
+### What changed in the data
+
+`server/src/journeys-data.js` was regenerated. Its diff against the previous commit is exactly the four changed lines above, in English and Arabic: airport ride pick-up, SIM credit check, catchment schools and placing request. The taxi-rank line is a choice-card description, which the export doesn't carry. It contains no U+FFFD characters. The new Arabic wording joins the language review.
+
+After this section, every Edinburgh journey has a source-check record. Of the Dubai journeys, only `dubai.eid.student` and `dubai.docs.before` do; the other 20 (for example `dubai.nol`, `dubai.sim`, `dubai.rent`, the other Emirates ID routes and the insurance guides) still show "Source check not recorded". **No guide has a review record.**
 
 ## How to record your review (when you're satisfied)
 
