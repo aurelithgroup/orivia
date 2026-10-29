@@ -63,3 +63,12 @@ console.log('University actions: labelled content, buttons only for supplied det
  assert.ok(sp.includes("if(prog&&(kind==='guide'||kind==='date'))actions.append(doneButton(c));"),'Done on guides and key dates only');
 assert.ok(!sp.includes('progress-sharing')&&sp.includes('Your Done marks are private: only you can see them.'),'no sharing switch; marks are private (staff totals paused)');
  assert.ok(sp.includes("if(!current(id,g))return;want?done.add(c.id):done.delete(c.id)"),'a late answer from another space or account is ignored');}
+
+// A demo (fictional) organisation: phones are shown as text, never as call links (founder, 29 Oct)
+{const ctx2={...ctx,fetch:async path=>Response.json(path.includes('memberships')?{platformRoles:[],memberships:[{organisationId:'north-1',name:'Northbay University',role:'student',status:'active'}]}:{organisation:{demo:true,name:'Northbay University'},content,studentContact:{label:'Student Hub',email:'hub@northbay.example',phone:'+971 4 000 0000'}})};
+ vm.createContext(ctx2);vm.runInContext(fs.readFileSync('workers/trial-ui/spaces.js','utf8'),ctx2);
+ await ctx2.window.OriviaSpaces.refresh();await roots.get('home-spaces-list').children.find(x=>x.tag==='button').onclick();
+ const b=roots.get('organisation-body'),hs=walk(b).filter(n=>n.href).map(n=>n.href);
+ assert.ok(!hs.some(h=>h.startsWith('tel:')),'no call link for a demo organisation');assert.match(words(b),/Demo number \(not callable\): \+971 4 000 0000/);
+ assert.ok(hs.includes('mailto:hub@northbay.example'),'email still offered (.example cannot deliver)');}
+console.log('Demo organisation: phones as text, no call links.');

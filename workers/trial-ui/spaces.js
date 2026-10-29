@@ -82,7 +82,8 @@
    out.push(node('p','tiny','Everything below is published by '+org+'. Check dates and requirements with them if anything is unclear.',true));
    // Who to contact (ORI-UNI-015 settings): only details staff supplied, as links the person chooses to open.
    const sc=d.studentContact;if(sc&&sc.label){const help=node('div','card org-contact');help.append(node('strong','','Need help? '+sc.label,true));const row=node('div','org-actions');const a=(label,href,ext)=>{const x=node('a','btn quiet small',label);x.href=href;if(ext){x.target='_blank';x.rel='noopener noreferrer'}return x};
-    if(sc.phone)row.append(a('Call','tel:'+sc.phone.replace(/[^\d+]/g,'')));if(sc.email)row.append(a('Email','mailto:'+sc.email));if(sc.website)row.append(a('Website ↗',sc.website,true));if(row.childElementCount)help.append(row);out.push(help)}
+    // A demo (fictional) organisation's phone is shown as text, never as a call link (founder, 29 Oct).
+    if(sc.phone)row.append(d.organisation?.demo?node('span','tiny demo-phone','Demo number (not callable): '+sc.phone,true):a('Call','tel:'+sc.phone.replace(/[^\d+]/g,'')));if(sc.email)row.append(a('Email','mailto:'+sc.email));if(sc.website)row.append(a('Website ↗',sc.website,true));if(row.childElementCount)help.append(row);out.push(help)}
    const content=d.content||[],byId=new Map(content.map(c=>[c.id,c]));
    // Progress: the person's own Done marks. The university sees totals only (never names, nothing under the minimum).
    const prog=d.progress&&d.progress.available?d.progress:null,done=new Set(prog?.done||[]);
@@ -102,7 +103,7 @@
      const actions=node('div','org-actions');
      if(kind==='date'&&det.date)actions.append(calendarAction(c,det,m,org));
      if(prog&&(kind==='guide'||kind==='date'))actions.append(doneButton(c));
-     if(kind==='contact'){if(det.phone)actions.append(link('Call','tel:'+det.phone.replace(/[^\d+]/g,'')));if(det.email)actions.append(link('Email','mailto:'+det.email));if(det.website)actions.append(link('Website ↗',det.website,true))}
+     if(kind==='contact'){if(det.phone)actions.append(d.organisation?.demo?node('span','tiny demo-phone','Demo number (not callable): '+det.phone,true):link('Call','tel:'+det.phone.replace(/[^\d+]/g,'')));if(det.email)actions.append(link('Email','mailto:'+det.email));if(det.website)actions.append(link('Website ↗',det.website,true))}
      if(kind==='guide')actions.append(askAction(c,m,org,actions));
      if(kind!=='contact'&&window.OriviaChat?.saveOrgItem)actions.append(saveAction(c,m,org));
      if(kind==='guide'&&det.sourceUrl)actions.append(link('Source page ↗',det.sourceUrl,true));
