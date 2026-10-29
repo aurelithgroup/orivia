@@ -1,0 +1,521 @@
+{
+ "kind": "local verification, not live acceptance; implemented and locally verified, awaiting independent review",
+ "date": "2026-10-29",
+ "implementationCheckpoint": "c2ca14a5da5885da18713b60de3d522a418070fe (changes on top, committed with this file)",
+ "reviewBaseline": "6e660b1655a5a7714266dfa8b7c4a1c0ba65e42d",
+ "deployment": "none: deployment hold in place; pilot, production and payments untouched",
+ "what": "Area 23, campus directory: the existing contact items gain optional directory details (category, building, room, map address, opening information, accessibility, directions, source page, last-checked date). Students see them in a Campus directory group; anything staff did not give is shown as not provided. Map links use the same Google and Apple Maps search links as the app’s place cards and are off for demo organisations, whose places are labelled fictional.",
+ "rerun": [
+  "node --experimental-sqlite tests/campus-directory-real-server.test.mjs",
+  "node --experimental-sqlite tools/browser-checks/campus-directory-browser.mjs <outDir>",
+  "both in CI and tools/run-ci-local.mjs"
+ ],
+ "replay": {
+  "ranAt": "2026-10-29T17:26:31.964Z",
+  "passed": true,
+  "steps": [
+   {
+    "step": "Owner invites Northbay University",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/onboarding",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "Northbay University admin opens the invitation",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/partner/inspect",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Northbay University admin submits its details",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/partner/submit",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Owner approves Northbay University",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/onboarding/:org/decision",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Owner invites Eastgate College",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/onboarding",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "Eastgate College admin opens the invitation",
+    "as": "eastgate",
+    "method": "POST",
+    "route": "/api/partner/inspect",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Eastgate College admin submits its details",
+    "as": "eastgate",
+    "method": "POST",
+    "route": "/api/partner/submit",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Owner approves Eastgate College",
+    "as": "owner",
+    "method": "POST",
+    "route": "/api/admin/onboarding/:org/decision",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Admin invites an editor",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:org/invitations",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "Editor asks to join",
+    "as": "editor",
+    "method": "POST",
+    "route": "/api/invitations/join",
+    "status": 201,
+    "expected": [
+     200,
+     201
+    ],
+    "ok": true
+   },
+   {
+    "step": "The named editor is staff straight away (no approval step)",
+    "as": "editor",
+    "method": "GET",
+    "route": "/api/orgs/:org/content",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Editor drafts a directory entry",
+    "as": "editor",
+    "method": "POST",
+    "route": "/api/orgs/:org/content",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "An editor cannot publish it",
+    "as": "editor",
+    "method": "PATCH",
+    "route": "/api/orgs/:org/content/:org",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "Before approval: a student sees no directory",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/me/orgs/:org",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "Admin publishes it",
+    "as": "admin",
+    "method": "PATCH",
+    "route": "/api/orgs/:org/content/:org",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "A category alone is not an entry",
+    "as": "editor",
+    "method": "POST",
+    "route": "/api/orgs/:org/content",
+    "status": 400,
+    "expected": 400,
+    "ok": true
+   },
+   {
+    "step": "A “last checked” date in the future is refused",
+    "as": "editor",
+    "method": "POST",
+    "route": "/api/orgs/:org/content",
+    "status": 400,
+    "expected": 400,
+    "ok": true
+   },
+   {
+    "step": "Markup in a directory field is refused",
+    "as": "editor",
+    "method": "POST",
+    "route": "/api/orgs/:org/content",
+    "status": 400,
+    "expected": 400,
+    "ok": true
+   },
+   {
+    "step": "Editor drafts an entry with only what is known",
+    "as": "editor",
+    "method": "POST",
+    "route": "/api/orgs/:org/content",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "Admin publishes it publicly",
+    "as": "admin",
+    "method": "PATCH",
+    "route": "/api/orgs/:org/content/:org",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Editor drafts a third entry and leaves it as a draft",
+    "as": "editor",
+    "method": "POST",
+    "route": "/api/orgs/:org/content",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "Admin creates a student invitation",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:org/invitations",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "Student asks to join",
+    "as": "student",
+    "method": "POST",
+    "route": "/api/invitations/join",
+    "status": 201,
+    "expected": [
+     200,
+     201
+    ],
+    "ok": true
+   },
+   {
+    "step": "Admin approves the student",
+    "as": "admin",
+    "method": "POST",
+    "route": "/api/orgs/:org/requests/:id/decision",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "After approval: the student sees the published directory",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/me/orgs/:org",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Signed out: the public page shows only the public entry",
+    "as": "signed out",
+    "method": "GET",
+    "route": "/api/public/orgs/northbay-university",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Staff list",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/content",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Admin updates the opening information",
+    "as": "admin",
+    "method": "PATCH",
+    "route": "/api/orgs/:org/content/:org",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "An editor cannot change a published entry",
+    "as": "editor",
+    "method": "PATCH",
+    "route": "/api/orgs/:org/content/:org",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "A stale edit is refused",
+    "as": "admin",
+    "method": "PATCH",
+    "route": "/api/orgs/:org/content/:org",
+    "status": 409,
+    "expected": 409,
+    "ok": true
+   },
+   {
+    "step": "The student sees the new opening information",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/me/orgs/:org",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Another organisation’s admin cannot list Northbay’s content",
+    "as": "eastgate",
+    "method": "GET",
+    "route": "/api/orgs/:org/content",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "Another organisation’s admin cannot edit a Northbay entry",
+    "as": "eastgate",
+    "method": "PATCH",
+    "route": "/api/orgs/:org/content/:org",
+    "status": 403,
+    "expected": [
+     403,
+     404
+    ],
+    "ok": true
+   },
+   {
+    "step": "Another organisation’s admin cannot read Northbay’s student space",
+    "as": "eastgate",
+    "method": "GET",
+    "route": "/api/me/orgs/:org",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "Eastgate drafts its own members-only entry",
+    "as": "eastgate",
+    "method": "POST",
+    "route": "/api/orgs/:org/content",
+    "status": 201,
+    "expected": 201,
+    "ok": true
+   },
+   {
+    "step": "Eastgate publishes it",
+    "as": "eastgate",
+    "method": "PATCH",
+    "route": "/api/orgs/:org/content/:org",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "A Northbay student cannot read Eastgate’s space",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/me/orgs/:org",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "Northbay’s admin cannot edit Eastgate’s entry",
+    "as": "admin",
+    "method": "PATCH",
+    "route": "/api/orgs/:org/content/:org",
+    "status": 403,
+    "expected": [
+     403,
+     404
+    ],
+    "ok": true
+   },
+   {
+    "step": "Activity history",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/audit",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   }
+  ],
+  "facts": {
+   "studentSees": [
+    {
+     "title": "Main library",
+     "status": "published",
+     "visibility": "public",
+     "details": {
+      "category": "library",
+      "building": "Building B"
+     }
+    },
+    {
+     "title": "Print and copy centre",
+     "status": "published",
+     "visibility": "members",
+     "details": {
+      "category": "printing",
+      "building": "Building A",
+      "room": "Ground floor, room A0.12",
+      "address": "Building A, Northbay University, Dubai Academic City",
+      "openingHours": "Sunday to Thursday, 8:00 to 18:00 in term time",
+      "accessibility": "Step-free entrance from the main courtyard. One height-adjustable printer.",
+      "directions": "From the main gate, walk past the library; it is the first door on the left.",
+      "sourceUrl": "https://northbay.example/printing",
+      "reviewedOn": "2026-10-29"
+     }
+    }
+   ],
+   "studentSeesAfterEdit": "Sunday to Thursday, 8:00 to 20:00 in exam weeks",
+   "draftHiddenFromStudent": true,
+   "publicSees": [
+    "Main library"
+   ],
+   "studentSeesEastgate": false,
+   "contentAudit": [
+    "content.updated",
+    "content.drafted",
+    "content.updated",
+    "content.drafted",
+    "content.updated",
+    "content.drafted"
+   ]
+  }
+ },
+ "browser": {
+  "ranAt": "2026-10-29T17:26:56.684Z",
+  "passed": true,
+  "checks": [
+   {
+    "check": "Replay of staff editing, visibility and boundaries (39 steps)",
+    "ok": true,
+    "detail": ""
+   },
+   {
+    "check": "The student’s university space has a Campus directory",
+    "ok": true,
+    "detail": "ORIVIA\nNorthbay University ▾\nS\nGood evening\n\nA little more settled, every day.\n\n✦\nAsk Orivia\n→\nYour spaces\nNorthbay University\nGuides, dates and contacts\n›\nJoin or manage your spaces →\nComing up\nView calendar →\n\nA little breathing room. No upcoming reminders.\n\nAdd a reminder\nYour guides\nAll your guides →\n\nTake things one step at a time. Find a guide when you need one.\n\nBrowse guides\nRecent chats\nA"
+   },
+   {
+    "check": "Entries are sorted by category (Library before Printing)",
+    "ok": true
+   },
+   {
+    "check": "Known details are shown",
+    "ok": true,
+    "detail": "Campus directory\nFrom Northbay University\nMain library\n\nBooks, study rooms and quiet study.\n\nLibrary\n\nWhere: Building B\n\nOpening: not provided\n\nAccessibility: not provided. Ask the service before you go\n\nNot dated by Northbay University\n\nFrom Northbay University\nPrint and copy centre\n\nPrint, scan and copy with your student ID card.\n\nPrinting\n\nWhere: Building A, Ground floor, room A0.12\n\nAddress: Building A, Northbay University, Dubai Academic City\n\nOpening: Sunday to Thursday, 8:00 to 20:00 in exam weeks\n\nAccessibility: Step-free entrance from the main courtyard. One height-adjustable printer.\n\nDirections: From the main gate, walk past the library; it is the first door on the left.\n\nChecked by Northbay University on 2026-10-29\n\nDirections in Google Maps ↗\nApple Maps ↗\nSource page ↗"
+   },
+   {
+    "check": "Unknown details stay unknown",
+    "ok": true
+   },
+   {
+    "check": "The draft entry is not shown",
+    "ok": true
+   },
+   {
+    "check": "Map links only for the entry with an address",
+    "ok": true,
+    "detail": [
+     {
+      "label": "Directions in Google Maps ↗",
+      "href": "https://www.google.com/maps/search/?api=1&query=Building+A%2C+Northbay+University%2C+Dubai+Academic+City"
+     },
+     {
+      "label": "Apple Maps ↗",
+      "href": "https://maps.apple.com/?q=Building+A%2C+Northbay+University%2C+Dubai+Academic+City"
+     },
+     {
+      "label": "Source page ↗",
+      "href": "https://northbay.example/printing"
+     }
+    ]
+   },
+   {
+    "check": "Source page link",
+    "ok": true
+   },
+   {
+    "check": "Demo: labelled fictional",
+    "ok": true
+   },
+   {
+    "check": "Demo: no map links",
+    "ok": true,
+    "detail": [
+     {
+      "label": "Source page ↗",
+      "href": "https://northbay.example/printing"
+     }
+    ]
+   },
+   {
+    "check": "Staff preview: unknown opening and accessibility shown as not provided",
+    "ok": true,
+    "detail": {
+     "card": "Student preview\nFrom Northbay University\nIT help desk\n\nWi-Fi, accounts and laptops.\n\nIT help\n\nBuilding A\n\nBuilding A, Northbay University\n\nOpening: not provided\n\nAccessibility: not provided\n\nNot dated: add when these details were last checked\n\nDemo number (not callable): +971 4 000 0000\nNot published yet: students don’t see it until an admin publishes it.\nMembers only: approved students see it.\nNo “last checked” date: students won’t know how current this is.\nDemo organisation: map links are off, because the address is fictional.\n\nPreview only: nothing is saved or sent. Buttons don’t work here."
+    }
+   },
+   {
+    "check": "Staff preview: a demo organisation’s number is not callable and map links are off",
+    "ok": true
+   },
+   {
+    "check": "Staff preview: asks for a “last checked” date",
+    "ok": true
+   },
+   {
+    "check": "The preview saved nothing",
+    "ok": true
+   }
+  ],
+  "note": "The demo checks use the local server’s /__dev/demo helper, which marks the local organisation as a demo one, as Northbay is on the pilot."
+ },
+ "notCovered": [
+  "Live acceptance: scope and authenticated access still to be confirmed",
+  "No real Northbay directory data has been entered; the entries here are fictional test data",
+  "Arabic and right-to-left layout, screen readers",
+  "Visual and language review",
+  "Whether map searches find the right place for a real address (depends on the address staff enter)"
+ ]
+}

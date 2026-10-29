@@ -138,7 +138,7 @@ Conflicts in four files were resolved: the assistant, `chat.js`, `page.html` (th
 
 **Guide source checks (29 Oct):** every Edinburgh journey now has a partial, dated source-check record (review pack sections 8 and 10). 20 Dubai journeys still have none. No review records exist.
 
-**Brought forward (29 Oct, founder's request): 22 · guided welcome and 24 · support assignment. Done locally, not live.**
+**Brought forward (29 Oct, founder's request): 22 · guided welcome and 24 · support assignment. Implemented and locally verified, awaiting independent review; not live and not accepted.**
 - **Welcome (22):**
   - A student opening the app's join link gets one welcome screen.
   - The name is asked once (it was asked twice), pre-filled from the account.
@@ -176,9 +176,9 @@ Conflicts in four files were resolved: the assistant, `chat.js`, `page.html` (th
 | Area | Work |
 |---|---|
 | 22 + 13 · Northbay welcome and onboarding | Welcome done locally (29 Oct, see above). Left: connect to the demo accounts after the hold. |
-| 21 + 20 · AI guides and instruction packages | **Student preview done locally (29 Oct, after `1dc58c0`):** "Preview as a student" in the content editor shows the unsaved item as a student's card, flags an unedited AI draft or a missing source page, and saves nothing (`docs/evidence/guide-student-preview-local-2026-10-29.json`). The URL/file drafting tool and packages came with Ina's block one. **Left:** checking AI drafting itself, which needs OpenAI (not on the local server, so only after the hold, within the live-acceptance scope still to be agreed); one reusable package per demo route. |
-| 23 · Campus help | A campus directory (printing, services, locations, opening hours, contacts). The student essentials collection and the first-week commute guide go in only where they reuse the directory and the place card directly. Otherwise they move to the backlog. |
-| 24 · Support workflows | Team assignment, filtering and linked process steps done locally (29 Oct, see above). |
+| 21 + 20 · AI guides and instruction packages | **Student preview implemented and locally verified (29 Oct, after `1dc58c0`), awaiting independent review; not accepted.** "Preview as a student" in the content editor shows the unsaved item as a student's card, flags an unedited AI draft or a missing source page, and saves nothing (`docs/evidence/guide-student-preview-local-2026-10-29.json`). The URL/file drafting tool and packages came with Ina's block one. **The preview doesn't show that AI drafting works.** **Left:** checking AI drafting itself, which needs OpenAI (not on the local server, so only after the hold, within the live-acceptance scope still to be agreed); one reusable package per demo route. |
+| 23 · Campus help | **Campus directory implemented and locally verified (29 Oct, after `c2ca14a`), awaiting independent review; not accepted.** Existing contacts gain optional category, building and room, map address, opening information, accessibility, directions, source page and last-checked date. Students see a Campus directory; anything not given shows as not provided. Map links only with an address, and never for a demo organisation (Northbay's places are labelled fictional). Editors draft, admins publish; stale edits are refused; another organisation can't read or edit it. Evidence: `docs/evidence/campus-directory-local-2026-10-29.json`. **Not done:** real directory data; the student essentials collection and first-week commute guide (backlog unless they reuse this directly). |
+| 24 · Support workflows | Team assignment, filtering and linked process steps: **implemented and locally verified (29 Oct, see above), awaiting independent review.** Not accepted. Editors handling requests is in the backlog. |
 | 16 · Sponsorships | The labelled placement students see, with a preview. Approval controls already exist. |
 
 **Wed 11 – Thu 12 Nov: integration, fixes, rehearsals.** No new features. The demo is rehearsed end to end at least twice on the candidate, with the fictional accounts.

@@ -89,23 +89,38 @@
    const prog=d.progress&&d.progress.available?d.progress:null,done=new Set(prog?.done||[]);
    const doneButton=c=>{const b=node('button','btn quiet small','');b.type='button';const paint=()=>{const on=done.has(c.id);b.textContent=t(on?'Done ✓':'Mark as done');b.setAttribute('aria-pressed',String(on))};paint();
     b.onclick=async()=>{const want=!done.has(c.id);b.disabled=true;try{await post('/api/me/orgs/'+encodeURIComponent(m.organisationId)+'/progress',id,{contentId:c.id,done:want});if(!current(id,g))return;want?done.add(c.id):done.delete(c.id);paint()}catch(_){if(current(id,g))b.textContent=t('Couldn’t save. Try again.')}finally{b.disabled=false}};return b};
-   const groups=[['update','Updates'],['date','Important dates'],['guide','Guides'],['contact','Useful contacts']];
+   // Campus directory (area 23): contacts with a category or a location. Only what staff entered is shown; opening and
+   // accessibility details they didn't give are said to be not provided. A demo organisation's places are fictional, so
+   // they get no map links.
+   const DIR={student_hub:'Student hub',international:'International office',library:'Library',printing:'Printing',it:'IT help',health:'Health',wellbeing:'Wellbeing and counselling',accessibility:'Accessibility and disability support',accommodation:'Accommodation',food:'Food and drink',transport:'Transport and parking',security:'Security',other:'Other'},order=Object.keys(DIR);
+   const inDirectory=c=>c.kind==='contact'&&!!(c.details?.category||c.details?.building||c.details?.address);
+   const groups=[['update','Updates'],['date','Important dates'],['guide','Guides'],['directory','Campus directory'],['contact','Useful contacts']];
    const link=(label,href,ext)=>{const a=node('a','btn quiet small',label);a.href=href;if(ext){a.target='_blank';a.rel='noopener noreferrer'}return a};
    for(const [kind,label] of groups){
     const todayIso=new Date().toISOString().slice(0,10),past=c=>kind==='date'&&c.details?.date&&c.details.date<todayIso;
-    const items=content.filter(c=>c.kind===kind&&!past(c)),gone=content.filter(c=>c.kind===kind&&past(c));if(!items.length&&!gone.length)continue;
-    const group=node('section','organisation-group');group.append(node('h3','',label));
+    const ofKind=c=>kind==='directory'?inDirectory(c):kind==='contact'?c.kind==='contact'&&!inDirectory(c):c.kind===kind;
+    const items=content.filter(c=>ofKind(c)&&!past(c)),gone=content.filter(c=>ofKind(c)&&past(c));if(!items.length&&!gone.length)continue;
+    if(kind==='directory')items.sort((a,b)=>(order.indexOf(a.details.category||'other')+1||99)-(order.indexOf(b.details.category||'other')+1||99)||a.title.localeCompare(b.title));
+    const group=node('section','organisation-group');group.id=kind==='directory'?'campus-directory':'';group.append(node('h3','',label));
+    if(kind==='directory'&&d.organisation?.demo)group.append(node('p','tiny','Demo organisation: these places, hours and numbers are fictional.',true));
     for(const c of items){
      const item=node('article','card org-item');item.id='org-item-'+c.id;const det=c.details&&typeof c.details==='object'?c.details:{};
      const tag=node('small','org-from','From '+org,true);item.append(tag,node('strong','',c.title,true));
      if(kind==='date'&&det.date)item.append(node('p','org-when',orgWhen(det),true));
      item.append(node('p','organisation-text',c.body,true));
+     if(kind==='directory'){const dd=det,line=(label,value,missing)=>item.append(node('p','tiny org-dir',label+': '+(value||missing),true));
+      if(dd.category)item.append(node('p','tiny org-dir-cat',DIR[dd.category]||dd.category,true));
+      const where=[dd.building,dd.room].filter(Boolean).join(', ');if(where)line('Where',where);if(dd.address)line('Address',dd.address);
+      line('Opening',dd.openingHours,'not provided');line('Accessibility',dd.accessibility,'not provided. Ask the service before you go');if(dd.directions)line('Directions',dd.directions);
+      item.append(node('p','tiny org-dir',dd.reviewedOn?'Checked by '+org+' on '+dd.reviewedOn:'Not dated by '+org,true))}
      const actions=node('div','org-actions');
      if(kind==='date'&&det.date)actions.append(calendarAction(c,det,m,org));
      if(prog&&(kind==='guide'||kind==='date'))actions.append(doneButton(c));
-     if(kind==='contact'){if(det.phone)actions.append(d.organisation?.demo?node('span','tiny demo-phone','Demo number (not callable): '+det.phone,true):link('Call','tel:'+det.phone.replace(/[^\d+]/g,'')));if(det.email)actions.append(link('Email','mailto:'+det.email));if(det.website)actions.append(link('Website ↗',det.website,true))}
+     if(kind==='directory'&&det.address&&!d.organisation?.demo){const q=det.address;actions.append(link('Directions in Google Maps ↗','https://www.google.com/maps/search/?'+new URLSearchParams({api:'1',query:q}),true),link('Apple Maps ↗','https://maps.apple.com/?'+new URLSearchParams({q}),true))}
+     if(kind==='directory'&&det.sourceUrl)actions.append(link('Source page ↗',det.sourceUrl,true));
+     if(kind==='contact'||kind==='directory'){if(det.phone)actions.append(d.organisation?.demo?node('span','tiny demo-phone','Demo number (not callable): '+det.phone,true):link('Call','tel:'+det.phone.replace(/[^\d+]/g,'')));if(det.email)actions.append(link('Email','mailto:'+det.email));if(det.website)actions.append(link('Website ↗',det.website,true))}
      if(kind==='guide')actions.append(askAction(c,m,org,actions));
-     if(kind!=='contact'&&window.OriviaChat?.saveOrgItem)actions.append(saveAction(c,m,org));
+     if(kind!=='contact'&&kind!=='directory'&&window.OriviaChat?.saveOrgItem)actions.append(saveAction(c,m,org));
      if(kind==='guide'&&det.sourceUrl)actions.append(link('Source page ↗',det.sourceUrl,true));
      if(kind==='update'){const g=det.relatedId&&byId.get(det.relatedId);if(g&&g.kind==='guide'){const b=node('button','btn quiet small','Open guide: '+g.title,true);b.type='button';b.onclick=()=>{const t=$('org-item-'+g.id);t?.scrollIntoView({behavior:'smooth',block:'start'});t?.classList.add('org-highlight');setTimeout(()=>t?.classList.remove('org-highlight'),1600)};actions.append(b)}
       if(det.actionLabel&&det.actionUrl)actions.append(link(det.actionLabel+' ↗',det.actionUrl,true))}

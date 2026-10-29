@@ -7,6 +7,7 @@
 // Usage: node tools/browser-checks/accounts-local-server.mjs [port]
 //   /__dev/as?name=owner   signs the browser in as <name>@northbay.example (local helper, not part of the worker).
 //   "owner" gets the platform owner role; everyone else starts as a plain account.
+//   /__dev/demo?org=<id>   marks that organisation as a demo (fictional) one.
 import http from 'node:http';
 import fs from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
@@ -53,6 +54,8 @@ http.createServer(async(req,res)=>{
   if(u.pathname==='/orivia-nav.js'){res.writeHead(200,{'Content-Type':'application/javascript','Cache-Control':'no-store'});return res.end(navJs)}
   if(u.pathname==='/__dev/as'){const name=(u.searchParams.get('name')||'').toLowerCase();if(!/^[a-z]{2,20}$/.test(name)){res.writeHead(400);return res.end('name: 2-20 letters')}
    const s=await signIn(name);res.writeHead(200,{'Content-Type':'application/json','Set-Cookie':s.cookies,'Cache-Control':'no-store'});return res.end(JSON.stringify({signedInAs:s.user.email,id:s.user.id}))}
+  // Local helper: mark an organisation as a demo (fictional) one, as Northbay is on the pilot, to check demo-only rules.
+  if(u.pathname==='/__dev/demo'){const oid=u.searchParams.get('org')||'';const r=sql.prepare('UPDATE organisations SET demo=1 WHERE id=?').run(oid);res.writeHead(r.changes?200:404,{'Content-Type':'application/json'});return res.end(JSON.stringify({demo:!!r.changes}))}
   if(u.pathname==='/__dev/sql'&&req.method==='GET'){const t=u.searchParams.get('t');if(!/^[a-z_]+$/.test(t||'')){res.writeHead(400);return res.end()}
    // Read-only look at one table for evidence; an unknown table answers 404 instead of stopping the server.
    let rows;try{rows=sql.prepare('SELECT * FROM '+t).all()}catch(e){res.writeHead(404,{'Content-Type':'text/plain'});return res.end('no such table')}

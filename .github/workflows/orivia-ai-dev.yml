@@ -224,6 +224,10 @@ jobs:
           node --experimental-sqlite tests/university-workflow-real-server.test.mjs
       - name: "Guided Northbay welcome in a real browser (real local server, headless Chrome)"
         run: node --experimental-sqlite tools/browser-checks/welcome-real-browser.mjs
+      - name: "Campus directory on the real local server (HTTP replay and headless Chrome)"
+        run: |
+          node --experimental-sqlite tests/campus-directory-real-server.test.mjs
+          node --experimental-sqlite tools/browser-checks/campus-directory-browser.mjs
       - name: "myorivia.app production entry gates"
         run: node --experimental-sqlite tests/myorivia-release.test.mjs
       - name: "Organisation membership and invitation server boundaries"
