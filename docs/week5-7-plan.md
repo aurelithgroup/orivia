@@ -138,14 +138,42 @@ Conflicts in four files were resolved: the assistant, `chat.js`, `page.html` (th
 
 **Guide source checks (29 Oct):** every Edinburgh journey now has a partial, dated source-check record (review pack sections 8 and 10). 20 Dubai journeys still have none. No review records exist.
 
+**Brought forward (29 Oct, founder's request): 22 · guided welcome and 24 · support assignment. Done locally, not live.**
+- **Welcome (22):**
+  - A student opening the app's join link gets one welcome screen.
+  - The name is asked once (it was asked twice), pre-filled from the account.
+  - The campus defaults Northbay's staff approved are shown as text and never asked.
+  - Their own details (name, where from, already moved) stay editable from the space.
+  - A clear first step: approval while pending, then the first unread guide, or the next date.
+  - Existing accounts keep their data, memberships, accepted terms and AI choice: nothing is asked again or reset.
+- **Support (24):**
+  - Admins assign a request to a team and to one of the organisation's admins.
+  - The inbox filters by status, team and assignee, on the server; stale assignments are refused (409).
+  - Assignments appear in the activity history. Students don't see who is handling their request.
+  - **Decision for the founder:** only admins can be assigned, because they already see every request. Letting editors handle assigned requests would widen access.
+  - **Not built:** linked process steps.
+- **Checked on the real local server**, which now also serves the real app page, so the app-shell join link is covered:
+  - headless Chrome, 30 welcome checks;
+  - 38 workflow steps, including assignment, filters and refusals;
+  - the admin inbox in the browser.
+- **Evidence:** `docs/evidence/welcome-and-support-local-2026-10-29.json`.
+- **Not covered:** live, Arabic layout, visual and language review.
+
+**Checks that don't wait for the founder.** Live acceptance stays pending until the hold lifts, but most checks no longer need a person:
+- **Rerunnable by anyone, and in CI:**
+  - `tests/university-workflow-real-server.test.mjs` (staff, owner and student flows over HTTP);
+  - `tools/browser-checks/welcome-real-browser.mjs` (the student welcome in headless Chrome).
+- **Both** start their own local server with fictional people, and run in `tools/run-ci-local.mjs`.
+- **After the hold:** the live run is short, can be done by Ina with the fictional accounts, and confirms only what the local server can't: real D1, real email sign-in, the deployed page.
+
 **Mon 9 – Tue 10 Nov: last features**
 
 | Area | Work |
 |---|---|
-| 22 + 13 · Northbay welcome and onboarding | Finish and connect to the demo accounts. |
+| 22 + 13 · Northbay welcome and onboarding | Welcome done locally (29 Oct, see above). Left: connect to the demo accounts after the hold. |
 | 21 + 20 · AI guides and instruction packages | The URL/file drafting tool produces editable, sourced instructions with a student preview. One reusable package per demo route. |
 | 23 · Campus help | A campus directory (printing, services, locations, opening hours, contacts). The student essentials collection and the first-week commute guide go in only where they reuse the directory and the place card directly. Otherwise they move to the backlog. |
-| 24 · Support workflows | Team assignment, filtering and linked process steps on the existing tickets. |
+| 24 · Support workflows | Team assignment and filtering done locally (29 Oct, see above). Left: linked process steps. |
 | 16 · Sponsorships | The labelled placement students see, with a preview. Approval controls already exist. |
 
 **Wed 11 – Thu 12 Nov: integration, fixes, rehearsals.** No new features. The demo is rehearsed end to end at least twice on the candidate, with the fictional accounts.

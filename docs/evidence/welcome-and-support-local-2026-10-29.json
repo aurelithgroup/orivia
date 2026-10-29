@@ -1,0 +1,345 @@
+{
+ "kind": "local verification, not live acceptance",
+ "date": "2026-10-29",
+ "baseCommit": "d8b89096e184a4f4d9c3c7b592a8e5440a3dfa10 (changes on top, committed with this file)",
+ "reviewCheckpoint": "6e660b1655a5a7714266dfa8b7c4a1c0ba65e42d",
+ "deployment": "none: deployment hold in place; pilot, production and payments untouched",
+ "server": "tools/browser-checks/accounts-local-server.mjs: the real accounts and organisations code and, for the app page, the real app worker; in-memory SQLite; no email, no AI, no Cloudflare",
+ "rerun": [
+  "node --experimental-sqlite tools/browser-checks/welcome-real-browser.mjs <outDir>",
+  "node --experimental-sqlite tests/university-workflow-real-server.test.mjs",
+  "both also run in CI (.github/workflows/orivia-ai-dev.yml) and in tools/run-ci-local.mjs"
+ ],
+ "area22_welcome": {
+  "ranAt": "2026-10-29T16:27:54.605Z",
+  "how": "headless Chrome, phone size, through the app’s own join link /?organisation=<slug>#join=<token>",
+  "passed": true,
+  "checks": [
+   {
+    "check": "Join link opens the branded landing",
+    "ok": true
+   },
+   {
+    "check": "The invitation stays out of the address bar",
+    "ok": true
+   },
+   {
+    "check": "Signing in alone does not join",
+    "ok": true
+   },
+   {
+    "check": "Request to join is offered",
+    "ok": true
+   },
+   {
+    "check": "One welcome screen, titled with the university",
+    "ok": true,
+    "detail": "ORIVIA\nLanguage\nEnglish\nFrançais\nالعربية\nWelcome to Northbay University\n\nYour university has set the campus. Add your own details; you can change them later.\n\nSet by Northbay University\n\nStudy · Dubai"
+   },
+   {
+    "check": "The name is asked once",
+    "ok": true
+   },
+   {
+    "check": "Approved campus defaults are shown as text",
+    "ok": true
+   },
+   {
+    "check": "Campus questions are not asked",
+    "ok": true
+   },
+   {
+    "check": "Personal details are editable",
+    "ok": true
+   },
+   {
+    "check": "Let’s get started",
+    "ok": true
+   },
+   {
+    "check": "Pending: the next step is approval",
+    "ok": true,
+    "detail": "ORIVIA\nLanguage\nEnglish\nFrançais\nالعربية\nNorthbay University\n\nYour university space\n\nMy Orivia\nNotifications and alerts\n\nYour next step\n\nWaiting for approval\n\nYour request is with your university. Private guides and updates appear here after staff approve it.\n\nCheck approval\nEdit my details"
+   },
+   {
+    "check": "Pending: no private guides",
+    "ok": true
+   },
+   {
+    "check": "Membership is requested, not active",
+    "ok": true,
+    "detail": {
+     "org_id": "c1db13cc-5aa5-4e15-b685-5b0d8fba51e7",
+     "user_id": "5KW308Y7jSz1QPU2jkWp1nm3jngqxBY0",
+     "role": "student",
+     "status": "requested",
+     "invitation_id": "611eeb63-3869-410c-a21e-473f5dfa589c",
+     "request_id": "67b7b551-a072-44c0-a56f-0ede1b954d01",
+     "created_at": 1793291254143,
+     "updated_at": 1793291254143
+    }
+   },
+   {
+    "check": "Saved profile: campus from the defaults, origin from Aisha",
+    "ok": true,
+    "detail": {
+     "displayName": "Aisha",
+     "originCountry": "GB",
+     "originTown": "Manchester",
+     "here": "away",
+     "dest": "uae",
+     "region": "",
+     "town": "",
+     "destRegion": "Dubai",
+     "destTown": "Dubai Academic City",
+     "who": "study",
+     "onboarding": {
+      "version": 1,
+      "completedAt": "2026-10-29T16:27:35.794Z",
+      "termsVersion": "pilot-2026-10-20",
+      "privacyVersion": "pilot-2026-10-20",
+      "language": "en"
+     },
+     "city": "",
+     "movingTo": "Dubai Academic City, Dubai, UAE",
+     "movedFrom": "Manchester, United Kingdom"
+    }
+   },
+   {
+    "check": "Approved: the first step is the published guide",
+    "ok": true,
+    "detail": "ORIVIA\nLanguage\nEnglish\nFrançais\nالعربية\nNorthbay University\n\nYour university space\n\nMy Orivia\nNotifications and alerts\n\nYour next step\n\nCollect your student ID card\n\nBring your passport and offer letter to the Student Hub in Building A during orientation week.\n\nRead this guide\nSet by Northbay Unive"
+   },
+   {
+    "check": "Approved: the step has one action",
+    "ok": true
+   },
+   {
+    "check": "Returning: not asked to join or set up again",
+    "ok": true
+   },
+   {
+    "check": "Edit my details",
+    "ok": true
+   },
+   {
+    "check": "Terms are not asked again",
+    "ok": true
+   },
+   {
+    "check": "The AI choice is not asked again",
+    "ok": true
+   },
+   {
+    "check": "Save my details",
+    "ok": true
+   },
+   {
+    "check": "Details saved, terms record unchanged",
+    "ok": true,
+    "detail": {
+     "before": 1,
+     "after": 2
+    }
+   },
+   {
+    "check": "Membership unchanged by editing",
+    "ok": true
+   },
+   {
+    "check": "Back in the space with the first step",
+    "ok": true
+   },
+   {
+    "check": "Layla: request to join",
+    "ok": true
+   },
+   {
+    "check": "Layla: welcome with the campus and Layla’s own details",
+    "ok": true,
+    "detail": "ORIVIA\nLanguage\nEnglish\nFrançais\nالعربية\nWelcome to Northbay University\n\nYour account, plans and choices are kept as they are.\n\nSet by Northbay University\n\nStudy · Dubai Academic City, Dubai, UAE\n\nYour university sets the campus and the reason. They can’t be changed here.\n\nYour details\n\nLayla\n\nFrom "
+   },
+   {
+    "check": "Layla: no setup questions",
+    "ok": true
+   },
+   {
+    "check": "Layla: joining changed nothing saved",
+    "ok": true
+   },
+   {
+    "check": "Layla: membership requested",
+    "ok": true
+   },
+   {
+    "check": "Notifications offers answered “Not now” (existing app step, once per account)",
+    "ok": true,
+    "detail": 1
+   }
+  ]
+ },
+ "area24_support": {
+  "ranAt": "2026-10-29T16:28:15.604Z",
+  "how": "HTTP replay of the staff and student screens’ requests (38 steps), plus a headless Chrome run of the admin inbox: filters kept across redraws, an assignment saved in the page, the activity label, and the student view without staff assignment details",
+  "passed": true,
+  "steps": [
+   {
+    "step": "Filter: assigned to me",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/support?assignee=me",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Filter: no team yet",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/support?team=none",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Filter: Accommodation, open",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/support?team=accommodation&status=open",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Filter: resolved",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/support?status=resolved",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "An unknown filter is refused",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/support?status=closed",
+    "status": 400,
+    "expected": 400,
+    "ok": true
+   },
+   {
+    "step": "The student’s own list has no staff assignment details",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/orgs/:org/support",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Application records stay locked for admins",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/records",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "A student cannot see the member list",
+    "as": "student",
+    "method": "GET",
+    "route": "/api/orgs/:org/members",
+    "status": 403,
+    "expected": 403,
+    "ok": true
+   },
+   {
+    "step": "An outsider cannot see the organisation",
+    "as": "outsider",
+    "method": "GET",
+    "route": "/api/orgs/:org/summary",
+    "status": 403,
+    "expected": [
+     403,
+     404
+    ],
+    "ok": true
+   },
+   {
+    "step": "Progress totals stay paused below the reporting minimum",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/progress",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   },
+   {
+    "step": "Activity history records the changes",
+    "as": "admin",
+    "method": "GET",
+    "route": "/api/orgs/:org/audit",
+    "status": 200,
+    "expected": 200,
+    "ok": true
+   }
+  ],
+  "filters": {
+   "assignedToMe": [
+    "Accommodation deposit"
+   ],
+   "noTeam": [
+    "Visa medical appointment"
+   ],
+   "accommodationOpen": [
+    "Accommodation deposit"
+   ],
+   "resolved": [
+    "Visa medical appointment"
+   ]
+  },
+  "assignment": [
+   {
+    "team": "accommodation",
+    "assignedToAdmin": true,
+    "revision": 1
+   }
+  ],
+  "teams": [
+   "International office",
+   "Admissions",
+   "Accommodation",
+   "Visas and immigration",
+   "Fees and funding",
+   "Student life",
+   "IT and campus services"
+  ],
+  "studentSeesAssignment": false,
+  "browser": {
+   "ranAt": "2026-10-29T16:28:36Z to 16:29:09Z",
+   "how": "tools/browser-checks/cdp-shoot.mjs on a fresh accounts-local-server.mjs after the 38-step replay",
+   "results": [
+    "three filters shown: Status, Team, Assigned to",
+    "Assigned to = Me kept after the redraw; 1 matching request (Accommodation deposit)",
+    "assignment saved in the page: \"Team: Visas and immigration · Assigned to: You\", with \"Assignment saved.\"",
+    "activity history shows \"Assigned a support request\"",
+    "the student view has no Team or Assigned to text"
+   ]
+  }
+ },
+ "decisions": [
+  "Requests can be assigned only to the organisation’s active admins, who already see every request: assigning shares a student’s message with nobody new. Letting editors handle assigned requests would widen access and is left for the founder.",
+  "Teams are a fixed list of seven (International office, Admissions, Accommodation, Visas and immigration, Fees and funding, Student life, IT and campus services); universities cannot edit it yet.",
+  "The first step is the longest-standing published guide not marked done, then the next upcoming date. Students marking guides done is still not built in the app, so in practice it is the oldest guide.",
+  "The app’s existing notifications offer appears once per account before the university space; the browser check answers “Not now”."
+ ],
+ "notCovered": [
+  "Live acceptance (after the hold), real D1 and email",
+  "Linked process steps on tickets (area 24’s third part)",
+  "Editors handling assigned requests",
+  "Arabic and right-to-left layout of the new screens, screen readers",
+  "Visual review and language review"
+ ]
+}

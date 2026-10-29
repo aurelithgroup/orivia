@@ -1,6 +1,8 @@
 // The real accounts and organisations server (handleAccountRequest, Better Auth, the real schema) on an in-memory SQLite
 // database behind the D1 interface, for local browser checks. Unlike platform-harness.mjs nothing here is a fixture:
-// every /api/ answer comes from the worker's own code. No Cloudflare bindings, no email (sign-in codes stay in a local
+// every /api/ answer comes from the worker's own code. Everything else (the app page at /, /chat.js, /v1/config) comes
+// from the real app worker (orivia-ai-private-trial.mjs, as embedded by tools/embed-trial-ui.mjs), so the app's own join
+// link (/?organisation=<slug>#join=<token>) runs here too; it has no AI binding, so chat answers fail. No Cloudflare bindings, no email (sign-in codes stay in a local
 // outbox), listens on 127.0.0.1 only, and the database disappears when it stops.
 // Usage: node tools/browser-checks/accounts-local-server.mjs [port]
 //   /__dev/as?name=owner   signs the browser in as <name>@northbay.example (local helper, not part of the worker).
@@ -10,6 +12,7 @@ import fs from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {createAccountAuth} from '../../workers/accounts/auth.mjs';
 import {handleAccountRequest} from '../../workers/accounts/handler.mjs';
+import appWorker from '../../workers/orivia-ai-private-trial.mjs';
 
 // The worker only accepts an https origin. On Cloudflare TLS ends at the edge; here this server plays the edge: the browser
 // talks plain http to 127.0.0.1, and the worker sees https://localhost:<port> (Origin and Referer are mapped the same way).
@@ -23,10 +26,13 @@ const statement=(text,args=[])=>({bind:(...v)=>statement(text,v),
  run:async()=>({meta:sql.prepare(text).run(...args),success:true})});
 const db={prepare:text=>statement(text),exec:async text=>sql.exec(text),batch:async stmts=>{sql.exec('BEGIN IMMEDIATE');try{const out=[];for(const s of stmts)out.push(await s.all());sql.exec('COMMIT');return out}catch(e){sql.exec('ROLLBACK');throw e}}};
 const outbox=[];
-const env={ACCOUNTS_ENABLED:'1',ORGANISATIONS_ENABLED:'1',ACCOUNTS_ORIGIN:origin,ACCOUNTS_SECRET:'local-only-browser-check-secret-0123456789',ACCOUNTS_DB:db,
+const env={ACCOUNTS_ENABLED:'1',ACCOUNTS_UI:'1',ORGANISATIONS_ENABLED:'1',ACCOUNTS_ORIGIN:origin,ACCOUNTS_SECRET:'local-only-browser-check-secret-0123456789',ACCOUNTS_DB:db,
  ACCOUNTS_EMAIL_ENABLED:'1',ACCOUNTS_FROM:'signin@example.test',ACCOUNTS_EMAIL:{send(){throw Error('No real email from the local server')}}};
 const auth=createAccountAuth(env,{deliver:m=>outbox.push(m)});
 const ctx={waitUntil(){},passThroughOnException(){}};
+// The app worker is private: it serves its own host behind Cloudflare Access. Here a local name and a stand-in Access
+// identity let it answer; neither reaches any real service.
+const appHost='orivia.localhost',appEnv={...env,PRIVATE_HOST:appHost,ACCESS_TEST_EMAIL:'local-access@northbay.example'},appCtx={...ctx,access:{getIdentity:async()=>({email:'local-access@northbay.example'})}};
 const navJs=fs.readFileSync(new URL('workers/trial-ui/nav.js',root),'utf8');
 
 let ip=0;
@@ -57,9 +63,9 @@ http.createServer(async(req,res)=>{
   for(const h of ['origin','referer'])if(headers.get(h)?.startsWith(local))headers.set(h,origin+headers.get(h).slice(local.length));
   const body=['GET','HEAD'].includes(req.method)?undefined:Buffer.concat(chunks);
   const r=await handleAccountRequest(new Request(origin+u.pathname+u.search,{method:req.method,headers,body}),env,ctx,{auth});
-  // Paths the accounts handler doesn't own (the app itself, /) belong to other workers.
-  if(!r){res.writeHead(404,{'Content-Type':'text/plain'});return res.end('Not served by the accounts worker: open /platform or /manage')}
-  const out={};r.headers.forEach((v,k)=>{if(k!=='set-cookie')out[k]=k==='location'&&v.startsWith(origin)?local+v.slice(origin.length):v});const set=r.headers.getSetCookie();if(set.length)out['set-cookie']=set;
-  res.writeHead(r.status,out);res.end(Buffer.from(await r.arrayBuffer()));
+  // Paths the accounts handler doesn't own (the app itself, /) go to the app worker.
+  const a=r||await appWorker.fetch(new Request('https://'+appHost+u.pathname+u.search,{method:req.method,headers,body}),appEnv,appCtx);
+  const out={};a.headers.forEach((v,k)=>{if(k!=='set-cookie')out[k]=k==='location'&&v.startsWith(origin)?local+v.slice(origin.length):v});const set=a.headers.getSetCookie();if(set.length)out['set-cookie']=set;
+  res.writeHead(a.status,out);res.end(Buffer.from(await a.arrayBuffer()));
  }catch(e){console.error(e);if(res.headersSent)return res.end();res.writeHead(500,{'Content-Type':'text/plain'});res.end('local server error: '+e.message)}
 }).listen(PORT,'127.0.0.1',()=>console.log('Real accounts server (in-memory SQLite, no email, no Cloudflare) on '+local+' (worker origin '+origin+')'));

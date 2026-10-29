@@ -54,6 +54,19 @@ await call(admin,'Admin replies and marks it resolved',pre+'/support/'+ticket?.i
 await call(admin,'A stale reply is refused, and records nothing',pre+'/support/'+ticket?.id,'PATCH',{revision:t?.revision,reply:'Late duplicate',status:'open'},409);
 const mine=await call(student,'Student sees the reply',pre+'/support');
 
+// 4b. Team assignment and filtering (area 24): admins assign a team and one of the organisation's admins, then filter.
+const second=await call(student,'Student sends a second request',pre+'/support','POST',{title:'Accommodation deposit',body:'When is the deposit for my room in Northbay Residence due?',confirm:true,allowEscalation:false},201);
+await call(admin,'Admin assigns it to Accommodation and to themself',pre+'/support/'+second?.id+'/assign','POST',{revision:0,team:'accommodation',assigneeId:admin.id});
+await call(admin,'A stale assignment is refused, and records nothing',pre+'/support/'+second?.id+'/assign','POST',{revision:0,team:'fees',assigneeId:null},409);
+await call(admin,'Only an admin of this organisation can be assigned',pre+'/support/'+second?.id+'/assign','POST',{revision:1,team:'accommodation',assigneeId:student.id},400);
+await call(student,'A student cannot assign requests',pre+'/support/'+second?.id+'/assign','POST',{revision:1,team:null,assigneeId:null},403);
+const assignedToMe=await call(admin,'Filter: assigned to me',pre+'/support?assignee=me');
+const noTeam=await call(admin,'Filter: no team yet',pre+'/support?team=none');
+const accommodation=await call(admin,'Filter: Accommodation, open',pre+'/support?team=accommodation&status=open');
+const resolved=await call(admin,'Filter: resolved',pre+'/support?status=resolved');
+await call(admin,'An unknown filter is refused',pre+'/support?status=closed',undefined,undefined,400);
+const studentList=await call(student,'The student’s own list has no staff assignment details',pre+'/support');
+
 // 5. Limits that must hold on the real server.
 await call(admin,'Application records stay locked for admins',pre+'/records','GET',undefined,403);
 await call(student,'A student cannot see the member list',pre+'/members','GET',undefined,403);
@@ -69,6 +82,10 @@ const facts={
  ticket:(mine?.tickets||[]).map(x=>({title:x.title,status:x.status,reply:x.reply,allowEscalation:x.allowEscalation})),
  progress:progress?.progress&&{shown:progress.progress.shown,reason:progress.progress.reason},
  auditActions:(audit?.entries||[]).map(e=>e.action),
+ filters:{assignedToMe:(assignedToMe?.tickets||[]).map(x=>x.title),noTeam:(noTeam?.tickets||[]).map(x=>x.title),accommodationOpen:(accommodation?.tickets||[]).map(x=>x.title),resolved:(resolved?.tickets||[]).map(x=>x.title)},
+ assignment:(assignedToMe?.tickets||[]).map(x=>({team:x.team,assignedToAdmin:x.assigneeId===admin.id,revision:x.assignmentRevision})),
+ teams:(assignedToMe?.teams||[]).map(t=>t.label),
+ studentSeesAssignment:(studentList?.tickets||[]).some(x=>'team' in x||'assigneeId' in x||'assigneeName' in x)||'assignees' in (studentList||{}),
 };
 const result={ranAt:new Date().toISOString(),server:'accounts-local-server.mjs: real handleAccountRequest + Better Auth on in-memory SQLite; no fixtures',passed:!failed&&steps.every(s=>s.ok),steps,failed,facts};
 if(outFile)fs.writeFileSync(outFile,JSON.stringify(result,null,1)+'\n');

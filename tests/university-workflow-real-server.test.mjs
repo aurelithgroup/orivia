@@ -1,7 +1,7 @@
 /* The Northbay university workflow against the real accounts server (no fixtures): partner setup and approval, staff
    publishing and invitations, a student's join request and approval, support with forwarding refused, and the limits that
-   must hold (records locked, member list hidden, outsiders refused, progress totals paused). Also pins the plain labels
-   found missing on the real screens on 29 Oct.
+   must hold (records locked, member list hidden, outsiders refused, progress totals paused), and support team assignment and
+   filtering (area 24). Also pins the plain labels found missing on the real screens on 29 Oct.
    Run: node --experimental-sqlite tests/university-workflow-real-server.test.mjs */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -18,15 +18,19 @@ try{
  const run=spawnSync(process.execPath,['tools/browser-checks/university-workflow-local.mjs',base,out],{encoding:'utf8'});
  const result=JSON.parse(fs.readFileSync(out,'utf8'));
  assert.equal(result.passed,true,'workflow: '+JSON.stringify(result.failed)+run.stderr);
- assert.equal(result.steps.length,27);
+ assert.equal(result.steps.length,38);
  assert.deepEqual(result.facts.memberships,[{role:'admin',status:'active'},{role:'student',status:'active'}]);
  assert.deepEqual(result.facts.studentSees.guides,['Collect your student ID card']);
  assert.equal(result.facts.studentSees.personalDataShared,false);
- assert.equal(result.facts.ticket[0].status,'resolved');
- assert.equal(result.facts.ticket[0].allowEscalation,0,'not forwardable without the student’s consent');
+  const visa=result.facts.ticket.find(x=>x.title==='Visa medical appointment');assert.equal(visa.status,'resolved');
+ assert.equal(visa.allowEscalation,0,'not forwardable without the student’s consent');
+ // Team assignment and filtering, applied by the server.
+ assert.deepEqual(result.facts.filters,{assignedToMe:['Accommodation deposit'],noTeam:['Visa medical appointment'],accommodationOpen:['Accommodation deposit'],resolved:['Visa medical appointment']});
+ assert.deepEqual(result.facts.assignment,[{team:'accommodation',assignedToAdmin:true,revision:1}],'the stale and refused assignments changed nothing');
+ assert.equal(result.facts.teams.length,7);assert.equal(result.facts.studentSeesAssignment,false,'students don’t see staff assignment');
  assert.deepEqual(result.facts.progress,{shown:false,reason:'reporting_paused'});
- // The staff reply is in the activity history once (the refused stale reply added nothing).
- assert.equal(result.facts.auditActions.filter(a=>a.startsWith('support.')).join(),'support.resolved');
+ // The staff reply and the assignment are each in the activity history once (the refused stale writes added nothing).
+ assert.equal(result.facts.auditActions.filter(a=>a.startsWith('support.')).sort().join(),'support.assigned,support.resolved');
 }finally{server.kill()}
 
 // Plain labels on the screens (values and stored keys unchanged).
@@ -56,4 +60,6 @@ has(restored,"admin?panel(h('h3',null,'Student support requests')",'admin inbox'
 has(platform,"'support.resolved':'Resolved a support request'",'reply label');
 // 7. Data request types and statuses have plain names.
 has(restored,"REQUEST_KIND={access:'A copy of my data'",'request types');lacks(restored,"['access','correction','deletion','other'].map(v=>h('option',{value:v},v))",'no raw request types');
-console.log('University workflow on the real local server: 27 steps passed (partner setup, publishing, join and approval, support, limits); plain labels and the seven 29 Oct findings pinned.');
+// Area 24 on the screens: filters and assignment controls for admins, labelled in the activity history.
+has(restored,"pick('assignee','Assigned to',[['','Anyone'],['me','Me'],['none','Nobody yet']",'assignee filter');has(restored,"button('Save assignment'",'assignment control');has(platform,"'support.assigned':'Assigned a support request'",'assignment label');
+console.log('University workflow on the real local server: 38 steps passed (partner setup, publishing, join and approval, support, team assignment and filtering, limits); plain labels and the seven 29 Oct findings pinned.');

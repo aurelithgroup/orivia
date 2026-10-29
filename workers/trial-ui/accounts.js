@@ -64,8 +64,25 @@
  async function resumeArrival(vault){
   if(!arrival.defaults){const box=shell('University setup is not ready',arrival.organisation.name);box.append(el('p','notice','Your organisation has not set its campus destination yet. Ask its staff, or continue with personal Orivia.'),btn('Continue with personal Orivia',personalInstead,true));return}
   if(native.getItem(dirtyKey())){paused=true;ready=true;enter();return}
-  if(vault.data){putLocal(vault.data);ready=true;enter()}else setup();
+  // An existing account keeps its data and choices; one that has just joined gets the welcome once, with nothing asked again.
+  if(vault.data){putLocal(vault.data);ready=true;if(arrival.joined)campusWelcome(vault.data);else enter()}
+  // A new account is asked for its name once (in the welcome), and about device data only when there is some.
+  else if(hasSavedPersonalData())setup();else personalSetup({data:empty(),preferredName:user.name&&user.name!==user.email?user.name:''});
  }
+ const REASON_NAME={study:'Study',work:'Work','join or bring my family':'Family','something else':'Something else'};
+ // The campus defaults the university's staff approved, shown as text: students don't choose or edit them.
+ function campusCard(entry){const d=entry.defaults,card=el('section','card');card.id='campus-defaults';
+  card.append(el('h2','','Set by '+entry.organisation.name),el('p','',[REASON_NAME[d.reason]||d.reason,[d.town,d.region,d.country==='uae'?'UAE':d.country==='uk'?'UK':''].filter(Boolean).join(', ')].filter(Boolean).join(' · ')),el('p','tiny','Your university sets the campus and the reason. They can’t be changed here.'));return card}
+ function campusWelcome(data){
+  screen='campus-welcome';const entry=arrival,p=data.profile||{},box=shell('Welcome to '+entry.organisation.name,'Your account, plans and choices are kept as they are.');
+  box.append(campusCard(entry));const mine=el('section','card');mine.id='your-details';mine.append(el('h2','','Your details'));
+  const lines=[p.displayName||(user?.name!==user?.email?user?.name:''),p.movedFrom&&'From '+p.movedFrom].filter(Boolean);
+  if(lines.length)for(const line of lines)mine.append(el('p','',line));else mine.append(el('p','notice','You haven’t added any personal details yet.'));
+  box.append(mine,btn('Continue',enter),btn('Edit my details',()=>personalSetup({data,campusEdit:true}),true));
+ }
+ async function editDetails(){try{const owner=scope,vault=await api('/api/account/vault');if(scope!==owner)return;revision=vault.revision;personalSetup({data:vault.data||empty(),campusEdit:true})}catch(e){fail(e)}}
+ // One clear next step at the top of the university space.
+ function nextStep(title,text,action){const card=el('section','card');card.id='first-step';card.append(el('p','tiny','Your next step'),el('h2','',title));if(text)card.append(el('p','',text));if(action)card.append(action);return card}
  async function checkArrival(vault){
   const owner=scope,entry=arrival,d=await api('/api/me/memberships');if(scope!==owner||arrival!==entry)return;
   const m=d.memberships?.find(m=>m.organisationId===entry.organisation.id);if(m){entry.status=m.status;entry.role=m.role;await resumeArrival(vault);return}
@@ -74,7 +91,7 @@
   if(!entry.token){box.append(el('p','notice','Ask your university for an Orivia invitation link. Signing in alone does not grant membership.'));}
   else{try{const invitation=await api('/api/invitations/inspect',{method:'POST',body:{token:entry.token}});if(scope!==owner||arrival!==entry)return;
    if(invitation.organisation.id!==entry.organisation.id||invitation.role!=='student'||!invitation.available)throw Error('invalid_invitation');
-   box.append(btn('Request to join',async()=>{try{if(scope!==owner||arrival!==entry)return;const result=await api('/api/invitations/join',{method:'POST',body:{token:entry.token}});if(scope!==owner||arrival!==entry)return;entry.status=result.membership.status;entry.role=result.membership.role;entry.token='';sessionStorage.removeItem(arrivalKey);await resumeArrival(vault)}catch(e){fail(e)}}));
+   box.append(btn('Request to join',async()=>{try{if(scope!==owner||arrival!==entry)return;const result=await api('/api/invitations/join',{method:'POST',body:{token:entry.token}});if(scope!==owner||arrival!==entry)return;entry.status=result.membership.status;entry.role=result.membership.role;entry.joined=true;entry.token='';sessionStorage.removeItem(arrivalKey);await resumeArrival(vault)}catch(e){fail(e)}}));
   }catch(_){box.append(el('p','notice','This invitation is unavailable, expired or for a different organisation. Ask your university for a new invitation.'))}}
   box.append(btn('Continue with personal Orivia',personalInstead,true));
  }
@@ -82,13 +99,18 @@
   const entry=arrival,owner=scope,box=shell(entry.organisation.name,'Your university space');
   box.append(btn('My Orivia',()=>{leaveArrival();enter()},true));if(window.OriviaNotifications)box.append(btn('Notifications and alerts',()=>window.OriviaNotifications.inbox(),true));
   if(entry.organisation.demo)box.append(el('p','notice','Demo organisation'));
-  if(entry.status!=='active'){box.append(el('h2','','Waiting for approval'),el('p','notice','Your request is with your university. Private guides and updates appear after staff approve it.'),btn('Check approval',()=>restore().catch(fail),true));return}
+  if(entry.status!=='active'){box.append(nextStep('Waiting for approval','Your request is with your university. Private guides and updates appear here after staff approve it.',btn('Check approval',()=>restore().catch(fail))),btn('Edit my details',editDetails,true));return}
   if(entry.role!=='student'){const a=el('a','btn','Open organisation dashboard');a.href='/platform';box.append(a);return}
   const loading=el('p','notice','Loading your organisation’s information…');box.append(loading);
   try{const d=await api('/api/me/orgs/'+encodeURIComponent(entry.organisation.id));if(scope!==owner||arrival!==entry)return;loading.remove();
+   // The first step is the longest-standing guide not yet marked done (the list comes newest first); then the next date.
+   const content=d.content||[],done=new Set(d.progress?.done||[]),guide=content.filter(c=>c.kind==='guide'&&!done.has(c.id)).at(-1),today=new Date().toISOString().slice(0,10),date=content.filter(c=>c.kind==='date'&&(c.details?.date||'')>=today).sort((a,b)=>String(a.details?.date).localeCompare(String(b.details?.date)))[0];
+   const read=c=>btn(c.kind==='guide'?'Read this guide':'See this date',()=>document.getElementById('org-content-'+c.id)?.scrollIntoView?.({behavior:'smooth',block:'start'}));
+   box.append(guide?nextStep(guide.title,guide.body.length>160?guide.body.slice(0,157)+'…':guide.body,read(guide)):date?nextStep(date.title,date.details?.date,read(date)):nextStep('Nothing to do yet','Your university hasn’t published a guide here yet. Check back soon, or ask its staff.'));
+   box.append(campusCard(entry),btn('Edit my details',editDetails,true));
    box.append(el('p','tiny','From your organisation. Your personal chats, calendar and About you remain private.'));
-   for(const [kind,label] of [['guide','Guides'],['date','Important dates'],['contact','Useful contacts'],['update','Updates']]){const items=(d.content||[]).filter(c=>c.kind===kind);if(!items.length)continue;box.append(el('h2','',label));for(const c of items){const item=el('article','card');item.append(el('h3','',c.title),el('p','organisation-text',c.body));box.append(item)}}
-   if(!d.content?.length)box.append(el('p','notice','Your organisation hasn’t published anything here yet.'));
+   for(const [kind,label] of [['guide','Guides'],['date','Important dates'],['contact','Useful contacts'],['update','Updates']]){const items=content.filter(c=>c.kind===kind);if(!items.length)continue;box.append(el('h2','',label));for(const c of items){const item=el('article','card');item.id='org-content-'+c.id;item.append(el('h3','',c.title),el('p','organisation-text',c.body));box.append(item)}}
+   if(!content.length)box.append(el('p','notice','Your organisation hasn’t published anything here yet.'));
   }catch(_){if(scope===owner&&arrival===entry)loading.textContent=t('This space couldn’t be opened. Your access may have changed. Close it and refresh your spaces.')}
  }
  // Refusals that need the person to do something first say what (ORI-AUTH-010); everything else stays generic.
@@ -115,42 +137,49 @@
   if(vault.data){putLocal(vault.data);ready=true;enter();return}
   setup();
  }
- function setup(){screen='setup';const box=shell('What should we call you?','Set up your space.');const label=el('label','field','Preferred name'),name=el('input');name.maxLength=60;name.value=user.name&&user.name!==user.email?user.name:'';label.append(name);box.append(label,el('h2','','Your saved things'),el('p','notice','Choose what to bring from this device. Nothing is added automatically.'));
+ function setup(){screen='setup';const box=shell(arrival?'Bring things from this device?':'What should we call you?',arrival?arrival.organisation.name:'Set up your space.');const label=el('label','field','Preferred name'),name=el('input');name.maxLength=60;name.value=user.name&&user.name!==user.email?user.name:'';label.append(name);if(!arrival)box.append(label);box.append(el('h2','','Your saved things'),el('p','notice','Choose what to bring from this device. Nothing is added automatically.'));
   const choices=el('div','auth-choices');let source;try{source=snapshot(native)}catch(_){source=null}
   const selected=new Set();if(source)for(const category of ['chats','events','journeys','profile']){const lab=el('label','auth-choice'),check=el('input');check.type='checkbox';check.onchange=()=>{check.checked?selected.add(category):selected.delete(category)};lab.append(check,el('span','',({chats:'Chats',events:'Reminders',journeys:'Journeys',profile:'About you'})[category]));choices.append(lab)}else box.append(el('p','notice','Device data could not be read. It has not been changed.'));
   box.append(choices,el('p','tiny','Leave these unchecked to start fresh. Your original device data is kept.'));
   const save=btn('Continue',async()=>{save.disabled=true;try{const data=empty();for(const k of selected)data[k]=source[k];personalSetup({data,preferredName:name.value.trim()});
   }catch(e){fail(e)}finally{save.disabled=false}});box.append(save,btn('Start without importing',()=>personalSetup({data:empty(),preferredName:name.value.trim()}),true),el('p','tiny','Your personal chats are not shared with your institution.'));
  }
- function personalSetup({data=empty(),preferredName='',guestMode=false}={}){
-  screen='onboarding';const owner=scope,box=shell('Make yourself at home','A few details help Orivia give you a useful starting point. You can change them in My Life.');
-  const p=data.profile||{},fields={},campus=arrival?.defaults||null;
-  const field=(key,label,value='',options=null)=>{const lab=el('label','field',label),input=el(options?'select':'input');input.id='onboard-'+key;
+ // campusEdit: an existing account changing its own details from its university space (data is its whole saved copy).
+ function personalSetup({data=empty(),preferredName='',guestMode=false,campusEdit=false}={}){
+  const p=data.profile||{},fields={},campus=arrival?.defaults||null,TERMS='pilot-2026-10-20',accepted=p.onboarding?.termsVersion===TERMS&&p.onboarding?.privacyVersion===TERMS;
+  screen='onboarding';const owner=scope,box=shell(campus?(campusEdit?'Your details':'Welcome to '+arrival.organisation.name):'Make yourself at home',campus?'Your university has set the campus. Add your own details; you can change them later.':'A few details help Orivia give you a useful starting point. You can change them in My Life.');
+  // With a university, its approved campus is shown as text and never asked; those answers come from the defaults.
+  if(campus)box.append(campusCard(arrival));const asked=box,unasked=el('div');
+  const field=(key,label,value='',options=null,into=asked)=>{const lab=el('label','field',label),input=el(options?'select':'input');input.id='onboard-'+key;
    if(options){for(const [v,title] of options){const option=el('option','',title);option.value=v;input.append(option)}}else input.maxLength=60;
-   input.value=value;fields[key]=input;lab.append(input);box.append(lab);return input};
+   input.value=value;fields[key]=input;lab.append(input);into.append(lab);return input};
   field('name','What should we call you?',preferredName||p.displayName||'');
   const countries=[['','Not sure yet / prefer not to say']];let names;try{names=new Intl.DisplayNames([window.OriviaI18n?.language?.()||'en'],{type:'region'})}catch(_){}
   for(const code of 'AE GB AF AL DZ AD AO AR AM AU AT AZ BS BH BD BB BY BE BZ BJ BT BO BA BW BR BN BG BF BI KH CM CA CV CF TD CL CN CO KM CG CD CR CI HR CU CY CZ DK DJ DM DO EC EG SV GQ ER EE SZ ET FJ FI FR GA GM GE DE GH GR GD GT GN GW GY HT HN HU IS IN ID IR IQ IE IL IT JM JP JO KZ KE KI KW KG LA LV LB LS LR LY LI LT LU MG MW MY MV ML MT MH MR MU MX FM MD MC MN ME MA MZ MM NA NR NP NL NZ NI NE NG KP MK NO OM PK PW PS PA PG PY PE PH PL PT QA RO RU RW KN LC VC WS SM ST SA SN RS SC SL SG SK SI SB SO ZA KR SS ES LK SD SR SE CH SY TW TJ TZ TH TL TG TO TT TN TR TM TV UG UA US UY UZ VU VA VE VN YE ZM ZW'.split(' '))countries.push([code,names?.of(code)||code]);
   const origin=field('origin','Where are you moving from?',p.originCountry||'',countries);
   field('originTown','City or town (optional)',p.originTown||'');
   const stage=field('stage','Have you already moved?',['uae','uk'].includes(p.here)?'moved':'planning',[['planning','I’m planning my move'],['moved','I’ve already moved']]);
-  const dest=field('destination','Where are you moving to?',p.dest||(['uae','uk'].includes(p.here)?p.here:''),[['','Not sure yet'],['uae','UAE'],['uk','UK']]);
-  const region=field('region','Emirate / nation (optional)','',[['','Not sure yet']]);const fillRegion=()=>{region.replaceChildren();for(const value of ['',...(dest.value==='uae'?['Abu Dhabi','Ajman','Dubai','Fujairah','Ras Al Khaimah','Sharjah','Umm Al Quwain']:dest.value==='uk'?['England','Scotland','Wales','Northern Ireland']:[])]){const option=el('option','',value||'Not sure yet');option.value=value;region.append(option)}region.disabled=!dest.value};fillRegion();region.value=p.destRegion||p.region||'';dest.onchange=fillRegion;
-  field('town','Destination city or area (optional)',p.destTown||p.town||'');
-  field('reason','What brings you here?',p.who||'',[['','Not sure yet'],['study','Study'],['work','Work'],['join or bring my family','Family'],['something else','Something else']]);
-  if(campus){dest.value=campus.country;fillRegion();region.value=campus.region;fields.town.value=campus.town;fields.reason.value=campus.reason;for(const input of [dest,region,fields.town,fields.reason])input.disabled=true;box.append(el('p','tiny','Destination and reason are set by your university for this campus. They cannot be edited here.'));}
-  const terms=el('details','card');terms.append(el('summary','','Pilot terms and privacy'),el('p','tiny','Orivia is an early service for practical information and planning. Check important decisions with the relevant authority or professional. It does not submit applications or act for you unless a feature explicitly says so and you confirm.'),el('p','tiny',guestMode?'As a guest, your chats, profile and plans stay in this browser on this device. Clearing browser data can remove them.':'Signed-in personal chats, profile and plans are saved to your private account and cached on this device. Your institution cannot see your personal chats through its dashboard.'),el('p','tiny','With your separate AI agreement, your messages and recent conversation go to OpenAI, or Cloudflare Workers AI if unavailable. General search terms go to Brave Search. Never send passwords or passport, visa or ID numbers. Microphone, location and camera permissions are requested only when you use those features.'),el('p','tiny','You can review your data in Settings. Downloads and copies on other devices are not remotely erased. These pilot notices are not the final public terms and privacy policy.'));box.append(terms);
+  const where=campus?unasked:asked;
+  const dest=field('destination','Where are you moving to?',p.dest||(['uae','uk'].includes(p.here)?p.here:''),[['','Not sure yet'],['uae','UAE'],['uk','UK']],where);
+  const region=field('region','Emirate / nation (optional)','',[['','Not sure yet']],where);const fillRegion=()=>{region.replaceChildren();for(const value of ['',...(dest.value==='uae'?['Abu Dhabi','Ajman','Dubai','Fujairah','Ras Al Khaimah','Sharjah','Umm Al Quwain']:dest.value==='uk'?['England','Scotland','Wales','Northern Ireland']:[])]){const option=el('option','',value||'Not sure yet');option.value=value;region.append(option)}region.disabled=!dest.value};fillRegion();region.value=p.destRegion||p.region||'';dest.onchange=fillRegion;
+  field('town','Destination city or area (optional)',p.destTown||p.town||'',null,where);
+  field('reason','What brings you here?',p.who||'',[['','Not sure yet'],['study','Study'],['work','Work'],['join or bring my family','Family'],['something else','Something else']],where);
+  if(campus){dest.value=campus.country;fillRegion();region.value=campus.region;fields.town.value=campus.town;fields.reason.value=campus.reason;for(const input of [dest,region,fields.town,fields.reason])input.disabled=true}
+  const terms=el('details','card');terms.append(el('summary','','Pilot terms and privacy'),el('p','tiny','Orivia is an early service for practical information and planning. Check important decisions with the relevant authority or professional. It does not submit applications or act for you unless a feature explicitly says so and you confirm.'),el('p','tiny',guestMode?'As a guest, your chats, profile and plans stay in this browser on this device. Clearing browser data can remove them.':'Signed-in personal chats, profile and plans are saved to your private account and cached on this device. Your institution cannot see your personal chats through its dashboard.'),el('p','tiny','With your separate AI agreement, your messages and recent conversation go to OpenAI, or Cloudflare Workers AI if unavailable. General search terms go to Brave Search. Never send passwords or passport, visa or ID numbers. Microphone, location and camera permissions are requested only when you use those features.'),el('p','tiny','You can review your data in Settings. Downloads and copies on other devices are not remotely erased. These pilot notices are not the final public terms and privacy policy.'));
+  // Terms already accepted, and an AI choice already made, are kept: they are not asked again or reset here.
   const agreement=el('label','auth-choice'),accept=el('input');accept.type='checkbox';agreement.append(accept,el('span','','I accept the pilot terms above.'));
-  const privacy=el('label','auth-choice'),read=el('input');read.type='checkbox';privacy.append(read,el('span','','I have read the privacy information above.'));box.append(agreement,privacy);const startControls=el('section');box.append(startControls);callbacks.mountStart?.(startControls);
-  const save=btn('Let’s get started',async()=>{if(!accept.checked||!read.checked){fail({});const status=$('account-flow-status');if(status)status.textContent=t('Please accept the pilot terms and read the privacy information before continuing.');return}
+  const privacy=el('label','auth-choice'),read=el('input');read.type='checkbox';privacy.append(read,el('span','','I have read the privacy information above.'));
+  if(accepted){accept.checked=read.checked=true;box.append(el('p','tiny','You’ve already accepted the pilot terms and read the privacy information.'))}else box.append(terms,agreement,privacy);
+  const keepConsent=campusEdit&&consentAgreed(),startControls=el('section');if(!keepConsent){box.append(startControls);callbacks.mountStart?.(startControls)}
+  const save=btn(campusEdit?'Save my details':'Let’s get started',async()=>{if(!accept.checked||!read.checked){fail({});const status=$('account-flow-status');if(status)status.textContent=t('Please accept the pilot terms and read the privacy information before continuing.');return}
    if(scope!==owner)return;save.disabled=true;try{
-    if(callbacks.authorizeStart&&!await callbacks.authorizeStart())return;if(scope!==owner)return;
+    if(!keepConsent&&callbacks.authorizeStart&&!await callbacks.authorizeStart())return;if(scope!==owner)return;
     const destination=dest.value,planning=stage.value==='planning',now=new Date().toISOString();
-    data.profile={...p,displayName:fields.name.value.trim(),originCountry:origin.value,originTown:fields.originTown.value.trim(),here:planning?'away':destination,dest:planning?destination:'',region:planning?'':region.value.trim(),town:planning?'':fields.town.value.trim(),destRegion:planning?region.value.trim():'',destTown:planning?fields.town.value.trim():'',who:fields.reason.value,onboarding:{version:1,completedAt:now,termsVersion:'pilot-2026-10-20',privacyVersion:'pilot-2026-10-20',language:window.OriviaI18n?.language?.()||'en'}};
+    data.profile={...p,displayName:fields.name.value.trim(),originCountry:origin.value,originTown:fields.originTown.value.trim(),here:planning?'away':destination,dest:planning?destination:'',region:planning?'':region.value.trim(),town:planning?'':fields.town.value.trim(),destRegion:planning?region.value.trim():'',destTown:planning?fields.town.value.trim():'',who:fields.reason.value,onboarding:accepted?p.onboarding:{version:1,completedAt:now,termsVersion:TERMS,privacyVersion:TERMS,language:window.OriviaI18n?.language?.()||'en'}};
     const place=[fields.town.value.trim(),region.value.trim(),destination==='uae'?'UAE':destination==='uk'?'UK':''].filter(Boolean).join(', ');data.profile.city=planning?'':place;data.profile.movingTo=planning?place:'';data.profile.movedFrom=[fields.originTown.value.trim(),origin.value?names?.of(origin.value)||origin.value:''].filter(Boolean).join(', ');
     if(!guestMode){if(fields.name.value.trim()){await api('/api/auth/update-user',{method:'POST',body:{name:fields.name.value.trim()}});if(scope!==owner)return;user.name=fields.name.value.trim()}const result=await api('/api/account/vault',{method:'PUT',headers:{'If-Match':String(revision)},body:data});if(scope!==owner)return;revision=result.revision}
     putLocal(data);if(guestMode){guest(true)}else{ready=true;enter()}
-   }catch(e){fail(e)}finally{save.disabled=false}});box.append(save,btn('Back',()=>guestMode?signIn():setup(),true));
+   }catch(e){fail(e)}finally{save.disabled=false}});box.append(save,btn('Back',()=>campusEdit?enter():guestMode?signIn():setup(),true));
  }
  function consentEntry(){
   screen='consent';const owner=scope,box=shell('Before we begin','Choose whether to use AI, then open your Orivia.');
