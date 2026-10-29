@@ -181,7 +181,8 @@ Regression cases for her exact examples are in `tests/ina-review-week6.test.mjs`
 | Bank protection wording | Now says eligible deposits, and that banks sharing a licence count as one bank |
 | Apostille eligibility and the receiving organisation's requirements | UK-issued documents only; which documents qualify as they are and which need a notary or solicitor first; which can't get an e-Apostille; and asking the requester about paper or e-Apostille, one apostille or several, and originals or certified copies |
 | French "Reviewed by" | Now "Relu par". The related sentences use relecture (editorial review) rather than vérification |
-| Arabic terms | Kept distinct throughout the documents guide: الأبوستيل (UK legalisation), الاعتماد من وزارة الخارجية الإماراتية (UAE attestation), الاعتراف بالمؤهل (qualification recognition) |
+| Arabic terms (corrected again after Ina's recheck) | UAE attestation uses MoFA's official **تصديق المستندات**, qualified as **تصديق وزارة الخارجية الإماراتية**. The UK side uses only **الأبوستيل** (Legalisation Office: مكتب الأبوستيل البريطاني). Recognition stays **الاعتراف بالمؤهل**. Notary-certified copies are **موثّقة**. The earlier non-official الاعتماد is removed |
+| Move direction, negated or corrected (Ina's recheck) | "I am not moving from London to Dubai" no longer triggers the guide, even with a UK-to-UAE profile. A correction to, or any statement of, the UAE-to-UK direction means no offer. So does "no longer moving" |
 
 Still the case: **no guide review records exist.** The remaining source checks and visual review are pending.
 

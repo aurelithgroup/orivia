@@ -23,6 +23,12 @@ assert.equal(offer('I moved from Dubai to London, I need to get my degree attest
 assert.equal(offer("I'm moving from Manchester to Dubai, I need to get my degree attested").offer?.id,'dubai.docs.before');
 assert.equal(offer('I need to get my documents attested',{city:'London',movedFrom:'Dubai'}).offer,null);
 assert.equal(offer('I need to get my documents attested',{city:'Dubai'}).offer,null,'both places unknown: not offered');
+// Negation and corrections (Ina's recheck): conservative
+assert.equal(offer('I need to get my documents ready. I am not moving from London to Dubai').offer,null,'a negated direction never triggers it');
+assert.equal(offer('I need to get my documents ready. I am not moving from London to Dubai',{city:'Dubai',movedFrom:'UK'}).offer,null,'not even with a UK-to-UAE profile');
+assert.equal(offer("I'm moving from London to Dubai, sorry I mean from Dubai to London. I need to get my documents ready").offer,null,'corrected to the other direction');
+assert.equal(offer("I'm moving from Dubai to London, sorry I mean from London to Dubai. I need to get my documents ready").offer,null,'conflicting statements: not offered');
+assert.equal(offer("I'm no longer moving. I need to get my documents attested",{city:'Dubai',movedFrom:'UK'}).offer,null);
 
 // 3. The assistant is never told an unreviewed guide is "checked"
 for(const [t,p] of [['I need to register with a GP',{city:'Edinburgh'}],['GP guide',{city:'Edinburgh'}],['I got a council tax bill',{city:'Edinburgh'}],["I'll take the metro",{city:'Dubai'}]]){
@@ -46,7 +52,13 @@ const docs=guideContent('dubai.docs.before'),uk=JSON.stringify(docs.steps.find(s
 assert.match(uk,/only for documents issued in the UK/);assert.match(uk,/can’t get an e-Apostille/);assert.match(uk,/accept an e-Apostille/);
 assert.match(JSON.stringify(docs.steps[0]),/original or a certified copy/);
 const ar=fs.readFileSync('js/content-docs.js','utf8');
-assert.match(ar,/الأبوستيل/);assert.match(ar,/الاعتماد/);assert.match(ar,/الاعتراف بالمؤهل/);
-const uaeStep=ar.slice(ar.indexOf("id:'uae'"),ar.indexOf('problems:['));assert.doesNotMatch(uaeStep,/صدّق|تصديق المستندات/,'UAE attestation is not called legalisation in Arabic');
+// Arabic terms (Ina's recheck): MoFA's official تصديق المستندات / تصديق وزارة الخارجية الإماراتية for UAE attestation,
+// الأبوستيل for the UK apostille, الاعتراف بالمؤهل for recognition, موثّقة for notary certification.
+const step=id=>ar.slice(ar.indexOf("{id:'"+id+"'"),ar.indexOf("{id:'",ar.indexOf("{id:'"+id+"'")+5)>0?ar.indexOf("{id:'",ar.indexOf("{id:'"+id+"'")+5):ar.indexOf('problems:['));
+const uaeStep=ar.slice(ar.indexOf("{id:'uae'"),ar.indexOf('problems:[')),ukStep=step('uk');
+assert.match(uaeStep,/تصديق المستندات/,'MoFA term in the UAE step');assert.match(uaeStep,/تصديق وزارة الخارجية الإماراتية/);
+assert.match(ukStep,/الأبوستيل/);assert.doesNotMatch(ukStep,/وزارة الخارجية|مكتب التصديق/,'the UK step never uses the MoFA term');
+assert.match(uaeStep,/الاعتراف بالمؤهل/,'recognition named separately');assert.doesNotMatch(ar,/الاعتماد/,'no non-official term for attestation');
+assert.doesNotMatch(ar,/مصدّقة/,'notary-certified copies are موثّقة, not تصديق');
 const tr=JSON.parse(fs.readFileSync('workers/trial-ui/translations.json','utf8'));assert.equal(tr['Reviewed by'].fr,'Relu par');
 console.log("Ina's week 6 review: place checks on problems/refreshers, move direction, no 'checked' claims, reminders reconciled, blocked note Undo, content fixes.");

@@ -49,7 +49,7 @@ Generated from `translations.json`: every key added after batch 1 (`c42dea0`), *
 
 These are in the journey files, not in `translations.json`:
 
-- `js/content-docs.js`: the whole **before-you-move document guide** (titles, steps, items, problems, source names). It's a first draft, revised after Ina's review so the three terms stay distinct: الأبوستيل (UK legalisation), الاعتماد من وزارة الخارجية الإماراتية (UAE attestation), الاعتراف بالمؤهل (recognition).
+- `js/content-docs.js`: the whole **before-you-move document guide** (titles, steps, items, problems, source names). It's a first draft, revised after Ina's review. The terms are kept distinct: الأبوستيل (UK apostille, with مكتب الأبوستيل البريطاني for the Legalisation Office), **تصديق المستندات / تصديق وزارة الخارجية الإماراتية** (UAE attestation, MoFA's own term), الاعتراف بالمؤهل (qualification recognition), and موثّقة for notary-certified copies. **Please confirm MoFA's exact Arabic name for its "through UAE missions abroad" service.** The guide describes it without quoting a service name.
 - `js/content-edinburgh.js` (bank guide): the corrected FSCS line (eligible deposits, shared banking licences).
 - `js/content.js`: two new source names on the student visa journey (u.ae pages).
 - `js/content-edinburgh.js`: the GOV.UK police-registration source name, the updated police answer (4 August 2022), the two corrected dental lines in the GP guide, and the gov.scot dental-charges source name.

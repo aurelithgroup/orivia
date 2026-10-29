@@ -92,11 +92,20 @@ const EDINBURGH=/\bedinburgh\b/i;
    The person's own "from <UK place> to <UAE place>" decides; a "from <UAE> to <UK>" rules it out; otherwise their
    profile must say they moved from the UK and live in, or are moving to, the UAE. */
 const UAE_PLACE=/\b(uae|emirates|dubai|abu dhabi|sharjah|ajman|ras al khaimah|fujairah|umm al quwain)\b/i;
+/* Conservative (Ina's recheck, 29 Oct): a negated statement ("I am not moving from London to Dubai") or any
+   statement of the opposite direction, including a correction ("…sorry, I mean from Dubai to London"), means no offer.
+   Only an un-negated UK-to-UAE statement, or failing any statement the profile, offers it. */
+const NEGATED=/\b(?:not|never|no longer|isn['’]?t|aren['’]?t|wasn['’]?t|weren['’]?t|won['’]?t|don['’]?t|didn['’]?t|cancel\w*|instead of)\b[^.!?|]{0,30}$/i;
+const NOT_MOVING=/\b(?:not|no longer|never|won['’]?t be|am not|i['’]?m not)\s+(?:moving|relocating|going to move|coming)\b/i;
 function movingUkToUae(profile,thread){
- let verdict=null;
- for(const m of String(thread||'').matchAll(/\bfrom\s+(?:the\s+)?([^.,;!?|]{2,40}?)\s+to\s+(?:the\s+)?([^.,;!?|]{2,40})/gi)){
-  if(UK_PLACE.test(m[1])&&UAE_PLACE.test(m[2]))verdict=true;else if(UAE_PLACE.test(m[1])&&UK_PLACE.test(m[2]))verdict=false}
- if(verdict!==null)return verdict;
+ const t=String(thread||'');let ukToUae=false,other=false;
+ for(const m of t.matchAll(/\bfrom\s+(?:the\s+)?([^.,;!?|]{2,40}?)\s+to\s+(?:the\s+)?([^.,;!?|]{2,40})/gi)){
+  const before=t.slice(Math.max(0,t.lastIndexOf('|',m.index)+1,...['.','!','?'].map(c=>t.lastIndexOf(c,m.index)+1)),m.index);
+  const dir=UK_PLACE.test(m[1])&&UAE_PLACE.test(m[2])?'uk-uae':UAE_PLACE.test(m[1])&&UK_PLACE.test(m[2])?'uae-uk':'';
+  if(!dir)continue;if(NEGATED.test(before)||dir==='uae-uk')other=true;else ukToUae=true}
+ if(other)return false;
+ if(ukToUae)return true;
+ if(NOT_MOVING.test(t))return false;
  return UK_PLACE.test(String(profile?.movedFrom||''))&&UAE_PLACE.test(String(profile?.movingTo||profile?.city||''));
 }
 function inScope(level,{profile,thread},what){
