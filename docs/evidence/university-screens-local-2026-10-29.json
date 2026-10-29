@@ -1,0 +1,27 @@
+{
+ "block": "University screens, local check (week 7 foundations)",
+ "baseCommit": "57e90db47fbc877cd9ab5d7600922ba2f8564899",
+ "where": "Local harness only: node tools/browser-checks/platform-harness.mjs admin|owner on localhost:8793, in the Claude desktop browser pane. Nothing was deployed; the pilot and production were not touched.",
+ "fixtures": "All fictional (Northbay University, set in Dubai; example.test / northbay.example addresses; the 000 0000 phone number is a placeholder). Fixture shapes follow organisations.mjs and Ina's block one.",
+ "checkedAt": "Finished 2026-10-29T07:48:07Z (the start time was not recorded; the last harness restart was at 2026-10-29T07:44:13Z)",
+ "ci": "node tools/run-ci-local.mjs: 133 suites, 0 failed, run after the last harness change",
+ "staffView": {
+  "page": "/platform?org=org-nb (admin role)",
+  "tabs": 11,
+  "result": "All 11 tabs render with no script error and no horizontal overflow at 390x844 and at desktop width. Application records shows Locked, with the server's own message (the harness now answers 403 separate_records_permission_required as organisations.mjs does)."
+ },
+ "ownerView": {
+  "page": "/manage (owner role)",
+  "areas": 15,
+  "result": "All 15 management areas render at 390x844 with no script error and no horizontal overflow. Every API request on the final load answered 200."
+ },
+ "harnessGapsFixed": [
+  "/orivia-nav.js served from workers/trial-ui/nav.js",
+  "/platform.js includes the restored management UI (window.OriviaRestoredUI), as organisations.mjs serves it",
+  "Owner fixtures: operations, onboarding, people, privacy requests, support escalations, metrics, runtime, entitlements, notices, support consents",
+  "Org fixtures: invitations, codes, arrival, support, processes, guide packages",
+  "records answers 403 like the server instead of 404"
+ ],
+ "remainingConsoleNoise": "GET / on the harness answers 404 (the harness has no home page). Earlier 404s in the console log came from loads made before the fixtures were added.",
+ "notCovered": "Real server behaviour, accounts and D1 (the harness fakes the API); right-to-left Arabic layout; screen readers. Visual review and language review remain pending; this is not a visual sign-off."
+}
