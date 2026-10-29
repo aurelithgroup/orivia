@@ -59,7 +59,7 @@ if(process.env.SHOW)console.log(subst.join('\n'));
 // Cross-site request with a valid session is refused.
 assert.equal((await call(adminB,`/api/orgs/${B}/content/${bContent}`,'PATCH',{revision:1,title:'csrf'},{Origin:'https://evil.example'})).status,403);
 // A session for one account can't be used with another account's header.
-assert.ok([401,403].includes((await call({...adminB,id:adminA.id},`/api/orgs/${A}/members`)).status),'account header must match the session');
+assert.equal((await call({...adminB,id:adminA.id},`/api/orgs/${A}/members`)).status,409,'account header must match the session');
 assert.equal(snapshot(),before,'organisation B unchanged after every attempt');
 // Owner-only routes and the export: refused to every organisation role, including a university-domain admin.
 for(const who of [adminA,adminB,editorA,studentA,null])for(const [m,p] of [['GET','/api/admin/overview'],['GET','/api/admin/orgs'],['GET','/api/admin/export/organisations.csv'],['POST','/api/admin/orgs'],['POST',`/api/admin/orgs/${B}/admin-invite`]]){

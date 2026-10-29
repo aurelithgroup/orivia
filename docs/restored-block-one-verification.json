@@ -1,0 +1,65 @@
+{
+  "verifiedAt": "2026-10-25T06:19:08.511277+00:00",
+  "baseCommit": "f6e7fc33a536cbdde0e3e869ca97d388e27ce02a",
+  "implementation": "fresh reconstruction on recovered public checkpoint",
+  "developmentChecks": {
+    "total": 128,
+    "failed": 0
+  },
+  "targetedRechecks": [
+    "authenticated restored operations",
+    "strict streams/profile/query privacy/local diagnostics/alert permissions",
+    "Better Auth delivery and expiry",
+    "organisation regressions",
+    "platform contract",
+    "full-length reply feedback"
+  ],
+  "browser": {
+    "passed": true,
+    "checks": [
+      "actual guest Settings diagnostics",
+      "photo rotate/crop/reset/use and cleanup",
+      "served owner management areas",
+      "390px layout",
+      "no browser exceptions"
+    ],
+    "transport": "Local fictional fixtures; backend permissions separately tested with real Better Auth/SQLite."
+  },
+  "pilotBuild": "pinned Wrangler 4.151.1 deploy --dry-run passed; no deployment",
+  "productionChanged": false,
+  "billingAndAppStoreChanged": false,
+  "sourceSha256": {
+    "workers/accounts/auth.mjs": "96b96df2dff510eec583576e69c8a08bdd06e5346fde254f33ed55cd5a818617",
+    "workers/accounts/feedback.mjs": "01e69b362794033a342698d77e5da4c18cf973a2c257a43f58dba16fecc4503a",
+    "workers/accounts/files.mjs": "ea5ac353d02d2a3ea885d2d30c0cb7cf48022b9314a92ff4f5fa71fd7f25f690",
+    "workers/accounts/handler.mjs": "6e438f0aa44b6c920b801a8877e67eacf2def336e95a65601c8a788ba987655a",
+    "workers/accounts/notifications.mjs": "3f0328ac4a3922e5ce6ddff07696071b4762b8ece05c4d5c69bb16c00969482f",
+    "workers/accounts/organisations.mjs": "330acce18ca94619b5d63e945072c2ae1f2678d1b443d56e8edb8f34a726ffba",
+    "workers/accounts/platform-ui.mjs": "5554300034265143c964b2119a70907b09e2ba0766e72c6c01f203818e54c1de",
+    "workers/accounts/shares.mjs": "4b8eb2f42dcce01c1483762d956bacf98ecefeb01b50bfc537a8f7b094a17552",
+    "workers/orivia-ai-private-trial.mjs": "be75c8cff0d356539763515a80a4638e3e954f3fcf8ddfe13ffa28b5a0fe42d5",
+    "workers/orivia-assistant.mjs": "3ae5954913488b1ea98c232689930547f8ff2caa7795b61670e8177b8f2456e8",
+    "workers/orivia-openai-pilot.mjs": "fd92f3c85001f5303ff3f82efe4c64993d085b3182c5a90645f2d9bf90316968",
+    "workers/orivia-research-pilot.mjs": "7dc76905795c4009a6d595e982dba75bfe2c4c35cd66683d52086b7d0105bea3",
+    "workers/orivia-research-understand.mjs": "20a1eb8e99f8498ff2a48ec6d1e9d1bd9b79f9b4b7a90988188a468de278dddc",
+    "workers/orivia-spend-ledger.mjs": "534aaeaab9353da25d25274aa2b87c1ba7553cbb679e23faff0b2d86b9374de6",
+    "workers/pilot/wrangler.jsonc": "57db326c4ca490b494ced053d132ae5cc7a8205d21acbe716e9e8ea3ed681e81",
+    "workers/production/wrangler.jsonc": "95dcf010a3134469565dae957597233dc463ba5aa0deddc921cdec6dd17b22fb",
+    "workers/trial-ui/accounts.js": "8422588e6a2246b5508caa3c708e0602156a875aa5b77e490ef2aa2c16691d0b",
+    "workers/trial-ui/chat.js": "72954c2ce4a45ae832ab997530587378d0258ed86237d72302993cf2051d2114",
+    "workers/trial-ui/files.js": "3a201ab82ffc6e3ac7d950f372fc65b244cc3241e2c20b40b040e4865ec3c1d7",
+    "workers/trial-ui/page.html": "ee4877d4e9b15fe99389f30ae2ed690077f8a0b3528a026a4a5ff58fc30fbd9b",
+    "workers/trial-ui/share-select.js": "65cc42d1447b3c57a7eb93dc738bd943ebb1bab8539c7159b77837b698fb9e34",
+    "workers/trial-ui/spaces.js": "47bd066ad659af35a708ca9f07841ed962f33c8e8c0d4cdfc52d8f3c5bde521f",
+    "workers/accounts/entitlements.mjs": "d8edd69762bd6051e3676744f529ba4cd1c80fb3f3c561defa52a7350b0f20ad",
+    "workers/accounts/guide-drafts.mjs": "838f77977e412f36944308943f483927d0296a8cea7c62f2c491c92ab152b067",
+    "workers/accounts/operations.mjs": "74a43c3e6056b2528c63f989c5a6cb642be07b9fced1bd55f086806d20659766",
+    "workers/accounts/restored-ui.mjs": "fd1ece540fb5cbb800c5e3d5303f67e0a0ac9775d83ea1fb53708a60ef0c2bc3",
+    "workers/accounts/support-escalation.mjs": "9e9bb16f2187f57f374609fbb27f30248a1b901ed00d201de56f7761268c23e5",
+    "workers/orivia-chat-stream.mjs": "21034467fd46b10f2758191e1f8c7dfa5b0c1d36db398735e1b6d7d38722860d",
+    "workers/orivia-profile-sharing.mjs": "419fff8513bb9f3d8534f3020dc0fbded7a56ab16aeaf60ea5638539db42611f",
+    "workers/trial-ui/image-review.js": "16c0fc8b1982b388936fe13547b59b60529372bc5dd7d6930e72807263f012c4",
+    "workers/trial-ui/response-diagnostics.js": "c149de493c7b00bc3e808c30f39eb734825763fb611e0a5e9948fa3fb79fd8be",
+    "workers/trial-ui/support.js": "d469d2006f1416ce1b618e32c16c00ba9952e80e1fa416c723413916143f2964"
+  }
+}

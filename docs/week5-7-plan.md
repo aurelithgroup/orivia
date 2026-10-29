@@ -116,6 +116,18 @@ These must work in this release. They aren't dashboards.
 
 ## Week 7: finishing (9 – 13 Nov)
 
+**University-story foundations (29 Oct): Ina's block one (`240f2f7`) brought in locally**, merged per file against its parent `f6e7fc3`. It covers:
+- partner invitations and onboarding review;
+- university support tickets, with separate permission before anything is forwarded to platform support;
+- guide drafts from public URLs or institution documents, for staff review;
+- ordered process templates and the source registry;
+- free, Plus and Premium allowances (no billing; off by default);
+- in-app data requests;
+- response timings kept on the device;
+- device photo review.
+
+Conflicts in four files were resolved: the assistant, `chat.js`, `page.html` (this branch's UX-005 rules kept) and the trial worker (rebuilt). Two config files gain `enable_request_signal`, which takes effect only on a deploy after the hold. 132/132 local CI pass. **Not yet checked:** the university screens in the harness, visual review, and any live check. **Not taken:** the founder workflows, sponsorship placements and Journey governance (later Ina commits). Sharjah coverage stays outstanding.
+
 **Mon 9 – Tue 10 Nov: last features**
 
 | Area | Work |

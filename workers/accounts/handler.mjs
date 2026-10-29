@@ -1,3 +1,4 @@
+import {accountPlan,ensureEntitlements} from './entitlements.mjs';
 import {handleNotificationRequest} from './notifications.mjs';
 export {runNotificationTick} from './notifications.mjs';
 import {accountTestPage,mountAccountTest} from './test-entry.mjs';
@@ -48,9 +49,10 @@ export async function handleAccountRequest(req,env,ctx,options={}){
    if(req.method==='POST'){const body=await boundedJson(req,4096);if(!body)return json({error:'invalid_request'},400);
     if(path==='/sign-in/social'&&(!['google','apple'].includes(body.provider)||!c[body.provider]||body.callbackURL!==c.origin+appHome(env)))return json({error:'provider_unavailable'},400);
     if(path==='/update-user'&&(Object.keys(body).some(k=>k!=='name')||typeof body.name!=='string'||!body.name.trim()||body.name.length>60))return json({error:'invalid_name'},400);
-    return await auth.handler(new Request(req,{body:JSON.stringify(body)}));}return await auth.handler(req);}
+    if(path==='/email-otp/send-verification-otp'){const attempt=crypto.randomUUID(),headers=new Headers(req.headers);headers.set('X-Orivia-Mail-Attempt',attempt);let result;try{result=await auth.handler(new Request(req,{headers,body:JSON.stringify(body)}))}finally{if(!result)auth.consumeDeliveryOutcome?.(attempt)}const delivery=auth.consumeDeliveryOutcome?.(attempt);if(result.ok&&typeof auth.consumeDeliveryOutcome==='function'&&delivery!=='accepted')return json({error:'email_unavailable'},503);return result}return await auth.handler(new Request(req,{body:JSON.stringify(body)}));}return await auth.handler(req);}
   const session=await auth.api.getSession({headers:req.headers});if(!session?.user?.id)return json({error:'sign_in_required'},401);const owner=session.user.id;
   const expected=req.headers.get('X-Orivia-Account');if(url.pathname!=='/api/account/session'&&expected&&expected!==owner)return json({error:'account_changed'},409);
+  if(url.pathname==='/api/account/plan'&&req.method==='GET'){const p=await accountPlan(env,owner);let usedToday=null;if(p.active){await ensureEntitlements(env);const r=await env.ACCOUNTS_DB.prepare('SELECT day,count FROM account_plan_usage WHERE user_id=?').bind(owner).first();usedToday=r?.day===new Date().toISOString().slice(0,10)?r.count:0}return json({...p,usedToday})}
   if((req.method==='PUT'||url.pathname.startsWith('/api/account/notifications')&&!['GET','HEAD'].includes(req.method))&&!expected)return json({error:'account_header_required'},428);
   if(url.pathname.startsWith('/api/account/notifications'))return await handleNotificationRequest(req,env,{session,readJson:boundedJson});
   if(filesRoute(url.pathname))return await handleFileRequest(req,env,{owner,expected,json,readJson:boundedJson});

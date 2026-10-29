@@ -15,6 +15,7 @@ assert.equal((await run('alice','/api/account/notifications/subscription','POST'
 let events=[{id:'reminder',title:'Never show this private title on a lock screen',at:new Date(stamp+120000).toISOString(),alarm:0}];sql.prepare('INSERT INTO account_vault VALUES (?,1,?,?)').run('alice',JSON.stringify({events}),iso);
 sql.prepare('INSERT INTO organisations VALUES (?,?,?,?,?,?,?,?)').run('org','northbay','Northbay','Dubai',1,'active','alice',stamp);
 sql.prepare('INSERT INTO organisation_memberships VALUES (?,?,?,?,?,?,?,?)').run('org','alice','student','requested',null,'request',stamp,stamp);
+sql.exec('CREATE TABLE organisation_settings(org_id TEXT PRIMARY KEY,data TEXT)');sql.prepare('INSERT INTO organisation_settings VALUES (?,?)').run('org',JSON.stringify({alerts:{updates:true,dates:false}}));
 let sends=0;const fetcher=async(url,opts)=>{sends++;assert.equal(url,sub.endpoint);assert.equal(opts.redirect,'manual','Workers reject redirect:error before sending (founder test 22 Oct)');assert.ok(opts.headers.Authorization||opts.headers.authorization);assert.ok(opts.body.byteLength>100,'real encrypted RFC8291 payload');assert.ok(!Buffer.from(opts.body).toString().includes(events[0].title),'payload is encrypted');return new Response(null,{status:201})};
 await runNotificationTick(env,{now:()=>stamp,fetcher});assert.equal(sends,0,'not due and not approved');
 stamp+=180000;sql.prepare("UPDATE organisation_memberships SET status='active',updated_at=?").run(stamp);

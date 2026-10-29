@@ -1,3 +1,5 @@
+import {sharedProfile,FAMILY_PRIVACY_GUIDANCE,institutionEvidence} from './orivia-profile-sharing.mjs';
+import {fetchTargets} from './orivia-fetch-targets.mjs';
 /* Orivia assistant: private pilot only (consent openai-assistant-pilot-v3). The model leads the whole conversation.
  * Each turn the model reads the chat, the task memory and the evidence so far, then either answers, asks one question, or
  * calls tools. Code supplies the tools (bounded search, page reading, the official SPEA directory feed), keeps an evidence
@@ -454,7 +456,7 @@ export function cleanMemory(m){
 }
 
 /* ---------- The model's instructions ---------- */
-const SYSTEM=`You are Orivia, a practical, warm assistant for people living in, moving to or preparing to move to the UAE or the UK.
+const SYSTEM=FAMILY_PRIVACY_GUIDANCE+'\n'+`You are Orivia, a practical, warm assistant for people living in, moving to or preparing to move to the UAE or the UK.
 People ask in their own words, often informally, with typos or frustration. Work out what they actually need, do the research, explain what applies to them in plain words, and help them take the next step. Explain abbreviations (for example SPEA = Sharjah Private Education Authority, the regulator for private schools in Sharjah).
 
 You work in steps. Each step, return ONE JSON object and nothing else:
@@ -618,13 +620,13 @@ export function incompleteReply(done,memory,ledger,{metrics,language='en'}={}){
 }
 /** Run one assistant turn. ai: the pilot transport (json mode). Returns the chat reply object, or null (caller falls back). */
 export async function runAssistantTurn({messages,profile=null,context=null,localNow=null,orgContext=null,documents=null,document=null,calendarChangeUI=false,replyLanguage='en'},env,{ai,fetcher=fetch,reserve,now=()=>new Date(),maxCalls=12,onProgress=null,signal}={}){
- // Stop (Ina 240f2f7): the person's cancellation reaches every page fetch, search and model call of this turn.
- const originalFetch=fetcher;fetcher=(url,options={})=>originalFetch(url,{...options,...(signal?{signal:options.signal?AbortSignal.any([signal,options.signal]):signal}:{})});
+ profile=sharedProfile(profile);const originalFetch=fetcher;fetcher=(url,options={})=>originalFetch(url,{...options,...(signal?{signal:options.signal?AbortSignal.any([signal,options.signal]):signal}:{})});
  // Progress for the chat: written by code from what is actually happening (never the model's private reasoning).
  const report=t=>{try{onProgress&&onProgress(t)}catch(_){}};
  if(!ai?.run)return null;
  const started=Date.now();
  const memory=cleanMemory(context?.task?.assistant);
+ if(orgContext)orgContext={...orgContext,body:institutionEvidence(orgContext)};
  const msgs=(Array.isArray(messages)?messages:[]).filter(m=>m&&['user','assistant'].includes(m.role)).slice(-12).map(m=>({role:m.role,content:clip(m.content,1200)}));
  // Names the person mentioned never leave in a search query (ORI-AI-009).
  const personNames=conversationNames(messages,profile);

@@ -126,7 +126,7 @@
     if(leave.dataset.sure!=='1'){leave.dataset.sure='1';leave.textContent=t('Tap again to leave');return}
     leave.disabled=true;try{await post('/api/me/orgs/'+encodeURIComponent(m.organisationId)+'/leave',id,{confirm:'leave'});if(!current(id,g))return;window.OriviaChat?.clearOrgContextFor?.(m.organisationId);close();leaveAddress();refresh()}
     catch(_){leave.disabled=false;leave.dataset.sure='';leave.textContent='Leave '+m.name;leaveMsg.textContent=t('Couldn’t leave. If you’re this organisation’s only admin, hand over to another admin first; otherwise try again.')}};
-   out.push(leaveNote,leave,leaveMsg);body.replaceChildren(...out);
+   const support=node('section','card');out.push(support,leaveNote,leave,leaveMsg);body.replaceChildren(...out);if(window.OriviaSupport)void window.OriviaSupport.mount(support,m.organisationId,id,{isCurrent:()=>current(id,g)});
   }catch(_){if(current(id,g))body.replaceChildren(node('p','notice','This space couldn’t be opened. Your access may have changed. Close it and refresh your spaces.'));}
  }
  async function refresh(){
@@ -136,7 +136,7 @@
    const out=[];for(const m of d.memberships||[]){if(m.status==='active')out.push(m.role==='student'?card(m.name,'Guides, dates and contacts',()=>openSpace(m)):management(m.name+' · '+t(m.role==='admin'?'Admin':'Editor'),'/platform?org='+encodeURIComponent(m.organisationId)));else if(m.status==='requested'){const p=node('div','dashboard-card');p.append(node('strong','',m.name,true),node('small','','Waiting for approval'));out.push(p)}}
    if((d.platformRoles||[]).includes('owner'))out.push(management('Orivia management','/manage'));
    if(!out.length)out.push(node('p','tiny','No organisations connected yet. An invitation adds one after staff approval.'));
-   const join=node('a','ask','Join or manage your spaces →');join.href='/platform';out.push(join);list.replaceChildren(...out);
+   const join=node('a','ask','Join or manage your spaces →');join.href='/platform';out.push(join);list.replaceChildren(...out);try{const notices=await get('/api/me/notices',id);if(!current(id,g))return;for(const n of notices.notices||[]){const card=node('section','card');card.append(node('strong','',n.title,true),node('p','',n.message,true));list.append(card)}}catch(_){}
   }catch(_){if(current(id,g)){list.replaceChildren(node('p','tiny','Your spaces couldn’t be loaded. Try again when you’re connected.'));const b=node('button','btn quiet small','Try again');b.type='button';b.onclick=refresh;list.append(b)}}
  }
  function closeByUser(){close();leaveAddress()}
