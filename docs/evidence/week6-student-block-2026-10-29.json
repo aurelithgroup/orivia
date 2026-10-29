@@ -1,0 +1,50 @@
+{
+ "block": "Week 6 student story (local)",
+ "sourceCommit": "2cf3864cf91dce8b21ebd350d790efa1504256a9",
+ "note": "CI ran on the working tree that was then committed unchanged as this commit (git status clean afterwards apart from untracked .claude/ and .wrangler/).",
+ "ci": {
+  "ranAt": "2026-10-29T06:46:22.716Z",
+  "total": 129,
+  "failed": 0,
+  "newSuites": [
+   {
+    "command": "node tests/family-overview.test.mjs",
+    "status": "pass"
+   },
+   {
+    "command": "node tests/deadline-reminders.test.mjs",
+    "status": "pass"
+   },
+   {
+    "command": "node tests/uk-guides.test.mjs",
+    "status": "pass"
+   },
+   {
+    "command": "node tests/docs-before-guide.test.mjs",
+    "status": "pass"
+   }
+  ]
+ },
+ "localHarness": {
+  "checkedAt": "2026-10-29, between 06:30 and 06:43 UTC",
+  "server": "tools/browser-checks/app-harness.mjs (guest mode, no AI, no accounts)",
+  "results": [
+   "Library lists 34 guides; every card shows its scope (Dubai only / Applies across the UK / Scotland only / Edinburgh only / Moving from the UK to the UAE) and \"Sources checked <date>\"; the word \"Reviewed\" appears nowhere",
+   "dubai.docs.before opens, can be followed (4 steps saved), shows \"Moving from the UK to the UAE\" in its header, lists its \"what you’ll need\" items as preparation ticks, and shows the deadline editor",
+   "Only console error: 503 from /api/account/session (the harness has no accounts; expected)"
+  ]
+ },
+ "notChecked": [
+  "Live pilot or production (deployment hold)",
+  "Real model behaviour (no provider calls)",
+  "Screenshots of the new guide (the screenshot timed out; page text and DOM were read instead)"
+ ],
+ "review": {
+  "status": "awaiting review",
+  "reviewRecords": 0,
+  "material": [
+   "docs/journey-review-pack-2026-10-28.md",
+   "docs/translations-for-review-2026-10-29.md"
+  ]
+ }
+}
