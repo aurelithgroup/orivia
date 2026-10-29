@@ -2,7 +2,7 @@
 
 **Status: awaiting language review.** I wrote these translations; nobody has checked them yet. They're used in the trial app's interface (`workers/trial-ui/translations.json`).
 
-Generated from `translations.json`: every key added after batch 1 (`c42dea0`), **38 strings**. Please correct them in place, or note changes here.
+Generated from `translations.json`: every key added after batch 1 (`c42dea0`), **38 strings**. Please correct them in place, or note changes here. ("Reviewed by" is now "Relu par", after Ina's review.)
 
 | English | French | Arabic |
 |---|---|---|
@@ -39,9 +39,9 @@ Generated from `translations.json`: every key added after batch 1 (`c42dea0`), *
 | Moving from the UK to the UAE | Départ du Royaume-Uni vers les Émirats | الانتقال من المملكة المتحدة إلى الإمارات |
 | Sources partly checked | Sources vérifiées en partie le | تم التحقق جزئياً من المصادر في |
 | Source check not recorded | Vérification des sources non enregistrée | لم يُسجَّل التحقق من المصادر |
-| Reviewed by | Vérifié par | راجعه |
-| A review covers this version of the guide, not a live check of every detail. | Une vérification porte sur cette version du guide, pas sur chaque détail en direct. | تشمل المراجعة هذه النسخة من الدليل، لا تحققاً مباشراً من كل تفصيل. |
-| Awaiting review: no one has reviewed this guide yet. Check fees, documents and deadlines with the official source. | En attente de vérification : personne n’a encore vérifié ce guide. Vérifiez les frais, documents et délais auprès de la source officielle. | بانتظار المراجعة: لم يراجع أحد هذا الدليل بعد. تحقّق من الرسوم والمستندات والمواعيد لدى المصدر الرسمي. |
+| Reviewed by | Relu par | راجعه |
+| A review covers this version of the guide, not a live check of every detail. | Une relecture porte sur cette version du guide ; ce n’est pas une vérification en direct de chaque détail. | تشمل المراجعة هذه النسخة من الدليل، لا تحققاً مباشراً من كل تفصيل. |
+| Awaiting review: no one has reviewed this guide yet. Check fees, documents and deadlines with the official source. | En attente de relecture : personne n’a encore relu ce guide. Vérifiez les frais, les documents et les délais auprès de la source officielle. | بانتظار المراجعة: لم يراجع أحد هذا الدليل بعد. تحقّق من الرسوم والمستندات والمواعيد لدى المصدر الرسمي. |
 | Scotland · some details are for Edinburgh (NHS Lothian) | Écosse · certains détails concernent Édimbourg (NHS Lothian) | اسكتلندا · بعض التفاصيل خاصة بإدنبرة (NHS Lothian) |
 | Across the UK · eligibility depends on the bank and on you | Tout le Royaume-Uni · l’éligibilité dépend de la banque et de vous | كل أنحاء المملكة المتحدة · الأهلية تعتمد على البنك وعليك |
 
@@ -49,6 +49,7 @@ Generated from `translations.json`: every key added after batch 1 (`c42dea0`), *
 
 These are in the journey files, not in `translations.json`:
 
-- `js/content-docs.js`: the whole **before-you-move document guide** (titles, steps, items, problems, source names). It's a first draft.
+- `js/content-docs.js`: the whole **before-you-move document guide** (titles, steps, items, problems, source names). It's a first draft, revised after Ina's review so the three terms stay distinct: الأبوستيل (UK legalisation), الاعتماد من وزارة الخارجية الإماراتية (UAE attestation), الاعتراف بالمؤهل (recognition).
+- `js/content-edinburgh.js` (bank guide): the corrected FSCS line (eligible deposits, shared banking licences).
 - `js/content.js`: two new source names on the student visa journey (u.ae pages).
 - `js/content-edinburgh.js`: the GOV.UK police-registration source name, the updated police answer (4 August 2022), the two corrected dental lines in the GP guide, and the gov.scot dental-charges source name.

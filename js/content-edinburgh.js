@@ -429,7 +429,7 @@ DATA.journeys['edinburgh.bank'] = base({
       {t:'list', v:[
         {en:'International students usually get a basic current account, with no overdraft.', ar:'عادةً يحصل الطلاب الدوليون على حساب جارٍ أساسي بلا سحب على المكشوف.'},
         {en:'Some banks work entirely in an app. Each bank has its own rules, so check theirs before you apply.', ar:'بعض البنوك تعمل بالكامل عبر تطبيق، ولكل بنك شروطه، فراجعها قبل التقديم.'},
-        {en:'Money in a UK bank is protected up to £120,000 per person, per bank, by the FSCS.', ar:'الأموال في البنوك البريطانية محمية حتى 120,000 جنيه لكل شخص في كل بنك، عبر نظام FSCS.'},
+        {en:'The FSCS protects eligible deposits up to £120,000 per eligible person, per bank, building society or credit union. Banks in the same group that share a banking licence count as one bank, so the limit covers your total across them.', ar:'يحمي نظام FSCS الودائع المؤهلة حتى 120,000 جنيه لكل شخص مؤهل، لدى كل بنك أو جمعية بناء أو اتحاد ائتماني. وتُعدّ البنوك التابعة لمجموعة واحدة وتتشارك ترخيصاً مصرفياً واحداً بنكاً واحداً، فيشمل الحد مجموع أموالك لديها.'},
       ]},
      ]},
     {id:'open', level:'source', label:{en:'Open it', ar:'افتح الحساب'}, title:{en:'Open your account', ar:'افتح حسابك'}, help:['refused','staff','else'],

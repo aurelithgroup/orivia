@@ -41,3 +41,8 @@ const sum=progressSummary('dubai.eid.student',{permit:'done',arrive:'not_applica
 assert.ok(STEP_STATUSES.every(s=>s==='waiting'||P.STATES.includes(s)),'server and app agree on the states');
 const eid=guideContent('dubai.eid.student');assert.ok(eid.steps.every(s=>!s.statuses.includes('waiting')),'the older state is never offered');
 console.log('Plan steps: eight states with Ready derived, ordered blockers and next step, blocked notes, history with source, Undo of the last change only, server agreement: pass.');
+
+// Undo must restore the prior blocked note, including edits to a note without changing state.
+let notes=P.change({},'medical','blocked',1,'Awaiting clinic');notes=P.change(notes,'medical','done',2);notes=P.undo(notes).entry;assert.equal(notes.notes.medical,'Awaiting clinic');assert.equal(notes.stepStatus.medical,'blocked');
+notes=P.change(notes,'medical','blocked',3,'Awaiting sponsor');notes=P.undo(notes).entry;assert.equal(notes.notes.medical,'Awaiting clinic');
+const conflict=P.change(notes,'medical','blocked',4,'New note');conflict.notes.medical='Changed elsewhere';assert.equal(P.undo(conflict),null,'a concurrent note change is never overwritten');

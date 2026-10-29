@@ -59,7 +59,7 @@ assert.equal(kind(dubaiTrip), 'offer:dubai.nol');
 const sharjahTrip = [u('How do I get to Heriot-Watt from Al Nahda, Sharjah?'), a('What matters most for this trip: time, cost or reliability?'), u('time'), a('Open the buttons below'), u('public transport it is')];
 const s = offer(sharjahTrip);
 assert.equal(s.offer, null, 'no Dubai guide for a Sharjah–Dubai commute');
-assert.match(s.context, /inside Dubai only/); assert.match(s.context, /no checked guide yet/);
+assert.match(s.context, /inside Dubai only/); assert.match(s.context, /no Orivia guide yet/);
 assert.equal(kind([u("I'm gonna take public transport")]), null, 'wait until the route is known');
 assert.equal(kind([u("I'm gonna take the bus")], undefined, { city: 'Sharjah' }), null);
 

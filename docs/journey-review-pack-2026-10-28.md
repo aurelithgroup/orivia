@@ -119,7 +119,7 @@ Pages were fetched on 29 Oct, about 07:05–07:20 UTC. Each guide below now has 
 
 | Claim | Type | Source checked | Result |
 |---|---|---|---|
-| Money in a UK bank is protected up to £120,000 per person, per bank, by the FSCS | UK-wide | FSCS: "£120,000 per person per firm" (from December 2025) | **Supported.** FSCS says "per firm": one firm can own several banks; worth wording carefully |
+| Money in a UK bank is protected up to £120,000 per person, per bank, by the FSCS | UK-wide | FSCS, *Banks and building societies*: £120,000 per eligible person, per bank, building society or credit union (failures after 30 Nov 2025); banks sharing a banking licence count as one; joint accounts share the limit | **Corrected after Ina's review.** The line now says eligible deposits, and that banks sharing a licence count as one. (My earlier "per firm" note was wrong.) |
 | Which bank will open an account, and what ID and address proof it accepts | **Depends on the bank and the applicant** | Not a single official rule | The guide must say "ask the bank". **App label:** "Across the UK · eligibility depends on the bank and on you" |
 
 ### `edinburgh.rent` (Scotland)
@@ -166,6 +166,24 @@ Pages were fetched on 29 Oct, about 07:05–07:20 UTC. Each guide below now has 
   - `edinburgh.gp` dental correction and source;
   - the new `dubai.docs.before`.
 - **Deployed?** Nothing was deployed, so no live user saw the corruption.
+
+## 9. Fixed after Ina's review of `6fddbd2` (29 Oct)
+
+Regression cases for her exact examples are in `tests/ina-review-week6.test.mjs`.
+
+| Ina's finding | Fix |
+|---|---|
+| "GP guide" in Manchester gave Scotland's guide; "I got a council tax bill" gave Edinburgh's | Problem and refresher requests now pass the same place check as offers. The exception is a guide the person already follows or saved themselves |
+| "I moved from Dubai to London" offered the UK-to-UAE documents guide | The direction is read from "from X to Y" in the person's words, or from their profile ("moved from" the UK and living in or moving to the UAE). Mentioning both places isn't enough |
+| The assistant was told it was presenting a "checked guide" | The guide card now gives the real status, for example "awaiting review; sources partly checked 2026-10-29", and says never to call a guide checked, verified or reviewed unless that status says so |
+| Changing or removing a deadline left its old calendar reminder; a change of certainty kept an old "Deadline" reminder | A new date, a change of certainty or removing the date now removes the linked reminder (`staleReminder`). Editing only the note keeps it |
+| Undo after leaving Blocked lost the blocked note | Your fix from `07fe82d` (`fromNote`/`toNote` on history; Undo restores the note, and refuses if it changed since) merged into `plan-steps.js`, with your test lines |
+| Bank protection wording | Now says eligible deposits, and that banks sharing a licence count as one bank |
+| Apostille eligibility and the receiving organisation's requirements | UK-issued documents only; which documents qualify as they are and which need a notary or solicitor first; which can't get an e-Apostille; and asking the requester about paper or e-Apostille, one apostille or several, and originals or certified copies |
+| French "Reviewed by" | Now "Relu par". The related sentences use relecture (editorial review) rather than vérification |
+| Arabic terms | Kept distinct throughout the documents guide: الأبوستيل (UK legalisation), الاعتماد من وزارة الخارجية الإماراتية (UAE attestation), الاعتراف بالمؤهل (qualification recognition) |
+
+Still the case: **no guide review records exist.** The remaining source checks and visual review are pending.
 
 ## How to record your review (when you're satisfied)
 

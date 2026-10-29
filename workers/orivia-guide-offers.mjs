@@ -1,6 +1,6 @@
 import {guideReview} from './orivia-guide-reviews.mjs';
 import {sourceCheck} from './guide-source-checks.mjs';
-/* Journey cards: when something the person decides makes a checked guide genuinely useful,
+/* Journey cards: when something the person decides makes a guide genuinely useful,
  * Orivia offers it under her reply (Follow guide / Save for later / Not now).
  * One pattern for every journey: add a guide to GUIDES with what counts as a decision,
  * a refresher request, or a known problem, plus any limit on where it applies.
@@ -30,7 +30,7 @@ export const GUIDES={
   applies:({trip,profile,thread})=>{
    const places=[trip?.origin,trip?.dest?.address||trip?.dest?.name].filter(Boolean).join(' | ');
    const all=places+' | '+thread+' | '+(profile?.city||'');
-   if(NOT_DUBAI.test(places)||NOT_DUBAI.test(thread)||(!trip?.origin&&NOT_DUBAI.test(String(profile?.city||''))))return {ok:false,note:'The person plans to use public transport for a trip that involves somewhere outside Dubai ('+(places||'another emirate')+'). Orivia’s checked public transport guide covers nol cards, the Metro and buses inside Dubai only, and there is no checked guide yet for travelling between Sharjah or another emirate and Dubai. If it helps, say that honestly in one sentence and suggest checking the route in Google Maps; do not claim the Dubai guide covers their whole journey.'};
+   if(NOT_DUBAI.test(places)||NOT_DUBAI.test(thread)||(!trip?.origin&&NOT_DUBAI.test(String(profile?.city||''))))return {ok:false,note:'The person plans to use public transport for a trip that involves somewhere outside Dubai ('+(places||'another emirate')+'). Orivia’s public transport guide (awaiting review) covers nol cards, the Metro and buses inside Dubai only, and there is no Orivia guide yet for travelling between Sharjah or another emirate and Dubai. If it helps, say that honestly in one sentence and suggest checking the route in Google Maps; do not claim the Dubai guide covers their whole journey.'};
    if(trip?.active&&trip.ready)return DUBAI.test(trip.origin||'')&&DUBAI.test(trip.dest?.address||trip.dest?.name||'')?{ok:true}:{ok:false};
    if(/\b(metro|tram)\b/i.test(thread)||DUBAI.test(all))return {ok:true}; // the Metro and tram only run in Dubai
    return {ok:false};
@@ -57,7 +57,7 @@ export const GUIDES={
   decision:/\b(?:i'?ll|i will|i need to|i have to|i'?m (?:gonna|going to)|gonna|i want to|how do i|help me)\b.{0,40}\b(?:attest\w*|apostille|legali[sz]\w*|get my (?:documents|certificates|degree|papers) ready|prepare my (?:documents|papers))\b/i,
   refresher:/\b(?:documents? (?:guide|checklist)|before you move guide)\b/i,
   problems:[['recognition',/\b(?:recogni[sz]\w*|equivalen\w*) (?:of )?my degree\b|\bdegree (?:recognition|equivalency)\b/i]],
-  applies:({profile,thread})=>{const t=[profile?.city,profile?.movedFrom,profile?.movingTo,thread].filter(Boolean).join(' | ');return UK_PLACE.test(t)&&/\b(uae|emirates|dubai|abu dhabi|sharjah|ajman)\b/i.test(t)?{ok:true}:{ok:false}}
+  applies:({profile,thread})=>movingUkToUae(profile,thread)?{ok:true}:{ok:false}
  },
  /* UK guides (week 6, 29 Oct): offered only where they apply (guideScope). */
  'edinburgh.evisa':{
@@ -88,13 +88,24 @@ const UK_PLACE=/\b(uk|u\.k\.|united kingdom|britain|england|scotland|wales|north
 const SCOT_PLACE=/\b(scotland|scottish|edinburgh|glasgow|aberdeen|dundee|inverness|stirling|st andrews)\b/i;
 const OTHER_UK=/\b(england|wales|northern ireland|london|manchester|birmingham|leeds|liverpool|bristol|sheffield|newcastle|nottingham|leicester|oxford|cambridge|cardiff|swansea|belfast)\b/i;
 const EDINBURGH=/\bedinburgh\b/i;
+/* Move direction (Ina's review, 29 Oct): mentioning both places isn't enough ("I moved from Dubai to London").
+   The person's own "from <UK place> to <UAE place>" decides; a "from <UAE> to <UK>" rules it out; otherwise their
+   profile must say they moved from the UK and live in, or are moving to, the UAE. */
+const UAE_PLACE=/\b(uae|emirates|dubai|abu dhabi|sharjah|ajman|ras al khaimah|fujairah|umm al quwain)\b/i;
+function movingUkToUae(profile,thread){
+ let verdict=null;
+ for(const m of String(thread||'').matchAll(/\bfrom\s+(?:the\s+)?([^.,;!?|]{2,40}?)\s+to\s+(?:the\s+)?([^.,;!?|]{2,40})/gi)){
+  if(UK_PLACE.test(m[1])&&UAE_PLACE.test(m[2]))verdict=true;else if(UAE_PLACE.test(m[1])&&UK_PLACE.test(m[2]))verdict=false}
+ if(verdict!==null)return verdict;
+ return UK_PLACE.test(String(profile?.movedFrom||''))&&UAE_PLACE.test(String(profile?.movingTo||profile?.city||''));
+}
 function inScope(level,{profile,thread},what){
  const home=String(profile?.city||profile?.movingTo||''),where=home+' | '+String(thread||'');
  if(level==='uk')return UK_PLACE.test(where)?{ok:true}:{ok:false};
  const place=level==='scotland'?SCOT_PLACE:EDINBURGH,name=level==='scotland'?'Scotland':'Edinburgh';
  const elsewhere=OTHER_UK.test(home)||(!place.test(home)&&OTHER_UK.test(where))||(level==='edinburgh'&&SCOT_PLACE.test(home)&&!EDINBURGH.test(home));
  if(place.test(where)&&!elsewhere)return {ok:true};
- return {ok:false,note:elsewhere?'JOURNEYS: Orivia’s checked '+what+' guide covers '+name+' only, and the person seems to be somewhere else in the UK. Don’t offer it; answer from official pages for where they are.':''};
+ return {ok:false,note:elsewhere?'JOURNEYS: Orivia’s '+what+' guide covers '+name+' only, and the person seems to be somewhere else in the UK. Don’t offer it; answer from official pages for where they are.':''};
 }
 
 const ID=/^[a-z]+(?:\.[a-z]+){1,3}$/;
@@ -146,8 +157,16 @@ export function guideOffer(messages,{trip,profile,prefs}={}){
  for(const [id,g] of Object.entries(GUIDES)){
   if(pick)break;
   const problem=g.problems.find(([,re])=>re.test(latest));
-  if(problem){pick={id,kind:'problem',problemId:problem[0]};break}
-  if(g.refresher.test(latest)){pick={id,kind:'refresher',progress:true};break}
+  if(problem||g.refresher.test(latest)){
+   /* Ina's review (29 Oct): a problem or refresher request must also pass the place check ("GP guide" in Manchester,
+      "I got a council tax bill" outside Edinburgh), unless the person already follows or saved this guide themselves. */
+   const own=['following','saved','paused','done'].some(k=>state[k].includes(id));
+   // Refused when something says the person is elsewhere (a note), or when a UK / UK-to-UAE guide's place can't be
+   // confirmed. A Dubai-only guide asked for by name ("how does the nol card work again?") with nothing pointing
+   // elsewhere still comes back: nol, the Metro and the tram exist only in Dubai.
+   if(!own){const fit=g.applies({trip,profile,thread}),sc=guideScope(id);if(!fit.ok&&(fit.note||sc?.country==='uk'||sc?.level==='uk-to-uae')){if(fit.note)context=fit.note;continue}}
+   pick=problem?{id,kind:'problem',problemId:problem[0]}:{id,kind:'refresher',progress:true};break;
+  }
   /* A decision anywhere in the recent conversation counts, so the card can appear once the route is known */
   if(users.slice(-6).some(u=>g.decision.test(u))){
    const fit=g.applies({trip,profile,thread});
@@ -164,8 +183,8 @@ export function guideOffer(messages,{trip,profile,prefs}={}){
  const offer={id:j.id,kind:pick.kind,title:j.title,summary:g.summary,sourceCheck:sourceCheck(j.id),steps:j.steps.length,checkedAt:d.verifiedOn,fresh:d.fresh,
   status:state.following.includes(j.id)?'active':state.paused.includes(j.id)?'paused':state.saved.includes(j.id)?'saved':state.done.includes(j.id)?'done':null,
   ...(p?{problem:(({id,question,answer})=>({id,question,answer}))(problemHelp(p))}:{})};
- const what={offer:'offering it, with Follow guide, Save for later and Not now',refresher:'bringing the guide back for them',problem:'showing the checked answer for “'+(p?.question||'')+'” from that guide'}[pick.kind];
- context='GUIDE CARD: Under your reply, Orivia shows a card for the checked guide “'+j.title+'”, '+what+'. Mention it in one short, natural sentence (for example “I’ve put a step-by-step guide below if you’d like help getting set up”). Do not list its steps, prices or rules yourself.';
+ const what={offer:'offering it, with Follow guide, Save for later and Not now',refresher:'bringing the guide back for them',problem:'showing the guide’s answer for “'+(p?.question||'')+'”'}[pick.kind];
+ context='GUIDE CARD: Under your reply, Orivia shows a card for the guide “'+j.title+'” ('+guideStatusText(j.id)+'), '+what+'. Never call it checked, verified or reviewed unless that status says so. Mention it in one short, natural sentence (for example “I’ve put a step-by-step guide below if you’d like help getting set up”). Do not list its steps, prices or rules yourself.';
  if(pick.progress&&state.progress[j.id])context+='\n'+progressSummary(j.id,state.progress[j.id]);
  return {offer,context};
 }
@@ -204,6 +223,9 @@ const SPECIAL_SCOPE={'dubai.docs.before':'uk-to-uae'};
 // Broad rules vs local examples (founder, 29 Oct): the GP guide's rules are Scotland-wide but some instructions are
 // NHS Lothian's (Edinburgh); bank protection is UK-wide but eligibility depends on the bank and the applicant.
 const SCOPE_DETAIL={'edinburgh.gp':'Scotland · some details are for Edinburgh (NHS Lothian)','edinburgh.bank':'Across the UK · eligibility depends on the bank and on you'};
+/* What the assistant may say about a guide's status (Ina's review, 29 Oct): never "checked" without a record. */
+function guideStatusText(id){const c=sourceCheck(id),rv=guideContent(id)?.review;
+ return (rv?.status==='reviewed'?'reviewed by '+rv.reviewer+' on '+rv.checkedAt:'awaiting review')+'; '+(c?(c.coverage==='full'?'sources checked ':'sources partly checked ')+c.date:'source check not recorded')}
 export function guideScope(id){const s=SPECIAL_SCOPE[id]||(/^dubai\./.test(String(id))?'dubai':UK_SCOPE[id]||null);return s?{level:s,country:s==='dubai'||s==='uk-to-uae'?'uae':'uk',label:SCOPE_DETAIL[id]||SCOPE_LABEL[s]}:null}
 export function guideCatalogue(city='dubai'){
  if(city==='all')return [...guideCatalogue('dubai'),...guideCatalogue('edinburgh')];

@@ -1857,7 +1857,8 @@ async function openGuide(id,opts={}){
    if(cur==='not_applicable')box.append(el('p','hint',uiText('Skipped as not applicable to you. Later steps no longer wait for it.')));
    // Deadline (week 6): the person's own date for this step, confirmed or not sure yet, and a reminder only if they ask.
    {const today=new Date().toLocaleDateString('en-CA'),dl=PLAN.normEntry(mine).deadlines?.[s.id],dbox=el('div','plan-deadline');dbox.append(el('h4','',uiText('Deadline')));
-    const saveDeadlines=e=>{store({deadlines:e.deadlines});opts.keepScroll=true;draw()};
+    // A change that no longer matches the linked calendar reminder removes that reminder too (Ina's review, 29 Oct).
+    const saveDeadlines=e=>{const stale=PLAN.staleReminder(readJourneys()[id],e,s.id);if(stale&&events.some(ev=>ev.id===stale))removeEvent(stale);store({deadlines:e.deadlines});opts.keepScroll=true;draw()};
     if(dl){const v=PLAN.deadlines(mine,[s],today)[0];dbox.append(el('p','fact',uiText(dl.certainty==='confirmed'?'Due':'About')+' '+when(dl.date+'T12:00:00')+' · '+uiText(dl.certainty==='confirmed'?'confirmed by you':'not sure yet')+(v?.when==='overdue'?' · '+uiText('the date has passed'):v?.when==='soon'?' · '+uiText('within a week'):'')));
      if(dl.note)dbox.append(el('p','tiny',uiText('Where you saw it')+': '+dl.note));
      if(dl.reminderId&&events.some(ev=>ev.id===dl.reminderId))dbox.append(el('p','tiny',uiText('Reminder in your calendar')));
