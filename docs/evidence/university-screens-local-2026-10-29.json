@@ -23,5 +23,15 @@
   "records answers 403 like the server instead of 404"
  ],
  "remainingConsoleNoise": "GET / on the harness answers 404 (the harness has no home page). Earlier 404s in the console log came from loads made before the fixtures were added.",
- "notCovered": "Real server behaviour, accounts and D1 (the harness fakes the API); right-to-left Arabic layout; screen readers. Visual review and language review remain pending; this is not a visual sign-off."
+ "notCovered": "Real server behaviour, accounts and D1 (the harness fakes the API); right-to-left Arabic layout; screen readers. Visual review and language review remain pending; this is not a visual sign-off.",
+ "reviewCheckpoint": "032e63986a170081cdaafbf897c84b60b8c08387 (founder, 29 Oct): the review checkpoint for this check.",
+ "screenshots": {
+  "takenAt": "2026-10-29T07:53:18Z to 2026-10-29T07:58:23Z (file times)",
+  "tool": "node tools/browser-checks/cdp-shoot.mjs (headless Chrome) against the same fixture harness",
+  "count": 38,
+  "set": "22 staff (11 tabs at 390x844 and 1280 wide) and 16 owner (overview plus 15 management areas at 390x844)",
+  "where": "Not in this public repository. Shared privately with the reviewer through a private page, with this file alongside."
+ },
+ "labelFix": "Found while taking the screenshots: five management areas (partner, sponsor, release, incident, privacy) showed raw keys as the area name, and their form fields showed raw keys (\"name\", \"funded Seats\"); statuses showed raw values such as rolled_back. restored-ui.mjs now gives plain names for areas, fields and statuses; the stored keys are unchanged. The owner screenshots were retaken after the fix.",
+ "fixtureVsServer": "Everything in this file is a fixture-harness check: the API is faked by platform-harness.mjs. Checks against the real local server (wrangler dev with local D1) are recorded separately."
 }
