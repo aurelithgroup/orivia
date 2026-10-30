@@ -231,11 +231,11 @@ DATA.journeys['edinburgh.u22'] = base({
     {title:{en:'Your university’s student services', ar:'خدمات الطلاب في جامعتك'}, body:{en:'They help students with proof of address and can tell you what others have used.', ar:'يساعدون الطلاب في إثبات العنوان، ويمكنهم إخبارك بما استخدمه غيرك.'}},
   ]},
   stages:[
-    {id:'who', level:'source', label:{en:'Who', ar:'من يحق له'}, title:{en:'Can you get it?', ar:'هل يحق لك؟'}, help:['intl','else'],
+    {id:'who', pendingAr:true, level:'source', label:{en:'Who', ar:'من يحق له'}, title:{en:'Can you get it?', ar:'هل يحق لك؟'}, help:['intl','else'],
      blocks:[
       {t:'list', v:[
         {en:'You’re aged 5 to 21.', ar:'عمرك بين 5 و21 عاماً.'},
-        {en:'You live in Scotland for at least 6 months of the year.', ar:'تعيش في اسكتلندا 6 أشهر على الأقل من السنة.'},
+        {en:'You live in Scotland for at least 6 months of the year. (We haven’t confirmed this on an official page yet: check with Young Scot.)', ar:'تعيش في اسكتلندا 6 أشهر على الأقل من السنة. (لم نتأكد من ذلك في صفحة رسمية بعد: تحقق مع Young Scot.)'},
       ]},
       {t:'tip', label:'important', v:{en:'You can only apply once you’ve arrived. Applications made before you move can’t be held.', ar:'لا يمكنك التقديم إلا بعد وصولك، ولا تُحفظ الطلبات المقدَّمة قبل انتقالك.'}},
      ]},
@@ -248,12 +248,12 @@ DATA.journeys['edinburgh.u22'] = base({
         {en:'Proof of your Scottish address, such as a council tax letter, bank statement or utility bill.', ar:'إثبات عنوانك في اسكتلندا، مثل رسالة ضريبة المجلس أو كشف حساب بنكي أو فاتورة خدمات.'},
       ]},
      ]},
-    {id:'apply', level:'source', label:{en:'Apply', ar:'قدّم'}, title:{en:'Apply for your card', ar:'قدّم على بطاقتك'}, help:['noaddress','slow','else'],
+    {id:'apply', pendingAr:true, level:'source', label:{en:'Apply', ar:'قدّم'}, title:{en:'Apply for your card', ar:'قدّم على بطاقتك'}, help:['noaddress','slow','else'],
      blocks:[
       {t:'steps', v:[
         {en:'Apply online at getyournec.scot, or through the City of Edinburgh Council.', ar:'قدّم عبر الإنترنت على getyournec.scot، أو عبر مجلس مدينة إدنبرة.'},
         {en:'Upload your photo and documents.', ar:'ارفع صورتك ومستنداتك.'},
-        {en:'Your Young Scot National Entitlement Card arrives by post: usually within 10 working days online, or at least 2 weeks through the council.', ar:'تصلك بطاقة Young Scot الوطنية بالبريد: عادةً خلال 10 أيام عمل عند التقديم عبر الإنترنت، أو أسبوعين على الأقل عبر المجلس.'},
+        {en:'Your Young Scot National Entitlement Card arrives by post: usually within 10 working days online, or at least 2 weeks through the council. (These times aren’t confirmed on an official page yet.)', ar:'تصلك بطاقة Young Scot الوطنية بالبريد: عادةً خلال 10 أيام عمل عند التقديم عبر الإنترنت، أو أسبوعين على الأقل عبر المجلس.'},
       ]},
       {t:'link', url:'https://www.mygov.scot/under-22-bus-pass', v:{en:'Apply on mygov.scot', ar:'قدّم عبر mygov.scot'}},
      ]},
@@ -268,7 +268,7 @@ DATA.journeys['edinburgh.u22'] = base({
   problems:[
     {id:'intl', q:{en:'I’m an international student. Can I get it?', ar:'أنا طالب دولي. هل يحق لي؟'}, a:{en:'The rules are about where you live: if you’re 21 or under and living in Scotland for at least 6 months of the year, you meet them. The official pages don’t mention international students separately, so if you’re unsure, ask the council or your university before you apply.', ar:'تعتمد الشروط على مكان سكنك: إذا كان عمرك 21 عاماً أو أقل وتعيش في اسكتلندا 6 أشهر على الأقل من السنة، فأنت تستوفيها. لا تذكر الصفحات الرسمية الطلاب الدوليين بشكل منفصل، فإن لم تكن متأكداً، اسأل المجلس أو جامعتك قبل التقديم.'}},
     {id:'noaddress', q:{en:'I don’t have proof of address yet', ar:'ليس لدي إثبات عنوان بعد'}, a:{en:'Apply through the council instead: it accepts more types of document than the online form. Your university can often give you a letter confirming your address.', ar:'قدّم عبر المجلس بدلاً من ذلك، فهو يقبل أنواعاً أكثر من المستندات مقارنةً بالنموذج الإلكتروني. وغالباً يمكن لجامعتك أن تعطيك خطاباً يؤكد عنوانك.'}},
-    {id:'slow', q:{en:'My card hasn’t arrived', ar:'لم تصلني البطاقة'}, a:{en:'Online applications take up to 10 working days and council ones at least 2 weeks. After that, contact whoever you applied through. For questions about the scheme, email concessionarytravel@transport.gov.scot.', ar:'تستغرق الطلبات الإلكترونية حتى 10 أيام عمل، وطلبات المجلس أسبوعين على الأقل. بعد ذلك، تواصل مع الجهة التي قدّمت عبرها. ولأسئلة عن البرنامج، راسل concessionarytravel@transport.gov.scot.'}},
+    {id:'slow', q:{en:'My card hasn’t arrived', ar:'لم تصلني البطاقة'}, a:{en:'Online applications are said to take up to 10 working days and council ones at least 2 weeks (not confirmed on an official page yet). After that, contact whoever you applied through. For questions about the scheme, email concessionarytravel@transport.gov.scot.', ar:'يُقال إن الطلبات الإلكترونية تستغرق حتى 10 أيام عمل، وطلبات المجلس أسبوعين على الأقل (لم يُتحقق من ذلك في صفحة رسمية بعد). بعد ذلك، تواصل مع الجهة التي قدّمت عبرها. ولأسئلة عن البرنامج، راسل concessionarytravel@transport.gov.scot.'}},
     {id:'tram', q:{en:'The tram won’t accept my card', ar:'الترام لا يقبل بطاقتي'}, a:{en:'That’s expected: the under-22 scheme covers buses, not trams. Buy a tram ticket or tap a bank card, or take a bus instead.', ar:'هذا متوقع: برنامج من هم دون 22 عاماً يشمل الحافلات لا الترام. اشترِ تذكرة ترام أو مرّر بطاقتك البنكية، أو اركب حافلة بدلاً منه.'}},
     ELSE('Email concessionarytravel@transport.gov.scot, or ask the City of Edinburgh Council.', 'راسل concessionarytravel@transport.gov.scot، أو اسأل مجلس مدينة إدنبرة.'),
   ],
@@ -354,12 +354,12 @@ DATA.journeys['edinburgh.gp'] = base({
       ]},
       {t:'phraseCard', v:{en:'This is an emergency. I need a doctor now.', ar:'هذه حالة طارئة. أحتاج إلى طبيب الآن.'}},
      ]},
-    {id:'cover', level:'source', label:{en:'Your cover', ar:'تغطيتك'}, title:{en:'You can use the NHS', ar:'يمكنك استخدام NHS'}, help:['cost','else'],
+    {id:'cover', pendingAr:true, level:'source', label:{en:'Your cover', ar:'تغطيتك'}, title:{en:'You can use the NHS', ar:'يمكنك استخدام NHS'}, help:['cost','else'],
      blocks:[
       {t:'p', v:{en:'If you paid the Immigration Health Surcharge with your visa, you can use the NHS (the UK’s public health service) like residents do. For students, that’s from when you arrive until one month after your course ends.', ar:'إذا دفعت رسوم الصحة للهجرة (Immigration Health Surcharge) مع تأشيرتك، يمكنك استخدام NHS (الخدمة الصحية العامة في بريطانيا) مثل المقيمين. وللطلاب، يبدأ ذلك من وصولك حتى شهر بعد انتهاء دراستك.'}},
       {t:'list', v:[
         {en:'Seeing a GP is free.', ar:'زيارة الطبيب العام مجانية.'},
-        {en:'Prescriptions are free in Scotland.', ar:'الوصفات الطبية مجانية في اسكتلندا.'},
+        {en:'Prescriptions are free in Scotland. We haven’t confirmed this against an official page yet, so check with the pharmacy if you’re unsure.', ar:'الوصفات الطبية مجانية في اسكتلندا. لم نتأكد من ذلك في صفحة رسمية بعد، فاسأل الصيدلية إن لم تكن متأكداً.'},
       ]},
      ]},
     {id:'register', level:'source', label:{en:'Register', ar:'سجّل'}, title:{en:'Register with a GP practice', ar:'سجّل لدى عيادة طبيب عام'}, help:['refused','nodocs','staff','else'],
@@ -494,10 +494,10 @@ DATA.journeys['edinburgh.rent'] = base({
       ]},
       {t:'link', url:'https://landlordregistrationscotland.gov.uk/', v:{en:'Search the Scottish Landlord Register', ar:'ابحث في سجل الملاك في اسكتلندا'}},
      ]},
-    {id:'pay', level:'source', label:{en:'Paying', ar:'الدفع'}, title:{en:'What you can be asked to pay', ar:'ما يحق للمالك أن يطلبه منك'}, help:['fees','deposit','else'],
+    {id:'pay', pendingAr:true, level:'source', label:{en:'Paying', ar:'الدفع'}, title:{en:'What you can be asked to pay', ar:'ما يحق للمالك أن يطلبه منك'}, help:['fees','deposit','else'],
      blocks:[
       {t:'list', v:[
-        {en:'Only rent and a deposit. Agency fees, key money, holding fees and credit-check fees are illegal, and you can claim them back.', ar:'الإيجار والتأمين فقط. رسوم الوكالة و«خلو الرجل» ورسوم الحجز ورسوم التحقق الائتماني مخالفة للقانون، ويمكنك استردادها.'},
+        {en:'Only rent and a deposit. Key money, non-refundable holding deposits and credit-check fees aren’t allowed. Landlords may also ask for a guarantor, ID and references.', ar:'الإيجار والتأمين فقط. رسوم الوكالة و«خلو الرجل» ورسوم الحجز ورسوم التحقق الائتماني مخالفة للقانون، ويمكنك استردادها.'},
         {en:'The deposit can be no more than 2 months’ rent.', ar:'لا يجوز أن يزيد التأمين عن إيجار شهرين.'},
         {en:'A landlord can ask for up to 6 months’ rent in advance. That counts as rent.', ar:'يجوز للمالك أن يطلب إيجار ما يصل إلى 6 أشهر مقدماً، ويُعدّ ذلك إيجاراً.'},
       ]},

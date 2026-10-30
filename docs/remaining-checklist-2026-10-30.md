@@ -12,8 +12,8 @@ Owners: **C** = Cleo, **I** = Ina, **B** = Bee (founder). Items marked ⛔ are b
 | 1.2 | Dubai source checks | **8 more guides recorded as partial** (nol, taxi, SIM, rent, work rights, student work, bank, employee insurance), plus `dubai.school`. **12 still have none:** airport, UAE PASS, student health, student, family, self and visitor insurance, community, and Emirates ID for employees, family and self-sponsored. One claim is not confirmed (student work "part-time, temporary, flexible or remote") and one conflicts between Sanadak's own pages | C |
 | 1.3 | AI guide drafting | **Verified without OpenAI:** real page reading, the exact-quote check, refusal of invented quotes, the consent gate, and the endpoint's safe refusal without a budget. **The model drafting itself is not verified:** it needs OpenAI and the budget database, so only after the hold | C (now) · ⛔ live |
 | 1.4 | Northbay demo directory | **Done:** 10 fictional, labelled entries and a seeder that refuses non-demo organisations | C |
-| 1.5 | Midnight pilot source | **Investigated read-only:** Ina's `4d6b0e9` plus an unpushed layer (two owner modules, four changed). Owner unconfirmed | C (done) · I to confirm |
-| 1.6 | Submission readiness (week 6, "kept small") | **Not built.** Flag blurry photos and missing pages with the existing document reader and camera; never say a document will be accepted | C, or Bee defers |
+| 1.5 | Midnight pilot source | **Investigated read-only:** Ina's `4d6b0e9` plus an unpushed layer (two owner modules, four changed). Authorship not established. The bundle, the extracted modules, the local build and the comparison are preserved privately with hashes (`orivia-private/midnight-2026-10-29`, outside the repository) | C (done) · I assesses the evidence |
+| 1.6 | Submission readiness (week 6, "kept small") | **Built 30 Oct, locally verified:** in the device photo review, a view-only zoom (rotate, retake and crop were already there); a rough resolution and blur note that warns only when measured; a pages prompt that defers to the receiving organisation's checklist; and a plain list of what Orivia can't check (completeness, authenticity, validity, acceptance). Nothing is sent and nothing is blocked | C |
 | 1.7 | Arrival budget planner | Not built. The plan made it conditional on content review being on time, and it isn't: **moves to the backlog** under the plan's own rule | — |
 | 1.8 | Confirmation sweep (areas 1, 5, 6, 7, 8, 27) | The scripted parts run in CI (140 checks). The Access-only parts are Ina's | I |
 
@@ -26,6 +26,7 @@ Owners: **C** = Cleo, **I** = Ina, **B** = Bee (founder). Items marked ⛔ are b
 | 2.3 | Arabic and French: new strings untranslated in the app's dictionary; the Arabic of the new guide steps marked for review; RTL layout of the new screens | A language reviewer | I or a reviewer |
 | 2.4 | Accessibility (area 9): actual zoom, screen reader, and the older 10px tab rule | — | C + I |
 | 2.5 | Real-server integration across all flows together (welcome, support, directory, sponsorship, drafting refusal) in one run | — | C |
+| 2.5b | Unsupported or conflicting guide claims | **Done 30 Oct:** qualified in the guide text (review pack section 12); the changed Arabic is marked not yet reviewed | C |
 | 2.6 | Guide approvals: record with `tools/review-guide.mjs` **only after a person's review passes** | Ina's content review | I (person only) |
 | 2.7 | Release policies: Privacy and Terms against the combined release (14 `[INCLUDE IF RELEASED]` items) | **Operator details** | B, then C |
 | 2.8 | Demo script: from `docs/demo-story-northbay-draft.md` | **Bee's approval of the story (due 30 Oct)** | B |
@@ -36,7 +37,7 @@ Owners: **C** = Cleo, **I** = Ina, **B** = Bee (founder). Items marked ⛔ are b
 
 | # | Item | Gate | Owner |
 |---|---|---|---|
-| 3.1 | Reconcile the Midnight layer change by change; never overwrite the pilot to make it easier | Ina confirms `abf5b831` and pushes `cdab3b5`, or Bee decides to recover it from the bundle | I, B |
+| 3.1 | Reconcile the Midnight layer change by change; never overwrite the pilot to make it easier | Ina assesses the preserved recovery evidence. Then the source is located and pushed, or Bee decides to recover it from the bundle. Nobody assumes Ina can confirm authorship or push a commit she hasn't located | I, B |
 | 3.2 | Bee explicitly clears the hold | 3.1 done | B ⛔ |
 | 3.3 | Pilot deploy preserving secrets, bindings, databases, budget caps and rollback | 3.2 | the one agreed deployer ⛔ |
 | 3.4 | Seed the Northbay demo (accounts, directory, guides) on the pilot test database | 3.3; the demo admin's own session | C ⛔ |

@@ -44,13 +44,13 @@ Object.assign(UI.ar, {
     it('passport','Your passport','جواز سفرك',null,'Usually valid for at least 6 more months.','صالح عادةً لستة أشهر على الأقل.'),
     it('photo','A photo with a white background','صورة بخلفية بيضاء'),
     it('forms','The forms your university sends','النماذج التي ترسلها جامعتك'),
-  ], wait:{en:'Your university to get your entry permit. It usually takes 7–15 working days.', ar:'أن تحصل جامعتك على تصريح دخولك. يستغرق ذلك عادةً من 7 إلى 15 يوم عمل.'}});
+  ], wait:{en:'Your university to get your entry permit. Universities say it usually takes 7–15 working days.', ar:'أن تحصل جامعتك على تصريح دخولك. تقول الجامعات إن ذلك يستغرق عادةً من 7 إلى 15 يوم عمل.'}});
   add('dubai.eid.student','arrive',{need:[it('permit','Your stamped entry permit','تصريح الدخول المختوم','copy','Send a copy to your visa office, or take it in.','أرسل نسخة إلى مكتب التأشيرات أو سلّمها بنفسك.')]});
   add('dubai.eid.student','medical',{need:[PASS, it('medform','The form from your university','النموذج من جامعتك')],
     wait:{en:'Your university to send your medical test appointment.', ar:'أن ترسل جامعتك موعد الفحص الطبي.'}});
   add('dubai.eid.student','biometrics',{need:[PASS, it('apptmail','Your appointment email','رسالة الموعد')],
     wait:{en:'Your university to send your fingerprint appointment.', ar:'أن ترسل جامعتك موعد البصمات.'}});
-  add('dubai.eid.student','issued',{wait:{en:'Your residence visa to be issued. It’s mostly waiting: about 3–5 weeks after you arrive in total.', ar:'صدور تأشيرة الإقامة. هذه المرحلة انتظار في الغالب: نحو 3 إلى 5 أسابيع من وصولك إجمالاً.'}});
+  add('dubai.eid.student','issued',{wait:{en:'Your residence visa to be issued. It’s mostly waiting: universities say about 3–5 weeks after you arrive in total.', ar:'صدور تأشيرة الإقامة. هذه المرحلة انتظار في الغالب: تقول الجامعات إنها نحو 3 إلى 5 أسابيع من وصولك إجمالاً.'}});
   add('dubai.eid.student','card',{wait:{en:'Your Emirates ID card to be ready. You can check its status on ICP.', ar:'أن تصبح بطاقة الهوية جاهزة. يمكنك متابعة حالتها على موقع الهيئة.'}});
   add('dubai.eid.student','register',{need:[PASS, EID]});
   /* Dubai: others */

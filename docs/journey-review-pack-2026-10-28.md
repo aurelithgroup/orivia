@@ -341,6 +341,23 @@ Twelve Dubai guides have no record yet:
 
 The older steps of `dubai.school` (choose, age, apply) are also unchecked.
 
+## 12. Qualified in the guides themselves (30 Oct)
+
+Unsupported, unconfirmed or conflicting claims from sections 1, 2, 8 and 11 are now qualified **in the text people read**, not only in this pack. `tests/claims-qualified.test.mjs` pins each change. The Arabic of every changed step is new wording of mine, so those steps carry `pendingAr`: in Arabic, they show *ترجمة لم تُراجع بعد* (Arabic not yet reviewed).
+
+| Guide | Was | Now |
+|---|---|---|
+| `dubai.eid.student` (section 1) | "usually takes about 7–15 working days"; "about 3–5 weeks"; passport "usually valid for 6+ months" | "Universities say … The official pages don't give a time." The same wording is used in the step labels and problem answers. For the passport: "ask your university how long it must still be valid" |
+| `edinburgh.evisa` (section 2) | Share code cost "Free" | "Not stated on GOV.UK's page" |
+| `edinburgh.u22` (section 8) | 6 months' residence; card arrival times | Each one adds that it isn't confirmed on an official page yet (check with Young Scot) |
+| `edinburgh.gp` (section 8) | "Prescriptions are free in Scotland." | It now adds that we haven't confirmed this on an official page yet; ask the pharmacy |
+| `edinburgh.rent` (section 8) | "Agency fees, … are illegal, and you can claim them back." | Reduced to what mygov.scot says: key money, non-refundable holding deposits and credit-check fees aren't allowed; landlords may ask for a guarantor, ID and references |
+| `dubai.studentwork` (section 11) | "part-time, temporary, flexible or remote" | "MOHRE's page doesn't say which kinds of work it covers, so ask the employer." |
+| `dubai.bank` (section 11) | Sanadak after 15 days | Adds that Sanadak's own pages say 15 days in one place and 30 in another; check its eligibility page |
+| `dubai.rent` (section 11) | Ejari about AED 178 / 220 | Adds "Check the exact fee on the payment screen before you pay." |
+
+**For visual review:** on the Dubai school steps, the "checked through search" note sits inside "More details". The trust ladder at the top shows the steps as a draft, not official.
+
 ## How to record your review (when you're satisfied)
 
 ```bash

@@ -319,16 +319,16 @@ DATA.journeys['dubai.eid.student'] = {
     {stage:'register', q:{en:'Have you finished your university registration since getting your card?', ar:'هل أكملت تسجيلك في الجامعة بعد استلام البطاقة؟'}},
   ],
   stages:[
-    {id:'permit', level:'source', now:{en:'Your university is applying for your entry permit. Watch your email.', ar:'جامعتك تتقدّم بطلب تصريح الدخول. تابع بريدك الإلكتروني.'}, label:{en:'Entry permit', ar:'تصريح الدخول'}, title:{en:'Your entry permit, before you fly', ar:'تصريح الدخول قبل السفر'},
+    {id:'permit', pendingAr:true, level:'source', now:{en:'Your university is applying for your entry permit. Watch your email.', ar:'جامعتك تتقدّم بطلب تصريح الدخول. تابع بريدك الإلكتروني.'}, label:{en:'Entry permit', ar:'تصريح الدخول'}, title:{en:'Your entry permit, before you fly', ar:'تصريح الدخول قبل السفر'},
      help:['late','expiring','office'],
      blocks:[
       {t:'p', v:{en:'Your university applies for your entry permit. You send them your documents, and they do the rest.', ar:'تتقدّم جامعتك بطلب تصريح الدخول. أنت ترسل المستندات، وهي تتولى الباقي.'}},
       {t:'list', v:[
-        {en:'It usually takes about 7–15 working days.', ar:'يستغرق عادةً من 7 إلى 15 يوم عمل.'},
+        {en:'Universities say it usually takes about 7–15 working days. The official pages don’t give a time.', ar:'تقول الجامعات إنه يستغرق عادةً من 7 إلى 15 يوم عمل. لا تذكر الصفحات الرسمية مدة محددة.'},
         {en:'When it arrives, print it and book your flight.', ar:'عندما يصلك، اطبعه واحجز رحلتك.'},
         {en:'It has an expiry date. Arrive in the UAE before it runs out.', ar:'للتصريح تاريخ انتهاء، فاحرص على الوصول إلى الإمارات قبله.'},
       ]},
-      {t:'tip', label:'bring', v:{en:'Your passport (usually valid for 6+ months), a photo with a white background, and the forms your university sends.', ar:'جواز سفرك (صالح عادةً لستة أشهر على الأقل)، وصورة بخلفية بيضاء، والنماذج التي ترسلها جامعتك.'}},
+      {t:'tip', label:'bring', v:{en:'Your passport (ask your university how long it must still be valid), a photo with a white background, and the forms your university sends.', ar:'جواز سفرك (اسأل جامعتك عن مدة الصلاحية المتبقية المطلوبة)، وصورة بخلفية بيضاء، والنماذج التي ترسلها جامعتك.'}},
      ]},
     {id:'arrive', level:'source', now:{en:'Next: send your stamped entry permit to your university’s visa office.', ar:'التالي: أرسل تصريح الدخول المختوم إلى مكتب التأشيرات في جامعتك.'}, label:{en:'Arrive', ar:'الوصول'}, title:{en:'Tell your university you’ve arrived', ar:'أبلغ جامعتك بوصولك'},
      help:['office','lostpermit','travel'],
@@ -362,10 +362,10 @@ DATA.journeys['dubai.eid.student'] = {
       {t:'tip', label:'important', v:{en:'Can’t make it? Tell your visa office before the appointment so they can rebook.', ar:'لا تستطيع الحضور؟ أبلغ مكتب التأشيرات قبل الموعد ليحجز لك موعداً آخر.'}},
       {t:'phraseCard', v:{en:'I have a fingerprint appointment for my Emirates ID.', ar:'لدي موعد لأخذ البصمات للهوية الإماراتية.'}},
      ]},
-    {id:'issued', level:'source', now:{en:'Next: wait for your residence visa. This part is mostly waiting.', ar:'التالي: انتظر صدور تأشيرة الإقامة. هذه المرحلة انتظار في الغالب.'}, label:{en:'Residence visa', ar:'تأشيرة الإقامة'}, title:{en:'Waiting for your residence visa', ar:'انتظار تأشيرة الإقامة'},
+    {id:'issued', pendingAr:true, level:'source', now:{en:'Next: wait for your residence visa. This part is mostly waiting.', ar:'التالي: انتظر صدور تأشيرة الإقامة. هذه المرحلة انتظار في الغالب.'}, label:{en:'Residence visa', ar:'تأشيرة الإقامة'}, title:{en:'Waiting for your residence visa', ar:'انتظار تأشيرة الإقامة'},
      help:['status','slow','office'],
      blocks:[
-      {t:'p', v:{en:'After your medical test and fingerprints, your university applies for your residence visa. The whole process usually takes about 3–5 weeks after you arrive.', ar:'بعد الفحص الطبي والبصمات، تتقدّم جامعتك بطلب تأشيرة الإقامة. تستغرق العملية كلها عادةً من 3 إلى 5 أسابيع بعد وصولك.'}},
+      {t:'p', v:{en:'After your medical test and fingerprints, your university applies for your residence visa. Universities say the whole process usually takes about 3–5 weeks after you arrive. The official pages don’t give a time.', ar:'بعد الفحص الطبي والبصمات، تتقدّم جامعتك بطلب تأشيرة الإقامة. تستغرق العملية كلها عادةً من 3 إلى 5 أسابيع بعد وصولك.'}},
       {t:'list', v:[
         {en:'The visa comes first, then your Emirates ID card.', ar:'تصدر التأشيرة أولاً، ثم بطاقة الهوية الإماراتية.'},
         {en:'Some universities still call this step “stamping”.', ar:'بعض الجامعات ما زالت تسمّي هذه الخطوة «ختم التأشيرة».'},
@@ -405,8 +405,8 @@ DATA.journeys['dubai.eid.student'] = {
   problems:[
     {id:'office', q:{en:'I don’t know who my visa office is', ar:'لا أعرف مكتب التأشيرات في جامعتي'},
      a:{en:'Look in your offer or welcome emails, or search your university’s website for “student visa”. The student services desk on campus can point you there too.', ar:'ابحث في رسائل القبول أو الترحيب، أو ابحث في موقع جامعتك عن «تأشيرة الطالب». ويمكن لمكتب خدمات الطلاب في الحرم الجامعي أن يرشدك أيضاً.'}},
-    {id:'late', q:{en:'My entry permit hasn’t come yet', ar:'لم يصلني تصريح الدخول بعد'},
-     a:{en:'It usually takes 7–15 working days after your university applies. If it’s been longer, email the visa office with your full name and passport number.', ar:'يستغرق عادةً من 7 إلى 15 يوم عمل بعد تقديم جامعتك الطلب. إذا تأخر أكثر، راسل مكتب التأشيرات باسمك الكامل ورقم جوازك.'}},
+    {id:'late', pendingAr:true, q:{en:'My entry permit hasn’t come yet', ar:'لم يصلني تصريح الدخول بعد'},
+     a:{en:'Universities say it usually takes 7–15 working days after your university applies. If it’s been longer, email the visa office with your full name and passport number.', ar:'تقول الجامعات إنه يستغرق عادةً من 7 إلى 15 يوم عمل بعد تقديم جامعتك الطلب. إذا تأخر أكثر، راسل مكتب التأشيرات باسمك الكامل ورقم جوازك.'}},
     {id:'expiring', q:{en:'My entry permit is about to expire', ar:'تصريح دخولي على وشك الانتهاء'},
      a:{en:'Tell your visa office today. Don’t wait until it expires.', ar:'أبلغ مكتب التأشيرات اليوم، ولا تنتظر حتى ينتهي.'}},
     {id:'lostpermit', q:{en:'I lost my entry permit', ar:'أضعت تصريح الدخول'},
@@ -436,8 +436,8 @@ DATA.journeys['dubai.eid.student'] = {
         {label:{en:'No', ar:'لا'}, a:{en:'Ask your university’s visa office for it. They made the application, so they have it.', ar:'اطلبه من مكتب التأشيرات في جامعتك، فهو من قدّم الطلب ولديه الرقم.'}},
         {label:{en:'I don’t know what that is', ar:'لا أعرف ما هذا'}, a:{en:'It’s the number given when your Emirates ID application was made. Your visa office has it, so ask them.', ar:'هو الرقم الذي يُعطى عند تقديم طلب الهوية الإماراتية. مكتب التأشيرات لديه هذا الرقم، فاسأله عنه.'}},
       ]}},
-    {id:'slow', q:{en:'It’s taking longer than expected', ar:'الأمر يستغرق أطول من المتوقع'},
-     a:{en:'The whole process usually takes about 3–5 weeks after you arrive. If it’s been longer, ask your visa office first. Still stuck? Call ICP on 600 522222.', ar:'تستغرق العملية كلها عادةً من 3 إلى 5 أسابيع بعد وصولك. إذا طالت أكثر، اسأل مكتب التأشيرات أولاً. وإذا بقيت المشكلة، اتصل بالهيئة على الرقم 600522222.'}},
+    {id:'slow', pendingAr:true, q:{en:'It’s taking longer than expected', ar:'الأمر يستغرق أطول من المتوقع'},
+     a:{en:'Universities say the whole process usually takes about 3–5 weeks after you arrive. If it’s been longer, ask your visa office first. Still stuck? Call ICP on 600 522222.', ar:'تقول الجامعات إن العملية كلها تستغرق عادةً من 3 إلى 5 أسابيع بعد وصولك. إذا طالت أكثر، اسأل مكتب التأشيرات أولاً. وإذا بقيت المشكلة، اتصل بالهيئة على الرقم 600522222.'}},
     {id:'wherecard', q:{en:'I don’t know where to collect my card', ar:'لا أعرف أين أستلم بطاقتي'},
      a:{en:'Ask your visa office. At many universities, students collect the card from the university.', ar:'اسأل مكتب التأشيرات، ففي كثير من الجامعات يستلم الطلاب البطاقة من الجامعة نفسها.'}},
     {id:'nopass', q:{en:'I can’t set up UAE PASS', ar:'لا أستطيع تفعيل UAE PASS'},
@@ -987,11 +987,11 @@ DATA.journeys['dubai.bank'] = {
       ]},
       {t:'tip', label:'important', v:{en:'Think it’s a scam? Hang up and call your bank on the number on the back of your card.', ar:'تظن أنها عملية احتيال؟ أغلق الخط واتصل ببنكك على الرقم المكتوب خلف بطاقتك.'}},
      ]},
-    {id:'complain', level:'source', label:{en:'Problems', ar:'المشكلات'}, title:{en:'If the bank doesn’t fix a problem', ar:'إذا لم يحل البنك مشكلتك'}, help:['complaint','else'],
+    {id:'complain', pendingAr:true, level:'source', label:{en:'Problems', ar:'المشكلات'}, title:{en:'If the bank doesn’t fix a problem', ar:'إذا لم يحل البنك مشكلتك'}, help:['complaint','else'],
      blocks:[
       {t:'steps', v:[
         {en:'Make a formal complaint to your bank, and keep the reference number.', ar:'قدّم شكوى رسمية إلى بنكك واحتفظ برقمها المرجعي.'},
-        {en:'If it isn’t sorted after 15 days, complain for free to Sanadak, the UAE’s independent financial ombudsman, on its website, app or 800 72 623 25.', ar:'إذا لم تُحل بعد 15 يوماً، قدّم شكوى مجانية إلى «سندك»، الجهة المستقلة لتسوية شكاوى القطاع المالي، عبر موقعها أو تطبيقها أو الرقم 800 72 623 25.'},
+        {en:'If it isn’t sorted after 15 days, complain for free to Sanadak, the UAE’s independent financial ombudsman, on its website, app or 800 72 623 25. Sanadak’s own pages say 15 days in one place and 30 in another, so check its eligibility page first.', ar:'إذا لم تُحل بعد 15 يوماً، قدّم شكوى مجانية إلى «سندك»، الجهة المستقلة لتسوية شكاوى القطاع المالي، عبر موقعها أو تطبيقها أو الرقم 800 72 623 25.'},
       ]},
      ]},
   ],
@@ -1002,7 +1002,7 @@ DATA.journeys['dubai.bank'] = {
     {id:'fees', q:{en:'I’m being charged fees I didn’t expect', ar:'تُخصم مني رسوم لم أتوقعها'}, a:{en:'Check your minimum balance first. Banks often charge when you fall below it. Ask the bank to explain each charge, and complain formally if it’s wrong.', ar:'تحقّق أولاً من الحد الأدنى للرصيد، فالبنوك غالباً تفرض رسوماً عند انخفاضه. اطلب من البنك شرح كل رسم، وقدّم شكوى رسمية إن كان خاطئاً.'}},
     {id:'staff', q:{en:'I don’t understand what staff said', ar:'لم أفهم ما قاله الموظفون'}, a:{en:'Show them this card. It asks them to slow down or write it down.', ar:'اعرض عليهم هذه البطاقة، فهي تطلب منهم التحدث ببطء أو الكتابة.'}, phraseText:{en:'I’m new here. Could you please say that more slowly, or write it down?', ar:'أنا جديد هنا. هل يمكنك أن تقول ذلك ببطء أكثر، أو تكتبه لي من فضلك؟'}},
     {id:'scam', q:{en:'Someone asked for my card details or a code', ar:'طلب أحدهم بيانات بطاقتي أو رمزاً'}, a:{en:'Don’t share anything. Hang up, then call your bank on the number on the back of your card. If you’ve already shared something, call straight away so they can block your card.', ar:'لا تشارك أي شيء. أغلق الخط، ثم اتصل ببنكك على الرقم المكتوب خلف بطاقتك. وإذا كنت قد شاركت شيئاً بالفعل، اتصل فوراً ليوقفوا بطاقتك.'}},
-    {id:'complaint', q:{en:'The bank won’t fix my problem', ar:'البنك لا يحل مشكلتي'}, a:{en:'Make a formal complaint to the bank and keep the reference number. If it isn’t resolved after 15 days, complain for free to Sanadak on 800 72 623 25 or through its website or app.', ar:'قدّم شكوى رسمية إلى البنك واحتفظ برقمها المرجعي. وإذا لم تُحل بعد 15 يوماً، قدّم شكوى مجانية إلى «سندك» على الرقم 800 72 623 25 أو عبر موقعها أو تطبيقها.'}},
+    {id:'complaint', q:{en:'The bank won’t fix my problem', ar:'البنك لا يحل مشكلتي'}, a:{en:'Make a formal complaint to the bank and keep the reference number. If it isn’t resolved after 15 days, complain for free to Sanadak on 800 72 623 25 or through its website or app. Its pages give 15 days in one place and 30 in another, so check its eligibility page.', ar:'قدّم شكوى رسمية إلى البنك واحتفظ برقمها المرجعي. وإذا لم تُحل بعد 15 يوماً، قدّم شكوى مجانية إلى «سندك» على الرقم 800 72 623 25 أو عبر موقعها أو تطبيقها.'}},
     {id:'else', q:{en:'Something else', ar:'مشكلة أخرى'}, a:{en:'Contact your bank through its app, a branch, or the number on your card. For a complaint the bank hasn’t solved, you can go to Sanadak.', ar:'تواصل مع بنكك عبر تطبيقه أو أحد فروعه أو الرقم المكتوب على بطاقتك. وللشكاوى التي لم يحلها البنك، يمكنك التوجه إلى «سندك».'}},
   ],
   stuck:{cards:[
@@ -1051,12 +1051,12 @@ DATA.journeys['dubai.rent'] = {
       ]},
       {t:'phraseCard', v:{en:'Before I sign, can you show me the rent, the deposit and the end date in the contract?', ar:'قبل أن أوقّع، هل يمكنك أن تريني الإيجار والتأمين وتاريخ الانتهاء في العقد؟'}},
      ]},
-    {id:'ejari', level:'source', label:{en:'Ejari', ar:'إيجاري'}, title:{en:'Register it with Ejari', ar:'سجّله في «إيجاري»'}, help:['noejari','else'],
+    {id:'ejari', pendingAr:true, level:'source', label:{en:'Ejari', ar:'إيجاري'}, title:{en:'Register it with Ejari', ar:'سجّله في «إيجاري»'}, help:['noejari','else'],
      blocks:[
       {t:'list', v:[
         {en:'Ejari is Dubai’s official register of rental contracts. By law, contracts must be registered, and disputes over unregistered ones won’t be heard.', ar:'«إيجاري» هو السجل الرسمي لعقود الإيجار في دبي. قانوناً يجب تسجيل العقود، ولا يُنظر في النزاعات المتعلقة بعقود غير مسجلة.'},
         {en:'The tenant or landlord can register it in the Dubai REST app, on the Dubai Land Department website, or at a Real Estate Trustee Centre.', ar:'يمكن للمستأجر أو المالك تسجيله عبر تطبيق Dubai REST، أو موقع دائرة الأراضي والأملاك، أو في أحد مراكز أمين العقارية.'},
-        {en:'Online, it costs about AED 178. At a centre, about AED 220.', ar:'التكلفة عبر الإنترنت نحو 178 درهماً، وفي المراكز نحو 220 درهماً.'},
+        {en:'Online, it costs about AED 178. At a centre, about AED 220. Check the exact fee on the payment screen before you pay.', ar:'التكلفة عبر الإنترنت نحو 178 درهماً، وفي المراكز نحو 220 درهماً. تحقق من الرسوم الدقيقة في شاشة الدفع قبل أن تدفع.'},
       ]},
       {t:'tip', label:'tip', v:{en:'Keep your Ejari certificate. You’ll often need it for things like connecting electricity and water, or visas for family.', ar:'احتفظ بشهادة «إيجاري»، فغالباً ستحتاجها لأمور مثل توصيل الكهرباء والماء أو تأشيرات العائلة.'}},
      ]},
@@ -1145,10 +1145,10 @@ DATA.journeys['dubai.studentwork'] = {
       {t:'p', v:{en:'Rules can depend on your university and where it’s based. Ask your university’s visa office or careers team before accepting any job.', ar:'قد تختلف القواعد حسب جامعتك ومكانها. اسأل مكتب التأشيرات أو فريق التوظيف في جامعتك قبل قبول أي عمل.'}},
       {t:'tip', label:'important', v:{en:'Never work without the right permit. It can put your visa at risk.', ar:'لا تعمل أبداً دون التصريح المناسب، فقد يعرّض ذلك تأشيرتك للخطر.'}},
      ]},
-    {id:'permit', level:'source', label:{en:'The permit', ar:'التصريح'}, title:{en:'The student work permit', ar:'تصريح عمل الطالب'}, help:['nopermit','else'],
+    {id:'permit', pendingAr:true, level:'source', label:{en:'The permit', ar:'التصريح'}, title:{en:'The student work permit', ar:'تصريح عمل الطالب'}, help:['nopermit','else'],
      blocks:[
       {t:'list', v:[
-        {en:'The government’s Student Training and Employment Permit lets students aged 15 and over work: part-time, temporary, flexible or remote.', ar:'يتيح تصريح تدريب وتشغيل الطلاب الحكومي للطلاب من سن 15 عاماً فأكثر العمل بدوام جزئي أو مؤقت أو مرن أو عن بُعد.'},
+        {en:'The government’s Student Training and Employment Permit lets students aged 15 and over work for an employer. MOHRE’s page doesn’t say which kinds of work it covers, so ask the employer.', ar:'يتيح تصريح تدريب وتشغيل الطلاب الحكومي للطلاب من سن 15 عاماً فأكثر العمل بدوام جزئي أو مؤقت أو مرن أو عن بُعد.'},
         {en:'Your employer applies for it, not you. You need a valid residence visa, and a contract approved by MOHRE.', ar:'جهة العمل هي من تتقدّم بطلبه، لا أنت. وتحتاج إلى تأشيرة إقامة سارية وعقد معتمد من الوزارة.'},
         {en:'The permit lasts 3 months.', ar:'مدة التصريح 3 أشهر.'},
       ]},

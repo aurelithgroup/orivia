@@ -62,8 +62,8 @@ const LANG_FLAG = {en:'🇬🇧', ar:'🇦🇪', fr:'🇫🇷', fil:'🇵🇭', 
 (function(){
   const J = DATA.journeys, add = (jid, sid, o) => { const s = J[jid] && J[jid].stages.find(x=>x.id===sid); if(s) Object.assign(s, o); };
   const v = (en, ar) => ({en, ar});
-  add('dubai.eid.student','permit',{time:v('Usually 7–15 working days','عادةً من 7 إلى 15 يوم عمل')});
-  add('dubai.eid.student','issued',{time:v('About 3–5 weeks after you arrive, in total','نحو 3 إلى 5 أسابيع من وصولك إجمالاً')});
+  add('dubai.eid.student','permit',{time:v('Usually 7–15 working days, universities say','عادةً من 7 إلى 15 يوم عمل، بحسب الجامعات')});
+  add('dubai.eid.student','issued',{time:v('About 3–5 weeks after you arrive, in total, universities say','نحو 3 إلى 5 أسابيع من وصولك إجمالاً، بحسب الجامعات')});
   add('dubai.eid.employee','arrive',{time:v('Enter within 30 days of approval, then finish within 60 days','ادخل خلال 30 يوماً من الموافقة، ثم أكمل خلال 60 يوماً')});
   add('dubai.eid.family','permit',{time:v('Finish your residency within 60 days of entering','أكمل إقامتك خلال 60 يوماً من دخولك')});
   add('dubai.nol','prepare',{cost:v('Silver card about AED 25, including AED 19 of credit','البطاقة الفضية نحو 25 درهماً، منها 19 درهماً رصيد')});
@@ -74,7 +74,7 @@ const LANG_FLAG = {en:'🇬🇧', ar:'🇦🇪', fr:'🇫🇷', fil:'🇵🇭', 
   add('edinburgh.work','nino',{cost:v('Free','مجاني'), time:v('Up to 4 weeks','حتى 4 أسابيع')});
   add('edinburgh.counciltax','tv',{cost:v('£180 a year','180 جنيهاً سنوياً')});
   add('edinburgh.gp','register',{cost:v('Free','مجاني')});
-  add('edinburgh.evisa','share',{cost:v('Free','مجاني')});
+  add('edinburgh.evisa','share',{cost:v('Not stated on GOV.UK’s page','غير مذكورة في صفحة GOV.UK')}); // the cited page doesn't give a cost (review pack, section 2)
   if(J['edinburgh.airport']) J['edinburgh.airport'].changes = [{d:v('27 Sep 2026','27 سبتمبر 2026'), t:v('Removed the Princes Street closure notice: the street reopened on 29 Aug 2026.','أزلنا تنبيه إغلاق شارع Princes Street، فقد أُعيد افتتاحه في 29 أغسطس 2026.')}];
 })();
 
