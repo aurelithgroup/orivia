@@ -1,0 +1,84 @@
+# Session 2 review candidate (30 Oct 2026)
+
+**Candidate (frozen):** `55951418d32d7ea6bda461fd7bf49a3673123040` on `myorivia-release-plan`.
+**Review baseline:** `6e660b1655a5a7714266dfa8b7c4a1c0ba65e42d`. The range has 8 commits, 50 files, +3208 −130:
+
+```bash
+git diff 6e660b1655a5a7714266dfa8b7c4a1c0ba65e42d 55951418d32d7ea6bda461fd7bf49a3673123040
+```
+
+**Status:** implemented and locally verified, awaiting Ina's independent review. **Nothing here is accepted.** Live acceptance waits for the hold to lift, and its scope and authenticated access are still to be agreed. No features are added after this candidate; review findings are fixed on top of it.
+
+## What to review
+
+| Area | What changed | Main files |
+|---|---|---|
+| 22 · Guided welcome | One welcome screen from the join link, name asked once, campus defaults shown not asked, editable details, a first step; existing accounts keep data, terms and AI choice | `workers/trial-ui/accounts.js` |
+| 24 · Support | Team assignment (admins only), filters, linked process steps inside the organisation boundary | `workers/accounts/support-escalation.mjs`, `restored-ui.mjs` |
+| 21 · Guides | Student preview in the staff editor; drafting checked without OpenAI | `workers/accounts/platform-ui.mjs`, `tools/browser-checks/guide-drafting-check.mjs` |
+| 23 · Campus directory | Directory details on contacts; "not provided" for unknowns; no map links for demo organisations; fictional Northbay entries | `workers/accounts/content-details.mjs`, `workers/trial-ui/spaces.js`, `tools/demo/` |
+| 16 · Sponsorships | Ina's campaign controls (selectively); a labelled Sponsored section for students | `workers/accounts/sponsorships.mjs`, `restored-ui.mjs`, `spaces.js` |
+| Submission readiness | Zoom, rough quality note, pages prompt, limits, in the photo review | `workers/trial-ui/image-review.js` |
+| Guides | School start and return; nine Dubai source checks; unsupported claims qualified in the text | `js/content*.js`, `js/context.js`, `js/simple.js`, `workers/guide-source-checks.mjs`, review pack sections 11–12 |
+| Local server | Serves the real app page; local-only helpers `/__dev/as`, `/__dev/sql`, `/__dev/demo` | `tools/browser-checks/accounts-local-server.mjs` |
+
+## Rerun the checks (no founder testing needed)
+
+```bash
+node tools/run-ci-local.mjs out.json
+```
+
+That runs all 144 CI commands; the result at the candidate was 144 of 144. Individually:
+
+```bash
+node --experimental-sqlite tests/university-workflow-real-server.test.mjs
+node --experimental-sqlite tools/browser-checks/welcome-real-browser.mjs
+node --experimental-sqlite tests/campus-directory-real-server.test.mjs
+node --experimental-sqlite tools/browser-checks/campus-directory-browser.mjs
+node --experimental-sqlite tests/sponsorships-real-server.test.mjs
+node --experimental-sqlite tools/browser-checks/sponsorships-browser.mjs
+node tests/submission-readiness.test.mjs
+node tests/claims-qualified.test.mjs
+node tests/school-start-return.test.mjs
+node --experimental-sqlite tools/browser-checks/guide-drafting-check.mjs
+```
+
+The last one needs internet and isn't in CI.
+
+**Evidence:** `docs/evidence/*-2026-10-29.json` and `*-2026-10-30.json`, each with its run times.
+
+## Known items for this review
+
+### Visual
+- The new screens use the existing styles and have had no design pass: welcome, support filters, directory cards, sponsored section, the photo review panel, and the staff preview.
+- On the Dubai school steps, the "checked through search" note sits inside "More details".
+- The sponsored card says "paid" twice when the disclosure already says it.
+
+### Language (Arabic, French)
+- 13 guide steps carry "Arabic not yet reviewed" (`translationPending`).
+- At least 11 new interface strings aren't in the translation dictionary yet: 8 in `accounts.js` and 3 in `image-review.js`. The automatic scan misses strings built another way, so check each new screen in Arabic and French.
+- Right-to-left layout of the new screens hasn't been checked.
+
+### Accessibility
+- Zoom, screen reader, and keyboard order in the photo review dialog, the support filters and the directory.
+
+### Integration
+- Each flow passes on the real local server separately. One run with all flows together on one server is Session 2's job.
+
+### Guide content
+- Review pack sections 1–12, especially the "Not confirmed" and "via search" rows.
+- **Approvals:** record one with `tools/review-guide.mjs` only after a person's review passes.
+
+### Policies
+- Privacy and Terms need operator details.
+- Check the drafts' `[INCLUDE IF RELEASED]` items against this candidate's features, including the new ones: sponsorships, the directory, and submission readiness.
+
+## Not verified anywhere yet
+
+- Live: real D1, email sign-in, the deployed page, OpenAI drafting, budget limits, rollback. Blocked by the hold.
+- AI drafting quality: the model step.
+- 12 Dubai guides still have no source check (`docs/remaining-checklist-2026-10-30.md`).
+
+## Midnight
+
+Ina assesses the preserved recovery evidence: the bundle, the extracted modules, the local build of `4d6b0e9`, and the comparison with hashes. It is held privately outside the repository; the summary is in `docs/midnight-source-investigation-2026-10-29.md`. Nothing assumes she can confirm authorship or locate `cdab3b5`. Deployment stays held until reconciliation.

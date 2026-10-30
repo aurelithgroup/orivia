@@ -21,7 +21,7 @@ Owners: **C** = Cleo, **I** = Ina, **B** = Bee (founder). Items marked ⛔ are b
 
 | # | Item | Needs | Owner |
 |---|---|---|---|
-| 2.1 | One stable commit for Ina's independent review: university block (areas 13, 16, 21, 22, 23, 24), school guides, directory, sponsorships | Session 1 pushed | C → I |
+| 2.1 | One stable commit for Ina's independent review | **Frozen 30 Oct: `55951418`**, with a review guide at `docs/session2-review-candidate-2026-10-30.md` | C → I |
 | 2.2 | Visual review (phone and desktop) of the new screens: welcome, support inbox, directory, sponsored section, preview | Screenshots from the browser checks | C + I |
 | 2.3 | Arabic and French: new strings untranslated in the app's dictionary; the Arabic of the new guide steps marked for review; RTL layout of the new screens | A language reviewer | I or a reviewer |
 | 2.4 | Accessibility (area 9): actual zoom, screen reader, and the older 10px tab rule | — | C + I |
