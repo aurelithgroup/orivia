@@ -221,6 +221,8 @@ jobs:
           node tests/docs-before-guide.test.mjs
           node tests/ina-review-week6.test.mjs
           node tests/source-checks-oct29.test.mjs
+          node tests/school-start-return.test.mjs
+          node tests/northbay-demo-directory.test.mjs
           node --experimental-sqlite tests/university-workflow-real-server.test.mjs
       - name: "Guided Northbay welcome in a real browser (real local server, headless Chrome)"
         run: node --experimental-sqlite tools/browser-checks/welcome-real-browser.mjs

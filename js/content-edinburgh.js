@@ -71,6 +71,9 @@ const ESRC = {
   volunteer: S('Volunteer Edinburgh: How to volunteer', 'Volunteer Edinburgh: كيف تتطوع', 'https://www.volunteeredinburgh.org.uk/volunteer/how-to-volunteer/'),
   catchment: S('City of Edinburgh Council: Find your catchment school', 'مجلس مدينة إدنبرة: اعثر على مدرسة منطقتك', 'https://www.edinburgh.gov.uk/school-places/find-catchment-school'),
   schoolApply:S('City of Edinburgh Council: Apply for a school place', 'مجلس مدينة إدنبرة: التقديم على مقعد مدرسي', 'https://www.edinburgh.gov.uk/school-places/apply-school-place'),
+  termDates: S('City of Edinburgh Council: School term dates', 'مجلس مدينة إدنبرة: مواعيد الفصول الدراسية', 'https://www.edinburgh.gov.uk/schools/term-dates'),
+  schoolGrants:S('City of Edinburgh Council: Free school meals, milk and school clothing grants', 'مجلس مدينة إدنبرة: الوجبات المدرسية المجانية والحليب ومنح الملابس المدرسية', 'https://www.edinburgh.gov.uk/food-clothing/free-school-meals-school-clothing-grants'),
+  schoolMeals:S('mygov.scot: School meals', 'mygov.scot: الوجبات المدرسية', 'https://www.mygov.scot/school-meals'),
   placing:   S('City of Edinburgh Council: School placing requests', 'مجلس مدينة إدنبرة: طلبات النقل إلى مدرسة أخرى', 'https://www.edinburgh.gov.uk/school-places/school-placing-requests'),
 };
 
@@ -702,7 +705,7 @@ DATA.journeys['edinburgh.school'] = base({
   need:'edu', icon:'edu',
   title:{en:'Find a school for your child', ar:'العثور على مدرسة لطفلك'},
   doneTitle:{en:'You’ve started your child’s school place.', ar:'بدأت إجراءات مقعد طفلك المدرسي.'},
-  sources:[ESRC.catchment, ESRC.schoolApply, ESRC.placing],
+  sources:[ESRC.catchment, ESRC.schoolApply, ESRC.placing, ESRC.termDates, ESRC.schoolGrants, ESRC.schoolMeals],
   stuck:{cards:[{title:{en:'The school office', ar:'مكتب المدرسة'}, body:{en:'Call or visit your catchment school. The office can tell you if there’s a place and help with the form.', ar:'اتصل بمدرسة منطقتك أو زُرها. يمكن للمكتب إخبارك إن كان هناك مقعد متاح ومساعدتك في النموذج.'}}]},
   stages:[
     {id:'find', level:'source', label:{en:'Find', ar:'اعثر'}, title:{en:'Find your catchment school', ar:'اعثر على مدرسة منطقتك'}, help:['full','else'],
@@ -723,9 +726,29 @@ DATA.journeys['edinburgh.school'] = base({
       ]},
       {t:'phraseCard', v:{en:'Hello. We’ve just moved to Edinburgh. Do you have a place for my child, and how do we apply?', ar:'مرحباً. انتقلنا إلى إدنبرة حديثاً. هل لديكم مقعد لطفلي، وكيف نقدّم؟'}},
      ]},
+    // School start and school return (29 Oct): read directly on the council and mygov.scot pages; Arabic not yet reviewed.
+    {id:'start', level:'source', pendingAr:true, label:{en:'Starting', ar:'البدء'}, title:{en:'Starting school', ar:'بدء الدراسة'}, help:['grants','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'At council schools in Scotland, every child in P1 to P5 gets a free school lunch, whatever your income.', ar:'في مدارس المجالس في اسكتلندا، يحصل كل طفل من الصف الأول إلى الخامس الابتدائي (P1–P5) على غداء مدرسي مجاني، أياً كان دخلك.'},
+        {en:'From P6, and for free milk and a school clothing grant, families on a low income can apply to the council.', ar:'من الصف السادس الابتدائي (P6) فما فوق، وللحصول على الحليب المجاني ومنحة الملابس المدرسية، يمكن للأسر ذات الدخل المنخفض التقديم إلى المجلس.'},
+        {en:'If you get Housing Benefit or Council Tax Reduction, the council may give you the award in June without an application.', ar:'إذا كنت تتلقى إعانة السكن أو تخفيض ضريبة المجلس، فقد يمنحك المجلس هذه المنحة في يونيو دون تقديم طلب.'},
+      ]},
+      {t:'link', url:'https://www.edinburgh.gov.uk/food-clothing/free-school-meals-school-clothing-grants', v:{en:'School meals, milk and clothing grants', ar:'الوجبات المدرسية والحليب ومنح الملابس'}},
+     ]},
+    {id:'return', level:'source', pendingAr:true, label:{en:'Term dates', ar:'المواعيد'}, title:{en:'Term dates and going back', ar:'مواعيد الفصول والعودة إلى المدرسة'}, help:['else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'2026–27: pupils start on Wednesday 12 August 2026. The year ends on Tuesday 29 June 2027.', ar:'العام 2026–2027: يبدأ التلاميذ يوم الأربعاء 12 أغسطس 2026، وينتهي العام يوم الثلاثاء 29 يونيو 2027.'},
+        {en:'Holidays: 12 to 19 October; 21 December to 5 January; 15 to 19 February; 5 to 19 April. There are also single holidays, such as Monday 14 September.', ar:'العطل: من 12 إلى 19 أكتوبر، ومن 21 ديسمبر إلى 5 يناير، ومن 15 إلى 19 فبراير، ومن 5 إلى 19 أبريل. وهناك أيضاً عطل ليوم واحد، مثل الاثنين 14 سبتمبر.'},
+        {en:'Moving to a different Edinburgh school during the year? Use the same Request for School Place form for the new school.', ar:'هل تنتقل إلى مدرسة أخرى في إدنبرة خلال العام؟ استخدم نموذج «طلب مقعد مدرسي» نفسه للمدرسة الجديدة.'},
+      ]},
+      {t:'link', url:'https://www.edinburgh.gov.uk/schools/term-dates', v:{en:'School term dates', ar:'مواعيد الفصول الدراسية'}},
+     ]},
   ],
   problems:[
     {id:'full', q:{en:'The school is full', ar:'المدرسة ممتلئة'}, a:{en:'Your child goes on the school’s waiting list, in the order applications arrived. You can also ask for a place at another school with a placing request.', ar:'يُدرج طفلك في قائمة انتظار المدرسة حسب ترتيب وصول الطلبات. ويمكنك أيضاً طلب مقعد في مدرسة أخرى عبر «طلب نقل» (placing request).'}},
+    {id:'grants', q:{en:'I’m not sure if we can get help with school costs', ar:'لست متأكداً إن كان بإمكاننا الحصول على مساعدة في تكاليف المدرسة'}, a:{en:'Check the council’s school grants page. If you don’t qualify but get the Scottish Child Payment, a child in P6 or P7 can still get free school meals.', ar:'راجع صفحة المنح المدرسية على موقع المجلس. وإن لم تكن مؤهلاً لكنك تتلقى دفعة الطفل الاسكتلندية، فيمكن لطفل في الصف السادس أو السابع الابتدائي الحصول على وجبات مدرسية مجانية.'}},
     {id:'other', q:{en:'I want a school outside my catchment', ar:'أريد مدرسة خارج منطقتي'}, a:{en:'Make a placing request to that school. For a child starting P1 or S1, the council’s admissions team handles it. Places go to catchment children first, so it depends on space.', ar:'قدّم «طلب نقل» إلى تلك المدرسة. أما الطفل الذي يبدأ الصف الأول الابتدائي (P1) أو الأول الثانوي (S1)، فيتولى فريق القبول في المجلس طلبه. تُعطى الأولوية لأطفال المنطقة، فالأمر يعتمد على توفر المقاعد.'}},
     STAFF,
     ELSE('Contact the school office, or the City of Edinburgh Council’s school places team through its website.', 'تواصل مع مكتب المدرسة، أو مع فريق المقاعد المدرسية في مجلس مدينة إدنبرة عبر موقعه.'),

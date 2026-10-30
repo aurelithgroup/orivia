@@ -1,0 +1,67 @@
+{
+ "kind": "local verification, not live acceptance",
+ "implementationCheckpoint": "4957fd6fac8f3af86e6aaacd098940b894be7916 (changes on top, committed with this file)",
+ "ranAt": "2026-10-30T03:24:53.341Z",
+ "what": "Guide drafting without OpenAI: real page reading and quote checks with a scripted stand-in model, and the real endpoint’s refusal without a budget. The model’s drafting itself is not verified.",
+ "passed": true,
+ "checks": [
+  {
+   "check": "The real page was read through the drafting tool’s own fetcher",
+   "ok": true,
+   "detail": "https://www.edinburgh.gov.uk/schools/term-dates"
+  },
+  {
+   "check": "An exact quote is kept, with its source page",
+   "ok": true,
+   "detail": [
+    {
+     "heading": "Opening information",
+     "points": [
+      {
+       "quote": "Autumn Term starts Wednesday 12 August 2026",
+       "sourceId": "S1",
+       "url": "https://www.edinburgh.gov.uk/schools/term-dates",
+       "label": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "check": "The draft is a draft, says staff review is required, and lists what wasn’t confirmed",
+   "ok": true,
+   "detail": [
+    "Facilities",
+    "Access",
+    "Contacts"
+   ]
+  },
+  {
+   "check": "An invented quote is refused (nothing unsupported reaches a draft)",
+   "ok": true,
+   "detail": "not_enough_evidence"
+  },
+  {
+   "check": "Staff consent to AI processing is required",
+   "ok": true,
+   "detail": "staff_ai_consent_required"
+  },
+  {
+   "check": "Without OpenAI configured, the real endpoint refuses and drafts nothing",
+   "ok": true,
+   "detail": {
+    "status": 400,
+    "body": {
+     "error": "budget_not_configured"
+    },
+    "before": 1,
+    "after": 1
+   }
+  }
+ ],
+ "notVerified": [
+  "The model drafting itself (needs OpenAI and the budget database; not available locally; after the hold, within the live-acceptance scope still to be agreed)",
+  "Institution PDF or image reading (needs the file reader)"
+ ],
+ "rerun": "node --experimental-sqlite tools/browser-checks/guide-drafting-check.mjs <out.json> (needs internet; not in CI because the council site can refuse automated requests)"
+}

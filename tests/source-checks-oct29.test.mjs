@@ -14,7 +14,7 @@ for(const id of ['edinburgh.airport','edinburgh.bus','edinburgh.sim','edinburgh.
  assert.ok(c,id+' has a source-check record');
  assert.equal(c.date,'2026-10-29',id+' dated by the real check');
  assert.equal(c.coverage,'partial',id+' is a partial check, not a full one');
- assert.match(c.record,/section 10$/,id+' points to its written record');
+ assert.match(c.record,/(section 10|sections 10 and 11)$/,id+' points to its written record');
 }
 
 // Ofcom: rolling SIM-only contracts usually need a credit check; only pay as you go avoids it.

@@ -1168,11 +1168,14 @@ DATA.tasks['dubai.work'] = [
 
 /* ---------- Education (Dubai): school for your children ---------- */
 SRC.khdaAge = {name:{en:'Khaleej Times: KHDA guide on age cut-offs (2026)', ar:'الخليج تايمز: دليل هيئة المعرفة حول السن المطلوبة (2026)'}, url:'https://www.khaleejtimes.com/uae/dubai-school-admissions-khda-new-guide-age-cut-off'};
+SRC.khdaRegister = {name:{en:'KHDA: Register a new student', ar:'هيئة المعرفة والتنمية البشرية: تسجيل طالب جديد'}, url:'https://web.khda.gov.ae/en/Services/School-Permit-Services/Requesting-Student-Registration'};
+SRC.khdaCalendar = {name:{en:'KHDA: Academic calendar for Dubai’s private schools', ar:'هيئة المعرفة والتنمية البشرية: التقويم الأكاديمي للمدارس الخاصة في دبي'}, url:'https://web.khda.gov.ae/en/resources/academic-calendar-dubai-private-schools'};
+SRC.khdaParents = {name:{en:'KHDA: Guide for parents', ar:'هيئة المعرفة والتنمية البشرية: دليل أولياء الأمور'}, url:'https://web.khda.gov.ae/en/Guides/Parents/Common-Question-For-Parents'};
 SRC.khdaRatings = {name:{en:'KHDA: Dubai school inspection ratings', ar:'هيئة المعرفة والتنمية البشرية: تقييمات المدارس'}, url:'https://web.khda.gov.ae/en/About-Us/Whats-New/Dubai-school-inspection-ratings'};
 DATA.journeys['dubai.school'] = {
   city:'dubai', need:'edu', icon:'edu',
   title:{en:'Find a school for your child', ar:'ابحث عن مدرسة لطفلك'},
-  sources:[SRC.khdaRatings, SRC.khdaAge], checked:CHECKED, trust:{reviewed:false, tested:0},
+  sources:[SRC.khdaRatings, SRC.khdaAge, SRC.khdaRegister, SRC.khdaCalendar, SRC.khdaParents], checked:CHECKED, trust:{reviewed:false, tested:0},
   stages:[
     {id:'choose', level:'source', label:{en:'Choose', ar:'اختر'}, title:{en:'Choosing a school', ar:'اختيار مدرسة'}, help:['else'],
      blocks:[
@@ -1197,10 +1200,35 @@ DATA.journeys['dubai.school'] = {
         {en:'Ask for the full fees in writing before you accept a place.', ar:'اطلب الرسوم الكاملة مكتوبة قبل قبول المقعد.'},
       ]},
      ]},
+    // School start and school return (29 Oct): KHDA pages read through search only; not yet reviewed; Arabic not yet reviewed.
+    {id:'start', viaSearch:'2026-10-29', pendingAr:true, label:{en:'Starting', ar:'البدء'}, title:{en:'Starting at the new school', ar:'البدء في المدرسة الجديدة'}, help:['papers','else'],
+     blocks:[
+      {t:'p', v:{en:'Once your child has a place, the school registers them with KHDA. These are the papers schools usually ask for.', ar:'بعد حصول طفلك على مقعد، تسجّله المدرسة لدى هيئة المعرفة والتنمية البشرية. هذه هي الأوراق التي تطلبها المدارس عادةً.'}},
+      {t:'list', v:[
+        {en:'From Grade 2 (Year 3) up, a transfer certificate from your child’s last school. If there isn’t one, an official end-of-year report.', ar:'من الصف الثاني (السنة الثالثة) فما فوق: شهادة نقل من مدرسة طفلك السابقة، أو تقرير رسمي لنهاية العام إن لم تتوفر.'},
+        {en:'School certificates from outside the UAE must be attested in the country that issued them, by its education authority and for the UAE Ministry of Foreign Affairs. Ask the school exactly which stamps it needs.', ar:'يجب تصديق الشهادات المدرسية الصادرة خارج الإمارات في البلد الذي أصدرها، من جهة التعليم فيه ولصالح وزارة الخارجية الإماراتية. اسأل المدرسة عن الأختام المطلوبة بالضبط.'},
+        {en:'Certificates must be in Arabic or English. Others need a legal translation.', ar:'يجب أن تكون الشهادات بالعربية أو الإنجليزية، وإلا فتحتاج إلى ترجمة قانونية.'},
+      ]},
+      {t:'journeyLink', journey:'dubai.docs.before', v:{en:'Prepare documents before you move', ar:'جهّز مستنداتك قبل الانتقال'}},
+      {t:'p', v:{en:'Checked against KHDA’s published pages through search on 29 October 2026, not read directly. Confirm with the school before you pay for attestation.', ar:'رُوجع هذا مقابل صفحات الهيئة المنشورة عبر البحث في 29 أكتوبر 2026، ولم تُقرأ مباشرة. تأكد مع المدرسة قبل الدفع مقابل التصديق.'}},
+     ]},
+    {id:'return', viaSearch:'2026-10-29', pendingAr:true, label:{en:'Going back', ar:'العودة'}, title:{en:'Going back after a break or a move', ar:'العودة بعد عطلة أو انتقال'}, help:['tc','else'],
+     blocks:[
+      {t:'list', v:[
+        {en:'Most Dubai private schools start in late August. In 2026–27, KHDA’s calendar for these schools has winter break from 14 December 2026 to 4 January 2027 and spring break from 5 to 12 April 2027. Some schools follow an April start.', ar:'تبدأ معظم المدارس الخاصة في دبي أواخر أغسطس. في العام 2026–2027 يحدد تقويم الهيئة لهذه المدارس عطلة الشتاء من 14 ديسمبر 2026 إلى 4 يناير 2027، وعطلة الربيع من 5 إلى 12 أبريل 2027. وبعض المدارس تبدأ عامها في أبريل.'},
+        {en:'Each school publishes its own calendar within KHDA’s. Use your school’s dates.', ar:'تنشر كل مدرسة تقويمها الخاص ضمن تقويم الهيئة. اعتمد مواعيد مدرستك.'},
+        {en:'Moving to another Dubai private school: the old school issues a transfer certificate. It can hold it back until fees are paid, so settle them first.', ar:'عند الانتقال إلى مدرسة خاصة أخرى في دبي: تصدر المدرسة السابقة شهادة النقل، ويحق لها حجبها حتى سداد الرسوم، فسدّدها أولاً.'},
+        {en:'Leaving Dubai’s private schools, for example moving abroad: ask the school for a leaving certificate verified by KHDA.', ar:'عند ترك المدارس الخاصة في دبي، كالانتقال إلى الخارج: اطلب من المدرسة شهادة مغادرة موثّقة من الهيئة.'},
+        {en:'Absence isn’t withdrawal. If your child is leaving, tell the school in writing.', ar:'الغياب ليس انسحاباً. إذا كان طفلك سيغادر المدرسة، فأبلغها كتابياً.'},
+      ]},
+      {t:'p', v:{en:'Checked against KHDA’s published pages through search on 29 October 2026, not read directly. Holiday dates can change with official announcements.', ar:'رُوجع هذا مقابل صفحات الهيئة المنشورة عبر البحث في 29 أكتوبر 2026، ولم تُقرأ مباشرة. قد تتغير مواعيد العطل بإعلانات رسمية.'}},
+     ]},
   ],
   problems:[
     {id:'grade', q:{en:'I’m not sure which grade my child should join', ar:'لست متأكداً في أي صف يلتحق طفلي'}, a:{en:'Ask the school to explain their placement, based on your child’s age and transfer certificate. The rules follow KHDA’s Student Placement Guidelines.', ar:'اطلب من المدرسة شرح قرار التسكين بناءً على عمر طفلك وشهادة النقل، فالقواعد تتبع إرشادات هيئة المعرفة لتسكين الطلاب.'}},
     {id:'full', q:{en:'The schools I want are full', ar:'المدارس التي أريدها ممتلئة'}, a:{en:'Join the waiting lists, and ask each school how long it usually takes. Apply to a few schools at once.', ar:'سجّل في قوائم الانتظار، واسأل كل مدرسة عن المدة المعتادة. وقدّم لعدة مدارس في الوقت نفسه.'}},
+    {id:'papers', q:{en:'The school wants papers I don’t have', ar:'تطلب المدرسة أوراقاً ليست لدي'}, a:{en:'Ask the school what it can accept instead, such as an official end-of-year report. For rules, you can contact KHDA.', ar:'اسأل المدرسة عمّا يمكن قبوله بدلاً منها، مثل تقرير رسمي لنهاية العام. ولأسئلة القواعد يمكنك التواصل مع الهيئة.'}},
+    {id:'tc', q:{en:'The old school won’t release the transfer certificate', ar:'المدرسة السابقة لا تسلّم شهادة النقل'}, a:{en:'Ask the school what is outstanding. A school can hold the certificate until approved fees are paid. If you think that is wrong, contact KHDA.', ar:'اسأل المدرسة عمّا هو مستحق. يحق للمدرسة حجب الشهادة حتى سداد الرسوم المعتمدة. وإن رأيت أن ذلك غير صحيح فتواصل مع الهيئة.'}},
     {id:'else', q:{en:'Something else', ar:'مشكلة أخرى'}, a:{en:'Ask the school’s admissions team first. For questions about rules, you can contact KHDA.', ar:'اسأل فريق القبول في المدرسة أولاً. ولأسئلة القواعد، يمكنك التواصل مع هيئة المعرفة والتنمية البشرية.'}},
   ],
   stuck:{cards:[{title:{en:'The school’s admissions team', ar:'فريق القبول في المدرسة'}, body:{en:'They handle applications and placement.', ar:'يتولون الطلبات والتسكين.'}},{title:{en:'KHDA', ar:'هيئة المعرفة والتنمية البشرية'}, body:{en:'Dubai’s regulator for private schools.', ar:'الجهة المنظمة للمدارس الخاصة في دبي.'}}]},

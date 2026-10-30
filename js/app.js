@@ -291,6 +291,7 @@ const SCREENS = {
           <div class="sign-tools">${listenBtn()}<button class="listen staff-btn" data-act="staffCard">${svg('staff','lic')}<span>${t('staffBtn')}</span></button></div>
         </div>
         <div class="content">
+          ${s.pendingAr && lang()==='ar' ? '<div class="tip" lang="ar" dir="rtl"><b>ترجمة لم تُراجع بعد</b>لم يراجع مترجم بعد النص العربي لهذه الخطوة. إن كان هناك شك فاعتمد النص الإنجليزي. (Arabic not yet reviewed.)</div>' : ''}
           ${waitingCard(S.params.id, s)}
           ${(()=>{ const q = quickCard(S.params.id, s), keep = b => b.t === 'emergency' || b.t === 'link' || b.t === 'journeyLink';
             const blocks = s.blocks.filter(b => !(s.need && b.t==='tip' && b.label==='bring'));

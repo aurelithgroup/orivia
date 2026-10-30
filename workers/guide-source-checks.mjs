@@ -18,7 +18,16 @@ export const SOURCE_CHECKS={
  'edinburgh.bus':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 10'},
  'edinburgh.sim':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 10'},
  'edinburgh.community':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 10'},
- 'edinburgh.school':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 10'},
+ 'edinburgh.school':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, sections 10 and 11'},
+ 'dubai.school':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 11'},
+ 'dubai.nol':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 11'},
+ 'dubai.taxi':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 11'},
+ 'dubai.sim':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 11'},
+ 'dubai.rent':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 11'},
+ 'dubai.workrights':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 11'},
+ 'dubai.studentwork':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 11'},
+ 'dubai.bank':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 11'},
+ 'dubai.ins.employee':{date:'2026-10-29',coverage:'partial',record:'docs/journey-review-pack-2026-10-28.md, section 11'},
 };
 const DATE=/^\d{4}-\d{2}-\d{2}$/;
 export function sourceCheck(id){const c=SOURCE_CHECKS[id];return c&&DATE.test(c.date)&&['full','partial'].includes(c.coverage)?{...c}:null}

@@ -40,7 +40,7 @@ assert.match(chat,/function sourceCheckText\(g\)/);assert.match(chat,/'Source ch
 // A date only from a recorded check of that guide (founder, 29 Oct)
 {const {SOURCE_CHECKS}=await import('../workers/guide-source-checks.mjs');const lib=guideCatalogue('all');
  for(const g of lib)assert.equal(JSON.stringify(g.sourceCheck),JSON.stringify(SOURCE_CHECKS[g.id]||null),g.id);
- assert.equal(guideCatalogue('all').find(g=>g.id==='dubai.nol').sourceCheck,null,'an unchecked guide has no check date');}assert.match(chat,/function homeFirst\(g\)/);
+ assert.equal(guideCatalogue('all').find(g=>g.id==='dubai.airport').sourceCheck,null,'an unchecked guide has no check date');}assert.match(chat,/function homeFirst\(g\)/);
 const trial=fs.readFileSync('workers/orivia-ai-private-trial.mjs','utf8');assert.match(trial,/guides:guideCatalogue\('all'\)/);
 const tr=JSON.parse(fs.readFileSync('workers/trial-ui/translations.json','utf8'));for(const k of ['Applies across the UK','Scotland only','Edinburgh only','Dubai only','Sources checked'])assert.ok(tr[k]?.fr&&tr[k]?.ar,k);
 console.log('UK guides: 12 in the catalogue with UK / Scotland / Edinburgh scope, plannable, offered only where they apply; Dubai unchanged.');

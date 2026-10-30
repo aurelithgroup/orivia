@@ -31,7 +31,9 @@ const { chromium } = require('playwright'); const fs = require('fs');
           expect: s.expect, waitingFor: s.wait, time: s.time, cost: s.cost,
           appointment: !!s.appt, staffQuestion: s.staff,
           problemIds: help, contactKeys: contactKeysFor(help),
-          checkupIds: (j.finder || []).map((f, i) => f.stage === s.id ? 'q' + (i + 1) : null).filter(Boolean)
+          checkupIds: (j.finder || []).map((f, i) => f.stage === s.id ? 'q' + (i + 1) : null).filter(Boolean),
+          // Kept for the assistant: a step checked only through search, and a step whose Arabic isn't reviewed yet.
+          ...(s.viaSearch ? { viaSearch: s.viaSearch } : {}), ...(s.pendingAr ? { translationPending: ['ar'] } : {})
         });
       });
       J[id] = clean({

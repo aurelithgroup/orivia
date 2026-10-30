@@ -513,7 +513,7 @@
  },
  "notCovered": [
   "Live acceptance: scope and authenticated access still to be confirmed",
-  "No real Northbay directory data has been entered; the entries here are fictional test data",
+  "Northbay is fictional: its demo directory is the labelled fictional set in tools/demo/northbay-directory.mjs (added 29 Oct, after this run). A real institution’s directory comes from that partner.",
   "Arabic and right-to-left layout, screen readers",
   "Visual and language review",
   "Whether map searches find the right place for a real address (depends on the address staff enter)"

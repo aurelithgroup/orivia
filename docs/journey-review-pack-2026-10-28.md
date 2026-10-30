@@ -265,6 +265,82 @@ Some sites refuse automated access: Ofcom (403, then a bot challenge in a browse
 
 After this section, every Edinburgh journey has a source-check record. Of the Dubai journeys, only `dubai.eid.student` and `dubai.docs.before` do; the other 20 (for example `dubai.nol`, `dubai.sim`, `dubai.rent`, the other Emirates ID routes and the insurance guides) still show "Source check not recorded". **No guide has a review record.**
 
+## 11. New (29 Oct, evening): school start and return, and eight Dubai guides
+
+Checked between about 18:00 and 18:40 UTC on 29 Oct. **Everything here is awaiting review.** No review record was created.
+
+What the results mean:
+- **Supported:** the official page says it.
+- **Via search:** the page couldn't be read directly (KHDA: certificate error; Sanadak: 403; one u.ae page: 404). The result rests on search results that quote that page.
+- **Not confirmed:** no official page was found that says it. The claim stays in the guide, marked here, for the reviewer to keep, reword or remove.
+
+**Arabic:** the new school steps carry `pendingAr`. In Arabic, the app shows *ترجمة لم تُراجع بعد* (Arabic not yet reviewed) on those steps, and the assistant's copy marks them `translationPending: ['ar']`. These Arabic lines need a language review.
+
+### `dubai.school`: new steps "Starting at the new school" and "Going back after a break or a move"
+
+These steps are at draft level and marked `viaSearch`.
+
+| Claim | Source | Result |
+|---|---|---|
+| Transfer certificate from Grade 2 / Year 3 up, or an official end-of-year report | KHDA, *Register a new student* | **Via search: supported** |
+| Certificates from outside the UAE attested in the issuing country, by its education authority and for the UAE Ministry of Foreign Affairs | KHDA, *Register a new student* | **Via search: supported.** The guide tells parents to ask the school which stamps it needs |
+| Certificates in Arabic or English, otherwise a legal translation | KHDA | **Via search: supported** |
+| 2026–27 September-start schools: winter break 14 Dec 2026 to 4 Jan 2027, spring break 5 to 12 Apr 2027; some schools start in April | KHDA, *Academic calendar* | **Via search: supported.** The search output was partly garbled; check the exact days before relying on them |
+| The old school can hold the transfer certificate until fees are paid | KHDA, *Registration and refund policy* | **Via search: supported** |
+| A leaving certificate verified by KHDA when leaving Dubai's private schools | KHDA, *Guide for parents* and services | **Via search: supported** |
+| Absence isn't withdrawal; tell the school in writing | KHDA refund policy | **Via search: supported** |
+
+### `edinburgh.school`: new steps "Starting school" and "Term dates and going back"
+
+These pages were read directly.
+
+| Claim | Source | Result |
+|---|---|---|
+| Free school lunch for every child in P1–P5 at council schools, whatever the income | mygov.scot, *School meals* | **Supported** |
+| From P6, and for milk and clothing grants, low-income families apply; automatic June award with Housing Benefit or Council Tax Reduction | Edinburgh Council, *Free school meals, milk and school clothing grants* | **Supported** |
+| Free meals in P6/P7 with the Scottish Child Payment (problem answer) | same | **Supported** |
+| 2026–27: start Wed 12 Aug 2026; holidays 12–19 Oct, 21 Dec–5 Jan, 15–19 Feb, 5–19 Apr; a single holiday on Mon 14 Sep; end Tue 29 Jun 2027 | Edinburgh Council, *School term dates* | **Supported.** A council PDF found by search gives different October and February dates; the web page was used |
+| Moving mid-year: use the same Request for School Place form | already in this guide's apply step | Not rechecked |
+
+### Eight Dubai guides (partial)
+
+| Guide | Claim | Source | Result |
+|---|---|---|---|
+| `dubai.nol` | Top up at least AED 20 at the Metro machine | RTA notice (from 1 Mar 2025, at Metro machines; other channels from AED 5) | **Supported** |
+| `dubai.nol` | The gate may not open below about AED 7.50 | RTA nol terms (minimum balance 7.5) | **Supported** |
+| `dubai.taxi` | A street taxi starts at AED 5 (6am–10pm) or AED 5.5 (10pm–6am) | RTA, *Taxi fares in Dubai* | **Supported** |
+| `dubai.taxi` | Booking in an app starts from AED 9 | same (AED 9 or 13, by time of day) | **Supported** |
+| `dubai.taxi` | The ride is free if the meter isn't running | same ("The meter is not in operation") | **Supported** |
+| `dubai.sim` | Residents up to 5 SIMs per provider, visitors up to 2 | TDRA FAQ | **Via search: supported** |
+| `dubai.rent` | Ejari costs about AED 178 online and about AED 220 at a centre | Dubai Land Department e-service (177.75 in total; 220 at trustee centres) | **Via search: supported.** Which channel each total belongs to is ambiguous on the page |
+| `dubai.rent` | 90 days' notice to change the terms, including the rent | Law 33 of 2008 (amended Art. 14); DLD FAQ | **Via search: supported** |
+| `dubai.workrights` | 30 days' annual leave after a year; 2 days a month between 6 and 12 months | u.ae, *Annual leave* (Decree-Law 33 of 2021) | **Via search: supported** |
+| `dubai.workrights` | Sick leave up to 90 days: 15 on full pay, 30 on half pay, the rest unpaid | u.ae, *Sick leave* | **Via search: supported** |
+| `dubai.workrights` | MOHRE's line is 80084; disputes are usually settled within 14 working days | — | **Not checked** |
+| `dubai.studentwork` | Students aged 15 and over; the employer applies; the permit lasts 3 months; a residence visa and a MOHRE-approved contract are needed | MOHRE, *Training and work permit for students* | **Supported.** Guardian consent is also needed under 18, which the guide doesn't say |
+| `dubai.studentwork` | The work can be "part-time, temporary, flexible or remote" | same page | **Not confirmed**: the page doesn't say so |
+| `dubai.bank` | Go to Sanadak after 15 days, for free, on 800 72 623 25 | Sanadak eligibility page and contact page | **Via search: supported.** Sanadak's FAQ says 30 days, which conflicts |
+| `dubai.bank` | ADCB student account minimum of AED 1,500; AED 3,000 salary example | — | **Not checked** |
+| `dubai.ins.employee` | The employer must enrol you, pay, and not charge you for it | Dubai Law 11 of 2013, Art. 10 | **Via search: supported** |
+| `dubai.ins.employee` | Cover is at least the Essential Benefits Plan; the family cover rules | ISAHD | **Not checked** |
+
+### Still without any source-check record
+
+Twelve Dubai guides have no record yet:
+- `dubai.airport`
+- `dubai.uaepass`
+- `dubai.health.student`
+- `dubai.ins.student`
+- `dubai.ins.family`
+- `dubai.ins.self`
+- `dubai.ins.visitor`
+- `dubai.community`
+- `dubai.eid.employee`
+- `dubai.eid.family`
+- `dubai.eid.self`
+
+The older steps of `dubai.school` (choose, age, apply) are also unchecked.
+
 ## How to record your review (when you're satisfied)
 
 ```bash
