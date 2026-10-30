@@ -1,0 +1,1177 @@
+{
+  "recordedAt": "2026-10-30T07:02:01.781122+00:00",
+  "base": "636310287d94b117ef9b50bd4856eb1fc102d6c2",
+  "fixCommit": "23f531e3e213c06831c3e9464cd4c83984bc75e4",
+  "accepted": false,
+  "checks": {
+    "ciCommands": {
+      "sha": "636310287d94b117ef9b50bd4856eb1fc102d6c2",
+      "at": "2026-10-30T06:54:17.656Z",
+      "results": [
+        {
+          "command": "node --check js/buddy.js",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --check js/orivia-ai-bridge.js",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --check workers/orivia-ai-preview.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/spea-directory-feed.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/openai-pilot.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/transport-assistant-card.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/place-card.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/handoff-cards.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/assistant.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/assistant-timing.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/reply-arrival.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/dictation.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/calendar-changes.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/inline-calendar-routing.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/i18n.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/buddy-smoke.js",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/ai-bridge.test.js",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/ai-chat-consent.test.js",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/native-calendar.test.cjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/live-official-and-reminders.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/official-sources.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/journey-sources.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/journey-api.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/journey-adapter-loop.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/natural-entry.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --test tests/journey-intelligence.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/transport-actions.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/device-handoffs.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/guide-cards.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/settings-calendar.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/research-display.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/chat-history.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/beta-start.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/research.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/school-task-integration.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/research-follow-through.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/research-schools.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/information-cards.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/spea-reader.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/school-sites.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/research-loop.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/research-loop-worker.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/site-captures.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/site-reader-layouts.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/site-captures-navigation.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/research-agent.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/research-web-evidence.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/spend-ledger.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/browser-directory.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/research-pilot.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/provider-comparison.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/public-beta.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/ai-preview.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/ai-journey-tools.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/home-dashboard.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/chat-motion.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/home-destination-photo.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/organisation-home.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/account-mail.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/accounts.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/account-client.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/onboarding-consent.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/organisation-arrival.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/notifications.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/notification-client.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/public-release.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/content-details.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/university-actions.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/university-chat.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/installable.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/chat-presentation.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/ina-voice-text.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/answer-accuracy.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/research-set-uae-uk.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/chat-stream.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/reply-language.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/natural-voice.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/files.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/files-to-chat.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/notification-isolation.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/library.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/design-pass.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/week-swipe-links.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/feedback.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/library-discoveries.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/org-bookmarks.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/staff-tenant-matrix.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/owner-recovery.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/tab-account-switch.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/hostile-fetch.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/incident-switches.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/time-correctness.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/truthful-progress.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/consent-scope.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/plan-steps.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/org-settings.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/dates-announcements.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/owner-overview.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/university-overview.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/listen-startup.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/voice-account-exit.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/chat-versions.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/chat-versions-integration.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/metric-definitions.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/offline-updates.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/device-accounts.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/connectors.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/ina-connector-duplicate.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/ina-reply-origin.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/restore-drill.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/language-matrix.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/shares.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/share-routing.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/share-provenance.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/rollback-compat.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/assistant-safety.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/settings-scope.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/deletion-consequences.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/leave-organisation.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/navigation.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/batch-one.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/batch-one-integration.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/family-overview.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/deadline-reminders.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/uk-guides.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/docs-before-guide.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/ina-review-week6.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/source-checks-oct29.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/school-start-return.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/northbay-demo-directory.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/submission-readiness.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/claims-qualified.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/language-fallbacks.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/legal-drafts.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/university-workflow-real-server.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tools/browser-checks/welcome-real-browser.mjs",
+          "status": "not_run",
+          "reason": "Chrome executable unavailable"
+        },
+        {
+          "command": "node --experimental-sqlite tests/campus-directory-real-server.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tools/browser-checks/campus-directory-browser.mjs",
+          "status": "not_run",
+          "reason": "Chrome executable unavailable"
+        },
+        {
+          "command": "node --experimental-sqlite tests/sponsorships-real-server.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tools/browser-checks/sponsorships-browser.mjs",
+          "status": "not_run",
+          "reason": "Chrome executable unavailable"
+        },
+        {
+          "command": "node --experimental-sqlite tools/browser-checks/guide-caveats-browser.mjs",
+          "status": "not_run",
+          "reason": "Chrome executable unavailable"
+        },
+        {
+          "command": "node --experimental-sqlite tools/browser-checks/visual-keyboard-reflow.mjs",
+          "status": "not_run",
+          "reason": "Chrome executable unavailable"
+        },
+        {
+          "command": "node --experimental-sqlite tests/myorivia-release.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/organisations.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node tests/platform-ui.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/restored-operations.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/restored-safety.test.mjs",
+          "status": "pass",
+          "detail": ""
+        },
+        {
+          "command": "node --experimental-sqlite tests/recovery-delivery.test.mjs",
+          "status": "pass",
+          "detail": ""
+        }
+      ]
+    },
+    "additionalBrowserChecks": {
+      "guideCaveats": 14,
+      "welcome": 30,
+      "directory": 14,
+      "sponsorships": 11
+    },
+    "targetedTests": [
+      "tests/platform-ui.test.mjs passed",
+      "tests/legal-drafts.test.mjs passed",
+      "node --check reflow script passed",
+      "git diff --check passed"
+    ]
+  },
+  "findings": {
+    "initialReflow": {
+      "ranAt": "2026-10-30T06:57:23.298Z",
+      "limits": [
+        "Reflow checks only: narrowed CSS viewports approximate 200% zoom reflow. They are not real browser-zoom, OS text-size or real-device checks, and not acceptance",
+        "Contrast computed against the nearest solid background; images, gradients and overlays ignored; a person must confirm",
+        "Chrome only; not Safari, Firefox or real phones",
+        "Keyboard checked with Tab and Escape only; not a screen reader",
+        "Screenshots need a person\u2019s visual judgement"
+      ],
+      "results": [
+        {
+          "screen": "staff-support",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 20,
+              "elementsPastEdge": []
+            }
+          },
+          "keyboard": {
+            "stops": 30,
+            "unique": 25,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:Your spaces",
+              "BUTTON:Account",
+              "BUTTON:Overview",
+              "BUTTON:Student welcome",
+              "BUTTON:Guides and information",
+              "BUTTON:Process templates",
+              "BUTTON:Support",
+              "BUTTON:Members",
+              "BUTTON:Invitations and QR codes",
+              "BUTTON:Counts",
+              "BUTTON:Application records",
+              "BUTTON:Settings"
+            ]
+          },
+          "contrast": {
+            "checked": 51,
+            "low": [
+              "Admin 4.19"
+            ],
+            "lowCount": 1
+          }
+        },
+        {
+          "screen": "staff-guides-preview",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            }
+          },
+          "keyboard": {
+            "stops": 30,
+            "unique": 26,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:Your spaces",
+              "BUTTON:Account",
+              "BUTTON:Overview",
+              "BUTTON:Student welcome",
+              "BUTTON:Guides and information",
+              "BUTTON:Process templates",
+              "BUTTON:Support",
+              "BUTTON:Members",
+              "BUTTON:Invitations and QR codes",
+              "BUTTON:Counts",
+              "BUTTON:Application records",
+              "BUTTON:Settings"
+            ]
+          },
+          "contrast": {
+            "checked": 88,
+            "low": [
+              "Admin 4.19",
+              "Contact 3.86",
+              "Published 4.19",
+              "Members only 3.86",
+              "Public 3.86"
+            ],
+            "lowCount": 9
+          }
+        },
+        {
+          "screen": "owner-manage",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 32,
+              "elementsPastEdge": []
+            }
+          },
+          "keyboard": {
+            "stops": 30,
+            "unique": 19,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:Your spaces",
+              "BUTTON:Account",
+              "A:See organisations",
+              "A:See which organisations",
+              "A:Open the feedback list",
+              "SUMMARY:What these numbers mean",
+              "SELECT:Management area",
+              "INPUT:INPUT",
+              "INPUT:on",
+              "BUTTON:Create partner invitation",
+              "A:Visit Harbour Books \u2197",
+              "A:Visit Harbour Books \u2197"
+            ]
+          },
+          "contrast": {
+            "checked": 206,
+            "low": [
+              "Owner 4.19",
+              "Live data 4.19",
+              "Unavailable 3.86",
+              "Sponsored 3.86",
+              "Active 4.19",
+              "Admin active 4.19"
+            ],
+            "lowCount": 21
+          }
+        },
+        {
+          "screen": "student-platform",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            }
+          },
+          "keyboard": {
+            "stops": 27,
+            "unique": 7,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:Your spaces",
+              "BUTTON:Account",
+              "INPUT:INPUT",
+              "TEXTAREA:TEXTAREA",
+              "INPUT:on",
+              "INPUT:on",
+              "BUTTON:Send support request",
+              "BUTTON:Leave Northbay University",
+              "BUTTON:Your spaces",
+              "BUTTON:Account",
+              "INPUT:INPUT",
+              "TEXTAREA:TEXTAREA"
+            ]
+          },
+          "contrast": {
+            "checked": 26,
+            "low": [],
+            "lowCount": 0
+          }
+        },
+        {
+          "screen": "app-directory",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": [
+                "TEXTAREA. 7px"
+              ]
+            }
+          },
+          "enteredApp": true,
+          "keyboard": {
+            "stops": 30,
+            "unique": 11,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:\u2190 My Orivia",
+              "A:Directions in Google Maps \u2197",
+              "A:Apple Maps \u2197",
+              "A:Source page \u2197",
+              "A:Manage membership",
+              "INPUT:Subject",
+              "TEXTAREA:Message",
+              "INPUT:on",
+              "INPUT:on",
+              "BUTTON:Send support request",
+              "BUTTON:Leave Northbay University",
+              "BUTTON:Close"
+            ]
+          },
+          "contrast": {
+            "checked": 74,
+            "low": [],
+            "lowCount": 0
+          }
+        },
+        {
+          "screen": "app-sponsored",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": [
+                "TEXTAREA. 7px"
+              ]
+            }
+          },
+          "enteredApp": true,
+          "keyboard": {
+            "stops": 30,
+            "unique": 8,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:\u2190 My Orivia",
+              "A:Manage membership",
+              "INPUT:Subject",
+              "TEXTAREA:Message",
+              "INPUT:on",
+              "INPUT:on",
+              "BUTTON:Send support request",
+              "BUTTON:Leave Northbay University",
+              "BUTTON:Close",
+              "BUTTON:\u2190 My Orivia",
+              "A:Manage membership",
+              "INPUT:Subject"
+            ]
+          },
+          "contrast": {
+            "checked": 53,
+            "low": [],
+            "lowCount": 0
+          }
+        },
+        {
+          "screen": "app-guide-step",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            }
+          },
+          "enteredApp": true,
+          "keyboard": {
+            "stops": 29,
+            "unique": 27,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:Chats",
+              "BUTTON:Home",
+              "BUTTON:Sign in",
+              "BUTTON:Settings",
+              "BUTTON:\u2190 Journeys",
+              "BUTTON:Chat",
+              "SUMMARY:Guide version and review",
+              "BUTTON:Follow this guide",
+              "BUTTON:Save for later",
+              "SUMMARY:All steps",
+              "SUMMARY:Read more",
+              "BUTTON:Ask Orivia about this step"
+            ]
+          },
+          "contrast": {
+            "checked": 58,
+            "low": [],
+            "lowCount": 0
+          }
+        },
+        {
+          "screen": "photo-dialog",
+          "keyboard": {
+            "stops": 13,
+            "unique": 9,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:Crop to square",
+              "BUTTON:Zoom in",
+              "BUTTON:Zoom out",
+              "BUTTON:Reset",
+              "BUTTON:Retake",
+              "BUTTON:Cancel",
+              "BUTTON:Use photo",
+              "DIALOG:Review photo",
+              "BUTTON:Rotate",
+              "BUTTON:Crop to square",
+              "BUTTON:Zoom in",
+              "BUTTON:Zoom out"
+            ]
+          },
+          "focusStayedInside": true,
+          "reflow at 195 CSS px (approximates phone at 200%)": {
+            "pageOverflowPx": 0,
+            "elementsPastEdge": []
+          },
+          "escapeCloses": true,
+          "contrast": null
+        }
+      ]
+    },
+    "postFixObservedPageOverflow195px": {
+      "staff-support": 0,
+      "staff-guides-preview": 0,
+      "owner-manage": 0,
+      "student-platform": 0
+    }
+  },
+  "limitations": [
+    "Local fictional data only; no deployed acceptance.",
+    "143 CI commands passed; five browser commands rerun separately. Reflow command previously returned success despite findings.",
+    "Policy introductions changed during broad run. No claim that all commands ran on final fix commit.",
+    "Contrast warnings remain advisory and unresolved.",
+    "Screen reader, real device, real browser zoom and language/content approvals pending.",
+    "Private Midnight bundle and overlay not available in this workspace; integration review blocked.",
+    "Production, pilot, payments, bindings, secrets and budget settings unchanged."
+  ]
+}
