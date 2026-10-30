@@ -1827,6 +1827,9 @@ async function openGuide(id,opts={}){
   // Earlier steps that aren't finished block this one; each links back to it.
   const before=mine?PLAN.blockers(mine,g.steps,i):[];if(before.length&&cur!=='done'&&cur!=='not_applicable'){const bl=el('div','plan-blockers');bl.append(el('p','tiny',uiText('Before this step')+':'));for(const x of before.slice(0,3)){const k=g.steps.findIndex(y=>y.id===x.id);bl.append(button(x.title+' · '+uiText(STEP_LABEL[x.state==='not_started'?'not_started':x.state]),'btn text small',()=>go(k)))}if(before.length>3)bl.append(el('p','tiny','+'+(before.length-3)+' '+uiText('more')));card.append(bl)}
   if(cur==='blocked'&&mine?.notes?.[s.id])card.append(el('p','hint',uiText('Blocked')+': '+mine.notes[s.id]));
+  // Limits of this step, said before its instructions: checked only through search, or not reviewed in this language.
+  if(s.viaSearch){const n=el('p','hint step-caveat');n.dataset.caveat='via-search';n.textContent=uiText('Checked only through search results that quote the official pages, not by reading them directly')+' ('+s.viaSearch+'). '+uiText('Confirm with the organisation before you act.');card.append(n)}
+  if(s.translationPending?.includes(uiLanguage())){const n=el('p','hint step-caveat');n.dataset.caveat='translation-pending';n.textContent=uiText('This step hasn’t been reviewed in your language yet. If anything is unclear, ask the organisation or check the English.');card.append(n)}
   const about=s.info.slice(0,2).map(p=>el('p','',p));
   if(s.info.length>2){const more=el('details','more-text');more.append(el('summary','',uiText('Read more')),...s.info.slice(2).map(p=>el('p','',p)));about.push(more)}
   card.append(...[
@@ -1886,6 +1889,9 @@ async function openGuide(id,opts={}){
   body.append(src,el('p','tiny',g.review?.status==='reviewed'&&g.review.reviewer?uiText('Reviewed by')+' '+g.review.reviewer+' · '+reviewed(g.review.checkedAt)+'. '+uiText('A review covers this version of the guide, not a live check of every detail.'):uiText('Awaiting review: no one has reviewed this guide yet. Check fees, documents and deadlines with the official source.')));
   if(!opts.problem&&!opts.keepScroll)body.parentElement.scrollTop=0;
   opts.keepScroll=false;
+  // Guide text stays in its own language (English content in an Arabic interface): each line takes its direction from
+  // its own words, so full stops and brackets stay at the right end.
+  for(const x of body.querySelectorAll('p,li,h2,h3,h4,summary,span'))if(!x.hasAttribute('dir'))x.dir='auto';
  };
  if(readJourneys()[id])planLocation(id,g.steps[i].id);
  draw();

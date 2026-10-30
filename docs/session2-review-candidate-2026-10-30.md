@@ -82,3 +82,12 @@ The last one needs internet and isn't in CI.
 ## Midnight
 
 Ina assesses the preserved recovery evidence: the bundle, the extracted modules, the local build of `4d6b0e9`, and the comparison with hashes. It is held privately outside the repository; the summary is in `docs/midnight-source-investigation-2026-10-29.md`. Nothing assumes she can confirm authorship or locate `cdab3b5`. Deployment stays held until reconciliation.
+
+## Fixes on top of the candidate (30 Oct)
+
+The candidate commit itself is unchanged. These are fixes for review findings, with evidence in `docs/evidence/session2-checks-2026-10-30.json`:
+- **Guide caveats in the app:** `guideContent` (`/v1/guides/<id>`) now carries `viaSearch` and `translationPending`. The app's guide view shows "checked only through search" and "not reviewed in your language" before the affected step's instructions. A headless-Chrome check covers the served route and the renderer, in English and Arabic, entering the app through its own guest screens; it is in CI.
+- **Right-to-left:** English guide text in the Arabic interface now reads left to right (`dir=auto` per line).
+- **Accessibility:** the photo dialog's heading level and the preview's label are fixed. The automated checks on the support, guides, owner and student screens were clean. Not a screen-reader or zoom test.
+- **Combined flow:** the workflow, directory and sponsorship replays pass in sequence on one server: 141 steps.
+- **Language:** 29 guide view interface strings have no Arabic or French entry yet; they are listed for the language reviewer, not translated. The three new caveat phrases have Arabic and French written by Cleo, which need review.

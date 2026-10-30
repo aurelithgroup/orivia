@@ -211,7 +211,10 @@ export function guideContent(id){
    cost:typeof s.cost==='string'?s.cost:'',time:typeof s.time==='string'?s.time:'',waitingFor:typeof s.waitingFor==='string'?s.waitingFor:'',
    staffQuestion:typeof s.staffQuestion==='string'?s.staffQuestion:'',expect:txt(s.expect),
    statuses:STEP_STATUSES.filter(x=>x!=='waiting'&&(x!=='waiting_org'||s.waitingFor||s.appointment)),
-   confirm:txt((j.checkups||[]).find(c=>c.step===s.id&&c.confirm)?.confirm)})),
+   confirm:txt((j.checkups||[]).find(c=>c.step===s.id&&c.confirm)?.confirm),
+   // A step checked only through search (the date), and the languages whose translation isn't reviewed yet.
+   ...(typeof s.viaSearch==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s.viaSearch)?{viaSearch:s.viaSearch}:{}),
+   ...(Array.isArray(s.translationPending)&&s.translationPending.length?{translationPending:s.translationPending.filter(x=>typeof x==='string'&&/^[a-z]{2}$/.test(x))}:{})})),
   problems:(j.problems||[]).map(problemHelp).filter(p=>p.question&&(p.answer||p.steps.length)),
   fullGuideUrl:'https://aurelithgroup.github.io/orivia/?j='+encodeURIComponent(j.id)};
  return {...guide,review:guideReview(guide)};

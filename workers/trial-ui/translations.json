@@ -3506,5 +3506,17 @@
   "Across the UK · eligibility depends on the bank and on you": {
     "fr": "Tout le Royaume-Uni · l’éligibilité dépend de la banque et de vous",
     "ar": "كل أنحاء المملكة المتحدة · الأهلية تعتمد على البنك وعليك"
+  },
+  "Checked only through search results that quote the official pages, not by reading them directly": {
+    "fr": "Vérifié uniquement à partir de résultats de recherche citant les pages officielles, sans les lire directement",
+    "ar": "تم التحقق فقط من خلال نتائج بحث تقتبس الصفحات الرسمية، دون قراءتها مباشرة"
+  },
+  "Confirm with the organisation before you act.": {
+    "fr": "Confirmez auprès de l’organisme avant d’agir.",
+    "ar": "تأكد مع الجهة المعنية قبل أن تتصرف."
+  },
+  "This step hasn’t been reviewed in your language yet. If anything is unclear, ask the organisation or check the English.": {
+    "fr": "Cette étape n’a pas encore été relue dans votre langue. Si quelque chose n’est pas clair, demandez à l’organisme ou consultez l’anglais.",
+    "ar": "لم تُراجع هذه الخطوة بلغتك بعد. إن كان هناك ما هو غير واضح، فاسأل الجهة المعنية أو راجع النص الإنجليزي."
   }
 }

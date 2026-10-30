@@ -1,0 +1,257 @@
+{
+ "kind": "Session 2 local checks; not live acceptance",
+ "candidate": "55951418d32d7ea6bda461fd7bf49a3673123040 (fixes on top, committed with this file)",
+ "guideCaveats": {
+  "ranAt": "2026-10-30T04:18:36.313Z",
+  "what": "Guide step caveats: /v1/guides from the app worker (guideContent) and the app’s guide view (openGuide), in headless Chrome against accounts-local-server.mjs",
+  "passed": true,
+  "checks": [
+   {
+    "check": "Served: Dubai school start and return carry viaSearch",
+    "ok": true,
+    "detail": [
+     [
+      "choose",
+      null
+     ],
+     [
+      "age",
+      null
+     ],
+     [
+      "apply",
+      null
+     ],
+     [
+      "start",
+      "2026-10-29"
+     ],
+     [
+      "return",
+      "2026-10-29"
+     ]
+    ]
+   },
+   {
+    "check": "Served: both school guides’ new steps carry translationPending: ar",
+    "ok": true
+   },
+   {
+    "check": "Served: Edinburgh’s directly read steps carry no viaSearch",
+    "ok": true
+   },
+   {
+    "check": "Served: an unaffected step carries neither",
+    "ok": true
+   },
+   {
+    "check": "Served: a qualified step elsewhere keeps its marker (nol has none; the Ejari step has ar)",
+    "ok": true
+   },
+   {
+    "check": "Entered the app as a guest through its own screens",
+    "ok": true
+   },
+   {
+    "check": "Renderer (English): the via-search note is shown on the Dubai step",
+    "ok": true,
+    "detail": {
+     "title": "Starting at the new school",
+     "viaSearch": "Checked only through search results that quote the official pages, not by reading them directly (2026-10-29). Confirm with the organisation before you act.",
+     "pending": null,
+     "caveatBeforeInstructions": true,
+     "firstBlock": "About this step",
+     "lang": "en",
+     "dir": "ltr",
+     "visible": true,
+     "englishLineDirection": "ltr",
+     "arabicNoteDirection": "ltr"
+    }
+   },
+   {
+    "check": "Renderer (English): no translation note in English",
+    "ok": true
+   },
+   {
+    "check": "Renderer: the guide is visible on screen",
+    "ok": true,
+    "detail": {
+     "title": "Starting at the new school",
+     "viaSearch": "Checked only through search results that quote the official pages, not by reading them directly (2026-10-29). Confirm with the organisation before you act.",
+     "pending": null,
+     "caveatBeforeInstructions": true,
+     "firstBlock": "About this step",
+     "lang": "en",
+     "dir": "ltr",
+     "visible": true,
+     "englishLineDirection": "ltr",
+     "arabicNoteDirection": "ltr"
+    }
+   },
+   {
+    "check": "Renderer: the note comes before the step’s instructions",
+    "ok": true,
+    "detail": {
+     "title": "Starting at the new school",
+     "viaSearch": "Checked only through search results that quote the official pages, not by reading them directly (2026-10-29). Confirm with the organisation before you act.",
+     "pending": null,
+     "caveatBeforeInstructions": true,
+     "firstBlock": "About this step",
+     "lang": "en",
+     "dir": "ltr",
+     "visible": true,
+     "englishLineDirection": "ltr",
+     "arabicNoteDirection": "ltr"
+    }
+   },
+   {
+    "check": "Renderer (Arabic): both notes, in Arabic",
+    "ok": true,
+    "detail": {
+     "title": "Starting at the new school",
+     "viaSearch": "تم التحقق فقط من خلال نتائج بحث تقتبس الصفحات الرسمية، دون قراءتها مباشرة (2026-10-29). تأكد مع الجهة المعنية قبل أن تتصرف.",
+     "pending": "لم تُراجع هذه الخطوة بلغتك بعد. إن كان هناك ما هو غير واضح، فاسأل الجهة المعنية أو راجع النص الإنجليزي.",
+     "caveatBeforeInstructions": true,
+     "firstBlock": "About this step",
+     "lang": "ar",
+     "dir": "rtl",
+     "visible": true,
+     "englishLineDirection": "ltr",
+     "arabicNoteDirection": "rtl"
+    }
+   },
+   {
+    "check": "Renderer (Arabic interface): English guide lines run left to right, Arabic notes right to left",
+    "ok": true,
+    "detail": {
+     "title": "Starting at the new school",
+     "viaSearch": "تم التحقق فقط من خلال نتائج بحث تقتبس الصفحات الرسمية، دون قراءتها مباشرة (2026-10-29). تأكد مع الجهة المعنية قبل أن تتصرف.",
+     "pending": "لم تُراجع هذه الخطوة بلغتك بعد. إن كان هناك ما هو غير واضح، فاسأل الجهة المعنية أو راجع النص الإنجليزي.",
+     "caveatBeforeInstructions": true,
+     "firstBlock": "About this step",
+     "lang": "ar",
+     "dir": "rtl",
+     "visible": true,
+     "englishLineDirection": "ltr",
+     "arabicNoteDirection": "rtl"
+    }
+   },
+   {
+    "check": "Renderer (Arabic): Edinburgh step has the translation note but no via-search note",
+    "ok": true,
+    "detail": {
+     "title": "Starting school",
+     "viaSearch": null,
+     "pending": "لم تُراجع هذه الخطوة بلغتك بعد. إن كان هناك ما هو غير واضح، فاسأل الجهة المعنية أو راجع النص الإنجليزي.",
+     "caveatBeforeInstructions": true,
+     "firstBlock": "About this step",
+     "lang": "ar",
+     "dir": "rtl",
+     "visible": true,
+     "englishLineDirection": "ltr",
+     "arabicNoteDirection": "rtl"
+    }
+   },
+   {
+    "check": "Renderer: an unaffected step shows neither note",
+    "ok": true,
+    "detail": {
+     "title": "Choosing a school",
+     "viaSearch": null,
+     "pending": null,
+     "caveatBeforeInstructions": true,
+     "firstBlock": "About this step",
+     "lang": "ar",
+     "dir": "rtl",
+     "visible": true,
+     "englishLineDirection": "ltr",
+     "arabicNoteDirection": "rtl"
+    }
+   }
+  ],
+  "rerun": "node --experimental-sqlite tools/browser-checks/guide-caveats-browser.mjs (in CI)"
+ },
+ "combinedFlow": {
+  "note": "All three replays in sequence against one accounts-local-server.mjs instance (04:19:03Z to 04:19:05Z on 30 Oct): 141 steps",
+  "runs": [
+   {
+    "script": "university-workflow-local",
+    "ranAt": "2026-10-30T04:19:04.260Z",
+    "passed": true,
+    "steps": 58
+   },
+   {
+    "script": "campus-directory-local",
+    "ranAt": "2026-10-30T04:19:05.051Z",
+    "passed": true,
+    "steps": 39
+   },
+   {
+    "script": "sponsorships-local",
+    "ranAt": "2026-10-30T04:19:05.812Z",
+    "passed": true,
+    "steps": 44
+   }
+  ]
+ },
+ "accessibility": {
+  "ranAt": "2026-10-30T04:19:32Z to 04:20:01Z, photo dialog rechecked after the fix",
+  "how": "Automated DOM checks in headless Chrome on the real local server: accessible names for buttons and links, labels for fields, image alt text, heading levels, dialog names. Not a screen-reader or zoom test.",
+  "screens": {
+   "staffSupport": "clean (19 controls, 14 fields)",
+   "staffGuides": "clean (18 controls, 9 fields)",
+   "ownerManage": "clean (16 controls, 17 fields)",
+   "studentPlatform": "clean (6 controls, 6 fields)",
+   "photoDialog": "fixed: heading h3 to h2 (no skip from h1); photo canvas now role=img with the label Photo preview. Focus order: Rotate, Crop to square, Zoom in, Zoom out, Reset, Retake, Cancel, Use photo. Readiness panel aria-live=polite"
+  }
+ },
+ "language": {
+  "guideViewUntranslated": {
+   "checked": 60,
+   "missingArOrFr": [
+    "← Journeys",
+    "Follow this guide",
+    "Save for later",
+    "Start following",
+    "Resume",
+    "Next for you",
+    "Fees and timings appear only where the official source states them. If one isn’t shown, it isn’t known: check with the office.",
+    "Before this step",
+    "About this step",
+    "Do this",
+    "What you’ll need",
+    "What to expect",
+    "Tip",
+    "Show staff",
+    "Ask Orivia about this step",
+    "What’s in the way? (optional)",
+    "What’s in the way?",
+    "Mark as blocked",
+    "You marked this",
+    "Ask Orivia to help me check",
+    "Something here needs you. Ask Orivia if you’re not sure what.",
+    "Skipped as not applicable to you. Later steps no longer wait for it.",
+    "Done is your own record, not an official approval or result.",
+    "Go to the next step when you’re ready.",
+    "← Previous",
+    "Next step →",
+    "Back to Journeys",
+    "Every step is done or not applicable. Finished with this guide?",
+    "Mark journey completed"
+   ],
+   "note": "Long-standing guide view strings without Arabic or French entries; listed for the language reviewer, not translated here (translation expansion is deferred and unreviewed translations are not added)."
+  },
+  "rtlFixed": "English guide text in the Arabic interface took right-to-left direction, so full stops and brackets moved to the wrong end. Each guide line now takes dir=auto; the caveat check asserts English lines are ltr and Arabic notes rtl.",
+  "newDictionaryEntries": [
+   "Checked only through search results that quote the official pages, not by reading them directly",
+   "Confirm with the organisation before you act.",
+   "This step hasn’t been reviewed in your language yet. If anything is unclear, ask the organisation or check the English."
+  ],
+  "newDictionaryEntriesNote": "Arabic and French written by Cleo; need a language review."
+ },
+ "notDone": [
+  "Screen reader and 200% zoom by a person",
+  "French visual pass",
+  "Live acceptance (hold)"
+ ]
+}

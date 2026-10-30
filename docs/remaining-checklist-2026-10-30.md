@@ -37,7 +37,8 @@ Owners: **C** = Cleo, **I** = Ina, **B** = Bee (founder). Items marked ⛔ are b
 
 | # | Item | Gate | Owner |
 |---|---|---|---|
-| 3.1 | Reconcile the Midnight layer change by change; never overwrite the pilot to make it easier | Ina assesses the preserved recovery evidence. Then the source is located and pushed, or Bee decides to recover it from the bundle. Nobody assumes Ina can confirm authorship or push a commit she hasn't located | I, B |
+| 3.0 | Midnight source | **Located 30 Oct:** `cdab3b5` is in the private management repository and reproduces the pilot bundle module by module. The evidence is on the private branch `cleo/midnight-reconciliation-evidence-2026-10-30`. Authorship not established | I assesses |
+| 3.1 | Reconcile the Midnight layer (`cdab3b5`) change by change; never overwrite the pilot to make it easier | Ina's assessment of the evidence. Nobody assumes Ina can confirm authorship | I, B |
 | 3.2 | Bee explicitly clears the hold | 3.1 done | B ⛔ |
 | 3.3 | Pilot deploy preserving secrets, bindings, databases, budget caps and rollback | 3.2 | the one agreed deployer ⛔ |
 | 3.4 | Seed the Northbay demo (accounts, directory, guides) on the pilot test database | 3.3; the demo admin's own session | C ⛔ |

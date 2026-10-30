@@ -1,5 +1,11 @@
 # Midnight pilot source: read-only investigation (29 Oct 2026)
 
+> **Update, 30 Oct: source located.** `cdab3b5` is on `ina/owner-midnight-integration-2026-10-25` in the private repository `aurelithgroup/orivia-management-private`: "Integrate rebuildable Midnight Owner dashboard with aggregate-only analytics and privacy enforcement", 25 Oct 17:35 +04:00. That's two minutes before the pilot deploy labelled "candidate cdab3b5". It is the public `cb3cfba` plus 11 checksummed overlay files.
+>
+> Rebuilt read-only, without running any script from that repository, the pilot bundle reproduces module by module: 66 modules identical, and 3 differing only in how external packages are referenced. **Authorship is not established:** the author field is the shared `aurelithgroup` account.
+>
+> The evidence is on the private branch `cleo/midnight-reconciliation-evidence-2026-10-30` (`f9eba110`), for Ina's assessment: the bundle, the extracted modules, both local builds, the comparisons and SHA-256 hashes. None of it is in this public repository. **The hold stays** until the `cdab3b5` changes are reconciled with `myorivia-release-plan` change by change, and Bee clears it.
+
 **Purpose:** find out what the current pilot Worker runs, so its source can be reconciled before any deployment. Nothing was deployed, changed, rolled back or rebound. The deployment hold stands.
 
 ## What was done (all read-only)
