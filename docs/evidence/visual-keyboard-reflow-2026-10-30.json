@@ -1,8 +1,8 @@
 {
- "kind": "local checks, not live acceptance",
+ "kind": "local reflow, keyboard and contrast checks; not real-device or browser-zoom acceptance, and not live acceptance",
  "frozenFeatureCheckpoint": "bd3d93d886efd0eb6f19410b266d81205c77b080 (fixes on top, committed with this file)",
  "limits": [
-  "200% zoom emulated by halving the CSS viewport width (how browser zoom reflows); not a real browser zoom or OS text-size setting",
+  "Reflow checks only: narrowed CSS viewports approximate 200% zoom reflow. They are not real browser-zoom, OS text-size or real-device checks, and not acceptance",
   "Contrast computed against the nearest solid background; images, gradients and overlays ignored; a person must confirm",
   "Chrome only; not Safari, Firefox or real phones",
   "Keyboard checked with Tab and Escape only; not a screen reader",
@@ -11,8 +11,8 @@
  "firstRun": {
   "ranAt": "2026-10-30T05:04:36.364Z",
   "found": [
-   "staff support: 44px sideways overflow at 195 CSS px (filters could not shrink below 180px)",
-   "staff guides and owner pages: 38 and 48px overflow at 195 CSS px (long URLs and email addresses could not wrap)",
+   "staff support: 44px sideways overflow at 195 CSS px (reflow check) (filters could not shrink below 180px)",
+   "staff guides and owner pages: 38 and 48px overflow at 195 CSS px (reflow check) (long URLs and email addresses could not wrap)",
    "owner page: the sponsorship date fields showed no focus indicator",
    "app: the active bottom-tab label was #a66b00 in every theme: 3.90:1 on the dark bar, and 4.44:1 on white"
   ]
@@ -24,16 +24,16 @@
   "active tab: #9e6600 in light (4.82:1 on white), var(--amber) #F2B90F in dark (9.68:1)"
  ],
  "afterFixes": {
-  "ranAt": "2026-10-30T05:11:54.957Z",
+  "ranAt": "2026-10-30T05:31:41.863Z",
   "issues": 0,
   "screens": [
    {
     "screen": "staff-support",
-    "overflow": {
+    "overflowPx": {
      "desktop 100%": 0,
-     "desktop 200% (640 CSS px)": 0,
+     "reflow at 640 CSS px (approximates desktop at 200%)": 0,
      "phone 100%": 0,
-     "phone 200% (195 CSS px)": 0
+     "reflow at 195 CSS px (approximates phone at 200%)": 0
     },
     "keyboard": {
      "stops": 30,
@@ -44,11 +44,11 @@
    },
    {
     "screen": "staff-guides-preview",
-    "overflow": {
+    "overflowPx": {
      "desktop 100%": 0,
-     "desktop 200% (640 CSS px)": 0,
+     "reflow at 640 CSS px (approximates desktop at 200%)": 0,
      "phone 100%": 0,
-     "phone 200% (195 CSS px)": 0
+     "reflow at 195 CSS px (approximates phone at 200%)": 0
     },
     "keyboard": {
      "stops": 30,
@@ -59,11 +59,11 @@
    },
    {
     "screen": "owner-manage",
-    "overflow": {
+    "overflowPx": {
      "desktop 100%": 0,
-     "desktop 200% (640 CSS px)": 0,
+     "reflow at 640 CSS px (approximates desktop at 200%)": 0,
      "phone 100%": 0,
-     "phone 200% (195 CSS px)": 0
+     "reflow at 195 CSS px (approximates phone at 200%)": 0
     },
     "keyboard": {
      "stops": 30,
@@ -74,11 +74,11 @@
    },
    {
     "screen": "student-platform",
-    "overflow": {
+    "overflowPx": {
      "desktop 100%": 0,
-     "desktop 200% (640 CSS px)": 0,
+     "reflow at 640 CSS px (approximates desktop at 200%)": 0,
      "phone 100%": 0,
-     "phone 200% (195 CSS px)": 0
+     "reflow at 195 CSS px (approximates phone at 200%)": 0
     },
     "keyboard": {
      "stops": 28,
@@ -89,11 +89,11 @@
    },
    {
     "screen": "app-directory",
-    "overflow": {
+    "overflowPx": {
      "desktop 100%": 0,
-     "desktop 200% (640 CSS px)": 0,
+     "reflow at 640 CSS px (approximates desktop at 200%)": 0,
      "phone 100%": 0,
-     "phone 200% (195 CSS px)": 0
+     "reflow at 195 CSS px (approximates phone at 200%)": 0
     },
     "keyboard": {
      "stops": 30,
@@ -105,11 +105,11 @@
    },
    {
     "screen": "app-sponsored",
-    "overflow": {
+    "overflowPx": {
      "desktop 100%": 0,
-     "desktop 200% (640 CSS px)": 0,
+     "reflow at 640 CSS px (approximates desktop at 200%)": 0,
      "phone 100%": 0,
-     "phone 200% (195 CSS px)": 0
+     "reflow at 195 CSS px (approximates phone at 200%)": 0
     },
     "keyboard": {
      "stops": 30,
@@ -121,11 +121,11 @@
    },
    {
     "screen": "app-guide-step",
-    "overflow": {
+    "overflowPx": {
      "desktop 100%": 0,
-     "desktop 200% (640 CSS px)": 0,
+     "reflow at 640 CSS px (approximates desktop at 200%)": 0,
      "phone 100%": 0,
-     "phone 200% (195 CSS px)": 0
+     "reflow at 195 CSS px (approximates phone at 200%)": 0
     },
     "keyboard": {
      "stops": 29,
@@ -137,7 +137,7 @@
    },
    {
     "screen": "photo-dialog",
-    "overflow": {},
+    "overflowPx": {},
     "keyboard": {
      "stops": 13,
      "withoutIndicator": [],
@@ -146,7 +146,8 @@
     "focusStayedInside": true,
     "escapeCloses": true
    }
-  ]
+  ],
+  "screenshots": "Sent privately for Ina's review (not in the repository)"
  },
- "rerun": "node --experimental-sqlite tools/browser-checks/visual-keyboard-zoom.mjs <outDir> (in CI; screenshots stay in outDir)"
+ "rerun": "node --experimental-sqlite tools/browser-checks/visual-keyboard-reflow.mjs <outDir> (in CI; screenshots stay in outDir)"
 }

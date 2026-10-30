@@ -109,14 +109,15 @@ The candidate commit itself is unchanged. These are fixes for review findings, w
 
 | Check | Status | Owner |
 |---|---|---|
-| Visual, keyboard and 200% zoom (local) | **Done 30 Oct**: 7 screens plus the photo dialog, at 4 widths. 4 defects found and fixed, then 0 issues (`docs/evidence/visual-keyboard-zoom-2026-10-30.json`). In CI | Cleo |
-| Limits of that check | Zoom is emulated by viewport width; contrast is approximate; Chrome only; no screen reader | Recorded |
+| Reflow, keyboard and contrast checks (local, headless Chrome) | **Done 30 Oct**: 7 screens plus the photo dialog, at full width and at narrowed widths (640 and 195 CSS px) that approximate 200% zoom reflow. 4 defects found and fixed, then 0 issues (`docs/evidence/visual-keyboard-reflow-2026-10-30.json`). In CI | Cleo |
+| What that check is not | Not real-device, browser-zoom or OS text-size acceptance. Contrast is approximate. Chrome only. No screen reader | Recorded |
 | Independent review of the candidate and fixes | Pending | Ina |
 | Midnight evidence (ZIP and private branch) | Pending | Ina |
-| Screen reader (VoiceOver or TalkBack) and real-phone zoom | Pending | Ina, or a tester she chooses |
-| Visual judgement of the screenshots | Pending | Ina |
-| Arabic and French: text written by Cleo, and the 13 steps marked not reviewed | Pending | A language reviewer |
-| Guide content review, then approvals with `tools/review-guide.mjs` | Pending; no approvals before review | Ina (a person) |
-| Privacy and Terms | Drafts updated against the candidate. Missing operator fields are listed in each draft. `tests/legal-drafts.test.mjs` checks the code claims | Cleo (done) · qualified review before publishing |
-| Operator details (legal name, address, contact emails, minimum age, partner-application retention) | Missing | **Bee**: the only items that need Bee, plus clearing the hold |
-| Live acceptance | Waits for reconciliation, review and Bee clearing the hold | Ina, then Bee |
+| Visual judgement of the screenshots (sent privately for Ina's review) | Pending | Part of Ina's review |
+| Screen reader (VoiceOver, TalkBack or NVDA) | **Pending; not arranged.** Nobody has yet been confirmed with this setup | To be arranged |
+| Real browser zoom and OS text size, on real phones and desktop browsers | **Pending; not arranged.** No physical-device testing has been arranged | To be arranged |
+| Arabic and French: text written by Cleo, and the 13 steps marked not reviewed | Pending | A language reviewer (to be arranged) |
+| Guide content review, then approvals with `tools/review-guide.mjs` | Pending; no approvals before review | A person reviewing content (Ina, if she takes it on) |
+| Privacy and Terms | Drafts updated against the candidate, and the sponsor and response-timing statements corrected on 30 Oct. Missing operator fields are listed in each draft. `tests/legal-drafts.test.mjs` checks the code claims | Cleo (done) · qualified review before publishing |
+| Operator details (legal name, address, contact emails, minimum age, partner-application retention) | Missing | **Bee** |
+| Live acceptance | Waits for reconciliation, review and Bee clearing the hold | After those, as agreed then |

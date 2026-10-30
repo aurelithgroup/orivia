@@ -1,11 +1,12 @@
-// Local visual, keyboard and 200% zoom checks of the new screens, in headless Chrome against the real local server.
-// For each screen: horizontal overflow at 100% and 200% zoom, a keyboard pass (Tab order, a visible focus indicator,
+// Local visual, keyboard and REFLOW checks of the new screens, in headless Chrome against the real local server.
+// These are reflow checks at narrowed viewports, not real-device or browser-zoom acceptance.
+// For each screen: horizontal overflow at full width and at narrowed widths that approximate 200% zoom, a keyboard pass (Tab order, a visible focus indicator,
 // no focus trap; the photo dialog keeps focus inside and closes with Escape) and an approximate text contrast scan,
 // with screenshots for a person to look at.
-// LIMITS (also written into the output): 200% zoom is emulated by halving the CSS viewport (how browser zoom reflows a
-// page), not by a real browser zoom or OS text size; contrast is computed against the nearest solid background and
+// LIMITS (also written into the output): narrowing the CSS viewport approximates how 200% zoom reflows a page; it is
+// not a real browser zoom, an OS text-size setting or a real device; contrast is computed against the nearest solid background and
 // ignores images and gradients; this is Chrome only, not Safari/Firefox or real phones; it is not a screen reader.
-// Usage: node --experimental-sqlite tools/browser-checks/visual-keyboard-zoom.mjs [outDir]   (CHROME=<path> to pick Chrome)
+// Usage: node --experimental-sqlite tools/browser-checks/visual-keyboard-reflow.mjs [outDir]   (CHROME=<path> to pick Chrome)
 import {spawn,spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -55,21 +56,21 @@ try{
   await send('Storage.clearDataForOrigin',{origin:base,storageTypes:'all'});
   if(s.as)await go(base+'/__dev/as?name='+s.as,800);
   const r={screen:s.name,widths:{}};
-  for(const [label,w,h] of [['desktop 100%',1280,900],['desktop 200% (640 CSS px)',640,450],['phone 100%',390,844],['phone 200% (195 CSS px)',195,422]]){
+  for(const [label,w,h] of [['desktop 100%',1280,900],['reflow at 640 CSS px (approximates desktop at 200%)',640,450],['phone 100%',390,844],['reflow at 195 CSS px (approximates phone at 200%)',195,422]]){
    await size(w,h);await go(s.url(),3000);if(s.app)r.enteredApp=await enterApp();if(s.then)await js(s.then);await sleep(400);
    r.widths[label]=await js(overflow);await snap(s.name+'-'+w);
    if(w===390){r.keyboard=await keyboard();r.contrast=await js(contrast)}
   }
-  results.push(r);console.log(s.name,JSON.stringify(r.widths['phone 200% (195 CSS px)']),'kb',r.keyboard?.stops,'noIndicator',r.keyboard?.withoutIndicator.length,'lowContrast',r.contrast?.lowCount);
+  results.push(r);console.log(s.name,JSON.stringify(r.widths['reflow at 195 CSS px (approximates phone at 200%)']),'kb',r.keyboard?.stops,'noIndicator',r.keyboard?.withoutIndicator.length,'lowContrast',r.contrast?.lowCount);
  }
  // The photo review dialog: focus stays inside while open, Escape closes it.
  await send('Storage.clearDataForOrigin',{origin:base,storageTypes:'all'});await size(390,844);await go(base+'/',3000);await enterApp();
  await js("(async()=>{const c=document.createElement('canvas');c.width=1200;c.height=1600;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,1200,1600);g.fillStyle='#000';g.font='40px serif';for(let y=60;y<1600;y+=60)g.fillText('Fictional test text 0123456789',20,y);const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));window.__photo=window.OriviaImageReview.review(new File([b],'t.jpg',{type:'image/jpeg'}),{}).then(v=>window.__photoResult=v===null?'closed':'used')})()");await sleep(800);
  const dlg={keyboard:await keyboard(14)};dlg.focusStayedInside=(await js("!!document.activeElement?.closest('dialog')"));await snap('photo-dialog-390');
- for(const [label,w,h] of [['phone 200% (195 CSS px)',195,422]]){await size(w,h);await sleep(300);dlg[label]=await js(overflow);await snap('photo-dialog-195')}
+ for(const [label,w,h] of [['reflow at 195 CSS px (approximates phone at 200%)',195,422]]){await size(w,h);await sleep(300);dlg[label]=await js(overflow);await snap('photo-dialog-195')}
  await key('Escape','Escape',27);await sleep(500);dlg.escapeCloses=(await js("!document.querySelector('dialog[open]')&&window.__photoResult==='closed'"));dlg.contrast=null;
  results.push({screen:'photo-dialog',...dlg});console.log('photo-dialog',JSON.stringify(dlg).slice(0,400));
 }catch(e){results.push({error:String(e.stack||e)});console.error(e)}
 finally{try{chrome?.kill()}catch{}server.kill()}
-const out={ranAt:new Date().toISOString(),limits:['200% zoom emulated by halving the CSS viewport width (how browser zoom reflows); not a real browser zoom or OS text-size setting','Contrast computed against the nearest solid background; images, gradients and overlays ignored; a person must confirm','Chrome only; not Safari, Firefox or real phones','Keyboard checked with Tab and Escape only; not a screen reader','Screenshots need a person’s visual judgement'],results};
-fs.writeFileSync(path.join(outDir,'visual-keyboard-zoom.json'),JSON.stringify(out,null,1)+'\n');console.log('written',outDir);
+const out={ranAt:new Date().toISOString(),limits:['Reflow checks only: narrowed CSS viewports approximate 200% zoom reflow. They are not real browser-zoom, OS text-size or real-device checks, and not acceptance','Contrast computed against the nearest solid background; images, gradients and overlays ignored; a person must confirm','Chrome only; not Safari, Firefox or real phones','Keyboard checked with Tab and Escape only; not a screen reader','Screenshots need a person’s visual judgement'],results};
+fs.writeFileSync(path.join(outDir,'visual-keyboard-reflow.json'),JSON.stringify(out,null,1)+'\n');console.log('written',outDir);

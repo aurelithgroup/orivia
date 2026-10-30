@@ -240,8 +240,8 @@ jobs:
           node --experimental-sqlite tools/browser-checks/sponsorships-browser.mjs
       - name: "Guide step caveats on the served route and in the app renderer (headless Chrome)"
         run: node --experimental-sqlite tools/browser-checks/guide-caveats-browser.mjs
-      - name: "Visual, keyboard and 200% zoom checks of the new screens (headless Chrome)"
-        run: node --experimental-sqlite tools/browser-checks/visual-keyboard-zoom.mjs
+      - name: "Visual, keyboard and reflow checks of the new screens (headless Chrome; not real-device or browser-zoom acceptance)"
+        run: node --experimental-sqlite tools/browser-checks/visual-keyboard-reflow.mjs
       - name: "myorivia.app production entry gates"
         run: node --experimental-sqlite tests/myorivia-release.test.mjs
       - name: "Organisation membership and invitation server boundaries"

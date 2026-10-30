@@ -35,10 +35,10 @@ The combined release isn't decided yet: the deployment hold is on and reconcilia
 | 1 Data requests | Yes | Privacy: [IN CANDIDATE] |
 | 2 Support tickets | Yes, plus admin-only assignment and linked process steps | Privacy and Terms: [IN CANDIDATE] |
 | 3 Partner applications | Yes | Privacy: [IN CANDIDATE]; retention is an operator decision |
-| 4 Sponsored placements | Yes, with a renderer; no view or click counting; links send no referrer | Privacy and Terms: [IN CANDIDATE] |
+| 4 Sponsored placements | Yes, with a renderer. No view or click counting, and no tracked link. The link passes no Orivia referrer (`rel=noreferrer`), but the sponsor's site still receives ordinary connection information when opened | Privacy and Terms: [IN CANDIDATE] |
 | 5 Plan allowances | Yes, off by default (`ENTITLEMENTS_ENABLED`) | Terms: [IN CANDIDATE, OFF BY DEFAULT] |
 | 6 In-app notices | Yes (block one) | No change needed |
-| 7 Response diagnostics | Yes; no export or send path in the code | Privacy: [IN CANDIDATE] |
+| 7 Response diagnostics | Yes. Preview, clear, and a user-initiated **Download timings** (a JSON file saved to the device, from `renderResponseDiagnostics` in `chat.js`); nothing is uploaded. Corrected 30 Oct: an earlier note wrongly said there was no export | Privacy: [IN CANDIDATE] |
 | 8 Profile sharing allowlist | To check during reconciliation | Unchanged |
 | 9 Guide drafting | Yes | Privacy: [IN CANDIDATE] |
 | 10 Founder drafts | Not taken | Nothing |
