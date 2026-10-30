@@ -74,3 +74,14 @@ try{
 finally{try{chrome?.kill()}catch{}server.kill()}
 const out={ranAt:new Date().toISOString(),limits:['Reflow checks only: narrowed CSS viewports approximate 200% zoom reflow. They are not real browser-zoom, OS text-size or real-device checks, and not acceptance','Contrast computed against the nearest solid background; images, gradients and overlays ignored; a person must confirm','Chrome only; not Safari, Firefox or real phones','Keyboard checked with Tab and Escape only; not a screen reader','Screenshots need a person’s visual judgement'],results};
 fs.writeFileSync(path.join(outDir,'visual-keyboard-reflow.json'),JSON.stringify(out,null,1)+'\n');console.log('written',outDir);
+
+// A successful process must not hide measured failures. Contrast remains advisory
+// because the estimator ignores gradients and alpha blending.
+const failures=results.flatMap(r=>[
+ ...(r.error?[r.error]:[]),
+ ...Object.entries(r.widths||{}).filter(([,v])=>v.pageOverflowPx>1).map(([w,v])=>`${r.screen}: ${w}: ${v.pageOverflowPx}px page overflow`),
+ ...(r.keyboard?.trapped?[`${r.screen}: keyboard focus trapped`]:[]),
+ ...(r.keyboard?.withoutIndicator?.length?[`${r.screen}: missing focus indicators`]:[]),
+ ...(r.screen==='photo-dialog'&&(!r.focusStayedInside||!r.escapeCloses)?['photo dialog focus/escape failed']:[])
+]);
+if(failures.length){console.error('Measured failures:',failures);process.exitCode=1;}

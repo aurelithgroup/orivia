@@ -16,7 +16,7 @@ h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:400;margin:0;te
 .who{font-size:13px;color:#C9D1D8}
 main{max-width:1200px;margin:0 auto;padding:24px max(16px,env(safe-area-inset-right,0px)) 56px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:18px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
-.panel h2{font-size:26px}.panel h3{font-size:20px}
+.panel{overflow-wrap:anywhere}.panel h2{font-size:26px}.panel h3{font-size:20px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:0 12px}.small,.content-body,.note,.muted,td,th{overflow-wrap:anywhere}input[type=date]:focus-within{outline:3px solid var(--focus);outline-offset:2px}.stack{display:flex;flex-direction:column;gap:10px}
 .muted{color:var(--muted)}.small{font-size:13px}
 .btn{border:0;background:var(--btn);color:var(--btnInk);font-weight:700;border-radius:999px;padding:10px 18px;cursor:pointer;min-height:44px}
@@ -35,7 +35,7 @@ form{display:flex;flex-direction:column;gap:12px}form.row{flex-direction:row}.st
 .tab{background:transparent;border:1px solid transparent;border-radius:999px;padding:8px 14px;cursor:pointer;min-height:40px;color:var(--muted)}
 .tab[aria-selected="true"]{background:var(--surface2);border-color:var(--line);color:var(--ink);font-weight:700}
 .focus-flash{outline:3px solid var(--amber);outline-offset:4px;border-radius:8px}.defs dl{margin:8px 0 0;display:grid;gap:2px}.defs dt{font-weight:700;margin-top:6px}.defs dd{margin:0}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.kpi{background:var(--surface2);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:4px}.kpi strong{font-size:26px;font-variant-numeric:tabular-nums}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:10px}.kpi{background:var(--surface2);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:4px}.kpi strong{font-size:26px;font-variant-numeric:tabular-nums}
 .note{background:var(--surface2);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--muted)}
 .notice{border-radius:12px;padding:12px 14px;font-size:14px}.notice.err{background:var(--warnSoft);color:var(--warn)}.notice.good{background:var(--okSoft);color:var(--ok)}
 .denied{border:2px solid var(--warn);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px;background:var(--warnSoft)}

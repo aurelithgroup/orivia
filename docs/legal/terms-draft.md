@@ -6,12 +6,7 @@
 >
 > The liability and governing-law sections need someone qualified to review them before publication.
 >
-> **Branch-specific, pending reconciliation.** This draft describes `myorivia-release-plan` only. Ina's branch `ina/founder-ai-sponsorship-block-3-2026-10-25` already implements things this branch doesn't have yet:
-> - account-scoped data requests with owner replies (`/api/me/data-requests`, `/api/admin/privacy-requests`);
-> - member-bound sponsored placements with disclosure validation (`49bad94`, `2c14591`);
-> - its own version of the progress-sharing controls.
->
-> Where this draft says something isn't available, it means **on this branch**, not in the product. Before publishing, the draft is reconciled with whichever code is actually released.
+> **Candidate-specific draft.** Data requests, university support and sponsored placements are implemented on this branch. Midnight owner analytics remains conditional until integration review. Reconcile the policies against the exact deployed source before publication.
 >
 > **Reconciliation checklist:** `docs/legal/reconciliation-combined-release.md` (14 features). The `[INCLUDE IF RELEASED]` paragraphs follow it.
 
