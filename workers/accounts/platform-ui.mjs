@@ -17,7 +17,7 @@ h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:400;margin:0;te
 main{max-width:1200px;margin:0 auto;padding:24px max(16px,env(safe-area-inset-right,0px)) 56px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:18px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
 .panel h2{font-size:26px}.panel h3{font-size:20px}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0 12px}.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:0 12px}.small,.content-body,.note,.muted,td,th{overflow-wrap:anywhere}input[type=date]:focus-within{outline:3px solid var(--focus);outline-offset:2px}.stack{display:flex;flex-direction:column;gap:10px}
 .muted{color:var(--muted)}.small{font-size:13px}
 .btn{border:0;background:var(--btn);color:var(--btnInk);font-weight:700;border-radius:999px;padding:10px 18px;cursor:pointer;min-height:44px}
 .btn.quiet{background:transparent;color:var(--ink);border:1px solid var(--line)}.btn.ok{background:var(--ok);color:#FFFFFF}.btn.danger{background:transparent;color:var(--warn);border:1px solid var(--line)}

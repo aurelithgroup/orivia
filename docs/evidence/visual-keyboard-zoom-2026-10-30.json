@@ -1,0 +1,152 @@
+{
+ "kind": "local checks, not live acceptance",
+ "frozenFeatureCheckpoint": "bd3d93d886efd0eb6f19410b266d81205c77b080 (fixes on top, committed with this file)",
+ "limits": [
+  "200% zoom emulated by halving the CSS viewport width (how browser zoom reflows); not a real browser zoom or OS text-size setting",
+  "Contrast computed against the nearest solid background; images, gradients and overlays ignored; a person must confirm",
+  "Chrome only; not Safari, Firefox or real phones",
+  "Keyboard checked with Tab and Escape only; not a screen reader",
+  "Screenshots need a person’s visual judgement"
+ ],
+ "firstRun": {
+  "ranAt": "2026-10-30T05:04:36.364Z",
+  "found": [
+   "staff support: 44px sideways overflow at 195 CSS px (filters could not shrink below 180px)",
+   "staff guides and owner pages: 38 and 48px overflow at 195 CSS px (long URLs and email addresses could not wrap)",
+   "owner page: the sponsorship date fields showed no focus indicator",
+   "app: the active bottom-tab label was #a66b00 in every theme: 3.90:1 on the dark bar, and 4.44:1 on white"
+  ]
+ },
+ "fixes": [
+  ".filters columns minmax(min(180px,100%),1fr)",
+  "overflow-wrap:anywhere on dashboard small, muted, note and table text",
+  "date inputs show the focus outline while any part inside has focus",
+  "active tab: #9e6600 in light (4.82:1 on white), var(--amber) #F2B90F in dark (9.68:1)"
+ ],
+ "afterFixes": {
+  "ranAt": "2026-10-30T05:11:54.957Z",
+  "issues": 0,
+  "screens": [
+   {
+    "screen": "staff-support",
+    "overflow": {
+     "desktop 100%": 0,
+     "desktop 200% (640 CSS px)": 0,
+     "phone 100%": 0,
+     "phone 200% (195 CSS px)": 0
+    },
+    "keyboard": {
+     "stops": 30,
+     "withoutIndicator": [],
+     "trapped": false
+    },
+    "lowContrast": []
+   },
+   {
+    "screen": "staff-guides-preview",
+    "overflow": {
+     "desktop 100%": 0,
+     "desktop 200% (640 CSS px)": 0,
+     "phone 100%": 0,
+     "phone 200% (195 CSS px)": 0
+    },
+    "keyboard": {
+     "stops": 30,
+     "withoutIndicator": [],
+     "trapped": false
+    },
+    "lowContrast": []
+   },
+   {
+    "screen": "owner-manage",
+    "overflow": {
+     "desktop 100%": 0,
+     "desktop 200% (640 CSS px)": 0,
+     "phone 100%": 0,
+     "phone 200% (195 CSS px)": 0
+    },
+    "keyboard": {
+     "stops": 30,
+     "withoutIndicator": [],
+     "trapped": false
+    },
+    "lowContrast": []
+   },
+   {
+    "screen": "student-platform",
+    "overflow": {
+     "desktop 100%": 0,
+     "desktop 200% (640 CSS px)": 0,
+     "phone 100%": 0,
+     "phone 200% (195 CSS px)": 0
+    },
+    "keyboard": {
+     "stops": 28,
+     "withoutIndicator": [],
+     "trapped": false
+    },
+    "lowContrast": []
+   },
+   {
+    "screen": "app-directory",
+    "overflow": {
+     "desktop 100%": 0,
+     "desktop 200% (640 CSS px)": 0,
+     "phone 100%": 0,
+     "phone 200% (195 CSS px)": 0
+    },
+    "keyboard": {
+     "stops": 30,
+     "withoutIndicator": [],
+     "trapped": false
+    },
+    "lowContrast": [],
+    "enteredApp": true
+   },
+   {
+    "screen": "app-sponsored",
+    "overflow": {
+     "desktop 100%": 0,
+     "desktop 200% (640 CSS px)": 0,
+     "phone 100%": 0,
+     "phone 200% (195 CSS px)": 0
+    },
+    "keyboard": {
+     "stops": 30,
+     "withoutIndicator": [],
+     "trapped": false
+    },
+    "lowContrast": [],
+    "enteredApp": true
+   },
+   {
+    "screen": "app-guide-step",
+    "overflow": {
+     "desktop 100%": 0,
+     "desktop 200% (640 CSS px)": 0,
+     "phone 100%": 0,
+     "phone 200% (195 CSS px)": 0
+    },
+    "keyboard": {
+     "stops": 29,
+     "withoutIndicator": [],
+     "trapped": false
+    },
+    "lowContrast": [],
+    "enteredApp": true
+   },
+   {
+    "screen": "photo-dialog",
+    "overflow": {},
+    "keyboard": {
+     "stops": 13,
+     "withoutIndicator": [],
+     "trapped": false
+    },
+    "focusStayedInside": true,
+    "escapeCloses": true
+   }
+  ]
+ },
+ "rerun": "node --experimental-sqlite tools/browser-checks/visual-keyboard-zoom.mjs <outDir> (in CI; screenshots stay in outDir)"
+}

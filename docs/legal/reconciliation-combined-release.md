@@ -28,6 +28,29 @@ The combined release isn't decided yet: the deployment hold is on and reconcilia
 | 13 | **Server error references** | Unexpected failures logged with a reference, route and cause (`1c76c87`) | Not yet | Privacy ("Keeping Orivia safe"): technical logs include a reference, the route without identifiers, and an error type, never content |
 | 14 | **Email-code delivery outcomes** | Codes hashed, 5 minutes, 5 attempts | Records honest delivery outcomes | Privacy: whether delivery status is stored, and for how long **[TO CONFIRM]** |
 
+## Status against the frozen candidate `bd3d93d` (30 Oct)
+
+| # | In the candidate? | Policy text |
+|---|---|---|
+| 1 Data requests | Yes | Privacy: [IN CANDIDATE] |
+| 2 Support tickets | Yes, plus admin-only assignment and linked process steps | Privacy and Terms: [IN CANDIDATE] |
+| 3 Partner applications | Yes | Privacy: [IN CANDIDATE]; retention is an operator decision |
+| 4 Sponsored placements | Yes, with a renderer; no view or click counting; links send no referrer | Privacy and Terms: [IN CANDIDATE] |
+| 5 Plan allowances | Yes, off by default (`ENTITLEMENTS_ENABLED`) | Terms: [IN CANDIDATE, OFF BY DEFAULT] |
+| 6 In-app notices | Yes (block one) | No change needed |
+| 7 Response diagnostics | Yes; no export or send path in the code | Privacy: [IN CANDIDATE] |
+| 8 Profile sharing allowlist | To check during reconciliation | Unchanged |
+| 9 Guide drafting | Yes | Privacy: [IN CANDIDATE] |
+| 10 Founder drafts | Not taken | Nothing |
+| 11 Progress totals | Paused | Unchanged |
+| 12 Checked-answer stream | Yes | Nothing |
+| 13 Server error references | Yes | Unchanged |
+| 14 Email-code delivery outcomes | No delivery-status storage found on this branch | Stays [TO CONFIRM] until reconciliation |
+| 15 University welcome (new) | Yes | Privacy: [IN CANDIDATE] |
+| 16 Campus directory and map links (new) | Yes | Privacy and Terms: [IN CANDIDATE] |
+| 17 Photo check (new) | Yes, on the device | Privacy and Terms: [IN CANDIDATE] |
+| 18 Owner analytics, Midnight `cdab3b5` (new) | No; it is in the pilot and pending reconciliation | Privacy: [INCLUDE IF RELEASED] |
+
 ## Order before publishing
 
 1. Decide what goes into the combined release: the founder and Ina, after the source of the pilot's `abf5b831` is found.

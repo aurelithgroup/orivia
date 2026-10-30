@@ -105,11 +105,18 @@ The candidate commit itself is unchanged. These are fixes for review findings, w
 - **Sponsored card:** who paid is said once. "Paid for by …" appears only when the disclosure doesn't already name the sponsor.
 - **Website app:** the "checked through search only" note now sits at the top of the Dubai school steps, before their instructions, in English and Arabic. It no longer appears only under "More details".
 
-## Still for people (not automatable here)
+## Who does what next (feature work frozen at `bd3d93d`)
 
-- Ina's independent review of the candidate and these fixes.
-- A visual pass.
-- A language review of the Arabic and French written by Cleo, and of the 13 steps marked not reviewed.
-- A screen-reader and 200% zoom pass.
-- Guide approvals, only after content review.
-- Privacy and Terms, once operator details exist.
+| Check | Status | Owner |
+|---|---|---|
+| Visual, keyboard and 200% zoom (local) | **Done 30 Oct**: 7 screens plus the photo dialog, at 4 widths. 4 defects found and fixed, then 0 issues (`docs/evidence/visual-keyboard-zoom-2026-10-30.json`). In CI | Cleo |
+| Limits of that check | Zoom is emulated by viewport width; contrast is approximate; Chrome only; no screen reader | Recorded |
+| Independent review of the candidate and fixes | Pending | Ina |
+| Midnight evidence (ZIP and private branch) | Pending | Ina |
+| Screen reader (VoiceOver or TalkBack) and real-phone zoom | Pending | Ina, or a tester she chooses |
+| Visual judgement of the screenshots | Pending | Ina |
+| Arabic and French: text written by Cleo, and the 13 steps marked not reviewed | Pending | A language reviewer |
+| Guide content review, then approvals with `tools/review-guide.mjs` | Pending; no approvals before review | Ina (a person) |
+| Privacy and Terms | Drafts updated against the candidate. Missing operator fields are listed in each draft. `tests/legal-drafts.test.mjs` checks the code claims | Cleo (done) · qualified review before publishing |
+| Operator details (legal name, address, contact emails, minimum age, partner-application retention) | Missing | **Bee**: the only items that need Bee, plus clearing the hold |
+| Live acceptance | Waits for reconciliation, review and Bee clearing the hold | Ina, then Bee |

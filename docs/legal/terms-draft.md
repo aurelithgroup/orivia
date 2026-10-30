@@ -17,6 +17,18 @@
 
 ---
 
+## Missing operator details (fill in before publishing)
+
+Every field below is still **missing**. The Terms are not published until each is filled and checked.
+
+| Field | Where it appears | Who supplies it |
+|---|---|---|
+| Legal name of the operator | Who we are | Bee |
+| Address | Who we are | Bee |
+| Public contact email | Who we are | Bee |
+| Minimum age and any parent or guardian rule | Your account | Bee, with qualified advice |
+| Governing law, courts and consumer protections | Governing law and disputes | Qualified legal review |
+
 ## Who we are
 
 These Terms are an agreement between you and **[OPERATOR: legal name]**, **[OPERATOR: address]**.
@@ -79,13 +91,16 @@ We may suspend access that breaks these rules, and we'll tell you why where we c
 - **Development:** Orivia is still being developed. Features can change, and the service may be unavailable at times.
 - **Notice:** we'll give notice of significant changes where we can.
 
-## Features that depend on the combined release
+## Features in the frozen candidate (`bd3d93d`, 30 Oct)
 
-These paragraphs are kept, cut or rewritten to match what is actually released (`docs/legal/reconciliation-combined-release.md`).
+The paragraphs marked **[IN CANDIDATE]** describe code in the frozen candidate `bd3d93d`. If the combined release differs, they change with it (`docs/legal/reconciliation-combined-release.md`).
 
-- **[INCLUDE IF RELEASED: sponsored placements]** Sponsored items are always labelled as sponsored. They're never presented as official information, never used as evidence in answers, and never affect which answers you get.
-- **[INCLUDE IF RELEASED: plan allowances]** Some features may have monthly allowances (Free, Plus, Premium). The basics stay free. Keeping your files never depends on your plan.
-- **[INCLUDE IF RELEASED: university support]** Support requests are answered by your university's team, or by Orivia support if you allow forwarding. Responses are best-effort and not an official service of any authority.
+- **[IN CANDIDATE: sponsored placements]** Sponsored items are always labelled as sponsored. They're never presented as official information, never used as evidence in answers, and never affect which answers you get.
+- **[IN CANDIDATE, OFF BY DEFAULT: plan allowances]** Some features may have monthly allowances (Free, Plus, Premium). The basics stay free. Keeping your files never depends on your plan.
+- **[IN CANDIDATE: university support]** Support requests are answered by your university's team, or by Orivia support if you allow forwarding. Responses are best-effort and not an official service of any authority.
+- **[IN CANDIDATE: campus directory]** Campus places, opening times, accessibility details and directions come from your university. Orivia doesn't check them, and details the university hasn't given are shown as not provided.
+- **[IN CANDIDATE: photo check]** The photo check is a rough check of the photo only. It can't tell whether a document is complete, genuine, valid or acceptable. Only the organisation receiving it can.
+- **[IN CANDIDATE: guides]** Guides show where a step was checked only through search, or isn't reviewed in your language yet. Always confirm important steps with the official source.
 
 ## Payment
 

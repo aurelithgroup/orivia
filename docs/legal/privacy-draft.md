@@ -19,6 +19,21 @@
 
 ---
 
+## Missing operator details (fill in before publishing)
+
+Every field below is still **missing**. Privacy information is not published until each is filled and checked.
+
+| Field | Where it appears | Who supplies it |
+|---|---|---|
+| Legal name of the operator (person or company) | Who runs Orivia | Bee |
+| Registered or public business address | Who runs Orivia | Bee |
+| Public privacy contact email (not a personal address) | Who runs Orivia; Your choices and rights | Bee |
+| Response time for privacy requests | Your choices and rights | Bee, with qualified advice |
+| Data protection authority for complaints | Your choices and rights | Qualified advice, based on where the operator is established and who the users are |
+| Minimum age, and whether a parent can use Orivia for a child | Children | Bee, with qualified advice |
+| How long partner applications are kept | Features in the candidate | Bee |
+| Whether email-code delivery outcomes are stored, and for how long | Reconciliation row 14 | Code check after reconciliation (Cleo/Ina) |
+
 ## Who runs Orivia
 
 Orivia is run by **[OPERATOR: legal name of the operating person or company]**, **[OPERATOR: registered address or a public business address]**.
@@ -103,16 +118,20 @@ This is checked by the server on every request.
 - **Reports:** "Report a problem" is linked to your account. The reply text is included only if you switch that on.
 - **Retention:** both are kept until reviewed and are deleted with your account.
 
-### Features that depend on the combined release
+### Features in the frozen candidate (`bd3d93d`, 30 Oct)
 
-These paragraphs are kept, cut or rewritten to match what is actually released. See `docs/legal/reconciliation-combined-release.md`.
+The paragraphs marked **[IN CANDIDATE]** describe code in the frozen candidate `bd3d93d`. They are checked against that code and its tests. If the combined release differs, they change with it (see `docs/legal/reconciliation-combined-release.md`).
 
-- **[INCLUDE IF RELEASED: data requests]** You can ask for a copy, a correction or deletion from Settings. We store the type of request, your message, its status and our reply. Only the Orivia owner reads it, and it's deleted with your account.
-- **[INCLUDE IF RELEASED: university support]** When you send a request to your university's support team, its staff see your request and replies. They don't see your personal chats or files. Separately, you can allow your university to forward the request text to Orivia support. You can withdraw that at any time, even after leaving the university.
-- **[INCLUDE IF RELEASED: partner applications]** If you set up a university on Orivia, we keep your email address and the details you submit, so that we can review the application. **[TO DECIDE: retention]**
-- **[INCLUDE IF RELEASED: sponsored placements]** Sponsored items are labelled as sponsored. Sponsors don't receive who saw them. **[TO CONFIRM: whether views or clicks are counted]**
-- **[INCLUDE IF RELEASED: response diagnostics]** If you turn on response timings in Settings, they're kept only on this device (at most 100 samples or 7 days) and contain no messages or account details. **[TO CONFIRM: where an export goes]**
-- **[INCLUDE IF RELEASED: university guide drafting]** University staff can ask Orivia to draft a guide from public pages or documents they supply. When they agree to it, those are sent to OpenAI. This never uses students' data.
+- **[IN CANDIDATE: data requests]** You can ask for a copy, a correction or deletion from Settings. We store the type of request, your message, its status and our reply. Only the Orivia owner reads it, and it's deleted with your account.
+- **[IN CANDIDATE: university support]** When you send a request to your university's support team, its admins see your request and replies. They don't see your personal chats or files. Admins can note which team and which admin handles it, and link it to a step of one of the university's own process guides. You see the linked step if that guide is published. You don't see who is handling it. Separately, you can allow your university to forward the request text to Orivia support. You can withdraw that at any time, even after leaving the university.
+- **[IN CANDIDATE: partner applications]** If you set up a university on Orivia, we keep your email address and the details you submit, so that we can review the application. **[OPERATOR DECISION: how long applications are kept. There is no deletion rule in the code yet.]**
+- **[IN CANDIDATE: sponsored placements]** Sponsored items are labelled as sponsored, and they're shown only to members of the university they're for. Orivia doesn't count who sees or taps them, and it tells sponsors nothing about you. If you tap a sponsor's link, their website opens without telling them which page you came from. What happens on their website is covered by their own privacy policy.
+- **[IN CANDIDATE: response diagnostics]** If you turn on response timings in Settings, they're kept only on this device (at most 100 samples or 7 days) and contain no messages or account details. There's no export, and nothing is sent anywhere.
+- **[IN CANDIDATE: university guide drafting]** University staff can ask Orivia to draft a guide from public pages or documents they supply. When they agree to it, those are sent to OpenAI. This never uses students' data. Drafts stay drafts until staff publish them.
+- **[IN CANDIDATE: university welcome]** When you join a university, its campus details (country, area, town and reason) are added to your own profile. You can change your other details at any time. Your existing chats, plans and choices aren't changed by joining.
+- **[IN CANDIDATE: campus directory]** Campus places and contacts are written by your university's staff. If you tap "Directions", the address is sent to Google Maps or Apple Maps, whichever you chose, and their privacy policy applies. Orivia doesn't send them anything else.
+- **[IN CANDIDATE: photo check before you send a document]** When you review a photo, Orivia checks its sharpness and size on your device. The photo isn't sent anywhere for this check.
+- **[INCLUDE IF RELEASED: owner analytics (Midnight, `cdab3b5`)]** The Orivia owner sees totals only: counts of actions, statuses and quota use, never individual people. Feedback reaches the owner as totals by category and status, without notes or names. **[TO CONFIRM against the reconciled code. Not in this candidate.]**
 
 ### Device alerts
 
