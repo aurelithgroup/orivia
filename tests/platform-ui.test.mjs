@@ -32,3 +32,15 @@ assert.doesNotMatch(platformPage,/https?:\/\//,'no third-party resources');asser
 console.log('Organisation dashboards (connected): session-only roles, contract endpoints only, plain-text content, unfinished features labelled, no demo data: passed');
 // Ina 1374ec9: staff progress totals are paused; the dashboard says so and shows no counts.
 assert.ok(js.includes("pr.reason==='reporting_paused'")&&js.includes('Totals are paused while we agree how to report them'),'paused reporting is explained');
+
+// Small status badges need 4.5:1 text contrast in both palettes.
+const palettes=[...platformPage.matchAll(/:root\{([^}]+)\}/g)].map(m=>Object.fromEntries([...m[1].matchAll(/--([\w]+):(#\w{6})/g)].map(x=>[x[1],x[2]])));
+const luminance=hex=>{const c=hex.slice(1).match(/../g).map(x=>parseInt(x,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return c[0]*.2126+c[1]*.7152+c[2]*.0722};
+for(const [i,values] of palettes.entries()){
+ const p={...palettes[0],...values};
+ for(const name of ['ok','focus','warn','amberInk']){
+  const bg=name==='amberInk'?'amberSoft':name+'Soft';const a=luminance(p[name]),b=luminance(p[bg]);
+  assert.ok((Math.max(a,b)+.05)/(Math.min(a,b)+.05)>=4.5,`palette ${i}: ${name} badge text must meet 4.5:1`);
+ }
+}
+console.log('Status badge text contrast passes in light and dark palettes.');
