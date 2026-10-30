@@ -23,6 +23,8 @@ assert.ok(/\{id:'start', viaSearch:'2026-10-29', pendingAr:true,/.test(src)&&!/\
 assert.ok(/\{id:'start', level:'source', pendingAr:true,/.test(edi));
 // The app tells Arabic readers, in Arabic, when a step's Arabic isn't reviewed.
 assert.ok(fs.readFileSync('js/app.js','utf8').includes("s.pendingAr && lang()==='ar' ? '<div class=\"tip\" lang=\"ar\" dir=\"rtl\"><b>ترجمة لم تُراجع بعد</b>"));
+// The website app also says "checked through search only" at the top of those steps, before their instructions.
+assert.ok(fs.readFileSync('js/app.js','utf8').includes("${s.viaSearch ? (lang()==='ar' ? '<div class=\"tip\" lang=\"ar\" dir=\"rtl\" data-caveat=\"via-search\"><b>تم التحقق عبر البحث فقط</b>"));
 // Every claim the review pack marks unconfirmed is listed there, not silently kept.
 const pack=fs.readFileSync('docs/journey-review-pack-2026-10-28.md','utf8');
 for(const s of ['**Not confirmed**: the page doesn\'t say so','Sanadak\'s FAQ says 30 days','## 11. New (29 Oct, evening)'])assert.ok(pack.includes(s),s);

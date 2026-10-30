@@ -49,7 +49,7 @@ export function mountRestoredUI(c){const {h,panel,field,api,act,refresh,getUser,
  // Sponsored, with who paid and the disclosure, kept apart from guides and answers. Fictional organisations say so.
  const CAMPAIGN_STATUS={draft:'Draft',in_review:'In review',approved:'Approved',withdrawn:'Withdrawn'};
  function placementCard(p,demo=false){const a=h('a',{class:'btn quiet small',href:p.destination,target:'_blank',rel:'sponsored noopener noreferrer'},'Visit '+p.partnerName+' ↗');
-  return h('div',{class:'item sponsored',style:'align-items:flex-start;flex-direction:column;border-style:dashed'},h('span',{class:'chip c-wait'},'Sponsored'),h('strong',null,p.label),h('p',{class:'small'},'Paid for by '+p.partnerName+'. '+p.disclosure),demo?h('p',{class:'small muted'},'Demo organisation: this sponsor and offer are fictional.'):null,a)}
+  return h('div',{class:'item sponsored',style:'align-items:flex-start;flex-direction:column;border-style:dashed'},h('span',{class:'chip c-wait'},'Sponsored'),h('strong',null,p.label),h('p',{class:'small'},(p.disclosure.toLowerCase().includes(p.partnerName.toLowerCase())?'':'Paid for by '+p.partnerName+'. ')+p.disclosure),demo?h('p',{class:'small muted'},'Demo organisation: this sponsor and offer are fictional.'):null,a)}
  async function placements(oid,org){let d;try{d=await api('/api/me/orgs/'+encodeURIComponent(oid)+'/sponsorships')}catch(_){return null}if(!d.placements?.length)return null;
   return panel(h('h3',null,'Sponsored'),text('Paid placements. They are not part of '+org.name+'’s guides or Orivia’s answers, and never change them.'),...d.placements.map(p=>placementCard(p,!!org.demo)))}
  const day=ms=>new Date(ms).toISOString().slice(0,10),fromDay=v=>Date.parse(v+'T00:00:00Z');

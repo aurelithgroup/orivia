@@ -91,3 +91,25 @@ The candidate commit itself is unchanged. These are fixes for review findings, w
 - **Accessibility:** the photo dialog's heading level and the preview's label are fixed. The automated checks on the support, guides, owner and student screens were clean. Not a screen-reader or zoom test.
 - **Combined flow:** the workflow, directory and sponsorship replays pass in sequence on one server: 141 steps.
 - **Language:** 29 guide view interface strings have no Arabic or French entry yet; they are listed for the language reviewer, not translated. The three new caveat phrases have Arabic and French written by Cleo, which need review.
+
+## Later fixes (30 Oct, after `b5053e5`)
+
+- **Language fallbacks recorded honestly:** `docs/language-matrix.md` now lists where French and Arabic still show English:
+  - guide view interface strings (29 of 60);
+  - some welcome and account strings;
+  - the photo review;
+  - guide content in the chat app;
+  - university content as written.
+  
+  `tests/language-fallbacks.test.mjs` recounts them, so the record can't go stale. No translations were added; expanding them stays deferred.
+- **Sponsored card:** who paid is said once. "Paid for by …" appears only when the disclosure doesn't already name the sponsor.
+- **Website app:** the "checked through search only" note now sits at the top of the Dubai school steps, before their instructions, in English and Arabic. It no longer appears only under "More details".
+
+## Still for people (not automatable here)
+
+- Ina's independent review of the candidate and these fixes.
+- A visual pass.
+- A language review of the Arabic and French written by Cleo, and of the 13 steps marked not reviewed.
+- A screen-reader and 200% zoom pass.
+- Guide approvals, only after content review.
+- Privacy and Terms, once operator details exist.

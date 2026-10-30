@@ -134,7 +134,7 @@
    // labelled Sponsored with who paid. They are never part of guides, answers or Ask Orivia. A failed read shows nothing.
    try{const sp=await get('/api/me/orgs/'+encodeURIComponent(m.organisationId)+'/sponsorships',id);if(!current(id,g))return;
     if(sp.placements?.length){const group=node('section','organisation-group org-sponsored');group.id='sponsored-placements';group.append(node('h3','','Sponsored'),node('p','tiny','Paid placements. They are not part of '+org+'’s guides or Orivia’s answers, and never change them.',true));
-     for(const p of sp.placements){const item=node('article','card org-item org-sponsor');item.append(node('small','org-from','Sponsored',true),node('strong','',p.label,true),node('p','tiny','Paid for by '+p.partnerName+'. '+p.disclosure,true));
+     for(const p of sp.placements){const item=node('article','card org-item org-sponsor');item.append(node('small','org-from','Sponsored',true),node('strong','',p.label,true),node('p','tiny',(p.disclosure.toLowerCase().includes(p.partnerName.toLowerCase())?'':'Paid for by '+p.partnerName+'. ')+p.disclosure,true));
       if(d.organisation?.demo)item.append(node('p','tiny','Demo organisation: this sponsor and offer are fictional.',true));
       const a=link('Visit '+p.partnerName+' ↗',p.destination,true);a.rel='sponsored noopener noreferrer';const actions=node('div','org-actions');actions.append(a);item.append(actions);group.append(item)}
      out.push(group)}}catch(_){}

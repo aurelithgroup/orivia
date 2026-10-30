@@ -37,6 +37,21 @@ Each language is tracked separately for each part of the app. "Tested" means a c
   - OpenAI's voice can speak the others, but nobody has checked them.
 - **Device voice:** `VOICE_LOC` maps all 10. When a phone has no voice for a language, Orivia says so instead of reading it in the wrong one. Bengali and Malayalam voices are often missing on phones.
 
+## Known English fallbacks (recorded 30 Oct)
+
+Where the table says **live** or **tested** for the French or Arabic interface, these parts still show English. Expanding translations is deferred, so they're recorded here rather than translated. `tests/language-fallbacks.test.mjs` recounts them and fails if this section goes out of date.
+
+- **Interface strings missing from the dictionary.** `translations.json` has French and Arabic for every key it contains, but some interface strings aren't in it at all. Those show in English:
+  - **Guide view** (`openGuide` in `chat.js`): 29 of 60 strings, including "About this step", "Do this", "What you’ll need", "Next step →" and "Ask Orivia about this step".
+  - **University welcome and account screens** (`accounts.js`): at least 8, including "Edit my details" and "Nothing to do yet".
+  - **Photo review** (`image-review.js`): its readiness text and button labels.
+
+  The new caveat phrases are the exception: they have French and Arabic, written by Cleo, awaiting review.
+- **Guide content in the chat app is English.** `/v1/guides/<id>` serves English for every interface language. Arabic readers see English guide text, with the interface around it in Arabic. Each line now keeps its own direction. The step note "not reviewed in your language" appears where a step's Arabic is pending.
+- **Guide content on the public website app** (`js/app.js`) is in English and Arabic. Steps whose Arabic isn't reviewed say so in Arabic (13 steps).
+- **The other eight interface languages** on the public website app are machine-assisted and marked "Beta translation" there.
+- **University content** (guides, directory entries, sponsored placements) appears in whatever language staff or the owner wrote it in. Orivia doesn't translate it.
+
 ## Gaps to close
 
 - **VOICE-002:** translate the UI for the seven unavailable languages.

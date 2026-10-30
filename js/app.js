@@ -291,6 +291,7 @@ const SCREENS = {
           <div class="sign-tools">${listenBtn()}<button class="listen staff-btn" data-act="staffCard">${svg('staff','lic')}<span>${t('staffBtn')}</span></button></div>
         </div>
         <div class="content">
+          ${s.viaSearch ? (lang()==='ar' ? '<div class="tip" lang="ar" dir="rtl" data-caveat="via-search"><b>تم التحقق عبر البحث فقط</b>تم التحقق من هذه الخطوة فقط من خلال نتائج بحث تقتبس الصفحات الرسمية، دون قراءتها مباشرة. تأكد مع الجهة المعنية قبل أن تتصرف.</div>' : '<div class="tip" data-caveat="via-search"><b>Checked through search only</b>This step was checked only through search results that quote the official pages, not by reading them directly. Confirm with the organisation before you act.</div>') : ''}
           ${s.pendingAr && lang()==='ar' ? '<div class="tip" lang="ar" dir="rtl"><b>ترجمة لم تُراجع بعد</b>لم يراجع مترجم بعد النص العربي لهذه الخطوة. إن كان هناك شك فاعتمد النص الإنجليزي. (Arabic not yet reviewed.)</div>' : ''}
           ${waitingCard(S.params.id, s)}
           ${(()=>{ const q = quickCard(S.params.id, s), keep = b => b.t === 'emergency' || b.t === 'link' || b.t === 'journeyLink';

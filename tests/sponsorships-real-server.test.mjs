@@ -34,6 +34,6 @@ const handler=fs.readFileSync('workers/accounts/handler.mjs','utf8'),ctx=handler
 assert.ok(!/sponsor/i.test(ctx),'no sponsorships in the assistant’s organisation context');
 const app=fs.readFileSync('workers/trial-ui/spaces.js','utf8'),ui=fs.readFileSync('workers/accounts/restored-ui.mjs','utf8');
 for(const s of ["node('h3','','Sponsored')","a.rel='sponsored noopener noreferrer'","Demo organisation: this sponsor and offer are fictional."])assert.ok(app.includes(s),s);
-for(const s of ["h('span',{class:'chip c-wait'},'Sponsored')","rel:'sponsored noopener noreferrer'","'Paid for by '+p.partnerName"])assert.ok(ui.includes(s),s);
+for(const s of ["h('span',{class:'chip c-wait'},'Sponsored')","rel:'sponsored noopener noreferrer'","(p.disclosure.toLowerCase().includes(p.partnerName.toLowerCase())?'':'Paid for by '+p.partnerName+'. ')+p.disclosure"])assert.ok(ui.includes(s),s);
 assert.ok(!fs.readFileSync('workers/accounts/sponsorships.mjs','utf8').includes('founder_workflows'),'founder AI workflows (area 12) not taken');
 console.log('Sponsored placements on the real local server: 44 steps passed (owner-only, disclosure, review and re-review, dates, withdrawal, student view, organisation boundary); labels pinned.');

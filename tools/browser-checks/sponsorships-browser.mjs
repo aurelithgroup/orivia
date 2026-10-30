@@ -39,7 +39,7 @@ try{
   sel.value=[...sel.options].find(o=>o.textContent.startsWith('Northbay')).value;const [partner,label,link,disc]=ins;partner.value='Northbay Coffee Co';label.value='Sponsored: free coffee in freshers’ week';link.value='https://coffee.example/freshers';disc.value='Paid placement by Northbay Coffee Co. Not an official university service.';
   [...f.querySelectorAll('button')].find(b=>b.textContent==='Preview as a student').click();await new Promise(r=>setTimeout(r,300));const preview=f.querySelector('.sponsored')?.innerText;
   f.querySelector('input[type=checkbox]').checked=true;f.querySelector('button[type=submit]').click();await new Promise(r=>setTimeout(r,2000));return preview})()`);
- check('Owner preview shows the student card before anything is saved',(made||'').includes('Sponsored')&&made.includes('Paid for by Northbay Coffee Co.'),made);
+ check('Owner preview shows the student card before anything is saved',(made||'').includes('Sponsored')&&made.includes('Paid placement by Northbay Coffee Co.')&&!made.includes('Paid for by'),made);
  const item=label=>`[...${panelJs}.querySelectorAll('.panel')].find(p=>p.querySelector('h4')?.textContent===${JSON.stringify(label)})`;
  const L='Sponsored: free coffee in freshers’ week';
  check('The new campaign is a draft',(await js(item(L)+'?.innerText'))?.includes('Draft'));
@@ -55,7 +55,7 @@ try{
  await go(base+'/__dev/as?name=student',800);await openSpace();await snap('student-sponsored');
  const s1=await js("(()=>{const g=document.getElementById('sponsored-placements');if(!g)return null;const all=[...document.querySelectorAll('.organisation-group')];return {text:g.innerText,last:all.at(-1)===g,links:[...g.querySelectorAll('a')].map(a=>({label:a.textContent,href:a.href,rel:a.rel}))}})()");
  check('The student sees a Sponsored section',!!s1,await js("document.body.innerText.slice(0,300)"));
- check('It is labelled, says who paid and that it is not part of guides or answers',(s1?.text||'').includes('Paid for by Northbay Coffee Co.')&&s1.text.includes('not part of Northbay University’s guides or Orivia’s answers'));
+ check('It is labelled, says who paid and that it is not part of guides or answers',(s1?.text||'').includes('Paid placement by Northbay Coffee Co.')&&!s1.text.includes('Paid for by Northbay Coffee Co.')&&s1.text.includes('not part of Northbay University’s guides or Orivia’s answers'));
  check('It comes after everything the university published',s1?.last===true);
  check('The link is marked sponsored',s1?.links.some(l=>l.href==='https://coffee.example/freshers'&&l.rel.includes('sponsored')),s1?.links);
  check('Only live, approved placements (the withdrawn and not-yet-started ones are absent)',!s1?.text.includes('course books')&&!s1?.text.includes('winter coat'));
