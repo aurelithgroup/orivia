@@ -1163,6 +1163,400 @@
       "staff-guides-preview": 0,
       "owner-manage": 0,
       "student-platform": 0
+    },
+    "postFixReflow": {
+      "ranAt": "2026-10-30T07:02:49.799Z",
+      "limits": [
+        "Reflow checks only: narrowed CSS viewports approximate 200% zoom reflow. They are not real browser-zoom, OS text-size or real-device checks, and not acceptance",
+        "Contrast computed against the nearest solid background; images, gradients and overlays ignored; a person must confirm",
+        "Chrome only; not Safari, Firefox or real phones",
+        "Keyboard checked with Tab and Escape only; not a screen reader",
+        "Screenshots need a person\u2019s visual judgement"
+      ],
+      "results": [
+        {
+          "screen": "staff-support",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            }
+          },
+          "keyboard": {
+            "stops": 30,
+            "unique": 25,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:Your spaces",
+              "BUTTON:Account",
+              "BUTTON:Overview",
+              "BUTTON:Student welcome",
+              "BUTTON:Guides and information",
+              "BUTTON:Process templates",
+              "BUTTON:Support",
+              "BUTTON:Members",
+              "BUTTON:Invitations and QR codes",
+              "BUTTON:Counts",
+              "BUTTON:Application records",
+              "BUTTON:Settings"
+            ]
+          },
+          "contrast": {
+            "checked": 51,
+            "low": [
+              "Admin 4.19"
+            ],
+            "lowCount": 1
+          }
+        },
+        {
+          "screen": "staff-guides-preview",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            }
+          },
+          "keyboard": {
+            "stops": 30,
+            "unique": 26,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:Your spaces",
+              "BUTTON:Account",
+              "BUTTON:Overview",
+              "BUTTON:Student welcome",
+              "BUTTON:Guides and information",
+              "BUTTON:Process templates",
+              "BUTTON:Support",
+              "BUTTON:Members",
+              "BUTTON:Invitations and QR codes",
+              "BUTTON:Counts",
+              "BUTTON:Application records",
+              "BUTTON:Settings"
+            ]
+          },
+          "contrast": {
+            "checked": 88,
+            "low": [
+              "Admin 4.19",
+              "Contact 3.86",
+              "Published 4.19",
+              "Members only 3.86",
+              "Public 3.86"
+            ],
+            "lowCount": 9
+          }
+        },
+        {
+          "screen": "owner-manage",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            }
+          },
+          "keyboard": {
+            "stops": 30,
+            "unique": 19,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:Your spaces",
+              "BUTTON:Account",
+              "A:See organisations",
+              "A:See which organisations",
+              "A:Open the feedback list",
+              "SUMMARY:What these numbers mean",
+              "SELECT:Management area",
+              "INPUT:INPUT",
+              "INPUT:on",
+              "BUTTON:Create partner invitation",
+              "A:Visit Harbour Books \u2197",
+              "A:Visit Harbour Books \u2197"
+            ]
+          },
+          "contrast": {
+            "checked": 206,
+            "low": [
+              "Owner 4.19",
+              "Live data 4.19",
+              "Unavailable 3.86",
+              "Sponsored 3.86",
+              "Active 4.19",
+              "Admin active 4.19"
+            ],
+            "lowCount": 21
+          }
+        },
+        {
+          "screen": "student-platform",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            }
+          },
+          "keyboard": {
+            "stops": 27,
+            "unique": 7,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:Your spaces",
+              "BUTTON:Account",
+              "INPUT:INPUT",
+              "TEXTAREA:TEXTAREA",
+              "INPUT:on",
+              "INPUT:on",
+              "BUTTON:Send support request",
+              "BUTTON:Leave Northbay University",
+              "BUTTON:Your spaces",
+              "BUTTON:Account",
+              "INPUT:INPUT",
+              "TEXTAREA:TEXTAREA"
+            ]
+          },
+          "contrast": {
+            "checked": 26,
+            "low": [],
+            "lowCount": 0
+          }
+        },
+        {
+          "screen": "app-directory",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": [
+                "TEXTAREA. 7px"
+              ]
+            }
+          },
+          "enteredApp": true,
+          "keyboard": {
+            "stops": 30,
+            "unique": 11,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:\u2190 My Orivia",
+              "A:Directions in Google Maps \u2197",
+              "A:Apple Maps \u2197",
+              "A:Source page \u2197",
+              "A:Manage membership",
+              "INPUT:Subject",
+              "TEXTAREA:Message",
+              "INPUT:on",
+              "INPUT:on",
+              "BUTTON:Send support request",
+              "BUTTON:Leave Northbay University",
+              "BUTTON:Close"
+            ]
+          },
+          "contrast": {
+            "checked": 74,
+            "low": [],
+            "lowCount": 0
+          }
+        },
+        {
+          "screen": "app-sponsored",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": [
+                "TEXTAREA. 7px"
+              ]
+            }
+          },
+          "enteredApp": true,
+          "keyboard": {
+            "stops": 30,
+            "unique": 8,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:\u2190 My Orivia",
+              "A:Manage membership",
+              "INPUT:Subject",
+              "TEXTAREA:Message",
+              "INPUT:on",
+              "INPUT:on",
+              "BUTTON:Send support request",
+              "BUTTON:Leave Northbay University",
+              "BUTTON:Close",
+              "BUTTON:\u2190 My Orivia",
+              "A:Manage membership",
+              "INPUT:Subject"
+            ]
+          },
+          "contrast": {
+            "checked": 53,
+            "low": [],
+            "lowCount": 0
+          }
+        },
+        {
+          "screen": "app-guide-step",
+          "widths": {
+            "desktop 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 640 CSS px (approximates desktop at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "phone 100%": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            },
+            "reflow at 195 CSS px (approximates phone at 200%)": {
+              "pageOverflowPx": 0,
+              "elementsPastEdge": []
+            }
+          },
+          "enteredApp": true,
+          "keyboard": {
+            "stops": 29,
+            "unique": 27,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:Chats",
+              "BUTTON:Home",
+              "BUTTON:Sign in",
+              "BUTTON:Settings",
+              "BUTTON:\u2190 Journeys",
+              "BUTTON:Chat",
+              "SUMMARY:Guide version and review",
+              "BUTTON:Follow this guide",
+              "BUTTON:Save for later",
+              "SUMMARY:All steps",
+              "SUMMARY:Read more",
+              "BUTTON:Ask Orivia about this step"
+            ]
+          },
+          "contrast": {
+            "checked": 58,
+            "low": [],
+            "lowCount": 0
+          }
+        },
+        {
+          "screen": "photo-dialog",
+          "keyboard": {
+            "stops": 13,
+            "unique": 9,
+            "withoutIndicator": [],
+            "offScreen": [],
+            "trapped": false,
+            "order": [
+              "BUTTON:Crop to square",
+              "BUTTON:Zoom in",
+              "BUTTON:Zoom out",
+              "BUTTON:Reset",
+              "BUTTON:Retake",
+              "BUTTON:Cancel",
+              "BUTTON:Use photo",
+              "DIALOG:Review photo",
+              "BUTTON:Rotate",
+              "BUTTON:Crop to square",
+              "BUTTON:Zoom in",
+              "BUTTON:Zoom out"
+            ]
+          },
+          "focusStayedInside": true,
+          "reflow at 195 CSS px (approximates phone at 200%)": {
+            "pageOverflowPx": 0,
+            "elementsPastEdge": []
+          },
+          "escapeCloses": true,
+          "contrast": null
+        }
+      ]
     }
   },
   "limitations": [
